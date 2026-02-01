@@ -7,7 +7,7 @@ interface Task {
   title: string;
   dueDate: string;
   priority: "high" | "medium" | "low";
-  type: "attendance" | "marks" | "assignment";
+  type: string;
 }
 
 interface PendingTasksListProps {
@@ -36,7 +36,7 @@ export function PendingTasksList({ tasks }: PendingTasksListProps) {
     >
       <h3 className="section-title flex items-center gap-2">
         <AlertCircle className="w-5 h-5 text-warning" />
-        Pending Tasks
+        Announcement & Circulars
       </h3>
       <div className="space-y-3">
         {tasks.map((task, index) => {
