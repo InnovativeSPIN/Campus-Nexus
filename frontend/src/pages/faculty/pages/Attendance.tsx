@@ -14,6 +14,7 @@ import { Input } from "@/pages/faculty/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/pages/faculty/components/ui/radio-group";
 import { Label } from "@/pages/faculty/components/ui/label";
 import { Switch } from "@/pages/faculty/components/ui/switch";
+import { Textarea } from "@/pages/faculty/components/ui/textarea";
 import {
   ClipboardCheck,
   Search,
@@ -25,6 +26,7 @@ import {
   History,
   Filter,
 } from "lucide-react";
+import { toast } from "sonner";
 import { cn } from "@/pages/faculty/lib/utils";
 
 interface Student {
@@ -109,6 +111,10 @@ export default function Attendance() {
   const [locked, setLocked] = useState(false);
   const [digitSearch, setDigitSearch] = useState("");
   const [showAttendanceSummary, setShowAttendanceSummary] = useState(false);
+  const [topicSemester, setTopicSemester] = useState("");
+  const [topicYear, setTopicYear] = useState("");
+  const [topicDept, setTopicDept] = useState("");
+  const [topicCovered, setTopicCovered] = useState("");
   const [currentPage, setCurrentPage] = useState(0);
   const itemsPerPage = 10;
 
@@ -120,20 +126,60 @@ export default function Attendance() {
     const raw = localStorage.getItem(key);
     if (raw) {
       try {
-        const parsed = JSON.parse(raw) as Record<string, string>;
-        setAttendanceData(parsed);
+        const parsed = JSON.parse(raw);
+        if (parsed.attendance) {
+          setAttendanceData(parsed.attendance);
+          setTopicSemester(parsed.topicDetails?.semester || "");
+          setTopicYear(parsed.topicDetails?.year || "");
+          setTopicDept(parsed.topicDetails?.department || "");
+          setTopicCovered(parsed.topicDetails?.topic || "");
+        } else {
+          setAttendanceData(parsed);
+          setTopicSemester("");
+          setTopicYear("");
+          setTopicDept("");
+          setTopicCovered("");
+        }
         setLocked(true);
       } catch (e) {
         setAttendanceData({});
+        setTopicSemester("");
+        setTopicYear("");
+        setTopicDept("");
+        setTopicCovered("");
         setLocked(!isToday);
       }
     } else {
       setAttendanceData({});
+      setTopicSemester("");
+      setTopicYear("");
+      setTopicDept("");
+      setTopicCovered("");
       setLocked(!isToday);
     }
     setMarkAllPresent(false);
     setDigitSearch("");
   }, [selectedDate, isToday]);
+
+  const handleSave = (showSummary = false) => {
+    if (!isToday) return;
+    const key = `attendance_${selectedDate}`;
+    const dataToSave = {
+      attendance: attendanceData,
+      topicDetails: {
+        semester: topicSemester,
+        year: topicYear,
+        department: topicDept,
+        topic: topicCovered
+      }
+    };
+    localStorage.setItem(key, JSON.stringify(dataToSave));
+    setLocked(true);
+    if (showSummary) {
+      setShowAttendanceSummary(true);
+    }
+    toast.success("Attendance and coverage details saved successfully!");
+  };
 
   const handleMarkAll = (checked: boolean) => {
     if (locked) return;
@@ -339,8 +385,8 @@ export default function Attendance() {
               </div>
               <div className="space-y-2">
                 <Label>Date</Label>
-                <Input 
-                  type="date" 
+                <Input
+                  type="date"
                   value={selectedDate}
                   onChange={(e) => setSelectedDate(e.target.value)}
                 />
@@ -388,13 +434,7 @@ export default function Attendance() {
 
               <Button
                 className="bg-primary hover:bg-primary/90"
-                onClick={() => {
-                  if (!isToday) return;
-                  const key = `attendance_${selectedDate}`;
-                  localStorage.setItem(key, JSON.stringify(attendanceData));
-                  setLocked(true);
-                  setShowAttendanceSummary(true);
-                }}
+                onClick={() => handleSave(true)}
                 disabled={locked || !isToday}
               >
                 <Save className="w-4 h-4 mr-2" />
@@ -694,10 +734,87 @@ export default function Attendance() {
                   }
                   disabled={currentPage >= Math.ceil(filteredStudents.length / itemsPerPage) - 1}
                 >
-                  Next 
+                  Next
                 </Button>
               </div>
             )}
+          </motion.div>
+
+          {/* Topic Selection Section */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.35 }}
+            className="widget-card mt-6 p-6 border-2 border-primary/10"
+          >
+            <h3 className="text-lg font-semibold mb-4 text-primary">Class Coverage Details</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+              <div className="space-y-2">
+                <Label>Semester</Label>
+                <Select
+                  value={topicSemester}
+                  onValueChange={setTopicSemester}
+                >
+                  <SelectTrigger><SelectValue placeholder="Select Semester" /></SelectTrigger>
+                  <SelectContent>
+                    {[1, 2, 3, 4, 5, 6, 7, 8].map(s => (
+                      <SelectItem key={s} value={s.toString()}>Semester {s}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Year</Label>
+                <Select
+                  value={topicYear}
+                  onValueChange={setTopicYear}
+                >
+                  <SelectTrigger><SelectValue placeholder="Select Year" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">1st Year</SelectItem>
+                    <SelectItem value="2">2nd Year</SelectItem>
+                    <SelectItem value="3">3rd Year</SelectItem>
+                    <SelectItem value="4">4th Year</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Department</Label>
+                <Select
+                  value={topicDept}
+                  onValueChange={setTopicDept}
+                >
+                  <SelectTrigger><SelectValue placeholder="Select Department" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="cse">CSE</SelectItem>
+                    <SelectItem value="aids">AI & DS</SelectItem>
+                    <SelectItem value="eee">EEE</SelectItem>
+                    <SelectItem value="mech">MECH</SelectItem>
+                    <SelectItem value="it">IT</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Topic / Unit Covered</Label>
+              <Textarea
+                placeholder="Briefly describe what was taught today..."
+                value={topicCovered}
+                onChange={(e) => setTopicCovered(e.target.value)}
+                className="min-h-[100px] bg-background/50"
+              />
+            </div>
+
+            <div className="mt-6 flex justify-end">
+              <Button
+                onClick={() => handleSave(false)}
+                disabled={locked || !isToday || !topicCovered.trim()}
+                className="bg-primary hover:bg-primary/90 min-w-[200px]"
+              >
+                <Save className="w-4 h-4 mr-2" />
+                Submit Class Coverage
+              </Button>
+            </div>
           </motion.div>
         </TabsContent>
 
