@@ -5,14 +5,12 @@ import {
   LayoutDashboard,
   User,
   GraduationCap,
-  BookOpen,
   LogOut,
   ChevronLeft,
   ChevronRight,
   Calendar,
   Award,
   FileText,
-  MessageSquare,
   Megaphone,
 } from 'lucide-react';
 import { useState } from 'react';
@@ -36,10 +34,7 @@ const portfolioNavItems = [
   { path: '/student/portfolio/sports', label: 'Portfolio', icon: Award },
 ];
 
-const knowledgeNavItems = [
-  { path: '/student/knowledge/materials', label: 'Materials', icon: BookOpen },
-  { path: '/student/knowledge/discussions', label: 'Discussions', icon: MessageSquare },
-];
+
 
 const announcementNavItems = [
   { path: '/student/announcements', label: 'Announcements', icon: Megaphone },
@@ -87,8 +82,8 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
   }) => {
     const isExpanded = expandedSection === sectionKey || isSectionActive(items);
 
-    // For Profile, Announcements, Academics, Portfolio, and Knowledge sections, make them navigate directly without dropdown
-    if (sectionKey === 'profile' || sectionKey === 'announcements' || sectionKey === 'academics' || sectionKey === 'portfolio' || sectionKey === 'knowledge') {
+    // For Profile, Announcements, Academics, and Portfolio sections, make them navigate directly without dropdown nodes
+    if (sectionKey === 'profile' || sectionKey === 'announcements' || sectionKey === 'academics' || sectionKey === 'portfolio') {
       const IconComponent = items[0].icon;
       return (
         <div className="mb-2">
@@ -219,7 +214,7 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
         <NavSection title="Profile" items={profileNavItems} sectionKey="profile" />
         <NavSection title="Academics" items={academicNavItems} sectionKey="academics" />
         <NavSection title="Portfolio" items={portfolioNavItems} sectionKey="portfolio" />
-        <NavSection title="Knowledge" items={knowledgeNavItems} sectionKey="knowledge" />
+
         <NavSection title="Announcements" items={announcementNavItems} sectionKey="announcements" />
       </nav>
 

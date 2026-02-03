@@ -2,7 +2,7 @@
 import PageHeader from '@/pages/student/components/layout/PageHeader';
 import SectionCard from '@/pages/student/components/common/SectionCard';
 import Badge from '@/pages/student/components/common/Badge';
-import { AlertCircle, Info, CheckCircle, Trash2, BookOpen } from 'lucide-react';
+import { AlertCircle, Info, Trash2, BookOpen } from 'lucide-react';
 
 type AnnouncementType = 'important' | 'info' | 'update';
 
@@ -102,7 +102,7 @@ export default function Announcements() {
     return items;
   }, [items, filter]);
 
-  const markAllRead = () => setItems((prev) => prev.map((n) => ({ ...n, isRead: true })));
+
   const clearAll = () => setItems([]);
   const toggleRead = (id: string) =>
     setItems((prev) => prev.map((n) => (n.id === id ? { ...n, isRead: !n.isRead } : n)));
@@ -130,10 +130,7 @@ export default function Announcements() {
               <option value="unread">Unread</option>
               <option value="read">Read</option>
             </select>
-            <button onClick={markAllRead} className="btn-secondary flex items-center gap-2">
-              <CheckCircle className="w-4 h-4" />
-              Mark all read
-            </button>
+
             <button
               onClick={clearAll}
               className="px-4 py-2 rounded-lg border border-border hover:bg-muted transition-colors flex items-center gap-2"
@@ -162,8 +159,8 @@ export default function Announcements() {
                 <div
                   key={announcement.id}
                   className={`p-4 rounded-lg border transition-all ${announcement.isRead
-                      ? 'border-border/50 bg-muted/30'
-                      : 'border-primary/30 bg-primary/5'
+                    ? 'border-border/50 bg-muted/30'
+                    : 'border-primary/30 bg-primary/5'
                     } hover:border-border`}
                 >
                   <div className="flex items-start gap-4">
