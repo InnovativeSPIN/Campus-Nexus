@@ -84,6 +84,10 @@ export default function Marks() {
   const totalMarks = data.subjects.reduce((sum, s) => sum + s.total, 0);
   const maxMarks = data.subjects.length * 100;
   const overallPercentage = ((totalMarks / maxMarks) * 100).toFixed(1);
+  const semesterGpa = data.subjects.reduce(
+    (sum, subject) => sum + gradePoints[subject.grade] * subject.credits,
+    0,
+  ) / data.totalCredits;
 
   return (
     <div className="animate-fade-in">
@@ -118,8 +122,8 @@ export default function Marks() {
               <TrendingUp className="w-6 h-6" />
             </div>
             <div>
-              <p className="text-sm opacity-80">Percentage</p>
-              <p className="text-2xl font-bold font-display">{overallPercentage}%</p>
+              <p className="text-sm opacity-80">Semester {selectedSemester} GPA</p>
+              <p className="text-2xl font-bold font-display">{semesterGpa.toFixed(2)}</p>
             </div>
           </div>
         </div>
