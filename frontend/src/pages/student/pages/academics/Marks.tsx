@@ -84,6 +84,10 @@ export default function Marks() {
   const totalMarks = data.subjects.reduce((sum, s) => sum + s.total, 0);
   const maxMarks = data.subjects.length * 100;
   const overallPercentage = ((totalMarks / maxMarks) * 100).toFixed(1);
+  const semesterGpa = data.subjects.reduce(
+    (sum, subject) => sum + gradePoints[subject.grade] * subject.credits,
+    0,
+  ) / data.totalCredits;
 
   return (
     <div className="animate-fade-in">
@@ -94,17 +98,6 @@ export default function Marks() {
           { label: 'Academics', path: '/student/academics/marks' },
           { label: 'Marks' },
         ]}
-        actions={
-          <select
-            value={selectedSemester}
-            onChange={(e) => setSelectedSemester(Number(e.target.value))}
-            className="input-field py-2 pr-8"
-          >
-            {SEMESTERS.slice(0, 5).reverse().map((sem) => (
-              <option key={sem} value={sem}>Semester {sem}</option>
-            ))}
-          </select>
-        }
       />
 
       <AcademicsNavBar />
@@ -129,8 +122,8 @@ export default function Marks() {
               <TrendingUp className="w-6 h-6" />
             </div>
             <div>
-              <p className="text-sm opacity-80">Percentage</p>
-              <p className="text-2xl font-bold font-display">{overallPercentage}%</p>
+              <p className="text-sm opacity-80">Semester {selectedSemester} GPA</p>
+              <p className="text-2xl font-bold font-display">{semesterGpa.toFixed(2)}</p>
             </div>
           </div>
         </div>
@@ -146,6 +139,22 @@ export default function Marks() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Semester Selector */}
+      <div className="mb-6">
+        <label className="block text-sm font-medium text-foreground mb-2">
+          Select Semester
+        </label>
+        <select
+          value={selectedSemester}
+          onChange={(e) => setSelectedSemester(Number(e.target.value))}
+          className="input-field py-2 pr-8 w-full sm:w-auto"
+        >
+          {SEMESTERS.slice(0, 5).reverse().map((sem) => (
+            <option key={sem} value={sem}>Semester {sem}</option>
+          ))}
+        </select>
       </div>
 
       {/* Internal 1 Container */}

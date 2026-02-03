@@ -75,6 +75,8 @@ export default function Leave() {
     endDate: '',
     reason: '',
     type: 'On-duty',
+    leaveSubType: '',
+    imageFile: null as File | null,
     recipient: 'Class Incharge',
   });
 
@@ -145,6 +147,8 @@ export default function Leave() {
       endDate: '',
       reason: '',
       type: 'On-duty',
+      leaveSubType: '',
+      imageFile: null,
       recipient: 'Class Incharge',
     });
   };
@@ -250,8 +254,8 @@ export default function Leave() {
             key={tab}
             onClick={() => setActiveTab(tab as any)}
             className={`px-4 py-2 font-medium text-sm transition-colors border-b-2 ${activeTab === tab
-                ? 'border-primary text-primary'
-                : 'border-transparent text-muted-foreground hover:text-foreground'
+              ? 'border-primary text-primary'
+              : 'border-transparent text-muted-foreground hover:text-foreground'
               }`}
           >
             {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -387,14 +391,86 @@ export default function Leave() {
             <label className="block text-sm font-medium mb-2">Leave Type *</label>
             <select
               value={formData.type}
-              onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+              onChange={(e) => setFormData({ ...formData, type: e.target.value, leaveSubType: '', imageFile: null })}
               className="input-field"
             >
               <option value="Leave">Leave</option>
-              <option value="Absent">Absent</option>
               <option value="On-duty">On-duty</option>
             </select>
           </div>
+
+          {/* Conditional Leave Sub-Type Dropdown */}
+          {formData.type === 'Leave' && (
+            <div>
+              <label className="block text-sm font-medium mb-2">Leave Sub-Type *</label>
+              <select
+                value={formData.leaveSubType}
+                onChange={(e) => setFormData({ ...formData, leaveSubType: e.target.value, imageFile: null })}
+                className="input-field"
+              >
+                <option value="">Select Leave Sub-Type</option>
+                <option value="Medical Leave">Medical Leave</option>
+                <option value="Personal Leave">Personal Leave</option>
+              </select>
+            </div>
+          )}
+
+          {/* Conditional Image Upload for Medical Leave */}
+          {formData.type === 'Leave' && formData.leaveSubType === 'Medical Leave' && (
+            <div>
+              <label className="block text-sm font-medium mb-2">Medical Certificate *</label>
+              <input
+                type="file"
+                accept="image/*,.pdf"
+                onChange={(e) => setFormData({ ...formData, imageFile: e.target.files?.[0] || null })}
+                className="input-field"
+                placeholder="Upload your medical certificate"
+              />
+              {formData.imageFile && (
+                <p className="text-sm text-muted-foreground mt-1">
+                  Selected: {formData.imageFile.name}
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Conditional Image Upload for Personal Leave */}
+          {formData.type === 'Leave' && formData.leaveSubType === 'Personal Leave' && (
+            <div>
+              <label className="block text-sm font-medium mb-2">Leave Letter *</label>
+              <input
+                type="file"
+                accept="image/*,.pdf"
+                onChange={(e) => setFormData({ ...formData, imageFile: e.target.files?.[0] || null })}
+                className="input-field"
+                placeholder="Upload leave letter"
+              />
+              {formData.imageFile && (
+                <p className="text-sm text-muted-foreground mt-1">
+                  Selected: {formData.imageFile.name}
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Conditional Image Upload for On-duty */}
+          {formData.type === 'On-duty' && (
+            <div>
+              <label className="block text-sm font-medium mb-2">On-duty Letter *</label>
+              <input
+                type="file"
+                accept="image/*,.pdf"
+                onChange={(e) => setFormData({ ...formData, imageFile: e.target.files?.[0] || null })}
+                className="input-field"
+                placeholder="Upload on-duty letter"
+              />
+              {formData.imageFile && (
+                <p className="text-sm text-muted-foreground mt-1">
+                  Selected: {formData.imageFile.name}
+                </p>
+              )}
+            </div>
+          )}
 
           <div>
             <label className="block text-sm font-medium mb-2">Reason *</label>
@@ -403,7 +479,7 @@ export default function Leave() {
               onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
               className="input-field resize-none"
               rows={3}
-              placeholder="Enter the reason for leave..."
+              placeholder={formData.type === 'On-duty' ? 'Type of Events / category of sports' : 'Enter the reason for leave'}
             />
           </div>
 
