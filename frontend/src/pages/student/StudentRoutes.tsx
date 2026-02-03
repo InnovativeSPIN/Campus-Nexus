@@ -20,8 +20,8 @@ import Marks from './pages/academics/Marks';
 import Timetable from './pages/academics/Timetable';
 import Leave from './pages/academics/Leave';
 
-// Records
-import Certifications from './pages/records/Certifications';
+// Portfolio (combines Records and Extra-curricular)
+import StudentPortfolio from './pages/portfolio/StudentPortfolio';
 
 // Knowledge
 import Materials from './pages/knowledge/Materials';
@@ -32,9 +32,6 @@ import Notifications from './pages/notifications/Notifications';
 
 // Announcements
 import Announcements from './pages/announcements/Announcements';
-
-// Extra-curricular
-import Extracurricular from './pages/extracurricular/Extracurricular';
 
 // Errors
 import Unauthorized from './pages/errors/Unauthorized';
@@ -72,8 +69,12 @@ const StudentRoutes = () => {
           <Route path="academics/timetable" element={<Timetable />} />
           <Route path="academics/leave" element={<Leave />} />
 
-          {/* Records */}
-          <Route path="records/certifications" element={<Certifications />} />
+          {/* Portfolio (combines Records and Extra-curricular) */}
+          <Route path="portfolio" element={<Navigate to="sports" replace />} />
+          <Route path="portfolio/sports" element={<StudentPortfolio />} />
+          <Route path="portfolio/events" element={<StudentPortfolio />} />
+          <Route path="portfolio/certifications" element={<StudentPortfolio />} />
+          <Route path="portfolio/projects" element={<StudentPortfolio />} />
 
           {/* Knowledge */}
           <Route path="knowledge/materials" element={<Materials />} />
@@ -84,10 +85,6 @@ const StudentRoutes = () => {
 
           {/* Announcements */}
           <Route path="announcements" element={<Announcements />} />
-
-          {/* Extra-curricular */}
-          <Route path="extracurricular/sports" element={<Extracurricular />} />
-          <Route path="extracurricular/events" element={<Extracurricular />} />
         </Route>
 
         {/* Catch-all */}
