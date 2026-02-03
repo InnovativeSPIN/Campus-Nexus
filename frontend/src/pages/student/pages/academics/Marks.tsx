@@ -94,17 +94,6 @@ export default function Marks() {
           { label: 'Academics', path: '/student/academics/marks' },
           { label: 'Marks' },
         ]}
-        actions={
-          <select
-            value={selectedSemester}
-            onChange={(e) => setSelectedSemester(Number(e.target.value))}
-            className="input-field py-2 pr-8"
-          >
-            {SEMESTERS.slice(0, 5).reverse().map((sem) => (
-              <option key={sem} value={sem}>Semester {sem}</option>
-            ))}
-          </select>
-        }
       />
 
       <AcademicsNavBar />
@@ -146,6 +135,22 @@ export default function Marks() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Semester Selector */}
+      <div className="mb-6">
+        <label className="block text-sm font-medium text-foreground mb-2">
+          Select Semester
+        </label>
+        <select
+          value={selectedSemester}
+          onChange={(e) => setSelectedSemester(Number(e.target.value))}
+          className="input-field py-2 pr-8 w-full sm:w-auto"
+        >
+          {SEMESTERS.slice(0, 5).reverse().map((sem) => (
+            <option key={sem} value={sem}>Semester {sem}</option>
+          ))}
+        </select>
       </div>
 
       {/* Internal 1 Container */}
