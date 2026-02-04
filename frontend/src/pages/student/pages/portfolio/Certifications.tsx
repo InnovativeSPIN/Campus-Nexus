@@ -5,6 +5,8 @@ import { Plus, ExternalLink, Award, Trash2, Calendar, Edit2 } from 'lucide-react
 import { useToast } from '@/pages/student/hooks/use-toast';
 import { formatDate } from '@/pages/student/utils/formatDate';
 
+export type ApprovalStatus = 'pending' | 'approved' | 'rejected';
+
 interface Certification {
   id: string;
   name: string;
@@ -14,6 +16,7 @@ interface Certification {
   credentialId?: string;
   credentialUrl?: string;
   skills: string[];
+  approvalStatus?: ApprovalStatus;
 }
 
 const initialCertifications: Certification[] = [
@@ -26,6 +29,7 @@ const initialCertifications: Certification[] = [
     credentialId: 'AWS-CCP-123456',
     credentialUrl: 'https://aws.amazon.com/verify',
     skills: ['Cloud Computing', 'AWS', 'Infrastructure'],
+    approvalStatus: 'approved',
   },
   {
     id: '2',
@@ -34,6 +38,7 @@ const initialCertifications: Certification[] = [
     issueDate: '2023-11-20',
     credentialId: 'META-REACT-789',
     skills: ['React', 'JavaScript', 'Frontend'],
+    approvalStatus: 'approved',
   },
   {
     id: '3',
@@ -42,10 +47,15 @@ const initialCertifications: Certification[] = [
     issueDate: '2023-08-10',
     credentialUrl: 'https://coursera.org/verify/123',
     skills: ['Python', 'Data Science', 'Machine Learning'],
+    approvalStatus: 'approved',
   },
 ];
 
-export default function Certifications() {
+interface CertificationsProps {
+  onPendingChange?: (hasPending: boolean) => void;
+}
+
+export default function Certifications({ onPendingChange }: CertificationsProps) {
   const { toast } = useToast();
   const [certifications, setCertifications] = useState<Certification[]>(initialCertifications);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -81,16 +91,18 @@ export default function Certifications() {
       credentialId: formData.credentialId || undefined,
       credentialUrl: formData.credentialUrl || undefined,
       skills: formData.skills.split(',').map(s => s.trim()).filter(Boolean),
+      approvalStatus: 'pending',
     };
 
     if (editingCert) {
-      setCertifications(certifications.map(c => c.id === editingCert.id ? newCert : c));
-      toast({ title: 'Certification updated successfully' });
+      setCertifications(certifications.map(c => c.id === editingCert.id ? { ...newCert, approvalStatus: 'pending' } : c));
+      toast({ title: 'Request Submitted', description: 'Your changes have been submitted to faculty for approval.' });
     } else {
       setCertifications([newCert, ...certifications]);
-      toast({ title: 'Certification added successfully' });
+      toast({ title: 'Request Submitted', description: 'Your changes have been submitted to faculty for approval.' });
     }
 
+    if (onPendingChange) onPendingChange(true);
     closeModal();
   };
 
@@ -106,6 +118,7 @@ export default function Certifications() {
       skills: cert.skills.join(', '),
     });
     setIsModalOpen(true);
+    if (onPendingChange) onPendingChange(true);
   };
 
   const handleDelete = (id: string) => {
@@ -130,6 +143,15 @@ export default function Certifications() {
   const isExpired = (expiryDate?: string) => {
     if (!expiryDate) return false;
     return new Date(expiryDate) < new Date();
+  };
+
+  const getApprovalBadgeVariant = (status?: ApprovalStatus): 'success' | 'warning' | 'danger' | 'info' => {
+    switch (status) {
+      case 'approved': return 'success';
+      case 'rejected': return 'danger';
+      case 'pending': return 'warning';
+      default: return 'warning';
+    }
   };
 
   return (
@@ -184,6 +206,9 @@ export default function Certifications() {
                   {!cert.expiryDate && (
                     <Badge variant="success">No Expiry</Badge>
                   )}
+                  <Badge variant={getApprovalBadgeVariant(cert.approvalStatus)}>
+                    {cert.approvalStatus || 'approved'}
+                  </Badge>
                 </div>
 
                 {cert.credentialId && (
@@ -306,7 +331,7 @@ export default function Certifications() {
               Cancel
             </button>
             <button type="submit" className="btn-primary">
-              {editingCert ? 'Update Certification' : 'Add Certification'}
+              {editingCert ? 'Submit Changes' : 'Add Certification'}
             </button>
           </div>
         </form>
@@ -314,5 +339,3 @@ export default function Certifications() {
     </div>
   );
 }
-
-

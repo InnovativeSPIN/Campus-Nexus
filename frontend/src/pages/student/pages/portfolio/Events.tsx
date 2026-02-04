@@ -5,6 +5,8 @@ import { Edit, Trash2, Plus, Save } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from '@/pages/student/components/ui/dialog';
 import { useToast } from '@/pages/student/hooks/use-toast';
 
+export type ApprovalStatus = 'pending' | 'approved' | 'rejected';
+
 interface Event {
   id: string;
   name: string;
@@ -12,6 +14,7 @@ interface Event {
   category: string;
   status: 'upcoming' | 'completed' | 'cancelled';
   location: string;
+  approvalStatus?: ApprovalStatus;
 }
 
 const initialEvents: Event[] = [
@@ -22,6 +25,7 @@ const initialEvents: Event[] = [
     category: 'Sports',
     status: 'upcoming',
     location: 'Main Ground',
+    approvalStatus: 'approved',
   },
   {
     id: '2',
@@ -30,6 +34,7 @@ const initialEvents: Event[] = [
     category: 'Cultural',
     status: 'upcoming',
     location: 'Auditorium',
+    approvalStatus: 'approved',
   },
   {
     id: '3',
@@ -38,10 +43,15 @@ const initialEvents: Event[] = [
     category: 'Academic',
     status: 'completed',
     location: 'Conference Hall',
+    approvalStatus: 'approved',
   },
 ];
 
-export default function Events() {
+interface EventsProps {
+  onPendingChange?: (hasPending: boolean) => void;
+}
+
+export default function Events({ onPendingChange }: EventsProps) {
   const { toast } = useToast();
   const [events, setEvents] = useState<Event[]>(initialEvents);
   const [showDialog, setShowDialog] = useState(false);
@@ -54,12 +64,14 @@ export default function Events() {
     category: '',
     status: 'upcoming',
     location: '',
+    approvalStatus: 'pending',
   });
 
   const handleEdit = (event: Event) => {
     setEditingId(event.id);
-    setFormData(event);
+    setFormData({ ...event, approvalStatus: 'pending' });
     setShowDialog(true);
+    if (onPendingChange) onPendingChange(true);
   };
 
   const handleAdd = () => {
@@ -71,8 +83,10 @@ export default function Events() {
       category: '',
       status: 'upcoming',
       location: '',
+      approvalStatus: 'pending',
     });
     setShowDialog(true);
+    if (onPendingChange) onPendingChange(true);
   };
 
   const handleDelete = async (id: string) => {
@@ -109,16 +123,16 @@ export default function Events() {
     await new Promise(resolve => setTimeout(resolve, 500));
 
     if (editingId) {
-      setEvents(events.map(e => e.id === editingId ? formData : e));
+      setEvents(events.map(e => e.id === editingId ? { ...formData, approvalStatus: 'pending' } : e));
       toast({
-        title: 'Success',
-        description: 'Event updated successfully.',
+        title: 'Request Submitted',
+        description: 'Your changes have been submitted to faculty for approval.',
       });
     } else {
-      setEvents([...events, formData]);
+      setEvents([...events, { ...formData, approvalStatus: 'pending' }]);
       toast({
-        title: 'Success',
-        description: 'Event added successfully.',
+        title: 'Request Submitted',
+        description: 'Your changes have been submitted to faculty for approval.',
       });
     }
 
@@ -136,7 +150,17 @@ export default function Events() {
       category: '',
       status: 'upcoming',
       location: '',
+      approvalStatus: 'pending',
     });
+  };
+
+  const getApprovalBadgeVariant = (status?: ApprovalStatus): 'success' | 'warning' | 'danger' | 'info' => {
+    switch (status) {
+      case 'approved': return 'success';
+      case 'rejected': return 'danger';
+      case 'pending': return 'warning';
+      default: return 'warning';
+    }
   };
 
   return (
@@ -184,9 +208,14 @@ export default function Events() {
                 <p className="text-sm text-muted-foreground">Location: {event.location}</p>
                 <p className="text-sm text-muted-foreground">Category: {event.category}</p>
               </div>
-              <Badge variant={event.status === 'upcoming' ? 'info' : event.status === 'completed' ? 'success' : 'danger'}>
-                {event.status}
-              </Badge>
+              <div className="flex flex-col gap-2">
+                <Badge variant={event.status === 'upcoming' ? 'info' : event.status === 'completed' ? 'success' : 'danger'}>
+                  {event.status}
+                </Badge>
+                <Badge variant={getApprovalBadgeVariant(event.approvalStatus)}>
+                  {event.approvalStatus || 'approved'}
+                </Badge>
+              </div>
             </div>
           </SectionCard>
         ))}
@@ -266,7 +295,7 @@ export default function Events() {
                   className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center gap-2"
                 >
                   <Save className="w-4 h-4" />
-                  {isSaving ? 'Saving...' : 'Save'}
+                  {isSaving ? 'Saving...' : 'Submit'}
                 </button>
               </div>
             </div>
@@ -276,5 +305,3 @@ export default function Events() {
     </div>
   );
 }
-
-

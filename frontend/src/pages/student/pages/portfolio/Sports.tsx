@@ -5,6 +5,8 @@ import { Edit, Trash2, Plus, Save } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from '@/pages/student/components/ui/dialog';
 import { useToast } from '@/pages/student/hooks/use-toast';
 
+export type ApprovalStatus = 'pending' | 'approved' | 'rejected';
+
 interface Sport {
     id: string;
     name: string;
@@ -12,6 +14,7 @@ interface Sport {
     status: 'active' | 'inactive';
     joinedDate: string;
     achievements: string;
+    approvalStatus?: ApprovalStatus;
 }
 
 const initialSports: Sport[] = [
@@ -22,6 +25,7 @@ const initialSports: Sport[] = [
         status: 'active',
         joinedDate: '2024-01-15',
         achievements: 'Winner',
+        approvalStatus: 'approved',
     },
     {
         id: '2',
@@ -30,6 +34,7 @@ const initialSports: Sport[] = [
         status: 'active',
         joinedDate: '2024-02-01',
         achievements: 'Winner',
+        approvalStatus: 'approved',
     },
     {
         id: '3',
@@ -38,10 +43,15 @@ const initialSports: Sport[] = [
         status: 'inactive',
         joinedDate: '2023-06-10',
         achievements: 'Runner-up',
+        approvalStatus: 'approved',
     },
 ];
 
-export default function Sports() {
+interface SportsProps {
+    onPendingChange?: (hasPending: boolean) => void;
+}
+
+export default function Sports({ onPendingChange }: SportsProps) {
     const { toast } = useToast();
     const [sports, setSports] = useState<Sport[]>(initialSports);
     const [showDialog, setShowDialog] = useState(false);
@@ -54,12 +64,16 @@ export default function Sports() {
         status: 'active',
         joinedDate: '',
         achievements: '',
+        approvalStatus: 'pending',
     });
+
+    const hasPendingItems = sports.some(s => s.approvalStatus === 'pending');
 
     const handleEdit = (sport: Sport) => {
         setEditingId(sport.id);
-        setFormData(sport);
+        setFormData({ ...sport, approvalStatus: 'pending' });
         setShowDialog(true);
+        if (onPendingChange) onPendingChange(true);
     };
 
     const handleAdd = () => {
@@ -71,8 +85,10 @@ export default function Sports() {
             status: 'active',
             joinedDate: '',
             achievements: '',
+            approvalStatus: 'pending',
         });
         setShowDialog(true);
+        if (onPendingChange) onPendingChange(true);
     };
 
     const handleDelete = async (id: string) => {
@@ -100,16 +116,16 @@ export default function Sports() {
         await new Promise(resolve => setTimeout(resolve, 500));
 
         if (editingId) {
-            setSports(sports.map(s => s.id === editingId ? formData : s));
+            setSports(sports.map(s => s.id === editingId ? { ...formData, approvalStatus: 'pending' } : s));
             toast({
-                title: 'Success',
-                description: 'Sport updated successfully.',
+                title: 'Request Submitted',
+                description: 'Your changes have been submitted to faculty for approval.',
             });
         } else {
-            setSports([...sports, formData]);
+            setSports([...sports, { ...formData, approvalStatus: 'pending' }]);
             toast({
-                title: 'Success',
-                description: 'Sport added successfully.',
+                title: 'Request Submitted',
+                description: 'Your changes have been submitted to faculty for approval.',
             });
         }
 
@@ -127,7 +143,17 @@ export default function Sports() {
             status: 'active',
             joinedDate: '',
             achievements: '',
+            approvalStatus: 'pending',
         });
+    };
+
+    const getApprovalBadgeVariant = (status?: ApprovalStatus): 'success' | 'warning' | 'danger' | 'info' => {
+        switch (status) {
+            case 'approved': return 'success';
+            case 'rejected': return 'danger';
+            case 'pending': return 'warning';
+            default: return 'warning';
+        }
     };
 
     return (
@@ -178,6 +204,9 @@ export default function Sports() {
                             <div className="flex flex-col gap-2">
                                 <Badge variant={sport.status === 'active' ? 'success' : 'info'}>
                                     Status: {sport.status}
+                                </Badge>
+                                <Badge variant={getApprovalBadgeVariant(sport.approvalStatus)}>
+                                    {sport.approvalStatus || 'approved'}
                                 </Badge>
                             </div>
                         </div>
@@ -258,7 +287,7 @@ export default function Sports() {
                                     className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center gap-2"
                                 >
                                     <Save className="w-4 h-4" />
-                                    {isSaving ? 'Saving...' : 'Save'}
+                                    {isSaving ? 'Saving...' : 'Submit'}
                                 </button>
                             </div>
                         </div>
@@ -268,4 +297,3 @@ export default function Sports() {
         </div>
     );
 }
-

@@ -4,6 +4,8 @@ import Badge from '@/pages/student/components/common/Badge';
 import { Plus, ExternalLink, Github, Edit2, Trash2, Image } from 'lucide-react';
 import { useToast } from '@/pages/student/hooks/use-toast';
 
+export type ApprovalStatus = 'pending' | 'approved' | 'rejected';
+
 interface Project {
   id: string;
   title: string;
@@ -14,6 +16,7 @@ interface Project {
   image?: string;
   status: 'completed' | 'in-progress' | 'planned';
   createdAt: string;
+  approvalStatus?: ApprovalStatus;
 }
 
 const initialProjects: Project[] = [
@@ -26,6 +29,7 @@ const initialProjects: Project[] = [
     demoUrl: 'https://demo.example.com',
     status: 'completed',
     createdAt: '2024-01-15',
+    approvalStatus: 'approved',
   },
   {
     id: '2',
@@ -35,6 +39,7 @@ const initialProjects: Project[] = [
     githubUrl: 'https://github.com/example/weather',
     status: 'completed',
     createdAt: '2024-02-20',
+    approvalStatus: 'approved',
   },
   {
     id: '3',
@@ -43,10 +48,15 @@ const initialProjects: Project[] = [
     technologies: ['Python', 'TensorFlow', 'Flask'],
     status: 'in-progress',
     createdAt: '2024-03-10',
+    approvalStatus: 'approved',
   },
 ];
 
-export default function Projects() {
+interface ProjectsProps {
+  onPendingChange?: (hasPending: boolean) => void;
+}
+
+export default function Projects({ onPendingChange }: ProjectsProps) {
   const { toast } = useToast();
   const [projects, setProjects] = useState<Project[]>(initialProjects);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -81,16 +91,18 @@ export default function Projects() {
       demoUrl: formData.demoUrl || undefined,
       status: formData.status,
       createdAt: editingProject?.createdAt || new Date().toISOString().split('T')[0],
+      approvalStatus: 'pending',
     };
 
     if (editingProject) {
-      setProjects(projects.map(p => p.id === editingProject.id ? newProject : p));
-      toast({ title: 'Project updated successfully' });
+      setProjects(projects.map(p => p.id === editingProject.id ? { ...newProject, approvalStatus: 'pending' } : p));
+      toast({ title: 'Request Submitted', description: 'Your changes have been submitted to faculty for approval.' });
     } else {
       setProjects([newProject, ...projects]);
-      toast({ title: 'Project added successfully' });
+      toast({ title: 'Request Submitted', description: 'Your changes have been submitted to faculty for approval.' });
     }
 
+    if (onPendingChange) onPendingChange(true);
     closeModal();
   };
 
@@ -105,6 +117,7 @@ export default function Projects() {
       status: project.status,
     });
     setIsModalOpen(true);
+    if (onPendingChange) onPendingChange(true);
   };
 
   const handleDelete = (id: string) => {
@@ -130,6 +143,15 @@ export default function Projects() {
       case 'completed': return 'success';
       case 'in-progress': return 'warning';
       default: return 'info';
+    }
+  };
+
+  const getApprovalBadgeVariant = (status?: ApprovalStatus): 'success' | 'warning' | 'danger' | 'info' => {
+    switch (status) {
+      case 'approved': return 'success';
+      case 'rejected': return 'danger';
+      case 'pending': return 'warning';
+      default: return 'warning';
     }
   };
 
@@ -186,29 +208,34 @@ export default function Projects() {
                 ))}
               </div>
 
-              <div className="flex items-center gap-3 pt-3 border-t border-border">
-                {project.githubUrl && (
-                  <a
-                    href={project.githubUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    <Github className="w-4 h-4" />
-                    GitHub
-                  </a>
-                )}
-                {project.demoUrl && (
-                  <a
-                    href={project.demoUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    <ExternalLink className="w-4 h-4" />
-                    Demo
-                  </a>
-                )}
+              <div className="flex items-center justify-between pt-3 border-t border-border">
+                <div className="flex items-center gap-3">
+                  {project.githubUrl && (
+                    <a
+                      href={project.githubUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <Github className="w-4 h-4" />
+                      GitHub
+                    </a>
+                  )}
+                  {project.demoUrl && (
+                    <a
+                      href={project.demoUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                      Demo
+                    </a>
+                  )}
+                </div>
+                <Badge variant={getApprovalBadgeVariant(project.approvalStatus)}>
+                  {project.approvalStatus || 'approved'}
+                </Badge>
               </div>
             </div>
           </div>
@@ -296,7 +323,7 @@ export default function Projects() {
               Cancel
             </button>
             <button type="submit" className="btn-primary">
-              {editingProject ? 'Update Project' : 'Add Project'}
+              {editingProject ? 'Submit Changes' : 'Add Project'}
             </button>
           </div>
         </form>
@@ -304,5 +331,3 @@ export default function Projects() {
     </div>
   );
 }
-
-
