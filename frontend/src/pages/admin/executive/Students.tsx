@@ -1,16 +1,32 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AdminLayout } from '@/pages/admin/components/layout/AdminLayout';
-import { DataTable } from '@/pages/admin/components/dashboard/DataTable';
-import { ProfileModal } from '@/pages/admin/components/modals/ProfileModal';
-import { mockStudents } from '@/data/mockData';
+import { DataTable } from '@/pages/admin/executive/components/dashboard/DataTable';
+import { mockStudents as initialStudents, mockDepartments } from '@/data/mockData';
 import { Student } from '@/types/auth';
-import { Badge } from '@/pages/admin/components/ui/badge';
+import { Badge } from '@/pages/admin/executive/components/ui/badge';
+import { Input } from '@/pages/admin/executive/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/pages/admin/executive/components/ui/select';
 
 export default function ExecutiveStudents() {
-  const [profileModal, setProfileModal] = useState<{ open: boolean; data: Student | null }>({
-    open: false,
-    data: null,
-  });
+  const navigate = useNavigate();
+  const [students] = useState<Student[]>(initialStudents);
+  const [departmentFilter, setDepartmentFilter] = useState<string>('all');
+  const [yearFilter, setYearFilter] = useState<string>('');
+
+  const filteredStudents = useMemo(() => {
+    return students.filter(s => {
+      const matchesDept = departmentFilter === 'all' || s.department === departmentFilter;
+      const matchesYear = !yearFilter || (s.enrollmentYear && s.enrollmentYear.toString().includes(yearFilter));
+      return matchesDept && matchesYear;
+    });
+  }, [students, departmentFilter, yearFilter]);
 
   const columns = [
     { key: 'name', label: 'Name' },
@@ -32,7 +48,7 @@ export default function ExecutiveStudents() {
   ];
 
   const handleView = (student: Student) => {
-    setProfileModal({ open: true, data: student });
+    navigate(`/admin/executive/students/${student.id}`);
   };
 
   return (
@@ -40,11 +56,36 @@ export default function ExecutiveStudents() {
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Student Directory</h1>
-          <p className="text-muted-foreground">View all student records (Read-only)</p>
+          <p className="text-muted-foreground">View and overview all institutional student records</p>
+        </div>
+
+        {/* Filters */}
+        <div className="flex flex-col sm:flex-row gap-4 p-4 bg-card rounded-lg border border-border shadow-sm">
+          <div className="flex-1">
+            <Input
+              placeholder="Filter by Year (e.g. 2023)..."
+              value={yearFilter}
+              onChange={(e) => setYearFilter(e.target.value)}
+              type="number"
+            />
+          </div>
+          <div className="w-full sm:w-[200px]">
+            <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="All Departments" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Departments</SelectItem>
+                {mockDepartments.map(dept => (
+                  <SelectItem key={dept.id} value={dept.name}>{dept.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         <DataTable
-          data={mockStudents}
+          data={filteredStudents}
           columns={columns}
           title="All Students"
           searchPlaceholder="Search students..."
@@ -52,13 +93,6 @@ export default function ExecutiveStudents() {
           canAdd={false}
           canEdit={false}
           canDelete={false}
-        />
-
-        <ProfileModal
-          open={profileModal.open}
-          onClose={() => setProfileModal({ open: false, data: null })}
-          data={profileModal.data}
-          type="student"
         />
       </div>
     </AdminLayout>
