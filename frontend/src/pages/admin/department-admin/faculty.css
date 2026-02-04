@@ -1,0 +1,163 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  .faculty-portal {
+    --background: 210 20% 98%;
+    --foreground: 0 28% 25%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 28% 25%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 28% 25%;
+
+    --primary: 0 85% 26%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 180 98% 28%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 210 15% 94%;
+    --muted-foreground: 0 10% 45%;
+
+    --accent: 180 98% 28%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 142 72% 40%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+
+    --border: 210 20% 90%;
+    --input: 210 20% 90%;
+    --ring: 0 85% 26%;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 0 85% 26%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 0 0% 100%;
+    --sidebar-primary-foreground: 0 85% 26%;
+    --sidebar-accent: 0 60% 20%;
+    --sidebar-accent-foreground: 0 0% 100%;
+  }
+
+  .faculty-portal {
+    background: linear-gradient(135deg, #790c0c 0%, #01898d 50%, #790c0c 100%);
+    background-attachment: fixed;
+    --sidebar-border: 0 60% 22%;
+    --sidebar-ring: 180 98% 28%;
+    --sidebar-muted: 0 40% 35%;
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(0, 85%, 26%) 0%, hsl(0, 70%, 35%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(180, 98%, 28%) 0%, hsl(180, 80%, 35%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(0, 0%, 100%) 0%, hsl(210, 20%, 98%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(0, 85%, 26%) 0%, hsl(0, 70%, 20%) 50%, hsl(180, 98%, 28%) 100%);
+
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 hsl(0, 0%, 0%, 0.05);
+    --shadow-md: 0 4px 6px -1px hsl(0, 0%, 0%, 0.1), 0 2px 4px -2px hsl(0, 0%, 0%, 0.1);
+    --shadow-lg: 0 10px 15px -3px hsl(0, 0%, 0%, 0.1), 0 4px 6px -4px hsl(0, 0%, 0%, 0.1);
+    --shadow-card: 0 4px 20px -4px hsl(0, 85%, 26%, 0.15);
+  }
+
+  .dark {
+    --background: 0 20% 8%;
+    --foreground: 210 20% 98%;
+
+    --card: 0 20% 12%;
+    --card-foreground: 210 20% 98%;
+
+    --popover: 0 20% 12%;
+    --popover-foreground: 210 20% 98%;
+
+    --primary: 0 75% 45%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 180 80% 40%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 0 15% 18%;
+    --muted-foreground: 210 10% 65%;
+
+    --accent: 180 80% 40%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 15% 20%;
+    --input: 0 15% 20%;
+    --ring: 0 75% 45%;
+
+    --sidebar-background: 0 30% 12%;
+    --sidebar-foreground: 210 20% 98%;
+    --sidebar-primary: 210 20% 98%;
+    --sidebar-primary-foreground: 0 30% 12%;
+    --sidebar-accent: 0 40% 18%;
+    --sidebar-accent-foreground: 210 20% 98%;
+    --sidebar-border: 0 20% 18%;
+    --sidebar-ring: 180 80% 40%;
+    --sidebar-muted: 0 15% 40%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Inter', sans-serif;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: 'Playfair Display', serif;
+  }
+}
+
+@layer components {
+  .widget-card {
+    @apply bg-card rounded-xl p-6 shadow-md border border-border/50 transition-all duration-300 hover:shadow-lg;
+  }
+
+  .stat-value {
+    @apply text-3xl font-bold text-primary;
+  }
+
+  .stat-label {
+    @apply text-sm text-muted-foreground font-medium uppercase tracking-wide;
+  }
+
+  .page-header {
+    @apply text-2xl font-bold text-foreground mb-6;
+  }
+
+  .section-title {
+    @apply text-lg font-semibold text-foreground mb-4;
+  }
+}
+
+@layer utilities {
+  .glass-effect {
+    @apply backdrop-blur-md bg-white/80;
+  }
+
+  .gradient-text {
+    @apply bg-clip-text text-transparent;
+    background-image: var(--gradient-hero);
+  }
+}
