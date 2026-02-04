@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { AdminLayout } from '@/pages/admin/components/layout/AdminLayout';
-import { DataTable } from '@/pages/admin/components/dashboard/DataTable';
-import { UserFormModal } from '@/pages/admin/components/modals/UserFormModal';
-import { ProfileModal } from '@/pages/admin/components/modals/ProfileModal';
+import { AdminLayout } from '@/pages/admin/academic/components/layout/AdminLayout';
+import { DataTable } from '@/pages/admin/academic/components/dashboard/DataTable';
+import { UserFormModal } from '@/pages/admin/academic/components/modals/UserFormModal';
+import { ProfileModal } from '@/pages/admin/academic/components/modals/ProfileModal';
 import { mockFaculty as initialFaculty } from '@/data/mockData';
 import { Faculty } from '@/types/auth';
-import { Badge } from '@/pages/admin/components/ui/badge';
+import { Badge } from '@/pages/admin/academic/components/ui/badge';
 import { toast } from 'sonner';
 
 // Academic Admin has semi-CRUD (can add and edit, but not delete)

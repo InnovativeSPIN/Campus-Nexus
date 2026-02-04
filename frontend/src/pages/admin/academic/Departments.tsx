@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { AdminLayout } from '@/pages/admin/components/layout/AdminLayout';
-import { DataTable } from '@/pages/admin/components/dashboard/DataTable';
-import { DepartmentFormModal } from '@/pages/admin/components/modals/DepartmentFormModal';
+import { AdminLayout } from '@/pages/admin/academic/components/layout/AdminLayout';
+import { DataTable } from '@/pages/admin/academic/components/dashboard/DataTable';
+import { DepartmentFormModal } from '@/pages/admin/academic/components/modals/DepartmentFormModal';
 import { mockDepartments as initialDepartments } from '@/data/mockData';
 import { Department } from '@/types/auth';
 import { toast } from 'sonner';

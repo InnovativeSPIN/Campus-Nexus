@@ -1,9 +1,9 @@
-import { AdminLayout } from '@/pages/admin/components/layout/AdminLayout';
-import { StatsCard } from '@/pages/admin/components/dashboard/StatsCard';
+import { AdminLayout } from '@/pages/admin/academic/components/layout/AdminLayout';
+import { StatsCard } from '@/pages/admin/academic/components/dashboard/StatsCard';
 import { dashboardStats, mockStudents, mockFaculty } from '@/data/mockData';
 import { Users, GraduationCap, Building2, BookOpen, TrendingUp, Clock } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/pages/admin/components/ui/card';
-import { Badge } from '@/pages/admin/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/pages/admin/academic/components/ui/card';
+import { Badge } from '@/pages/admin/academic/components/ui/badge';
 
 export default function AcademicAdminDashboard() {
   const recentStudents = mockStudents.slice(0, 4);
