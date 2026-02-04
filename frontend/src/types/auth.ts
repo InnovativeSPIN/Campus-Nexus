@@ -20,12 +20,14 @@ export interface Student {
 	phone: string;
 	department: string;
 	enrollmentYear: number;
+	semester?: number;
 	status: 'active' | 'inactive' | 'graduated';
 	avatar?: string;
 }
 
 export interface Faculty {
 	id: string;
+	employeeId: string;
 	name: string;
 	email: string;
 	phone: string;
@@ -36,6 +38,15 @@ export interface Faculty {
 	avatar?: string;
 }
 
+export interface Admin {
+	id: string;
+	name: string;
+	email: string;
+	role: 'executive' | 'academic' | 'faculty_admin'; // specific admin roles
+	department?: string;
+	status: 'active' | 'inactive';
+}
+
 export interface Department {
 	id: string;
 	name: string;
@@ -43,4 +54,17 @@ export interface Department {
 	headOfDepartment: string;
 	facultyCount: number;
 	studentCount: number;
+}
+
+export interface TimeTableEntry {
+	id: string;
+	facultyId: string;
+	facultyName: string;
+	subject: string;
+	classOrLab: string;
+	day: string;
+	period: number;
+	time: string;
+	academicYear: string;
+	semester: 'odd' | 'even';
 }

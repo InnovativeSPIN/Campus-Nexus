@@ -1,12 +1,20 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AdminLayout } from '@/pages/admin/components/layout/AdminLayout';
 import { DataTable } from '@/pages/admin/components/dashboard/DataTable';
 import { UserFormModal } from '@/pages/admin/components/modals/UserFormModal';
-import { ProfileModal } from '@/pages/admin/components/modals/ProfileModal';
-import { mockStudents as initialStudents } from '@/data/mockData';
+import { mockStudents as initialStudents, mockDepartments } from '@/data/mockData';
 import { Student } from '@/types/auth';
 import { Badge } from '@/pages/admin/components/ui/badge';
 import { toast } from 'sonner';
+import { Input } from '@/pages/admin/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/pages/admin/components/ui/select';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,19 +27,27 @@ import {
 } from '@/pages/admin/components/ui/alert-dialog';
 
 export default function SuperAdminStudents() {
+  const navigate = useNavigate();
   const [students, setStudents] = useState<Student[]>(initialStudents);
+  const [departmentFilter, setDepartmentFilter] = useState<string>('all');
+  const [yearFilter, setYearFilter] = useState<string>('');
+
   const [formModal, setFormModal] = useState<{ open: boolean; mode: 'add' | 'edit'; data?: Student }>({
     open: false,
     mode: 'add',
-  });
-  const [profileModal, setProfileModal] = useState<{ open: boolean; data: Student | null }>({
-    open: false,
-    data: null,
   });
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; data: Student | null }>({
     open: false,
     data: null,
   });
+
+  const filteredStudents = useMemo(() => {
+    return students.filter(s => {
+      const matchesDept = departmentFilter === 'all' || s.department === departmentFilter;
+      const matchesYear = !yearFilter || (s.enrollmentYear && s.enrollmentYear.toString().includes(yearFilter));
+      return matchesDept && matchesYear;
+    });
+  }, [students, departmentFilter, yearFilter]);
 
   const columns = [
     { key: 'name', label: 'Name' },
@@ -57,7 +73,7 @@ export default function SuperAdminStudents() {
   };
 
   const handleView = (student: Student) => {
-    setProfileModal({ open: true, data: student });
+    navigate(`/admin/superadmin/students/${student.id}`);
   };
 
   const handleEdit = (student: Student) => {
@@ -76,7 +92,7 @@ export default function SuperAdminStudents() {
     setDeleteDialog({ open: false, data: null });
   };
 
-  const handleSave = (data: Partial<Student>) => {
+  const handleSave = (data: any) => {
     if (formModal.mode === 'add') {
       const newStudent: Student = {
         id: String(Date.now()),
@@ -105,8 +121,33 @@ export default function SuperAdminStudents() {
           <p className="text-muted-foreground">Manage all student records</p>
         </div>
 
+        {/* Filters */}
+        <div className="flex flex-col sm:flex-row gap-4 p-4 bg-card rounded-lg border border-border shadow-sm">
+          <div className="flex-1">
+            <Input
+              placeholder="Filter by Year (e.g. 2023)..."
+              value={yearFilter}
+              onChange={(e) => setYearFilter(e.target.value)}
+              type="number"
+            />
+          </div>
+          <div className="w-full sm:w-[200px]">
+            <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="All Departments" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Departments</SelectItem>
+                {mockDepartments.map(dept => (
+                  <SelectItem key={dept.id} value={dept.name}>{dept.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
         <DataTable
-          data={students}
+          data={filteredStudents}
           columns={columns}
           title="All Students"
           searchPlaceholder="Search students..."
@@ -125,12 +166,7 @@ export default function SuperAdminStudents() {
           mode={formModal.mode}
         />
 
-        <ProfileModal
-          open={profileModal.open}
-          onClose={() => setProfileModal({ open: false, data: null })}
-          data={profileModal.data}
-          type="student"
-        />
+
 
         <AlertDialog open={deleteDialog.open} onOpenChange={(open) => setDeleteDialog({ open, data: null })}>
           <AlertDialogContent className="bg-card">

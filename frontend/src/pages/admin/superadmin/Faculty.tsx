@@ -1,12 +1,20 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AdminLayout } from '@/pages/admin/components/layout/AdminLayout';
 import { DataTable } from '@/pages/admin/components/dashboard/DataTable';
 import { UserFormModal } from '@/pages/admin/components/modals/UserFormModal';
-import { ProfileModal } from '@/pages/admin/components/modals/ProfileModal';
-import { mockFaculty as initialFaculty } from '@/data/mockData';
+import { mockFaculty as initialFaculty, mockDepartments } from '@/data/mockData';
 import { Faculty } from '@/types/auth';
 import { Badge } from '@/pages/admin/components/ui/badge';
 import { toast } from 'sonner';
+import { Input } from '@/pages/admin/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/pages/admin/components/ui/select';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,21 +27,41 @@ import {
 } from '@/pages/admin/components/ui/alert-dialog';
 
 export default function SuperAdminFaculty() {
+  const navigate = useNavigate();
   const [faculty, setFaculty] = useState<Faculty[]>(initialFaculty);
+  const [departmentFilter, setDepartmentFilter] = useState<string>('all');
+  const [employeeIdFilter, setEmployeeIdFilter] = useState('');
+
   const [formModal, setFormModal] = useState<{ open: boolean; mode: 'add' | 'edit'; data?: Faculty }>({
     open: false,
     mode: 'add',
-  });
-  const [profileModal, setProfileModal] = useState<{ open: boolean; data: Faculty | null }>({
-    open: false,
-    data: null,
   });
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; data: Faculty | null }>({
     open: false,
     data: null,
   });
 
+  const filteredFaculty = useMemo(() => {
+    return faculty.filter(f => {
+      const matchesDept = departmentFilter === 'all' || f.department === departmentFilter;
+      const matchesEmpId = !employeeIdFilter || (f.employeeId && f.employeeId.toLowerCase().includes(employeeIdFilter.toLowerCase()));
+      return matchesDept && matchesEmpId;
+    });
+  }, [faculty, departmentFilter, employeeIdFilter]);
+
   const columns = [
+    { key: 'employeeId', label: 'ID' },
+    {
+      key: 'avatar',
+      label: 'Photo',
+      render: (item: Faculty) => (
+        <img
+          src={item.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(item.name)}&background=random`}
+          alt={item.name}
+          className="w-8 h-8 rounded-full"
+        />
+      )
+    },
     { key: 'name', label: 'Name' },
     { key: 'email', label: 'Email' },
     { key: 'department', label: 'Department' },
@@ -57,7 +85,7 @@ export default function SuperAdminFaculty() {
   };
 
   const handleView = (item: Faculty) => {
-    setProfileModal({ open: true, data: item });
+    navigate(`/admin/superadmin/faculty/${item.id}`);
   };
 
   const handleEdit = (item: Faculty) => {
@@ -76,10 +104,11 @@ export default function SuperAdminFaculty() {
     setDeleteDialog({ open: false, data: null });
   };
 
-  const handleSave = (data: Partial<Faculty>) => {
+  const handleSave = (data: any) => {
     if (formModal.mode === 'add') {
       const newFaculty: Faculty = {
         id: String(Date.now()),
+        employeeId: data.employeeId || `FAC${Date.now()}`,
         name: data.name || '',
         email: data.email || '',
         phone: data.phone || '',
@@ -106,11 +135,35 @@ export default function SuperAdminFaculty() {
           <p className="text-muted-foreground">Manage all faculty records</p>
         </div>
 
+        {/* Filters */}
+        <div className="flex flex-col sm:flex-row gap-4 p-4 bg-card rounded-lg border border-border shadow-sm">
+          <div className="flex-1">
+            <Input
+              placeholder="Filter by Employee Code..."
+              value={employeeIdFilter}
+              onChange={(e) => setEmployeeIdFilter(e.target.value)}
+            />
+          </div>
+          <div className="w-full sm:w-[200px]">
+            <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="All Departments" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Departments</SelectItem>
+                {mockDepartments.map(dept => (
+                  <SelectItem key={dept.id} value={dept.name}>{dept.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
         <DataTable
-          data={faculty}
+          data={filteredFaculty}
           columns={columns}
           title="All Faculty"
-          searchPlaceholder="Search faculty..."
+          searchPlaceholder="Search by Name..."
           onAdd={handleAdd}
           onView={handleView}
           onEdit={handleEdit}
@@ -126,12 +179,7 @@ export default function SuperAdminFaculty() {
           mode={formModal.mode}
         />
 
-        <ProfileModal
-          open={profileModal.open}
-          onClose={() => setProfileModal({ open: false, data: null })}
-          data={profileModal.data}
-          type="faculty"
-        />
+
 
         <AlertDialog open={deleteDialog.open} onOpenChange={(open) => setDeleteDialog({ open, data: null })}>
           <AlertDialogContent className="bg-card">

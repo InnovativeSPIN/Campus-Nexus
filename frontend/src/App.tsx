@@ -10,6 +10,10 @@ import SuperAdminFaculty from './pages/admin/superadmin/Faculty';
 import SuperAdminDepartments from './pages/admin/superadmin/Departments';
 import SuperAdminReports from './pages/admin/superadmin/Reports';
 import SuperAdminBackup from './pages/admin/superadmin/Backup';
+import SuperAdminAdmins from './pages/admin/superadmin/Admins';
+import SuperAdminTimeTable from './pages/admin/superadmin/TimeTable';
+import SuperAdminFacultyProfile from './pages/admin/superadmin/FacultyProfile';
+import SuperAdminStudentProfile from './pages/admin/superadmin/StudentProfile';
 
 import ExecutiveAdminDashboard from './pages/admin/executive/Dashboard';
 import ExecutiveStudents from './pages/admin/executive/Students';
@@ -55,8 +59,12 @@ const App = () => {
 
               {/* Super Admin Routes */}
               <Route path="/admin/superadmin" element={<SuperAdminDashboard />} />
+              <Route path="/admin/superadmin/admins" element={<SuperAdminAdmins />} />
+              <Route path="/admin/superadmin/timetable" element={<SuperAdminTimeTable />} />
               <Route path="/admin/superadmin/students" element={<SuperAdminStudents />} />
+              <Route path="/admin/superadmin/students/:id" element={<SuperAdminStudentProfile />} />
               <Route path="/admin/superadmin/faculty" element={<SuperAdminFaculty />} />
+              <Route path="/admin/superadmin/faculty/:id" element={<SuperAdminFacultyProfile />} />
               <Route path="/admin/superadmin/departments" element={<SuperAdminDepartments />} />
               <Route path="/admin/superadmin/reports" element={<SuperAdminReports />} />
               <Route path="/admin/superadmin/backup" element={<SuperAdminBackup />} />

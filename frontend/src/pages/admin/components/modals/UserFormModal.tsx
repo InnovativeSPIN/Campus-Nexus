@@ -16,16 +16,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/pages/admin/components/ui/select';
-import { Student, Faculty } from '@/types/auth';
+import { Student, Faculty, Admin } from '@/types/auth';
 import { mockDepartments } from '@/data/mockData';
 
-type FormData = Partial<Student | Faculty>;
+type FormData = Partial<Student | Faculty | Admin>;
 
 interface UserFormModalProps {
   open: boolean;
   onClose: () => void;
   onSave: (data: FormData) => void;
-  type: 'student' | 'faculty';
+  type: 'student' | 'faculty' | 'admin';
   initialData?: FormData;
   mode: 'add' | 'edit';
 }
@@ -51,12 +51,18 @@ export function UserFormModal({ open, onClose, onSave, type, initialData, mode }
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
+  const getTitle = () => {
+    if (type === 'student') return 'Student';
+    if (type === 'faculty') return 'Faculty';
+    return 'Admin';
+  }
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[500px] bg-card">
         <DialogHeader>
           <DialogTitle className="text-foreground">
-            {mode === 'add' ? 'Add' : 'Edit'} {type === 'student' ? 'Student' : 'Faculty'}
+            {mode === 'add' ? 'Add' : 'Edit'} {getTitle()}
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -65,7 +71,7 @@ export function UserFormModal({ open, onClose, onSave, type, initialData, mode }
               <Label htmlFor="name">Full Name</Label>
               <Input
                 id="name"
-                value={(formData as Student | Faculty).name || ''}
+                value={(formData as any).name || ''}
                 onChange={(e) => updateField('name', e.target.value)}
                 required
               />
@@ -75,38 +81,56 @@ export function UserFormModal({ open, onClose, onSave, type, initialData, mode }
               <Input
                 id="email"
                 type="email"
-                value={(formData as Student | Faculty).email || ''}
+                value={(formData as any).email || ''}
                 onChange={(e) => updateField('email', e.target.value)}
                 required
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="phone">Phone</Label>
-              <Input
-                id="phone"
-                value={(formData as Student | Faculty).phone || ''}
-                onChange={(e) => updateField('phone', e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="department">Department</Label>
-              <Select
-                value={(formData as Student | Faculty).department || ''}
-                onValueChange={(value) => updateField('department', value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select department" />
-                </SelectTrigger>
-                <SelectContent className="bg-popover">
-                  {mockDepartments.map((dept) => (
-                    <SelectItem key={dept.id} value={dept.name}>
-                      {dept.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {type !== 'admin' && (
+              <div className="space-y-2">
+                <Label htmlFor="phone">Phone</Label>
+                <Input
+                  id="phone"
+                  value={(formData as Student | Faculty).phone || ''}
+                  onChange={(e) => updateField('phone', e.target.value)}
+                  required
+                />
+              </div>
+            )}
+
+            {type === 'faculty' && (
+              <div className="space-y-2">
+                <Label htmlFor="employeeId">Employee ID</Label>
+                <Input
+                  id="employeeId"
+                  value={(formData as Faculty).employeeId || ''}
+                  onChange={(e) => updateField('employeeId', e.target.value)}
+                  required
+                />
+              </div>
+            )}
+
+            {(type !== 'admin' || (type === 'admin' && (formData as Admin).role === 'academic')) && (
+              <div className="space-y-2">
+                <Label htmlFor="department">Department</Label>
+                <Select
+                  value={(formData as any).department || ''}
+                  onValueChange={(value) => updateField('department', value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select department" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover">
+                    {mockDepartments.map((dept) => (
+                      <SelectItem key={dept.id} value={dept.name}>
+                        {dept.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
             {type === 'student' && (
               <>
                 <div className="space-y-2">
@@ -152,6 +176,24 @@ export function UserFormModal({ open, onClose, onSave, type, initialData, mode }
                     <SelectItem value="Associate Professor">Associate Professor</SelectItem>
                     <SelectItem value="Assistant Professor">Assistant Professor</SelectItem>
                     <SelectItem value="Lecturer">Lecturer</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            {type === 'admin' && (
+              <div className="space-y-2">
+                <Label htmlFor="role">Admin Role</Label>
+                <Select
+                  value={(formData as Admin).role || ''}
+                  onValueChange={(value) => updateField('role', value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select role" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover">
+                    <SelectItem value="executive">Executive</SelectItem>
+                    <SelectItem value="academic">Academic Admin</SelectItem>
+                    <SelectItem value="faculty_admin">Faculty Admin</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

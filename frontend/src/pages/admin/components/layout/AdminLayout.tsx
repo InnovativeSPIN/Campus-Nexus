@@ -13,6 +13,8 @@ import {
   X,
   ChevronDown,
   User,
+  ShieldCheck,
+  Calendar,
 } from 'lucide-react';
 import { Button } from '@/pages/admin/components/ui/button';
 import { Avatar, AvatarFallback } from '@/pages/admin/components/ui/avatar';
@@ -37,6 +39,8 @@ interface AdminLayoutProps {
 const navItemsByRole: Record<string, NavItem[]> = {
   superadmin: [
     { label: 'Dashboard', path: '/admin/superadmin', icon: <LayoutDashboard className="h-5 w-5" /> },
+    { label: 'Admins', path: '/admin/superadmin/admins', icon: <ShieldCheck className="h-5 w-5" /> },
+    { label: 'Time Table', path: '/admin/superadmin/timetable', icon: <Calendar className="h-5 w-5" /> },
     { label: 'Students', path: '/admin/superadmin/students', icon: <GraduationCap className="h-5 w-5" /> },
     { label: 'Faculty', path: '/admin/superadmin/faculty', icon: <Users className="h-5 w-5" /> },
     { label: 'Departments', path: '/admin/superadmin/departments', icon: <Building2 className="h-5 w-5" /> },
@@ -102,7 +106,9 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         {/* Logo */}
         <div className="flex h-16 items-center justify-between px-4 border-b border-sidebar-border">
           {sidebarOpen && (
-            <span className="text-xl font-bold text-sidebar-foreground">EduAdmin</span>
+            <span className="text-xl font-bold text-sidebar-foreground">
+              {roleLabels[user.role]}
+            </span>
           )}
           <Button
             variant="ghost"
@@ -160,9 +166,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         <header className="sticky top-0 z-40 h-16 border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
           <div className="flex h-full items-center justify-between px-6">
             <div>
-              <h2 className="text-lg font-semibold text-foreground">
-                {roleLabels[user.role]} Panel
-              </h2>
+              {/* Branding moved to sidebar */}
             </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

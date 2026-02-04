@@ -80,7 +80,8 @@ const educationalQualifications = [
 const teachingExperience = [
   {
     designation: "Assistant Professor",
-    institution: "Nadar Saraswathi College of Engineering and Technology, Theni",
+    institutionName: "Nadar Saraswathi College of Engineering and Technology",
+    university: "Anna University",
     department: "Artificial Intelligence and Data Science",
     from: "01.09.2023",
     to: "Present",
@@ -89,7 +90,8 @@ const teachingExperience = [
   },
   {
     designation: "Assistant Professor",
-    institution: "AAA College of Engineering and Technology, Sivakasi",
+    institutionName: "AAA College of Engineering and Technology",
+    university: "Anna University",
     department: "Artificial Intelligence and Data Science",
     from: "15.08.2021",
     to: "31.05.2023",
@@ -98,7 +100,8 @@ const teachingExperience = [
   },
   {
     designation: "Assistant Professor",
-    institution: "Ultra College of Engineering and Technology, Madurai",
+    institutionName: "Ultra College of Engineering and Technology",
+    university: "Anna University",
     department: "Artificial Intelligence and Data Science",
     from: "21.09.2020",
     to: "20.07.2021",
@@ -232,7 +235,8 @@ export default function Profile() {
   const [addingTeachingExp, setAddingTeachingExp] = useState(false);
   const [newTeachingExp, setNewTeachingExp] = useState({
     designation: "",
-    institution: "",
+    institutionName: "",
+    university: "",
     department: "",
     from: "",
     to: "",
@@ -523,7 +527,8 @@ export default function Profile() {
     setAddingTeachingExp(true);
     setNewTeachingExp({
       designation: "",
-      institution: "",
+      institutionName: "",
+      university: "",
       department: "",
       from: "",
       to: "",
@@ -536,7 +541,8 @@ export default function Profile() {
     setAddingTeachingExp(false);
     setNewTeachingExp({
       designation: "",
-      institution: "",
+      institutionName: "",
+      university: "",
       department: "",
       from: "",
       to: "",
@@ -546,10 +552,10 @@ export default function Profile() {
   };
 
   const handleSaveNewTeachingExp = async () => {
-    if (!newTeachingExp.designation || !newTeachingExp.institution || !newTeachingExp.department) {
+    if (!newTeachingExp.designation || !newTeachingExp.institutionName || !newTeachingExp.university || !newTeachingExp.department) {
       toast({
         title: 'Validation Error',
-        description: 'Please fill in designation, institution, and department fields.',
+        description: 'Please fill in designation, institution name, university, and department fields.',
         variant: 'destructive'
       });
       return;
@@ -561,7 +567,8 @@ export default function Profile() {
       setAddingTeachingExp(false);
       setNewTeachingExp({
         designation: "",
-        institution: "",
+        institutionName: "",
+        university: "",
         department: "",
         from: "",
         to: "",
@@ -938,15 +945,15 @@ export default function Profile() {
           </div>
 
           <div className="mt-6 space-y-4">
-             {/* AICTE ID */}
-              <div className="flex items-center gap-3 text-sm">
+            {/* AICTE ID */}
+            <div className="flex items-center gap-3 text-sm">
               <Building className="w-4 h-4 text-primary flex-shrink-0" />
-              <span className="text-muted-foreground line-clamp-2">AICTE ID: { facultyData.aicteId}</span>
+              <span className="text-muted-foreground line-clamp-2">AICTE ID: {facultyData.aicteId}</span>
             </div>
-             {/* COE ID */}
-              <div className="flex items-center gap-3 text-sm">
+            {/* COE ID */}
+            <div className="flex items-center gap-3 text-sm">
               <Building className="w-4 h-4 text-primary flex-shrink-0" />
-              <span className="text-muted-foreground line-clamp-2">COE ID: { facultyData.coeId}</span>
+              <span className="text-muted-foreground line-clamp-2">COE ID: {facultyData.coeId}</span>
             </div>
             {/* College Name */}
             <div className="flex items-center gap-3 text-sm">
@@ -1668,12 +1675,23 @@ export default function Profile() {
                         />
                       </div>
                       <div className="flex flex-col gap-1">
-                        <label className="text-xs font-medium">Institution *</label>
+                        <label className="text-xs font-medium">Institution Name *</label>
+                        <input
+                          type="text"
+                          placeholder="e.g., Nadar Saraswathi College"
+                          value={newTeachingExp.institutionName}
+                          onChange={(e) => handleNewTeachingExpChange('institutionName', e.target.value)}
+                          className="input input-bordered text-sm"
+                          disabled={loading}
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-xs font-medium">University *</label>
                         <input
                           type="text"
                           placeholder="e.g., Anna University"
-                          value={newTeachingExp.institution}
-                          onChange={(e) => handleNewTeachingExpChange('institution', e.target.value)}
+                          value={newTeachingExp.university}
+                          onChange={(e) => handleNewTeachingExpChange('university', e.target.value)}
                           className="input input-bordered text-sm"
                           disabled={loading}
                         />
@@ -1788,8 +1806,18 @@ export default function Profile() {
                             <label className="text-sm font-medium w-28">Institution:</label>
                             <input
                               type="text"
-                              value={tempTeachingExp.institution}
-                              onChange={(e) => handleTeachingExpFieldChange('institution', e.target.value)}
+                              value={tempTeachingExp.institutionName}
+                              onChange={(e) => handleTeachingExpFieldChange('institutionName', e.target.value)}
+                              className="input input-bordered flex-1 text-sm"
+                              disabled={loading}
+                            />
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <label className="text-sm font-medium w-28">University:</label>
+                            <input
+                              type="text"
+                              value={tempTeachingExp.university}
+                              onChange={(e) => handleTeachingExpFieldChange('university', e.target.value)}
                               className="input input-bordered flex-1 text-sm"
                               disabled={loading}
                             />
@@ -1883,7 +1911,10 @@ export default function Profile() {
                                 <p className="font-semibold text-foreground">{exp.designation}</p>
                                 <span className="text-xs text-muted-foreground">{exp.department}</span>
                               </div>
-                              <p className="text-sm text-muted-foreground mt-1">{exp.institution}</p>
+                              <p className="text-sm text-foreground mt-1">
+                                <span className="font-medium">{exp.institutionName}</span>
+                                {exp.university && <span className="text-muted-foreground">, {exp.university}</span>}
+                              </p>
                               <div className="flex items-center gap-4 mt-3">
                                 <div className="flex items-center gap-2 text-xs">
                                   <Calendar className="w-3 h-3 text-muted-foreground" />
