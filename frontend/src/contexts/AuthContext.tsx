@@ -47,17 +47,25 @@ const mockUsers: Record<UserRole, User> = {
     year: 3,
     semester: 5,
   },
+  'department-admin': {
+    id: '6',
+    email: 'deptadmin@edu.com',
+    name: 'Department Admin',
+    role: 'department-admin',
+  },
 };
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<AuthContextType['user']>(null);
+  const [user, setUser] = useState<AuthContextType['user']>(() => {
+    const savedUser = localStorage.getItem('eduvertex_user');
+    return savedUser ? JSON.parse(savedUser) : null;
+  });
 
   const login = (email: string, password: string, role: UserRole): boolean => {
-    // Mock authentication - in production, this would validate against a backend
     if (password === '123') {
-      // Find the mock user for the given role and override email if needed
-      const user = { ...mockUsers[role], email };
-      setUser(user);
+      const userObj = { ...mockUsers[role], email };
+      setUser(userObj);
+      localStorage.setItem('eduvertex_user', JSON.stringify(userObj));
       return true;
     }
     return false;
@@ -65,6 +73,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = () => {
     setUser(null);
+    localStorage.removeItem('eduvertex_user');
   };
 
   return (

@@ -29,6 +29,47 @@ import {
   Plus,
 } from "lucide-react";
 
+// Types for Profile Data
+interface EducationDetail {
+  degree: string;
+  branch: string;
+  college: string;
+  university: string;
+  year: string;
+  percentage: string;
+  url: string;
+}
+
+interface MembershipDetail {
+  society: string;
+  id: string;
+  status: string;
+  url: string;
+}
+
+interface ExperienceDetail {
+  designation: string;
+  institutionName: string;
+  university: string;
+  department: string;
+  from: string;
+  to: string;
+  period: string;
+  current: boolean;
+  url: string;
+}
+
+interface IndustryDetail {
+  jobTitle: string;
+  company: string;
+  location: string;
+  from: string;
+  to: string;
+  period: string;
+  current: boolean;
+  url: string;
+}
+
 // Faculty data based on the Self-Appraisal Form
 const initialFacultyData = {
   // Basic Information
@@ -57,6 +98,7 @@ const educationalQualifications = [
     university: "Anna University",
     year: "Pursuing",
     percentage: "-",
+    url: "https://example.com/phd-proof.pdf"
   },
   {
     degree: "M.E",
@@ -65,6 +107,7 @@ const educationalQualifications = [
     university: "Anna University",
     year: "2019",
     percentage: "81%",
+    url: "https://example.com/me-certificate.pdf"
   },
   {
     degree: "B.E",
@@ -73,6 +116,7 @@ const educationalQualifications = [
     university: "Anna University",
     year: "2017",
     percentage: "66%",
+    url: "https://example.com/be-certificate.pdf"
   },
 ];
 
@@ -87,6 +131,7 @@ const teachingExperience = [
     to: "Present",
     period: "1 Yr 1 M",
     current: true,
+    url: "https://example.com/exp-certificate-1.pdf"
   },
   {
     designation: "Assistant Professor",
@@ -97,6 +142,7 @@ const teachingExperience = [
     to: "31.05.2023",
     period: "1 Yr 10 M",
     current: false,
+    url: "https://example.com/exp-certificate-2.pdf"
   },
   {
     designation: "Assistant Professor",
@@ -107,6 +153,7 @@ const teachingExperience = [
     to: "20.07.2021",
     period: "10 M",
     current: false,
+    url: "https://example.com/exp-certificate-3.pdf"
   },
 ];
 
@@ -119,19 +166,20 @@ const industryExperience = [
     to: "30.08.2020",
     period: "1 Yr 2 M",
     current: false,
+    url: "https://example.com/industry-proof.pdf"
   },
 ];
 
 // Subjects Handled
 const subjectsHandled = [
-  { program: "B.E - CSE", semester: "3", subject: "CS3301 - Data Structures", result: "82%" },
-  { program: "B.Tech - AI&DS", semester: "4", subject: "CS3591 - Computer Networks", result: "100%" },
-  { program: "B.Tech - IT", semester: "4", subject: "IT3401 - Web Technology", result: "92%" },
+  { program: "B.E - CSE", semester: "3", subject: "CS3301 - Data Structures", result: "82%", url: "https://example.com/subject-proof-1.pdf" },
+  { program: "B.Tech - AI&DS", semester: "4", subject: "CS3591 - Computer Networks", result: "100%", url: "https://example.com/subject-proof-2.pdf" },
+  { program: "B.Tech - IT", semester: "4", subject: "IT3401 - Web Technology", result: "92%", url: "https://example.com/subject-proof-3.pdf" },
 ];
 
 // Professional Memberships
 const memberships = [
-  { society: "COE Member", id: "304180", status: "Active" },
+  { society: "COE Member", id: "304180", status: "Active", url: "https://example.com/membership-card.pdf" },
 ];
 
 // Leave Details
@@ -146,35 +194,35 @@ const leaveDetails = {
 // Events Data
 const initialEventsData = {
   "Resource Person": [
-    { name: "Expert Talk on GenAI", date: "15.12.2023", organizer: "IIT Madras", url: "https://example.com" },
-    { name: "Data Science Workshop", date: "10.05.2023", organizer: "Sathyabama University", url: "" },
+    { name: "Expert Talk on GenAI", date: "15.12.2023", organizer: "IIT Madras", url: "https://example.com/certificate.pdf" },
+    { name: "Data Science Workshop", date: "10.05.2023", organizer: "Sathyabama University", url: "https://example.com/workshop.pdf" },
   ],
   "FDP": [
-    { name: "Advanced Deep Learning", date: "10.11.2023", organizer: "NIT Trichy", url: "" },
-    { name: "Cloud Computing Essentials", date: "01.03.2024", organizer: "Anna University", url: "" },
+    { name: "Advanced Deep Learning", date: "10.11.2023", organizer: "NIT Trichy", url: "https://example.com/fdp-1.pdf" },
+    { name: "Cloud Computing Essentials", date: "01.03.2024", organizer: "Anna University", url: "https://example.com/fdp-2.pdf" },
   ],
   "Seminar": [
-    { name: "Future of Robotics", date: "05.10.2023", organizer: "Anna University", url: "" },
+    { name: "Future of Robotics", date: "05.10.2023", organizer: "Anna University", url: "https://example.com/seminar.pdf" },
   ],
   "Workshop": [
-    { name: "React Development Workshop", date: "20.08.2023", organizer: "Tech Academy India", url: "" },
-    { name: "Python for AI", date: "15.02.2024", organizer: "TCS iON", url: "" },
+    { name: "React Development Workshop", date: "20.08.2023", organizer: "Tech Academy India", url: "https://example.com/workshop-2.pdf" },
+    { name: "Python for AI", date: "15.02.2024", organizer: "TCS iON", url: "https://example.com/workshop-3.pdf" },
   ]
 };
 
 // Research Data
 const initialResearchData = {
   "Conference": [
-    { title: "IEEE International Conference on AI", date: "2024", organizer: "IEEE", url: "https://ieee.org", type: "International" },
+    { title: "IEEE International Conference on AI", date: "2024", organizer: "IEEE", url: "https://ieee.org/paper.pdf", type: "International" },
   ],
   "Journal": [
-    { title: "AI in Education 2024", date: "2024", organizer: "International Journal of CS", url: "" },
+    { title: "AI in Education 2024", date: "2024", organizer: "International Journal of CS", url: "https://example.com/journal.pdf" },
   ],
   "Patent": [
-    { title: "Smart Irrigation System using IoT", date: "2023", organizer: "Indian Patent Office", url: "" },
+    { title: "Smart Irrigation System using IoT", date: "2023", organizer: "Indian Patent Office", url: "https://example.com/patent.pdf" },
   ],
   "Book Chapter": [
-    { title: "Machine Learning in Healthcare", date: "2023", organizer: "Springer", url: "" },
+    { title: "Machine Learning in Healthcare", date: "2023", organizer: "Springer", url: "https://example.com/chapter.pdf" },
   ]
 };
 
@@ -205,35 +253,37 @@ export default function Profile() {
   const [loading, setLoading] = useState(false);
 
   // Education and membership states
-  const [educationData, setEducationData] = useState(educationalQualifications);
+  const [educationData, setEducationData] = useState<EducationDetail[]>(educationalQualifications);
   const [editingEducation, setEditingEducation] = useState<number | null>(null);
-  const [tempEducation, setTempEducation] = useState<any>(null);
+  const [tempEducation, setTempEducation] = useState<EducationDetail | null>(null);
   const [addingEducation, setAddingEducation] = useState(false);
-  const [newEducation, setNewEducation] = useState({
+  const [newEducation, setNewEducation] = useState<EducationDetail>({
     degree: "",
     branch: "",
     college: "",
     university: "",
     year: "",
     percentage: "",
+    url: "",
   });
 
-  const [membershipData, setMembershipData] = useState(memberships);
+  const [membershipData, setMembershipData] = useState<MembershipDetail[]>(memberships);
   const [editingMembership, setEditingMembership] = useState<number | null>(null);
-  const [tempMembership, setTempMembership] = useState<any>(null);
+  const [tempMembership, setTempMembership] = useState<MembershipDetail | null>(null);
   const [addingMembership, setAddingMembership] = useState(false);
-  const [newMembership, setNewMembership] = useState({
+  const [newMembership, setNewMembership] = useState<MembershipDetail>({
     society: "",
     id: "",
     status: "Active",
+    url: "",
   });
 
   // Experience states
-  const [teachingExpData, setTeachingExpData] = useState(teachingExperience);
+  const [teachingExpData, setTeachingExpData] = useState<ExperienceDetail[]>(teachingExperience);
   const [editingTeachingExp, setEditingTeachingExp] = useState<number | null>(null);
-  const [tempTeachingExp, setTempTeachingExp] = useState<any>(null);
+  const [tempTeachingExp, setTempTeachingExp] = useState<ExperienceDetail | null>(null);
   const [addingTeachingExp, setAddingTeachingExp] = useState(false);
-  const [newTeachingExp, setNewTeachingExp] = useState({
+  const [newTeachingExp, setNewTeachingExp] = useState<ExperienceDetail>({
     designation: "",
     institutionName: "",
     university: "",
@@ -242,13 +292,14 @@ export default function Profile() {
     to: "",
     period: "",
     current: false,
+    url: "",
   });
 
-  const [industryExpData, setIndustryExpData] = useState(industryExperience);
+  const [industryExpData, setIndustryExpData] = useState<IndustryDetail[]>(industryExperience);
   const [editingIndustryExp, setEditingIndustryExp] = useState<number | null>(null);
-  const [tempIndustryExp, setTempIndustryExp] = useState<any>(null);
+  const [tempIndustryExp, setTempIndustryExp] = useState<IndustryDetail | null>(null);
   const [addingIndustryExp, setAddingIndustryExp] = useState(false);
-  const [newIndustryExp, setNewIndustryExp] = useState({
+  const [newIndustryExp, setNewIndustryExp] = useState<IndustryDetail>({
     jobTitle: "",
     company: "",
     location: "",
@@ -256,6 +307,7 @@ export default function Profile() {
     to: "",
     period: "",
     current: false,
+    url: "",
   });
 
   function validateEmail(email: string) {
@@ -327,6 +379,7 @@ export default function Profile() {
   };
 
   const handleSaveEducation = async (index: number) => {
+    if (!tempEducation) return;
     setLoading(true);
     // Simulate API call
     setTimeout(() => {
@@ -359,6 +412,7 @@ export default function Profile() {
   };
 
   const handleSaveMembership = async (index: number) => {
+    if (!tempMembership) return;
     setLoading(true);
     // Simulate API call
     setTimeout(() => {
@@ -389,6 +443,7 @@ export default function Profile() {
       university: "",
       year: "",
       percentage: "",
+      url: "",
     });
   };
 
@@ -401,6 +456,7 @@ export default function Profile() {
       university: "",
       year: "",
       percentage: "",
+      url: "",
     });
   };
 
@@ -427,6 +483,7 @@ export default function Profile() {
         university: "",
         year: "",
         percentage: "",
+        url: "",
       });
       setLoading(false);
       toast({
@@ -462,6 +519,7 @@ export default function Profile() {
       society: "",
       id: "",
       status: "Active",
+      url: "",
     });
   };
 
@@ -471,6 +529,7 @@ export default function Profile() {
       society: "",
       id: "",
       status: "Active",
+      url: "",
     });
   };
 
@@ -494,6 +553,7 @@ export default function Profile() {
         society: "",
         id: "",
         status: "Active",
+        url: "",
       });
       setLoading(false);
       toast({
@@ -534,6 +594,7 @@ export default function Profile() {
       to: "",
       period: "",
       current: false,
+      url: "",
     });
   };
 
@@ -548,6 +609,7 @@ export default function Profile() {
       to: "",
       period: "",
       current: false,
+      url: "",
     });
   };
 
@@ -574,6 +636,7 @@ export default function Profile() {
         to: "",
         period: "",
         current: false,
+        url: "",
       });
       setLoading(false);
       toast({
@@ -598,6 +661,7 @@ export default function Profile() {
   };
 
   const handleSaveTeachingExp = async (index: number) => {
+    if (!tempTeachingExp) return;
     setLoading(true);
     setTimeout(() => {
       const updated = [...teachingExpData];
@@ -643,6 +707,7 @@ export default function Profile() {
       to: "",
       period: "",
       current: false,
+      url: "",
     });
   };
 
@@ -656,6 +721,7 @@ export default function Profile() {
       to: "",
       period: "",
       current: false,
+      url: "",
     });
   };
 
@@ -681,6 +747,7 @@ export default function Profile() {
         to: "",
         period: "",
         current: false,
+        url: "",
       });
       setLoading(false);
       toast({
@@ -705,6 +772,7 @@ export default function Profile() {
   };
 
   const handleSaveIndustryExp = async (index: number) => {
+    if (!tempIndustryExp) return;
     setLoading(true);
     setTimeout(() => {
       const updated = [...industryExpData];
@@ -2448,8 +2516,8 @@ export default function Profile() {
                               <Calendar className="w-3.5 h-3.5 ml-1" /> {event.date}
                             </p>
                             {event.url && (
-                              <a href={event.url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline mt-1 flex items-center gap-1">
-                                <Download className="w-3 h-3" /> View Source
+                              <a href={event.url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline mt-2 flex items-center gap-1.5 font-medium bg-primary/5 w-fit px-3 py-1 rounded-full border border-primary/20 transition-all hover:bg-primary/10">
+                                <FileText className="w-4 h-4" /> View Document
                               </a>
                             )}
                           </div>
@@ -2671,8 +2739,8 @@ export default function Profile() {
                               {item.organizer} • {item.date}
                             </p>
                             {item.url && (
-                              <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-xs text-secondary hover:underline mt-2 flex items-center gap-1 font-semibold">
-                                <FileText className="w-3 h-3" /> View Publication
+                              <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-sm text-secondary hover:underline mt-3 flex items-center gap-1.5 font-semibold bg-secondary/5 w-fit px-3 py-1 rounded-full border border-secondary/20 transition-all hover:bg-secondary/10">
+                                <FileText className="w-4 h-4" /> View Document
                               </a>
                             )}
                           </div>

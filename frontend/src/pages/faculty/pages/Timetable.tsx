@@ -151,45 +151,41 @@ export default function Timetable() {
           <thead>
             <tr>
               <th className="p-3 text-left text-sm font-semibold text-muted-foreground border-b">
-                <Clock className="w-4 h-4 inline mr-2" />
-                Time
+                <CalendarIcon className="w-4 h-4 inline mr-2" />
+                Day
               </th>
-              {days.map((day) => (
+              {timeSlots.map((time) => (
                 <th
-                  key={day}
-                  className={cn(
-                    "p-3 text-center text-sm font-semibold border-b",
-                    day === currentDay
-                      ? "text-primary bg-primary/5"
-                      : "text-muted-foreground"
-                  )}
+                  key={time}
+                  className="p-3 text-center text-sm font-semibold text-muted-foreground border-b"
                 >
-                  <CalendarIcon className="w-4 h-4 inline mr-2" />
-                  {day}
+                  <Clock className="w-4 h-4 inline mr-2" />
+                  {time}
                 </th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {timeSlots.map((time, timeIndex) => (
+            {days.map((day, dayIndex) => (
               <motion.tr
-                key={time}
+                key={day}
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.3 + timeIndex * 0.05 }}
+                transition={{ delay: 0.3 + dayIndex * 0.05 }}
+                className={cn(day === currentDay && "bg-primary/5")}
               >
-                <td className="p-3 text-sm font-medium text-muted-foreground border-b whitespace-nowrap">
-                  {time}
+                <td className={cn(
+                  "p-3 text-sm font-medium border-b whitespace-nowrap",
+                  day === currentDay ? "text-primary font-bold" : "text-muted-foreground"
+                )}>
+                  {day}
                 </td>
-                {days.map((day) => {
+                {timeSlots.map((time) => {
                   const slot = timetableData[day]?.[time];
                   return (
                     <td
                       key={`${day}-${time}`}
-                      className={cn(
-                        "p-2 border-b",
-                        day === currentDay && "bg-primary/5"
-                      )}
+                      className="p-2 border-b"
                     >
                       {slot ? (
                         <motion.div

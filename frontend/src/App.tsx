@@ -15,10 +15,14 @@ import SuperAdminTimeTable from './pages/admin/superadmin/TimeTable';
 import SuperAdminFacultyProfile from './pages/admin/superadmin/FacultyProfile';
 import SuperAdminStudentProfile from './pages/admin/superadmin/StudentProfile';
 
-import ExecutiveAdminDashboard from './pages/admin/executive/Dashboard';
-import ExecutiveStudents from './pages/admin/executive/Students';
-import ExecutiveFaculty from './pages/admin/executive/Faculty';
-import ExecutiveReports from './pages/admin/executive/Reports';
+import ExecutiveAdminDashboard from '@/pages/admin/executive/Dashboard';
+import ExecutiveStudents from '@/pages/admin/executive/Students';
+import ExecutiveFaculty from '@/pages/admin/executive/Faculty';
+import ExecutiveReports from '@/pages/admin/executive/Reports';
+import ExecutiveLeaveRequests from '@/pages/admin/executive/LeaveRequests';
+import AcademicPerformance from '@/pages/admin/executive/AcademicPerformance';
+import ExecutiveStudentProfile from '@/pages/admin/executive/StudentProfile';
+import ExecutiveFacultyProfile from '@/pages/admin/executive/FacultyProfile';
 
 import AcademicAdminDashboard from './pages/admin/academic/Dashboard';
 import AcademicStudents from './pages/admin/academic/Students';
@@ -31,6 +35,9 @@ import NotFound from './pages/auth/NotFound';
 
 // Faculty Routes
 import FacultyRoutes from './pages/faculty/FacultyRoutes';
+
+// Department Admin Routes
+import DepartmentAdminRoutes from './pages/admin/department-admin/DepartmentAdminRoutes';
 
 // Student Routes
 import StudentRoutes from './pages/student/StudentRoutes';
@@ -72,7 +79,11 @@ const App = () => {
               {/* Executive Admin Routes */}
               <Route path="/admin/executive" element={<ExecutiveAdminDashboard />} />
               <Route path="/admin/executive/students" element={<ExecutiveStudents />} />
+              <Route path="/admin/executive/students/:id" element={<ExecutiveStudentProfile />} />
               <Route path="/admin/executive/faculty" element={<ExecutiveFaculty />} />
+              <Route path="/admin/executive/faculty/:id" element={<ExecutiveFacultyProfile />} />
+              <Route path="/admin/executive/leave-requests" element={<ExecutiveLeaveRequests />} />
+              <Route path="/admin/executive/academic-performance" element={<AcademicPerformance />} />
               <Route path="/admin/executive/reports" element={<ExecutiveReports />} />
 
               {/* Academic Admin Routes */}
@@ -81,6 +92,9 @@ const App = () => {
               <Route path="/admin/academic/faculty" element={<AcademicFaculty />} />
               <Route path="/admin/academic/departments" element={<AcademicDepartments />} />
               <Route path="/admin/academic/reports" element={<AcademicReports />} />
+
+              {/* Department Admin Routes */}
+              <Route path="/admin/department-admin/*" element={<DepartmentAdminRoutes />} />
 
               {/* Student Routes */}
               <Route path="/student/*" element={<StudentRoutes />} />

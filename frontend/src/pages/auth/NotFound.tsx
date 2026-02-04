@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Button } from '@/pages/admin/components/ui/button';
+import { Button } from '@/pages/admin/superadmin/components/ui/button';
 import { GraduationCap, Home } from 'lucide-react';
 
 const NotFound = () => {

@@ -1,5 +1,5 @@
 
-export type UserRole = 'superadmin' | 'executive' | 'academic' | 'faculty' | 'student';
+export type UserRole = 'superadmin' | 'executive' | 'academic' | 'department-admin' | 'faculty' | 'student';
 
 export interface User {
 	id: string;
@@ -60,6 +60,7 @@ export interface TimeTableEntry {
 	id: string;
 	facultyId: string;
 	facultyName: string;
+	department: string;
 	subject: string;
 	classOrLab: string;
 	day: string;

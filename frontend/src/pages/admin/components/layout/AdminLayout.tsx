@@ -1,5 +1,6 @@
-import { ReactNode, useState } from 'react';
+import { ReactNode, useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   LayoutDashboard,
@@ -9,22 +10,24 @@ import {
   Database,
   Building2,
   LogOut,
-  Menu,
-  X,
-  ChevronDown,
   User,
   ShieldCheck,
   Calendar,
+  TrendingUp,
+  Bell,
+  Clock,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
-import { Button } from '@/pages/admin/components/ui/button';
-import { Avatar, AvatarFallback } from '@/pages/admin/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/pages/admin/components/ui/dropdown-menu';
-import { cn } from '@/pages/admin/lib/utils';
+} from '@/components/ui/dropdown-menu';
+import { cn } from '@/lib/utils';
 
 interface NavItem {
   label: string;
@@ -49,8 +52,11 @@ const navItemsByRole: Record<string, NavItem[]> = {
   ],
   executive: [
     { label: 'Dashboard', path: '/admin/executive', icon: <LayoutDashboard className="h-5 w-5" /> },
+    { label: 'Academic Performance', path: '/admin/executive/academic-performance', icon: <TrendingUp className="h-5 w-5" /> },
+    { label: 'Time Table', path: '/admin/superadmin/timetable', icon: <Calendar className="h-5 w-5" /> },
     { label: 'Students', path: '/admin/executive/students', icon: <GraduationCap className="h-5 w-5" /> },
     { label: 'Faculty', path: '/admin/executive/faculty', icon: <Users className="h-5 w-5" /> },
+    { label: 'Leave Requests', path: '/admin/executive/leave-requests', icon: <Calendar className="h-5 w-5" /> },
     { label: 'Reports', path: '/admin/executive/reports', icon: <FileText className="h-5 w-5" /> },
   ],
   academic: [
@@ -71,19 +77,47 @@ const navItemsByRole: Record<string, NavItem[]> = {
   ],
 };
 
-const roleLabels: Record<string, string> = {
-  superadmin: 'Super Admin',
-  executive: 'Executive Admin',
-  academic: 'Academic Admin',
-  faculty: 'Faculty',
-  student: 'Student',
-};
-
 export function AdminLayout({ children }: AdminLayoutProps) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(() => {
+    const saved = localStorage.getItem('admin_sidebar_open');
+    return saved !== null ? JSON.parse(saved) : true;
+  });
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('admin_sidebar_open', JSON.stringify(sidebarOpen));
+  }, [sidebarOpen]);
+
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString('en-US', {
+      weekday: 'short',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    });
+  };
+
+  useEffect(() => {
+    if (!user) {
+      navigate('/login');
+    }
+  }, [user, navigate]);
 
   if (!user) return null;
 
@@ -94,102 +128,209 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     navigate('/login');
   };
 
+  // Determine user info display
+  const userRoleDisplay = user.role === 'executive' ? 'Principal & CEO' : (user.role.charAt(0).toUpperCase() + user.role.slice(1));
+
   return (
     <div className="min-h-screen flex w-full bg-background">
       {/* Sidebar */}
-      <aside
-        className={cn(
-          'fixed inset-y-0 left-0 z-50 flex flex-col bg-sidebar transition-all duration-300',
-          sidebarOpen ? 'w-64' : 'w-16'
-        )}
+      <motion.aside
+        initial={false}
+        animate={{ width: sidebarOpen ? 280 : 80 }}
+        transition={{ duration: 0.3, ease: "easeInOut" }}
+        className="fixed left-0 top-0 h-screen bg-sidebar z-50 flex flex-col shadow-xl"
       >
-        {/* Logo */}
-        <div className="flex h-16 items-center justify-between px-4 border-b border-sidebar-border">
-          {sidebarOpen && (
-            <span className="text-xl font-bold text-sidebar-foreground">
-              {roleLabels[user.role]}
-            </span>
-          )}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="text-sidebar-foreground hover:bg-sidebar-accent"
-          >
-            {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </Button>
+        {/* Header / User Info Section */}
+        <div className="p-4 border-b border-sidebar-border bg-sidebar-accent/10">
+          <div className="flex items-center gap-3">
+            <AnimatePresence>
+              {sidebarOpen ? (
+                <motion.div
+                  key="expanded-user"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  className="flex items-center gap-3 overflow-hidden"
+                >
+                  <div className="relative flex-shrink-0">
+                    <Avatar className="h-12 w-12 border-2 border-white shadow-md">
+                      <AvatarFallback className="bg-gradient-to-br from-primary to-secondary text-white font-bold">
+                        {user.name.split(' ').map(n => n[0]).join('')}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-success border-2 border-sidebar rounded-full" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="font-serif font-bold text-white text-lg whitespace-nowrap">
+                      {user.name}
+                    </span>
+                    <span className="text-xs text-white/70 whitespace-nowrap">
+                      {userRoleDisplay}
+                    </span>
+                  </div>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="collapsed-user"
+                  initial={{ opacity: 0, scale: 0.5 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.5 }}
+                  className="mx-auto"
+                >
+                  <Avatar className="h-10 w-10 border-2 border-white/20">
+                    <AvatarFallback className="bg-primary/20 text-white font-bold text-xs font-serif">
+                      {user.name.split(' ').map(n => n[0]).join('')}
+                    </AvatarFallback>
+                  </Avatar>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto py-4">
-          <ul className="space-y-1 px-2">
-            {navItems.map((item) => {
-              const isActive = location.pathname.startsWith(item.path);
+        <nav className="flex-1 overflow-y-auto py-6 scrollbar-hide">
+          <ul className="space-y-1.5 px-3">
+            {navItems.map((item, index) => {
+              const isActive = location.pathname === item.path || (item.path !== '/admin' && location.pathname.startsWith(item.path));
               return (
-                <li key={item.path}>
+                <motion.li
+                  key={item.path}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                >
                   <button
                     onClick={() => navigate(item.path)}
                     className={cn(
-                      'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+                      'flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-all duration-200 group relative',
                       isActive
-                        ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-                        : 'text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
+                        ? 'bg-sidebar-accent text-white shadow-lg shadow-black/20'
+                        : 'text-white/60 hover:bg-sidebar-accent/50 hover:text-white'
                     )}
                   >
-                    {item.icon}
-                    {sidebarOpen && <span>{item.label}</span>}
+                    <div className={cn(
+                      "transition-colors",
+                      isActive ? "text-secondary" : "text-white/60 group-hover:text-secondary"
+                    )}>
+                      {item.icon}
+                    </div>
+
+                    <AnimatePresence>
+                      {sidebarOpen && (
+                        <motion.span
+                          initial={{ opacity: 0, width: 0 }}
+                          animate={{ opacity: 1, width: "auto" }}
+                          exit={{ opacity: 0, width: 0 }}
+                          className="whitespace-nowrap overflow-hidden"
+                        >
+                          {item.label}
+                        </motion.span>
+                      )}
+                    </AnimatePresence>
+
+                    {isActive && (
+                      <motion.div
+                        layoutId="active-pill"
+                        className="absolute left-0 w-1 h-6 bg-secondary rounded-r-full"
+                      />
+                    )}
                   </button>
-                </li>
+                </motion.li>
               );
             })}
           </ul>
         </nav>
 
-        {/* User section */}
-        <div className="border-t border-sidebar-border p-4">
+        {/* Footer Buttons */}
+        <div className="p-4 border-t border-sidebar-border space-y-3">
+          {/* Logout Button */}
           <button
             onClick={handleLogout}
             className={cn(
-              'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground transition-colors',
-              !sidebarOpen && 'justify-center'
+              "w-full flex items-center justify-center gap-3 px-3 py-3 rounded-xl transition-all font-bold text-sm",
+              "bg-destructive/10 text-destructive border border-destructive/20 hover:bg-destructive hover:text-white"
             )}
           >
-            <LogOut className="h-5 w-5" />
-            {sidebarOpen && <span>Logout</span>}
+            <LogOut className="w-5 h-5 flex-shrink-0" />
+            <AnimatePresence>
+              {sidebarOpen && (
+                <motion.span
+                  initial={{ opacity: 0, width: 0 }}
+                  animate={{ opacity: 1, width: "auto" }}
+                  exit={{ opacity: 0, width: 0 }}
+                  className="whitespace-nowrap overflow-hidden"
+                >
+                  Logout
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </button>
+
+          {/* Collapse Toggle Button */}
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="w-full flex items-center justify-center gap-3 px-3 py-3 rounded-xl bg-sidebar-accent/30 text-white/70 hover:bg-sidebar-accent hover:text-white transition-all border border-white/5"
+          >
+            {sidebarOpen ? (
+              <>
+                <ChevronLeft className="w-5 h-5 flex-shrink-0" />
+                <span className="text-xs font-bold uppercase tracking-widest overflow-hidden">Collapse</span>
+              </>
+            ) : (
+              <ChevronRight className="w-5 h-5 flex-shrink-0" />
+            )}
           </button>
         </div>
-      </aside>
+      </motion.aside>
 
       {/* Main content */}
-      <div className={cn('flex-1 transition-all duration-300', sidebarOpen ? 'ml-64' : 'ml-16')}>
+      <div className={cn('flex-1 transition-all duration-300', sidebarOpen ? 'ml-[280px]' : 'ml-[80px]')}>
         {/* Header */}
         <header className="sticky top-0 z-40 h-16 border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
-          <div className="flex h-full items-center justify-between px-6">
-            <div>
-              {/* Branding moved to sidebar */}
-            </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="flex items-center gap-2">
-                  <Avatar className="h-8 w-8">
-                    <AvatarFallback className="bg-primary text-primary-foreground">
-                      {user.name.split(' ').map((n) => n[0]).join('')}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="hidden md:block text-sm font-medium">{user.name}</span>
-                  <ChevronDown className="h-4 w-4" />
+          <div className="flex h-full items-center justify-end px-6">
+            <div className="flex items-center gap-6">
+              <div className="hidden md:flex flex-col items-end">
+                <div className="flex items-center gap-2 text-sm font-bold text-foreground">
+                  <Calendar className="w-4 h-4 text-primary" />
+                  {formatDate(currentTime)}
+                </div>
+                <div className="flex items-center gap-2 text-[11px] font-medium text-muted-foreground">
+                  <Clock className="w-3.5 h-3.5 text-secondary" />
+                  {formatTime(currentTime)}
+                </div>
+              </div>
+
+              <div className="h-8 w-[1px] bg-border mx-2" />
+
+              <div className="flex items-center gap-3">
+                <Button variant="ghost" size="icon" className="relative hover:bg-primary/10 transition-colors">
+                  <Bell className="h-5 w-5 text-foreground" />
+                  <span className="absolute top-1 right-1 h-2 w-2 bg-destructive rounded-full border-2 border-card" />
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48 bg-popover">
-                <DropdownMenuItem className="text-muted-foreground">
-                  {user.email}
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleLogout} className="text-destructive">
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Logout
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="p-0 hover:bg-transparent">
+                      <Avatar className="h-8 w-8 ring-2 ring-primary/20 transition-all hover:ring-primary/40">
+                        <AvatarFallback className="bg-primary text-primary-foreground text-[10px]">
+                          {user.name.split(' ').map((n) => n[0]).join('')}
+                        </AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuItem className="text-muted-foreground text-xs">
+                      {user.email}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleLogout} className="text-destructive">
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Logout
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </div>
           </div>
         </header>
 

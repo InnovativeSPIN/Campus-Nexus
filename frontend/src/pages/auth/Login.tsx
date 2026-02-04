@@ -2,16 +2,16 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserRole } from '@/types/auth';
-import { Button } from '@/pages/admin/components/ui/button';
-import { Input } from '@/pages/admin/components/ui/input';
-import { Label } from '@/pages/admin/components/ui/label';
+import { Button } from '@/pages/admin/superadmin/components/ui/button';
+import { Input } from '@/pages/admin/superadmin/components/ui/input';
+import { Label } from '@/pages/admin/superadmin/components/ui/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/pages/admin/components/ui/select';
+} from '@/pages/admin/superadmin/components/ui/select';
 import { GraduationCap, Lock, Mail, Users } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -19,6 +19,7 @@ const roleRoutes: Record<UserRole, string> = {
   superadmin: '/admin/superadmin',
   executive: '/admin/executive',
   academic: '/admin/academic',
+  'department-admin': '/admin/department-admin',
   faculty: '/faculty',
   student: '/student',
 };
@@ -66,7 +67,7 @@ export default function Login() {
             </div>
           </div>
           <h1 className="text-4xl font-bold text-primary-foreground mb-4">
-         EDUVERTEX
+            EDUVERTEX
           </h1>
           {/* <p className="text-lg text-primary-foreground/80">
             Comprehensive education management system for administrators, faculty, and students.
@@ -119,6 +120,7 @@ export default function Login() {
                   <SelectItem value="superadmin">Super Admin</SelectItem>
                   <SelectItem value="executive">Executive Admin</SelectItem>
                   <SelectItem value="academic">Academic Admin</SelectItem>
+                  <SelectItem value="department-admin">Department Admin</SelectItem>
                   <SelectItem value="faculty">Faculty</SelectItem>
                   <SelectItem value="student">Student</SelectItem>
                 </SelectContent>
@@ -172,7 +174,7 @@ export default function Login() {
               )}
             </Button>
           </form>
-{/* 
+          {/* 
           <div className="rounded-lg bg-muted p-4">
             <p className="text-sm font-medium text-muted-foreground mb-2">Demo Credentials:</p>
             <p className="text-sm text-muted-foreground">
