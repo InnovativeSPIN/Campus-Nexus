@@ -1,10 +1,10 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { AdminLayout } from '@/pages/admin/components/layout/AdminLayout';
-import { Button } from '@/pages/admin/components/ui/button';
+import { AdminLayout } from '@/pages/admin/superadmin/components/layout/AdminLayout';
+import { Button } from '@/pages/admin/superadmin/components/ui/button';
 import { ChevronLeft, Mail, Phone, Building2, Calendar, User, MapPin, GraduationCap, Clock } from 'lucide-react';
 import { mockStudents } from '@/data/mockData';
-import { Badge } from '@/pages/admin/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/pages/admin/components/ui/tabs';
+import { Badge } from '@/pages/admin/superadmin/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/pages/admin/superadmin/components/ui/tabs';
 
 export default function SuperAdminStudentProfile() {
     const { id } = useParams();

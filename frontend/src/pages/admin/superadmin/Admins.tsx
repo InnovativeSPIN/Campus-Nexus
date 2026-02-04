@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { AdminLayout } from '@/pages/admin/components/layout/AdminLayout';
-import { DataTable } from '@/pages/admin/components/dashboard/DataTable';
-import { UserFormModal } from '@/pages/admin/components/modals/UserFormModal';
+import { AdminLayout } from '@/pages/admin/superadmin/components/layout/AdminLayout';
+import { DataTable } from '@/pages/admin/superadmin/components/dashboard/DataTable';
+import { UserFormModal } from '@/pages/admin/superadmin/components/modals/UserFormModal';
 import { mockAdmins as initialAdmins } from '@/data/mockData';
 import { Admin } from '@/types/auth'; // Ensure Admin type is exported from types/auth
-import { Badge } from '@/pages/admin/components/ui/badge';
+import { Badge } from '@/pages/admin/superadmin/components/ui/badge';
 import { toast } from 'sonner';
 import {
     AlertDialog,
@@ -15,7 +15,7 @@ import {
     AlertDialogFooter,
     AlertDialogHeader,
     AlertDialogTitle,
-} from '@/pages/admin/components/ui/alert-dialog';
+} from '@/pages/admin/superadmin/components/ui/alert-dialog';
 
 export default function SuperAdminAdmins() {
     const [admins, setAdmins] = useState<Admin[]>(initialAdmins);

@@ -1,20 +1,20 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AdminLayout } from '@/pages/admin/components/layout/AdminLayout';
-import { DataTable } from '@/pages/admin/components/dashboard/DataTable';
-import { UserFormModal } from '@/pages/admin/components/modals/UserFormModal';
+import { AdminLayout } from '@/pages/admin/superadmin/components/layout/AdminLayout';
+import { DataTable } from '@/pages/admin/superadmin/components/dashboard/DataTable';
+import { UserFormModal } from '@/pages/admin/superadmin/components/modals/UserFormModal';
 import { mockFaculty as initialFaculty, mockDepartments } from '@/data/mockData';
 import { Faculty } from '@/types/auth';
-import { Badge } from '@/pages/admin/components/ui/badge';
+import { Badge } from '@/pages/admin/superadmin/components/ui/badge';
 import { toast } from 'sonner';
-import { Input } from '@/pages/admin/components/ui/input';
+import { Input } from '@/pages/admin/superadmin/components/ui/input';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/pages/admin/components/ui/select';
+} from '@/pages/admin/superadmin/components/ui/select';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,7 +24,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/pages/admin/components/ui/alert-dialog';
+} from '@/pages/admin/superadmin/components/ui/alert-dialog';
 
 export default function SuperAdminFaculty() {
   const navigate = useNavigate();

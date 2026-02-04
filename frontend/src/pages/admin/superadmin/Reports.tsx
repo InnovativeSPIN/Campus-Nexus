@@ -1,8 +1,8 @@
-import { AdminLayout } from '@/pages/admin/components/layout/AdminLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/pages/admin/components/ui/card';
+import { AdminLayout } from '@/pages/admin/superadmin/components/layout/AdminLayout';
+import { Card, CardContent, CardHeader, CardTitle } from '@/pages/admin/superadmin/components/ui/card';
 import { dashboardStats, mockStudents, mockFaculty, mockDepartments } from '@/data/mockData';
 import { FileText, Download, TrendingUp, Users, GraduationCap, Building2 } from 'lucide-react';
-import { Button } from '@/pages/admin/components/ui/button';
+import { Button } from '@/pages/admin/superadmin/components/ui/button';
 import { toast } from 'sonner';
 
 export default function SuperAdminReports() {

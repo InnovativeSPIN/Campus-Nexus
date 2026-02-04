@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { AdminLayout } from '@/pages/admin/components/layout/AdminLayout';
-import { DataTable } from '@/pages/admin/components/dashboard/DataTable';
-import { DepartmentFormModal } from '@/pages/admin/components/modals/DepartmentFormModal';
+import { AdminLayout } from '@/pages/admin/superadmin/components/layout/AdminLayout';
+import { DataTable } from '@/pages/admin/superadmin/components/dashboard/DataTable';
+import { DepartmentFormModal } from '@/pages/admin/superadmin/components/modals/DepartmentFormModal';
 import { mockDepartments as initialDepartments } from '@/data/mockData';
 import { Department } from '@/types/auth';
 import { toast } from 'sonner';
@@ -14,7 +14,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/pages/admin/components/ui/alert-dialog';
+} from '@/pages/admin/superadmin/components/ui/alert-dialog';
 
 export default function SuperAdminDepartments() {
   const [departments, setDepartments] = useState<Department[]>(initialDepartments);

@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import { AdminLayout } from '@/pages/admin/components/layout/AdminLayout';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/pages/admin/components/ui/card';
-import { Button } from '@/pages/admin/components/ui/button';
-import { Checkbox } from '@/pages/admin/components/ui/checkbox';
-import { Label } from '@/pages/admin/components/ui/label';
+import { AdminLayout } from '@/pages/admin/superadmin/components/layout/AdminLayout';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/pages/admin/superadmin/components/ui/card';
+import { Button } from '@/pages/admin/superadmin/components/ui/button';
+import { Checkbox } from '@/pages/admin/superadmin/components/ui/checkbox';
+import { Label } from '@/pages/admin/superadmin/components/ui/label';
 import { Database, Download, Clock, CheckCircle, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
-import { Progress } from '@/pages/admin/components/ui/progress';
+import { Progress } from '@/pages/admin/superadmin/components/ui/progress';
 
 interface BackupOption {
   id: string;

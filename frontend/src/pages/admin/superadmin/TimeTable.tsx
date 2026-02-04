@@ -1,23 +1,23 @@
 import { useState, useMemo } from 'react';
-import { AdminLayout } from '@/pages/admin/components/layout/AdminLayout';
-import { DataTable } from '@/pages/admin/components/dashboard/DataTable';
-import { mockTimeTable, mockAcademicYears } from '@/data/mockData';
+import { AdminLayout } from '@/pages/admin/superadmin/components/layout/AdminLayout';
+import { DataTable } from '@/pages/admin/superadmin/components/dashboard/DataTable';
+import { mockTimeTable, mockAcademicYears, mockDepartments } from '@/data/mockData';
 import { TimeTableEntry } from '@/types/auth';
-import { Input } from '@/pages/admin/components/ui/input';
+import { Input } from '@/pages/admin/superadmin/components/ui/input';
 import {
     Select,
     SelectContent,
     SelectItem,
     SelectTrigger,
     SelectValue,
-} from '@/pages/admin/components/ui/select';
+} from '@/pages/admin/superadmin/components/ui/select';
 import {
     Dialog,
     DialogContent,
     DialogHeader,
     DialogTitle,
-} from '@/pages/admin/components/ui/dialog';
-import { Badge } from '@/pages/admin/components/ui/badge';
+} from '@/pages/admin/superadmin/components/ui/dialog';
+import { Badge } from '@/pages/admin/superadmin/components/ui/badge';
 
 export default function SuperAdminTimeTable() {
     const [entries] = useState<TimeTableEntry[]>(mockTimeTable);
@@ -31,6 +31,7 @@ export default function SuperAdminTimeTable() {
     const [semester, setSemester] = useState<string>('all');
     const [employeeId, setEmployeeId] = useState('');
     const [facultyName, setFacultyName] = useState('');
+    const [department, setDepartment] = useState<string>('all');
     const [day, setDay] = useState<string>('all');
     const [period, setPeriod] = useState<string>('');
 
@@ -42,13 +43,15 @@ export default function SuperAdminTimeTable() {
             const matchesName = !facultyName || entry.facultyName.toLowerCase().includes(facultyName.toLowerCase());
             const matchesDay = day === 'all' || entry.day === day;
             const matchesPeriod = !period || entry.period.toString() === period;
+            const matchesDept = department === 'all' || entry.department === department;
 
-            return matchesYear && matchesSemester && matchesFacultyId && matchesName && matchesDay && matchesPeriod;
+            return matchesYear && matchesSemester && matchesFacultyId && matchesName && matchesDay && matchesPeriod && matchesDept;
         });
-    }, [entries, academicYear, semester, employeeId, facultyName, day, period]);
+    }, [entries, academicYear, semester, employeeId, facultyName, day, period, department]);
 
     const columns = [
         { key: 'facultyName', label: 'Faculty' },
+        { key: 'department', label: 'Department' },
         { key: 'day', label: 'Day' },
         { key: 'period', label: 'Period' },
         { key: 'time', label: 'Time' },
@@ -78,6 +81,15 @@ export default function SuperAdminTimeTable() {
                             <SelectItem value="all">All Academic Years</SelectItem>
                             {mockAcademicYears.map(year => (
                                 <SelectItem key={year} value={year}>{year}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    <Select value={department} onValueChange={setDepartment}>
+                        <SelectTrigger><SelectValue placeholder="Department" /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Departments</SelectItem>
+                            {mockDepartments.map(dept => (
+                                <SelectItem key={dept.id} value={dept.name}>{dept.name}</SelectItem>
                             ))}
                         </SelectContent>
                     </Select>
@@ -141,6 +153,10 @@ export default function SuperAdminTimeTable() {
                                     <div>
                                         <label className="text-sm font-medium text-muted-foreground">Faculty</label>
                                         <p className="text-lg font-semibold">{viewModal.data.facultyName}</p>
+                                    </div>
+                                    <div>
+                                        <label className="text-sm font-medium text-muted-foreground">Department</label>
+                                        <p className="text-lg font-semibold">{viewModal.data.department}</p>
                                     </div>
                                     <div>
                                         <label className="text-sm font-medium text-muted-foreground">Subject</label>
