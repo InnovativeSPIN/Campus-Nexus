@@ -26,7 +26,13 @@ const profileNavItems = [
 const academicNavItems = [
   { path: '/student/academics/attendance', label: 'Attendance', icon: Calendar },
   { path: '/student/academics/marks', label: 'Marks', icon: Award },
+];
+
+const timetableNavItems = [
   { path: '/student/academics/timetable', label: 'Timetable', icon: Calendar },
+];
+
+const leaveNavItems = [
   { path: '/student/academics/leave', label: 'Leave', icon: FileText },
 ];
 
@@ -51,16 +57,29 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
   const [expandedSection, setExpandedSection] = useState<string | null>('profile');
 
   const isActive = (path: string) => {
+    // For dashboard, match exactly
     if (path === '/student/dashboard') {
       return location.pathname === path;
     }
-    // For other paths, check if the current pathname starts with the base path
-    // e.g., if path is /student/profile/personal, match if starts with /student/profile
+
+    // For Timetable and Leave, which share a prefix with Academics, match the specific path
+    if (path.includes('timetable') || path.includes('leave')) {
+      return location.pathname.startsWith(path);
+    }
+
+    // For other paths (like Profile or Academics), check if the current pathname starts with the base category
     const segments = path.split('/');
     if (segments.length >= 3) {
       const base = `/${segments[1]}/${segments[2]}`;
+      // Ensure we don't highlight "Academics" when on "Timetable" or "Leave" pages
+      if (base === '/student/academics') {
+        return location.pathname.startsWith(base) &&
+          !location.pathname.includes('timetable') &&
+          !location.pathname.includes('leave');
+      }
       return location.pathname.startsWith(base);
     }
+
     return location.pathname.startsWith(path);
   };
 
@@ -82,8 +101,8 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
   }) => {
     const isExpanded = expandedSection === sectionKey || isSectionActive(items);
 
-    // For Profile, Announcements, Academics, and Portfolio sections, make them navigate directly without dropdown nodes
-    if (sectionKey === 'profile' || sectionKey === 'announcements' || sectionKey === 'academics' || sectionKey === 'portfolio') {
+    // For Profile, Announcements, Academics, Portfolio, Timetable, and Leave sections, make them navigate directly without dropdown nodes
+    if (sectionKey === 'profile' || sectionKey === 'announcements' || sectionKey === 'academics' || sectionKey === 'portfolio' || sectionKey === 'timetable' || sectionKey === 'leave') {
       const IconComponent = items[0].icon;
       return (
         <div className="mb-2">
@@ -213,6 +232,8 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
 
         <NavSection title="Profile" items={profileNavItems} sectionKey="profile" />
         <NavSection title="Academics" items={academicNavItems} sectionKey="academics" />
+        <NavSection title="Timetable" items={timetableNavItems} sectionKey="timetable" />
+        <NavSection title="Leave" items={leaveNavItems} sectionKey="leave" />
         <NavSection title="Portfolio" items={portfolioNavItems} sectionKey="portfolio" />
 
         <NavSection title="Announcements" items={announcementNavItems} sectionKey="announcements" />

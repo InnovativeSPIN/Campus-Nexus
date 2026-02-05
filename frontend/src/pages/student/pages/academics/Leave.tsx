@@ -3,7 +3,6 @@ import PageHeader from '@/pages/student/components/layout/PageHeader';
 import SectionCard from '@/pages/student/components/common/SectionCard';
 import Badge from '@/pages/student/components/common/Badge';
 import Modal from '@/pages/student/components/common/Modal';
-import AcademicsNavBar from '@/pages/student/components/layout/AcademicsNavBar';
 import { Plus, Calendar, Send, CheckCircle, Clock, XCircle, Download } from 'lucide-react';
 import { useToast } from '@/pages/student/hooks/use-toast';
 import { formatDate } from '@/pages/student/utils/formatDate';
@@ -195,7 +194,6 @@ export default function Leave() {
         title="Leave Management"
         subtitle="Request and manage your leave"
         breadcrumbs={[
-          { label: 'Academics', path: '/student/academics/leave' },
           { label: 'Leave' },
         ]}
         actions={
@@ -206,7 +204,6 @@ export default function Leave() {
         }
       />
 
-      <AcademicsNavBar />
 
       {/* Statistics Cards */}
       <div className="grid gap-4 sm:grid-cols-3 mb-6">

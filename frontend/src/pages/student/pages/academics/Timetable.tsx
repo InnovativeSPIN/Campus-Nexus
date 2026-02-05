@@ -1,6 +1,5 @@
 ﻿import PageHeader from '@/pages/student/components/layout/PageHeader';
 import SectionCard from '@/pages/student/components/common/SectionCard';
-import AcademicsNavBar from '@/pages/student/components/layout/AcademicsNavBar';
 
 export default function Timetable() {
   return (
@@ -9,12 +8,9 @@ export default function Timetable() {
         title="Timetable"
         subtitle=""
         breadcrumbs={[
-          { label: 'Academics', path: '/student/academics/timetable' },
           { label: 'Timetable' },
         ]}
       />
-
-      <AcademicsNavBar />
 
       <SectionCard title="Timetable">
         <div className="py-12 text-center text-muted-foreground">
