@@ -2,6 +2,7 @@ import { ReactNode, useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
+import { IntegratedNotificationBell } from '@/components/common/IntegratedNotificationBell';
 import {
   LayoutDashboard,
   Users,
@@ -12,6 +13,7 @@ import {
   LogOut,
   User,
   ShieldCheck,
+  Lock,
   Calendar,
   TrendingUp,
   Bell,
@@ -49,6 +51,8 @@ const navItemsByRole: Record<string, NavItem[]> = {
     { label: 'Departments', path: '/admin/superadmin/departments', icon: <Building2 className="h-5 w-5" /> },
     { label: 'Reports', path: '/admin/superadmin/reports', icon: <FileText className="h-5 w-5" /> },
     { label: 'Backup', path: '/admin/superadmin/backup', icon: <Database className="h-5 w-5" /> },
+    { label: 'Security', path: '/admin/change-password', icon: <ShieldCheck className="h-5 w-5" /> },
+    { label: 'Announcements', path: '/admin/superadmin/announcements', icon: <Bell className="h-5 w-5" /> },
   ],
   executive: [
     { label: 'Dashboard', path: '/admin/executive', icon: <LayoutDashboard className="h-5 w-5" /> },
@@ -57,23 +61,29 @@ const navItemsByRole: Record<string, NavItem[]> = {
     { label: 'Students', path: '/admin/executive/students', icon: <GraduationCap className="h-5 w-5" /> },
     { label: 'Faculty', path: '/admin/executive/faculty', icon: <Users className="h-5 w-5" /> },
     { label: 'Leave Requests', path: '/admin/executive/leave-requests', icon: <Calendar className="h-5 w-5" /> },
+    { label: 'Announcements', path: '/admin/executive/announcements', icon: <Bell className="h-5 w-5" /> },
     { label: 'Reports', path: '/admin/executive/reports', icon: <FileText className="h-5 w-5" /> },
+    { label: 'Security', path: '/admin/change-password', icon: <ShieldCheck className="h-5 w-5" /> },
   ],
   academic: [
     { label: 'Dashboard', path: '/admin/academic', icon: <LayoutDashboard className="h-5 w-5" /> },
     { label: 'Students', path: '/admin/academic/students', icon: <GraduationCap className="h-5 w-5" /> },
     { label: 'Faculty', path: '/admin/academic/faculty', icon: <Users className="h-5 w-5" /> },
     { label: 'Departments', path: '/admin/academic/departments', icon: <Building2 className="h-5 w-5" /> },
+    { label: 'Announcements', path: '/admin/academic/announcements', icon: <Bell className="h-5 w-5" /> },
     { label: 'Reports', path: '/admin/academic/reports', icon: <FileText className="h-5 w-5" /> },
+    { label: 'Security', path: '/admin/change-password', icon: <ShieldCheck className="h-5 w-5" /> },
   ],
   faculty: [
     { label: 'Dashboard', path: '/faculty', icon: <LayoutDashboard className="h-5 w-5" /> },
     { label: 'My Students', path: '/faculty/students', icon: <GraduationCap className="h-5 w-5" /> },
     { label: 'Profile', path: '/faculty/profile', icon: <User className="h-5 w-5" /> },
+    { label: 'Security', path: '/admin/change-password', icon: <ShieldCheck className="h-5 w-5" /> },
   ],
   student: [
     { label: 'Dashboard', path: '/student', icon: <LayoutDashboard className="h-5 w-5" /> },
     { label: 'Profile', path: '/student/profile', icon: <User className="h-5 w-5" /> },
+    { label: 'Security', path: '/admin/change-password', icon: <ShieldCheck className="h-5 w-5" /> },
   ],
 };
 
@@ -304,10 +314,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               <div className="h-8 w-[1px] bg-border mx-2" />
 
               <div className="flex items-center gap-3">
-                <Button variant="ghost" size="icon" className="relative hover:bg-primary/10 transition-colors">
-                  <Bell className="h-5 w-5 text-foreground" />
-                  <span className="absolute top-1 right-1 h-2 w-2 bg-destructive rounded-full border-2 border-card" />
-                </Button>
+                <IntegratedNotificationBell />
 
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -322,6 +329,10 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                   <DropdownMenuContent align="end" className="w-48">
                     <DropdownMenuItem className="text-muted-foreground text-xs">
                       {user.email}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/admin/change-password')}>
+                      <Lock className="mr-2 h-4 w-4" />
+                      Change Password
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={handleLogout} className="text-destructive">
                       <LogOut className="mr-2 h-4 w-4" />

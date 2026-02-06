@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { AdminLayout } from '@/pages/admin/superadmin/components/layout/AdminLayout';
 import { DataTable } from '@/pages/admin/superadmin/components/dashboard/DataTable';
 import { UserFormModal } from '@/pages/admin/superadmin/components/modals/UserFormModal';
-import { mockFaculty as initialFaculty, mockDepartments } from '@/data/mockData';
 import { Faculty } from '@/types/auth';
 import { Badge } from '@/pages/admin/superadmin/components/ui/badge';
 import { toast } from 'sonner';
@@ -28,9 +27,50 @@ import {
 
 export default function SuperAdminFaculty() {
   const navigate = useNavigate();
-  const [faculty, setFaculty] = useState<Faculty[]>(initialFaculty);
+  const [faculty, setFaculty] = useState<Faculty[]>([]);
+  const [departments, setDepartments] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [departmentFilter, setDepartmentFilter] = useState<string>('all');
   const [employeeIdFilter, setEmployeeIdFilter] = useState('');
+
+  const fetchFaculty = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/v1/faculty');
+      const result = await response.json();
+      if (result.success) {
+        setFaculty(result.data.map((f: any) => ({
+          ...f,
+          name: `${f.firstName} ${f.lastName}`,
+          department: f.department?.name || 'N/A'
+        })));
+      }
+    } catch (error) {
+      console.error('Error fetching faculty:', error);
+      toast.error('Failed to fetch faculty');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchDepartments = async () => {
+    try {
+      const response = await fetch('/api/v1/departments');
+      const result = await response.json();
+      if (result.success) {
+        setDepartments(result.data);
+      }
+    } catch (error) {
+      console.error('Error fetching departments:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchFaculty();
+    fetchDepartments();
+  }, []);
+
+  const hodCount = useMemo(() => faculty.filter(f => f.designation === 'HOD').length, [faculty]);
 
   const [formModal, setFormModal] = useState<{ open: boolean; mode: 'add' | 'edit'; data?: Faculty }>({
     open: false,
@@ -135,6 +175,24 @@ export default function SuperAdminFaculty() {
           <p className="text-muted-foreground">Manage all faculty records</p>
         </div>
 
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pb-2">
+          <div className="bg-card p-4 rounded-lg border border-border shadow-sm">
+            <p className="text-sm text-muted-foreground">Total Faculty</p>
+            <p className="text-2xl font-bold">{faculty.length}</p>
+            <p className="text-xs text-success mt-1">Status: All Records</p>
+          </div>
+          <div className="bg-card p-4 rounded-lg border border-border shadow-sm">
+            <p className="text-sm text-muted-foreground">HODs assigned</p>
+            <p className="text-2xl font-bold">{hodCount}</p>
+            <p className="text-xs text-blue-500 mt-1">1 HOD per Department</p>
+          </div>
+          <div className="bg-card p-4 rounded-lg border border-border shadow-sm">
+            <p className="text-sm text-muted-foreground">Faculty Target</p>
+            <p className="text-2xl font-bold">30+</p>
+            <p className="text-xs text-muted-foreground mt-1">Recommended per Dept</p>
+          </div>
+        </div>
+
         {/* Filters */}
         <div className="flex flex-col sm:flex-row gap-4 p-4 bg-card rounded-lg border border-border shadow-sm">
           <div className="flex-1">
@@ -151,7 +209,7 @@ export default function SuperAdminFaculty() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Departments</SelectItem>
-                {mockDepartments.map(dept => (
+                {departments.map(dept => (
                   <SelectItem key={dept.id} value={dept.name}>{dept.name}</SelectItem>
                 ))}
               </SelectContent>
@@ -159,16 +217,22 @@ export default function SuperAdminFaculty() {
           </div>
         </div>
 
-        <DataTable
-          data={filteredFaculty}
-          columns={columns}
-          title="All Faculty"
-          searchPlaceholder="Search by Name..."
-          onAdd={handleAdd}
-          onView={handleView}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-        />
+        {loading ? (
+          <div className="flex h-64 items-center justify-center">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+          </div>
+        ) : (
+          <DataTable
+            data={filteredFaculty}
+            columns={columns}
+            title="All Faculty"
+            searchPlaceholder="Search by Name..."
+            onAdd={handleAdd}
+            onView={handleView}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+          />
+        )}
 
         <UserFormModal
           open={formModal.open}

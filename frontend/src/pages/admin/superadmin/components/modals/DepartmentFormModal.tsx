@@ -65,16 +65,17 @@ export function DepartmentFormModal({ open, onClose, onSave, initialData, mode }
               required
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="hod">Head of Department</Label>
-            <Input
-              id="hod"
-              value={formData.headOfDepartment || ''}
-              onChange={(e) => setFormData((prev) => ({ ...prev, headOfDepartment: e.target.value }))}
-              placeholder="e.g., Dr. John Smith"
-              required
-            />
-          </div>
+          {mode === 'edit' && formData.headOfDepartment && (
+            <div className="space-y-2">
+              <Label>Head of Department</Label>
+              <Input
+                value={formData.headOfDepartment}
+                readOnly
+                className="bg-muted cursor-not-allowed"
+              />
+              <p className="text-xs text-muted-foreground">Managed in Admin settings</p>
+            </div>
+          )}
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel

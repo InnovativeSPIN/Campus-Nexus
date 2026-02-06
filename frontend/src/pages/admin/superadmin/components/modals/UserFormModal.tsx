@@ -16,8 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/pages/admin/superadmin/components/ui/select';
-import { Student, Faculty, Admin } from '@/types/auth';
-import { mockDepartments } from '@/data/mockData';
+import { Student, Faculty, Admin, Department } from '@/types/auth';
 
 type FormData = Partial<Student | Faculty | Admin>;
 
@@ -31,7 +30,9 @@ interface UserFormModalProps {
 }
 
 export function UserFormModal({ open, onClose, onSave, type, initialData, mode }: UserFormModalProps) {
+  const [file, setFile] = useState<File | null>(null);
   const [formData, setFormData] = useState<FormData>({});
+  const [departments, setDepartments] = useState<Department[]>([]);
 
   useEffect(() => {
     if (initialData) {
@@ -39,16 +40,49 @@ export function UserFormModal({ open, onClose, onSave, type, initialData, mode }
     } else {
       setFormData({});
     }
+    setFile(null); // Reset file when data changes
   }, [initialData, open]);
+
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      try {
+        const response = await fetch('/api/v1/departments');
+        const result = await response.json();
+        if (result.success) {
+          setDepartments(result.data);
+        }
+      } catch (error) {
+        console.error('Error fetching departments:', error);
+      }
+    };
+
+    if (open) {
+      fetchDepartments();
+    }
+  }, [open]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(formData);
+    onSave({ ...formData, avatarFile: file } as any);
     onClose();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setFile(e.target.files[0]);
+    }
   };
 
   const updateField = (field: string, value: string | number) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+
+    // Auto-fetch department code if department is selected
+    if (field === 'department' && type === 'admin' && (formData as Admin).role === 'department-admin') {
+      const selectedDept = departments.find(d => d.name === value);
+      if (selectedDept) {
+        setFormData(prev => ({ ...prev, departmentCode: selectedDept.code }));
+      }
+    }
   };
 
   const getTitle = () => {
@@ -86,6 +120,29 @@ export function UserFormModal({ open, onClose, onSave, type, initialData, mode }
                 required
               />
             </div>
+            {type === 'admin' && (
+              <div className="space-y-2">
+                <Label htmlFor="avatar">Photo (Optional)</Label>
+                <div className="flex items-center gap-4">
+                  <Input
+                    id="avatar"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="cursor-pointer"
+                  />
+                  {(file || (formData as any).avatar) && (
+                    <div className="w-10 h-10 rounded-full overflow-hidden border border-border flex-shrink-0">
+                      <img
+                        src={file ? URL.createObjectURL(file) : (formData as any).avatar}
+                        alt="Preview"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
             {type !== 'admin' && (
               <div className="space-y-2">
                 <Label htmlFor="phone">Phone</Label>
@@ -110,7 +167,7 @@ export function UserFormModal({ open, onClose, onSave, type, initialData, mode }
               </div>
             )}
 
-            {(type !== 'admin' || (type === 'admin' && (formData as Admin).role === 'academic')) && (
+            {(type !== 'admin' || (type === 'admin' && ((formData as Admin).role === 'academic' || (formData as Admin).role === 'department-admin'))) && (
               <div className="space-y-2">
                 <Label htmlFor="department">Department</Label>
                 <Select
@@ -121,13 +178,29 @@ export function UserFormModal({ open, onClose, onSave, type, initialData, mode }
                     <SelectValue placeholder="Select department" />
                   </SelectTrigger>
                   <SelectContent className="bg-popover">
-                    {mockDepartments.map((dept) => (
-                      <SelectItem key={dept.id} value={dept.name}>
+                    {departments.map((dept) => (
+                      <SelectItem key={dept.id || (dept as any)._id} value={dept.name}>
                         {dept.name}
                       </SelectItem>
                     ))}
+                    {departments.length === 0 && (
+                      <div className="p-2 text-sm text-muted-foreground text-center">No departments available</div>
+                    )}
                   </SelectContent>
                 </Select>
+              </div>
+            )}
+
+            {type === 'admin' && (formData as Admin).role === 'department-admin' && (
+              <div className="space-y-2">
+                <Label htmlFor="departmentCode">Department Code</Label>
+                <Input
+                  id="departmentCode"
+                  value={(formData as Admin).departmentCode || ''}
+                  readOnly
+                  placeholder="Select a department to see code"
+                  className="bg-muted/50 cursor-not-allowed"
+                />
               </div>
             )}
 
@@ -172,10 +245,12 @@ export function UserFormModal({ open, onClose, onSave, type, initialData, mode }
                     <SelectValue placeholder="Select designation" />
                   </SelectTrigger>
                   <SelectContent className="bg-popover">
+                    <SelectItem value="HOD">Head of Department (HOD)</SelectItem>
                     <SelectItem value="Professor">Professor</SelectItem>
                     <SelectItem value="Associate Professor">Associate Professor</SelectItem>
                     <SelectItem value="Assistant Professor">Assistant Professor</SelectItem>
                     <SelectItem value="Lecturer">Lecturer</SelectItem>
+                    <SelectItem value="Lab Assistant">Lab Assistant</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -193,7 +268,10 @@ export function UserFormModal({ open, onClose, onSave, type, initialData, mode }
                   <SelectContent className="bg-popover">
                     <SelectItem value="executive">Executive</SelectItem>
                     <SelectItem value="academic">Academic Admin</SelectItem>
-                    <SelectItem value="faculty_admin">Faculty Admin</SelectItem>
+                    <SelectItem value="exam_cell_admin">Exam Cell Admin</SelectItem>
+                    <SelectItem value="placement_cell_admin">Placement Cell Admin</SelectItem>
+                    <SelectItem value="research_development_admin">Research & Development Admin</SelectItem>
+                    <SelectItem value="department-admin">Department Admin</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

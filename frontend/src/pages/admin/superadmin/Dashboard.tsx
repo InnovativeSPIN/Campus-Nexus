@@ -1,7 +1,15 @@
 import { AdminLayout } from '@/pages/admin/superadmin/components/layout/AdminLayout';
 import { StatsCard } from '@/pages/admin/superadmin/components/dashboard/StatsCard';
 import { dashboardStats, mockStudents, mockFaculty } from '@/data/mockData';
-import { Users, GraduationCap, Building2, BookOpen, TrendingUp, Clock } from 'lucide-react';
+import {
+  Users,
+  GraduationCap,
+  Building2,
+  BookOpen,
+  Clock,
+  Bell,
+  ShieldCheck
+} from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/pages/admin/superadmin/components/ui/card';
 import { Badge } from '@/pages/admin/superadmin/components/ui/badge';
 
@@ -12,9 +20,11 @@ export default function SuperAdminDashboard() {
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Dashboard Overview</h1>
-          <p className="text-muted-foreground">Welcome back! Here's what's happening today.</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Dashboard Overview</h1>
+            <p className="text-muted-foreground">Welcome back! Here's what's happening today.</p>
+          </div>
         </div>
 
         {/* Stats Grid */}
@@ -45,39 +55,29 @@ export default function SuperAdminDashboard() {
           />
         </div>
 
-        {/* Performance Cards */}
-        <div className="grid gap-4 md:grid-cols-2">
-          <Card className="border-border">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Graduation Rate
+        {/* System Alerts */}
+        <div className="grid gap-6 lg:grid-cols-4">
+          <Card className="lg:col-span-4 border-border">
+            <CardHeader className="py-3">
+              <CardTitle className="text-foreground flex items-center gap-2 text-sm uppercase font-black">
+                <Bell className="h-4 w-4 text-secondary" />
+                System Alerts
               </CardTitle>
-              <TrendingUp className="h-4 w-4 text-success" />
             </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-foreground">{dashboardStats.graduationRate}%</div>
-              <div className="mt-2 h-2 rounded-full bg-muted">
-                <div
-                  className="h-2 rounded-full bg-success"
-                  style={{ width: `${dashboardStats.graduationRate}%` }}
-                />
+            <CardContent className="grid md:grid-cols-2 gap-4">
+              <div className="flex gap-3 text-sm p-3 rounded-lg bg-orange-500/5 border border-orange-500/10 items-center">
+                <Clock className="h-4 w-4 text-orange-500 shrink-0" />
+                <div>
+                  <p className="font-bold text-foreground">Backup Reminder</p>
+                  <p className="text-xs text-muted-foreground">Last backup was 3 days ago.</p>
+                </div>
               </div>
-            </CardContent>
-          </Card>
-          <Card className="border-border">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Attendance Rate
-              </CardTitle>
-              <Clock className="h-4 w-4 text-secondary" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-foreground">{dashboardStats.attendanceRate}%</div>
-              <div className="mt-2 h-2 rounded-full bg-muted">
-                <div
-                  className="h-2 rounded-full bg-secondary"
-                  style={{ width: `${dashboardStats.attendanceRate}%` }}
-                />
+              <div className="flex gap-3 text-sm p-3 rounded-lg bg-success/5 border border-success/10 items-center">
+                <ShieldCheck className="h-4 w-4 text-success shrink-0" />
+                <div>
+                  <p className="font-bold text-foreground">Security Patch</p>
+                  <p className="text-xs text-muted-foreground">System is up to date.</p>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -95,7 +95,7 @@ export default function SuperAdminDashboard() {
                   <div key={student.id} className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary font-medium">
-                        {student.name.split(' ').map((n) => n[0]).join('')}
+                        {student.name.split(' ').map((n) => (n[0])).join('')}
                       </div>
                       <div>
                         <p className="font-medium text-foreground">{student.name}</p>
@@ -124,7 +124,7 @@ export default function SuperAdminDashboard() {
                   <div key={faculty.id} className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary/10 text-secondary font-medium">
-                        {faculty.name.split(' ').map((n) => n[0]).join('')}
+                        {faculty.name.split(' ').map((n) => (n[0])).join('')}
                       </div>
                       <div>
                         <p className="font-medium text-foreground">{faculty.name}</p>

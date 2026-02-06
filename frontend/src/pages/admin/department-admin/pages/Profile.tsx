@@ -1,6 +1,7 @@
-﻿import { useState, useRef } from "react";
+﻿import { useState, useRef, useEffect } from "react";
 import { toast } from "@/pages/admin/department-admin/hooks/use-toast";
 import { MainLayout } from "@/pages/admin/department-admin/components/layout/MainLayout";
+import { useAuth } from "@/contexts/AuthContext";
 import { motion } from "framer-motion";
 import { Button } from "@/pages/admin/department-admin/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/pages/admin/department-admin/components/ui/tabs";
@@ -227,10 +228,30 @@ const initialResearchData = {
 };
 
 export default function Profile() {
+  const { user, updateUserData } = useAuth();
   const [selectedEventCategory, setSelectedEventCategory] = useState<keyof typeof initialEventsData>("Resource Person");
   const [selectedResearchCategory, setSelectedResearchCategory] = useState<keyof typeof initialResearchData>("Conference");
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [facultyData, setFacultyData] = useState(initialFacultyData);
+
+  const [facultyData, setFacultyData] = useState({
+    ...initialFacultyData,
+    name: user?.name || initialFacultyData.name,
+    email: user?.email || initialFacultyData.email,
+    profilePhoto: user?.avatar || initialFacultyData.profilePhoto,
+    department: user?.department || initialFacultyData.department
+  });
+
+  useEffect(() => {
+    if (user) {
+      setFacultyData(prev => ({
+        ...prev,
+        name: user.name || prev.name,
+        email: user.email || prev.email,
+        profilePhoto: user.avatar || prev.profilePhoto,
+        department: user.department || prev.department
+      }));
+    }
+  }, [user]);
 
   // Events and Research states
   const [eventsData, setEventsData] = useState(initialEventsData);
@@ -330,6 +351,58 @@ export default function Profile() {
     setFieldError("");
   };
 
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || !e.target.files[0]) return;
+
+    const file = e.target.files[0];
+    const formData = new FormData();
+    formData.append('file', file);
+
+    setLoading(true);
+    try {
+      const token = (user as any)?.token || localStorage.getItem('token');
+      const response = await fetch('/api/v1/auth/avatar', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        const avatarUrl = result.data;
+        // Update local state
+        setFacultyData((prev) => ({
+          ...prev,
+          profilePhoto: avatarUrl,
+        }));
+        // Update global auth state
+        updateUserData({ avatar: avatarUrl });
+
+        toast({
+          title: 'Photo updated',
+          description: 'Your profile photo has been updated successfully.'
+        });
+      } else {
+        toast({
+          title: 'Upload failed',
+          description: result.error || 'Could not upload photo',
+          variant: 'destructive'
+        });
+      }
+    } catch (error) {
+      console.error('Error uploading avatar:', error);
+      toast({
+        title: 'Error',
+        description: 'An error occurred while uploading photo.',
+        variant: 'destructive'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSaveField = async (field: string) => {
     // Validate based on field type
     if (field === "email") {
@@ -342,29 +415,59 @@ export default function Profile() {
         setFieldError("Invalid phone number");
         return;
       }
-    } else if (field === "address") {
+    } else if (field === "address" || field === "name" || field === "profilePhoto") {
       if (tempValue.trim().length === 0) {
-        setFieldError("Address cannot be empty");
+        setFieldError(`${field} cannot be empty`);
         return;
       }
     }
 
     setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      setFacultyData((prev) => ({
-        ...prev,
-        [field]: tempValue,
-      }));
-      setEditingField(null);
-      setTempValue("");
-      setFieldError("");
-      setLoading(false);
-      toast({
-        title: 'Profile updated',
-        description: `Your ${field} has been updated successfully.`
+    try {
+      const token = (user as any)?.token || localStorage.getItem('token');
+      const response = await fetch('/api/v1/auth/updatedetails', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ [field === 'profilePhoto' ? 'avatar' : field]: tempValue })
       });
-    }, 1000);
+
+      const result = await response.json();
+      if (result.success) {
+        // Update local state
+        setFacultyData((prev) => ({
+          ...prev,
+          [field]: tempValue,
+        }));
+        // Update global auth state
+        updateUserData({ [field === 'profilePhoto' ? 'avatar' : field]: tempValue });
+
+        setEditingField(null);
+        setTempValue("");
+        setFieldError("");
+        toast({
+          title: 'Profile updated',
+          description: `Your ${field} has been updated successfully.`
+        });
+      } else {
+        toast({
+          title: 'Update failed',
+          description: result.error || 'Could not update profile',
+          variant: 'destructive'
+        });
+      }
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      toast({
+        title: 'Error',
+        description: 'An error occurred while updating profile.',
+        variant: 'destructive'
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Education handlers
@@ -987,15 +1090,59 @@ export default function Profile() {
           transition={{ delay: 0.1 }}
           className="widget-card lg:col-span-1"
         >
-          <div className="text-center">
-            <div className="w-32 h-32 mx-auto rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center mb-4">
+          <div className="text-center relative group">
+            <input
+              type="file"
+              ref={fileInputRef}
+              className="hidden"
+              accept="image/*"
+              onChange={handleAvatarUpload}
+            />
+            <div className="w-32 h-32 mx-auto rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center mb-4 relative overflow-hidden">
               <img
                 src={facultyData.profilePhoto || "/src/assets/prathap.png"}
                 alt={facultyData.name}
                 className="w-32 h-32 rounded-full object-cover border-2 border-white"
               />
+              <div
+                className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <Edit2 className="w-6 h-6 text-white" />
+              </div>
+              {loading && editingField === null && (
+                <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                </div>
+              )}
             </div>
-            <h2 className="font-serif text-xl font-bold text-foreground">{facultyData.name}</h2>
+
+            {editingField === "name" ? (
+              <div className="mb-2">
+                <input
+                  type="text"
+                  value={tempValue}
+                  onChange={(e) => setTempValue(e.target.value)}
+                  className="input input-bordered w-full text-center font-bold"
+                  autoFocus
+                />
+                <div className="flex gap-2 justify-center mt-2">
+                  <Button size="sm" onClick={() => handleSaveField("name")} disabled={loading}>Save</Button>
+                  <Button size="sm" variant="outline" onClick={handleCancelEdit}>Cancel</Button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center gap-2 group/name">
+                <h2 className="font-serif text-xl font-bold text-foreground">{facultyData.name}</h2>
+                <button
+                  onClick={() => handleEditField("name", facultyData.name)}
+                  className="opacity-0 group-hover/name:opacity-100 transition p-1"
+                >
+                  <Edit2 className="w-3 h-3 text-muted-foreground" />
+                </button>
+              </div>
+            )}
+
             <p className="text-secondary font-medium">{facultyData.designation}</p>
             <p className="text-sm text-muted-foreground mt-1">{facultyData.department}</p>
             <div className="mt-4 p-3 bg-muted rounded-lg">
