@@ -22,6 +22,8 @@ import {
   Users,
   Target,
   Star,
+  Linkedin,
+  Globe,
   Edit2,
   Check,
   X,
@@ -79,13 +81,15 @@ const initialFacultyData = {
   coeId: "COE-789012",
   designation: "Assistant Professor",
   department: "Artificial Intelligence and Data Science",
-  college: "Nadar Saraswathi College of Engineering & Technology",
+  collegeCode: "NS20T11",
+  orcidId: "0000-0001-5391-3610",
   dateOfBirth: "24.10.1995",
   age: 29,
   dateOfJoining: "01.09.2023",
   email: "Velvinojagan@gmail.com",
   phone: "+91 8072435849",
   address: "Vadapudupatti, Theni 625531",
+  linkedinUrl: "https://www.linkedin.com/in/prathap/",
   profilePhoto: "",
 };
 
@@ -1023,10 +1027,16 @@ export default function Profile() {
               <Building className="w-4 h-4 text-primary flex-shrink-0" />
               <span className="text-muted-foreground line-clamp-2">COE ID: {facultyData.coeId}</span>
             </div>
-            {/* College Name */}
+            {/* College Code */}
             <div className="flex items-center gap-3 text-sm">
               <Building className="w-4 h-4 text-primary flex-shrink-0" />
-              <span className="text-muted-foreground line-clamp-2">{facultyData.college}</span>
+              <span className="text-muted-foreground line-clamp-2">Faculty Code: {facultyData.collegeCode}</span>
+            </div>
+
+            {/* ORCID ID */}
+            <div className="flex items-center gap-3 text-sm">
+              <Globe className="w-4 h-4 text-primary flex-shrink-0" />
+              <span className="text-muted-foreground line-clamp-2">ORCID ID: {facultyData.orcidId}</span>
             </div>
 
             {/* DOB & Age */}
@@ -1039,155 +1049,34 @@ export default function Profile() {
             {/* Date of Joining */}
             <div className="flex items-center gap-3 text-sm">
               <Briefcase className="w-4 h-4 text-primary flex-shrink-0" />
-              <span className="text-muted-foreground">Joined:</span>
+              <span className="text-muted-foreground">Date of Joined:</span>
               <span className="font-medium">{facultyData.dateOfJoining}</span>
             </div>
 
-            {/* Email - Individual Edit */}
+            {/* LinkedIn URL */}
+            <div className="flex items-center gap-3 text-sm">
+              <Linkedin className="w-4 h-4 text-primary flex-shrink-0" />
+              <a href={facultyData.linkedinUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline font-medium">
+                {facultyData.linkedinUrl}
+              </a>
+            </div>
+
+            {/* Email */}
             <div className="flex items-start gap-3 text-sm">
               <Mail className="w-4 h-4 text-primary flex-shrink-0 mt-1" />
-              <div className="flex-1">
-                {editingField === "email" ? (
-                  <div className="space-y-2">
-                    <input
-                      type="email"
-                      value={tempValue}
-                      onChange={(e) => setTempValue(e.target.value)}
-                      className="input input-bordered w-full text-sm"
-                      disabled={loading}
-                      autoFocus
-                    />
-                    {fieldError && <span className="text-xs text-red-500">{fieldError}</span>}
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleSaveField("email")}
-                        disabled={loading}
-                        className="p-1 hover:bg-green-100 rounded transition"
-                        title="Save"
-                      >
-                        <Check className="w-4 h-4 text-green-600" />
-                      </button>
-                      <button
-                        onClick={handleCancelEdit}
-                        disabled={loading}
-                        className="p-1 hover:bg-red-100 rounded transition"
-                        title="Cancel"
-                      >
-                        <X className="w-4 h-4 text-red-600" />
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="font-medium text-sm break-all">{facultyData.email}</span>
-                    <button
-                      onClick={() => handleEditField("email", facultyData.email)}
-                      className="p-1 hover:bg-muted rounded transition flex-shrink-0"
-                      title="Edit email"
-                    >
-                      <Edit2 className="w-3 h-3 text-muted-foreground" />
-                    </button>
-                  </div>
-                )}
-              </div>
+              <span className="font-medium text-sm break-all">{facultyData.email}</span>
             </div>
 
-            {/* Phone - Individual Edit */}
+            {/* Phone */}
             <div className="flex items-start gap-3 text-sm">
               <Phone className="w-4 h-4 text-primary flex-shrink-0 mt-1" />
-              <div className="flex-1">
-                {editingField === "phone" ? (
-                  <div className="space-y-2">
-                    <input
-                      type="tel"
-                      value={tempValue}
-                      onChange={(e) => setTempValue(e.target.value)}
-                      className="input input-bordered w-full text-sm"
-                      disabled={loading}
-                      autoFocus
-                    />
-                    {fieldError && <span className="text-xs text-red-500">{fieldError}</span>}
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleSaveField("phone")}
-                        disabled={loading}
-                        className="p-1 hover:bg-green-100 rounded transition"
-                        title="Save"
-                      >
-                        <Check className="w-4 h-4 text-green-600" />
-                      </button>
-                      <button
-                        onClick={handleCancelEdit}
-                        disabled={loading}
-                        className="p-1 hover:bg-red-100 rounded transition"
-                        title="Cancel"
-                      >
-                        <X className="w-4 h-4 text-red-600" />
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="font-medium">{facultyData.phone}</span>
-                    <button
-                      onClick={() => handleEditField("phone", facultyData.phone)}
-                      className="p-1 hover:bg-muted rounded transition flex-shrink-0"
-                      title="Edit phone"
-                    >
-                      <Edit2 className="w-3 h-3 text-muted-foreground" />
-                    </button>
-                  </div>
-                )}
-              </div>
+              <span className="font-medium">{facultyData.phone}</span>
             </div>
 
-            {/* Address - Individual Edit */}
+            {/* Address */}
             <div className="flex items-start gap-3 text-sm">
               <MapPin className="w-4 h-4 text-primary flex-shrink-0 mt-1" />
-              <div className="flex-1">
-                {editingField === "address" ? (
-                  <div className="space-y-2">
-                    <input
-                      type="text"
-                      value={tempValue}
-                      onChange={(e) => setTempValue(e.target.value)}
-                      className="input input-bordered w-full text-sm"
-                      disabled={loading}
-                      autoFocus
-                    />
-                    {fieldError && <span className="text-xs text-red-500">{fieldError}</span>}
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleSaveField("address")}
-                        disabled={loading}
-                        className="p-1 hover:bg-green-100 rounded transition"
-                        title="Save"
-                      >
-                        <Check className="w-4 h-4 text-green-600" />
-                      </button>
-                      <button
-                        onClick={handleCancelEdit}
-                        disabled={loading}
-                        className="p-1 hover:bg-red-100 rounded transition"
-                        title="Cancel"
-                      >
-                        <X className="w-4 h-4 text-red-600" />
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="font-medium text-sm">{facultyData.address}</span>
-                    <button
-                      onClick={() => handleEditField("address", facultyData.address)}
-                      className="p-1 hover:bg-muted rounded transition flex-shrink-0"
-                      title="Edit address"
-                    >
-                      <Edit2 className="w-3 h-3 text-muted-foreground" />
-                    </button>
-                  </div>
-                )}
-              </div>
+              <span className="font-medium text-sm">{facultyData.address}</span>
             </div>
           </div>
 
