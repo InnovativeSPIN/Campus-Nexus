@@ -29,6 +29,10 @@ export const protect = asyncHandler(async (req, res, next) => {
 
     req.user = await User.findById(decoded.id);
 
+    if (!req.user) {
+      return next(new ErrorResponse('Not authorized to access this route', 401));
+    }
+
     next();
   } catch (err) {
     return next(new ErrorResponse('Not authorized to access this route', 401));
@@ -38,7 +42,21 @@ export const protect = asyncHandler(async (req, res, next) => {
 // Grant access to specific roles
 export const authorize = (...roles) => {
   return (req, res, next) => {
-    if (!roles.includes(req.user.role)) {
+    if (!req.user || !req.user.role) {
+      return next(new ErrorResponse('Not authorized to access this route', 401));
+    }
+
+    // Normalize user role: trim, lowercase, and treat 'super-admin' as 'superadmin'
+    const userRole = req.user.role.trim().toLowerCase();
+    const normalizedUserRole = userRole === 'super-admin' ? 'superadmin' : userRole;
+
+    // Normalize allowed roles similarly
+    const normalizedRoles = roles.map(role => {
+      const r = role.trim().toLowerCase();
+      return r === 'super-admin' ? 'superadmin' : r;
+    });
+
+    if (!normalizedRoles.includes(normalizedUserRole)) {
       return next(
         new ErrorResponse(
           `User role ${req.user.role} is not authorized to access this route`,
