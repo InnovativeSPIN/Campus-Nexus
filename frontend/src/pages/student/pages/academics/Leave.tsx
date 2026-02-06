@@ -44,7 +44,7 @@ const initialLeaveRequests: LeaveRequest[] = [
     reason: 'Family emergency',
     days: 3,
     type: 'Personal',
-    recipient: 'HOD',
+    recipient: 'Class Incharge',
     status: 'pending',
     submittedOn: '2024-02-18',
   },
@@ -126,7 +126,7 @@ export default function Leave() {
     setLeaveRequests([newRequest, ...leaveRequests]);
     toast({
       title: 'Leave Request Submitted',
-      description: `Your leave request for ${days} days has been submitted to ${formData.recipient}.`,
+      description: `Your leave request for ${days} days has been submitted to Class Incharge.`,
     });
 
     closeModal();
