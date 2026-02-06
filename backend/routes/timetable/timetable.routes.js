@@ -28,7 +28,7 @@ router.get('/today', getTodaySchedule);
 // Period configuration routes
 router.route('/config/periods')
   .get(getPeriodConfigs)
-  .post(authorize('superadmin', 'executiveadmin', 'academicadmin'), createPeriodConfig);
+  .post(authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin'), createPeriodConfig);
 
 // Get timetable by class or faculty
 router.get('/class/:classId', getTimetableByClass);
@@ -37,19 +37,19 @@ router.get('/faculty/:facultyId', getTimetableByFaculty);
 // Main timetable routes
 router.route('/')
   .get(getAllTimetables)
-  .post(authorize('superadmin', 'executiveadmin', 'academicadmin'), createTimetable);
+  .post(authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin'), createTimetable);
 
 router.route('/:id')
   .get(getTimetable)
-  .put(authorize('superadmin', 'executiveadmin', 'academicadmin'), updateTimetable)
-  .delete(authorize('superadmin', 'executiveadmin', 'academicadmin'), deleteTimetable);
+  .put(authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin'), updateTimetable)
+  .delete(authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin'), deleteTimetable);
 
 // Slot management routes
 router.route('/:id/slots')
-  .post(authorize('superadmin', 'executiveadmin', 'academicadmin'), addSlot);
+  .post(authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin'), addSlot);
 
 router.route('/:id/slots/:slotId')
-  .put(authorize('superadmin', 'executiveadmin', 'academicadmin'), updateSlot)
-  .delete(authorize('superadmin', 'executiveadmin', 'academicadmin'), removeSlot);
+  .put(authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin'), updateSlot)
+  .delete(authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin'), removeSlot);
 
 export default router;

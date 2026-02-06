@@ -25,7 +25,7 @@ router.get('/balance', getLeaveBalance);
 router.put('/:id/cancel', cancelLeave);
 
 // Admin routes
-router.get('/pending-count', authorize('superadmin', 'executiveadmin', 'academicadmin'), getPendingCount);
+router.get('/pending-count', authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin'), getPendingCount);
 
 // Main routes
 router.route('/')
@@ -35,8 +35,8 @@ router.route('/')
 router.route('/:id')
   .get(getLeave)
   .put(updateLeave)
-  .delete(authorize('superadmin', 'executiveadmin', 'academicadmin'), deleteLeave);
+  .delete(authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin'), deleteLeave);
 
-router.put('/:id/status', authorize('superadmin', 'executiveadmin', 'academicadmin'), updateLeaveStatus);
+router.put('/:id/status', authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin'), updateLeaveStatus);
 
 export default router;

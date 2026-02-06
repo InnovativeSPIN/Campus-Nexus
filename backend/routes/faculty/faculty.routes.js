@@ -23,21 +23,21 @@ router.use(protect);
 // Faculty can access their own profile
 router.get('/me/profile', authorize('faculty'), getMyProfile);
 // Route to download profile as DOCX
-router.post('/download-profile', authorize('faculty', 'superadmin', 'executiveadmin', 'academicadmin'), handleDownloadProfile);
+router.post('/download-profile', authorize('faculty', 'superadmin', 'super-admin', 'executiveadmin', 'academicadmin'), handleDownloadProfile);
 
 // Routes for admin
 router.route('/')
-  .get(authorize('superadmin', 'executiveadmin', 'academicadmin', 'faculty'), getAllFaculty)
-  .post(authorize('superadmin', 'executiveadmin', 'academicadmin'), createFaculty);
+  .get(authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin', 'faculty'), getAllFaculty)
+  .post(authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin'), createFaculty);
 
 router.route('/:id')
-  .get(authorize('superadmin', 'executiveadmin', 'academicadmin', 'faculty'), getFaculty)
-  .put(authorize('superadmin', 'executiveadmin', 'academicadmin'), updateFaculty)
-  .delete(authorize('superadmin'), deleteFaculty);
+  .get(authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin', 'faculty'), getFaculty)
+  .put(authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin'), updateFaculty)
+  .delete(authorize('superadmin', 'super-admin'), deleteFaculty);
 
-router.get('/department/:departmentId', authorize('superadmin', 'executiveadmin', 'academicadmin'), getFacultyByDepartment);
-router.put('/:id/subjects', authorize('superadmin', 'executiveadmin', 'academicadmin'), assignSubjects);
-router.put('/:id/classes', authorize('superadmin', 'executiveadmin', 'academicadmin'), assignClasses);
-router.put('/:id/status', authorize('superadmin', 'executiveadmin', 'academicadmin'), updateFacultyStatus);
+router.get('/department/:departmentId', authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin'), getFacultyByDepartment);
+router.put('/:id/subjects', authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin'), assignSubjects);
+router.put('/:id/classes', authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin'), assignClasses);
+router.put('/:id/status', authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin'), updateFacultyStatus);
 
 export default router;

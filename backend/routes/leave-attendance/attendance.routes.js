@@ -24,25 +24,25 @@ router.use(protect);
 router.get('/my-attendance', authorize('student'), getMyAttendance);
 
 // Stats route
-router.get('/stats', authorize('superadmin', 'executiveadmin', 'academicadmin'), getAttendanceStats);
+router.get('/stats', authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin'), getAttendanceStats);
 
 // Class and student attendance routes
-router.get('/class/:classId', authorize('superadmin', 'executiveadmin', 'academicadmin', 'faculty'), getAttendanceByClass);
-router.get('/student/:studentId', authorize('superadmin', 'executiveadmin', 'academicadmin', 'faculty', 'student'), getStudentAttendance);
+router.get('/class/:classId', authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin', 'faculty'), getAttendanceByClass);
+router.get('/student/:studentId', authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin', 'faculty', 'student'), getStudentAttendance);
 
 // Faculty attendance routes
 router.route('/faculty')
-  .post(authorize('superadmin', 'executiveadmin', 'academicadmin'), markFacultyAttendance);
-router.get('/faculty/:facultyId', authorize('superadmin', 'executiveadmin', 'academicadmin', 'faculty'), getFacultyAttendance);
+  .post(authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin'), markFacultyAttendance);
+router.get('/faculty/:facultyId', authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin', 'faculty'), getFacultyAttendance);
 
 // Main routes
 router.route('/')
-  .get(authorize('superadmin', 'executiveadmin', 'academicadmin', 'faculty'), getAllAttendance)
-  .post(authorize('superadmin', 'executiveadmin', 'academicadmin', 'faculty'), markAttendance);
+  .get(authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin', 'faculty'), getAllAttendance)
+  .post(authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin', 'faculty'), markAttendance);
 
 router.route('/:id')
   .get(getAttendance)
-  .put(authorize('superadmin', 'executiveadmin', 'academicadmin', 'faculty'), updateAttendance)
-  .delete(authorize('superadmin', 'executiveadmin', 'academicadmin'), deleteAttendance);
+  .put(authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin', 'faculty'), updateAttendance)
+  .delete(authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin'), deleteAttendance);
 
 export default router;
