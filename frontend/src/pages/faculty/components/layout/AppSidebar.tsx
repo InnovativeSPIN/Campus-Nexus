@@ -36,11 +36,15 @@ export function AppSidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
 
   const handleLogout = () => {
     logout();
     navigate('/login');
+  };
+
+  const getInitials = (name: string) => {
+    return name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'F';
   };
 
   return (
@@ -53,7 +57,6 @@ export function AppSidebar() {
       {/* Logo Section */}
       <div className="p-4 border-b border-sidebar-border">
         <div className="flex items-center gap-3">
-          {/* Removed GraduationCap icon */}
           <AnimatePresence>
             {!collapsed && (
               <motion.div
@@ -62,32 +65,30 @@ export function AppSidebar() {
                 exit={{ opacity: 0, width: 0 }}
                 className="overflow-hidden flex items-center"
               >
-                {/* Faculty Photo */}
+                {/* User Photo */}
                 <img
-                  src="/src/assets/prathap.png"
-                  alt="C.Prathap"
+                  src={user?.avatar || "/src/assets/prathap.png"}
+                  alt={user?.name}
                   className="w-12 h-12 rounded-full object-cover border-2 border-white"
                   onError={(e) => {
-                    // Fallback to initials if image fails to load
                     e.currentTarget.style.display = 'none';
                     e.currentTarget.nextElementSibling?.classList.remove('hidden');
                   }}
                 />
                 <div className="hidden w-12 h-12 rounded-full bg-gradient-to-br from-sidebar-accent to-secondary flex items-center justify-center flex-shrink-0 text-white font-bold text-sm border-2 border-white">
-                  CP
+                  {getInitials(user?.name || 'F')}
                 </div>
                 {/* Name and Role */}
                 <div className="flex flex-col ml-3">
                   <span className="font-serif font-bold text-white text-lg whitespace-nowrap">
-                    C.Prathap
+                    {user?.name || 'Faculty'}
                   </span>
-                  <span className="text-xs text-white/70 whitespace-nowrap mt-1">
-                    Assistant Professor
+                  <span className="text-[10px] text-white/70 uppercase tracking-widest font-semibold mt-1">
+                    {user?.role?.replace('-', ' ') || 'Assistant Professor'}
                   </span>
-                  <span className="text-xs text-white/70 whitespace-nowrap mt-1">
-                    Department of AI & DS
+                  <span className="text-[10px] text-white/50 uppercase tracking-wider">
+                    {user?.department || 'Department'}
                   </span>
-
                 </div>
               </motion.div>
             )}

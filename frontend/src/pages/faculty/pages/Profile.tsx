@@ -1,4 +1,5 @@
-﻿import { useState, useRef } from "react";
+﻿import { useState, useRef, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/pages/faculty/hooks/use-toast";
 import { MainLayout } from "@/pages/faculty/components/layout/MainLayout";
 import { motion } from "framer-motion";
@@ -232,10 +233,27 @@ const initialResearchData = {
 };
 
 export default function Profile() {
+  const { user, updateUserData } = useAuth();
   const [selectedEventCategory, setSelectedEventCategory] = useState<keyof typeof initialEventsData>("Resource Person");
   const [selectedResearchCategory, setSelectedResearchCategory] = useState<keyof typeof initialResearchData>("Conference");
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [facultyData, setFacultyData] = useState(initialFacultyData);
+  const [facultyData, setFacultyData] = useState({
+    ...initialFacultyData,
+    name: user?.name || initialFacultyData.name,
+    email: user?.email || initialFacultyData.email,
+    profilePhoto: user?.avatar || initialFacultyData.profilePhoto
+  });
+
+  useEffect(() => {
+    if (user) {
+      setFacultyData(prev => ({
+        ...prev,
+        name: user.name || prev.name,
+        email: user.email || prev.email,
+        profilePhoto: user.avatar || prev.profilePhoto
+      }));
+    }
+  }, [user]);
 
   // Events and Research states
   const [eventsData, setEventsData] = useState(initialEventsData);
@@ -905,11 +923,42 @@ export default function Profile() {
     }
   };
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (files && files.length > 0) {
       const file = files[0];
-      console.log("File selected:", file.name, file.size, file.type);
+
+      try {
+        setLoading(true);
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const response = await fetch('/api/v1/auth/avatar', {
+          method: 'POST',
+          body: formData,
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          updateUserData({ avatar: result.data });
+          toast({
+            title: 'Success',
+            description: 'Profile photo updated successfully.'
+          });
+        } else {
+          throw new Error(result.message || 'Upload failed');
+        }
+      } catch (error) {
+        console.error('Upload error:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to upload profile photo.',
+          variant: 'destructive'
+        });
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -993,11 +1042,26 @@ export default function Profile() {
           className="widget-card lg:col-span-1"
         >
           <div className="text-center">
-            <div className="w-32 h-32 mx-auto rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center mb-4">
-              <img
-                src={facultyData.profilePhoto || "/src/assets/prathap.png"}
-                alt={facultyData.name}
-                className="w-32 h-32 rounded-full object-cover border-2 border-white"
+            <div className="relative w-32 h-32 mx-auto mb-4 group">
+              <div className="w-32 h-32 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center overflow-hidden border-4 border-white shadow-lg">
+                <img
+                  src={user?.avatar || "/src/assets/prathap.png"}
+                  alt={facultyData.name}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+              >
+                <Edit2 className="w-6 h-6 text-white" />
+              </button>
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileUpload}
+                accept="image/*"
+                className="hidden"
               />
             </div>
             <h2 className="font-serif text-xl font-bold text-foreground">{facultyData.name}</h2>
