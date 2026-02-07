@@ -87,8 +87,20 @@ export default function Login() {
             <p className="mt-2 text-muted-foreground text-sm">
               Select your role and enter your default credentials.
             </p>
-            <div className="mt-2 p-2 bg-primary/5 border border-primary/10 rounded-lg text-[10px] text-muted-foreground">
-              <p><span className="font-semibold">Student Dummy:</span> student@nscet.com / student123</p>
+            <div className="mt-2 p-3 bg-primary/5 border border-primary/10 rounded-lg text-[10px] space-y-1 text-muted-foreground">
+              <p><span className="font-semibold text-primary italic">Note: Select the corresponding role below</span></p>
+              <div className="grid grid-cols-2 gap-2 mt-1">
+                <div>
+                  <p className="font-semibold text-primary">Student:</p>
+                  <p>User: student@nscet.org</p>
+                  <p>Pass: student123</p>
+                </div>
+                <div>
+                  <p className="font-semibold text-primary">Faculty:</p>
+                  <p>User: faculty@nscet.org</p>
+                  <p>Pass: password123</p>
+                </div>
+              </div>
             </div>
           </div>
 

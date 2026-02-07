@@ -28,6 +28,8 @@ import {
   X,
   Trash2,
   Plus,
+  Linkedin,
+  Globe,
 } from "lucide-react";
 
 // Types for Profile Data
@@ -87,6 +89,8 @@ const initialFacultyData = {
   email: "Velvinojagan@gmail.com",
   phone: "+91 8072435849",
   address: "Vadapudupatti, Theni 625531",
+  orcidId: "0000-0001-5391-3610",
+  linkedinUrl: "https://www.linkedin.com/in/prathap/",
   profilePhoto: "",
 };
 
@@ -1170,10 +1174,25 @@ export default function Profile() {
               <Building className="w-4 h-4 text-primary flex-shrink-0" />
               <span className="text-muted-foreground line-clamp-2">COE ID: {facultyData.coeId}</span>
             </div>
-            {/* College Name */}
+            {/* ORCID ID */}
             <div className="flex items-center gap-3 text-sm">
-              <Building className="w-4 h-4 text-primary flex-shrink-0" />
-              <span className="text-muted-foreground line-clamp-2">{facultyData.college}</span>
+              <Globe className="w-4 h-4 text-primary flex-shrink-0" />
+              <span className="text-muted-foreground line-clamp-2">ORCID ID: {facultyData.orcidId}</span>
+            </div>
+
+            {/* LinkedIn URL */}
+            <div className="flex items-center gap-3 text-sm">
+              <div className="w-8 h-8 rounded-full bg-[#0077B5]/10 flex items-center justify-center flex-shrink-0">
+                <Linkedin className="w-4 h-4 text-[#0077B5]" />
+              </div>
+              <a
+                href={facultyData.linkedinUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:underline font-medium truncate"
+              >
+                LinkedIn Profile
+              </a>
             </div>
 
             {/* DOB & Age */}

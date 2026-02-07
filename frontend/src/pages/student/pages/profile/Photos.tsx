@@ -1,17 +1,24 @@
-﻿import { useState } from 'react';
+﻿import { useState, useEffect } from 'react';
 import PageHeader from '@/pages/student/components/layout/PageHeader';
 import SectionCard from '@/pages/student/components/common/SectionCard';
 import ProfileNavBar from '@/pages/student/components/layout/ProfileNavBar';
 import { Upload, Camera, Users, X, Check, Edit, Clock } from 'lucide-react';
 import { useToast } from '@/pages/student/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function Photos() {
   const { toast } = useToast();
-  const [studentPhoto, setStudentPhoto] = useState<string | null>(null);
+  const { user, updateUserData } = useAuth();
+  const [studentPhoto, setStudentPhoto] = useState<string | null>(user?.avatar || null);
   const [familyPhoto, setFamilyPhoto] = useState<string | null>(null);
   const [uploading, setUploading] = useState<'student' | 'family' | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [pendingRequest, setPendingRequest] = useState(false);
+
+  useEffect(() => {
+    if (user?.avatar) {
+      setStudentPhoto(user.avatar);
+    }
+  }, [user?.avatar]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, type: 'student' | 'family') => {
     const file = e.target.files?.[0];
@@ -38,26 +45,42 @@ export default function Photos() {
 
     setUploading(type);
 
-    // Read file and create preview
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-      // Simulate upload delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
 
-      if (type === 'student') {
-        setStudentPhoto(event.target?.result as string);
-      } else {
-        setFamilyPhoto(event.target?.result as string);
-      }
-
-      setUploading(null);
-      setPendingRequest(true);
-      toast({
-        title: 'Request Submitted',
-        description: 'Your photo has been submitted to faculty for approval.',
+      const response = await fetch('/api/v1/auth/avatar', {
+        method: 'POST',
+        body: formData,
       });
-    };
-    reader.readAsDataURL(file);
+
+      const result = await response.json();
+
+      if (result.success) {
+        if (type === 'student') {
+          setStudentPhoto(result.data);
+          updateUserData({ avatar: result.data });
+        } else {
+          setFamilyPhoto(result.data);
+        }
+
+        toast({
+          title: 'Photo Uploaded',
+          description: type === 'student' ? 'Your profile photo has been updated.' : 'Family photo uploaded successfully.',
+        });
+      } else {
+        throw new Error(result.message || 'Upload failed');
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast({
+        title: 'Upload Failed',
+        description: 'There was an error uploading your photo.',
+        variant: 'destructive',
+      });
+    } finally {
+      setUploading(null);
+    }
   };
 
   const removePhoto = (type: 'student' | 'family') => {
@@ -87,8 +110,7 @@ export default function Photos() {
       actions={
         <button
           onClick={() => setIsEditing(!isEditing)}
-          disabled={pendingRequest}
-          className="p-2 rounded-lg hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="p-2 rounded-lg hover:bg-muted transition-colors"
           title={isEditing ? 'Cancel' : 'Edit'}
         >
           {isEditing ? <X className="w-5 h-5" /> : <Edit className="w-5 h-5" />}
@@ -116,12 +138,12 @@ export default function Photos() {
                     accept="image/jpeg,image/png,image/webp"
                     className="hidden"
                     onChange={(e) => handleFileChange(e, type)}
-                    disabled={pendingRequest || uploading === type}
+                    disabled={uploading === type}
                   />
                 </label>
                 <button
                   onClick={() => removePhoto(type)}
-                  disabled={pendingRequest || uploading === type}
+                  disabled={uploading === type}
                   className="bg-destructive text-destructive-foreground px-3 py-2 rounded-lg hover:bg-destructive/90 transition-colors flex items-center gap-2 text-sm disabled:opacity-50"
                 >
                   <X className="w-4 h-4" />
@@ -144,7 +166,7 @@ export default function Photos() {
               accept="image/jpeg,image/png,image/webp"
               className="hidden"
               onChange={(e) => handleFileChange(e, type)}
-              disabled={pendingRequest || uploading === type}
+              disabled={uploading === type}
             />
           </label>
         )}
@@ -165,17 +187,6 @@ export default function Photos() {
 
       <ProfileNavBar />
 
-      {pendingRequest && (
-        <div className="flex items-start gap-3 p-4 rounded-lg bg-amber-50 border border-amber-200 mb-6">
-          <Clock className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" />
-          <div>
-            <h3 className="font-semibold text-amber-900">Change Request Pending</h3>
-            <p className="text-sm text-amber-800 mt-1">
-              Your photos have been submitted to faculty for approval. You cannot make new changes until they respond.
-            </p>
-          </div>
-        </div>
-      )}
 
       <div className="grid gap-6 sm:grid-cols-2">
         <PhotoUploadCard

@@ -3,24 +3,32 @@ import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Navbar from './Navbar';
 import { cn } from '@/pages/student/lib/utils';
+import { motion } from 'framer-motion';
 
 export default function MainLayout() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   return (
-    <div className="min-h-screen bg-background">
-      <Sidebar 
-        isCollapsed={isSidebarCollapsed} 
-        onToggle={() => setIsSidebarCollapsed(!isSidebarCollapsed)} 
+    <div className="min-h-screen bg-background flex">
+      <Sidebar
+        isCollapsed={isSidebarCollapsed}
+        onToggle={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
       />
+
       <div className={cn(
-        'transition-all duration-300',
-        isSidebarCollapsed ? 'ml-16' : 'ml-64'
+        'flex-1 transition-all duration-300 ease-in-out',
+        isSidebarCollapsed ? 'ml-20' : 'ml-[280px]'
       )}>
         <Navbar />
-        <main className="p-6">
+
+        <motion.main
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="p-6 lg:p-8 max-w-7xl mx-auto"
+        >
           <Outlet />
-        </main>
+        </motion.main>
       </div>
     </div>
   );

@@ -23,6 +23,53 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   });
 
   const login = async (email: string, password: string, role: UserRole): Promise<boolean> => {
+    // Dummy credentials for development
+    const trimmedEmail = email.trim().toLowerCase();
+    const trimmedPassword = password.trim();
+
+    console.log('Login attempt:', {
+      email: trimmedEmail,
+      password: trimmedPassword,
+      passwordLength: trimmedPassword.length,
+      role,
+      emailMatch: trimmedEmail === 'faculty@nscet.org',
+      passwordMatch: trimmedPassword === 'password123',
+      roleMatch: role === 'faculty'
+    });
+
+    if (role === 'faculty' && trimmedEmail === 'faculty@nscet.org' && trimmedPassword === 'password123') {
+      console.log('Faculty dummy login success');
+      const dummyFaculty = {
+        id: 'mock-faculty-id',
+        email: 'faculty@nscet.org',
+        name: 'C. Prathap',
+        role: 'faculty' as UserRole,
+        avatar: '',
+        department: 'Artificial Intelligence and Data Science'
+      };
+      setUser(dummyFaculty);
+      localStorage.setItem('eduvertex_user', JSON.stringify(dummyFaculty));
+      return true;
+    }
+
+    if (role === 'student' && trimmedEmail === 'student@nscet.org' && trimmedPassword === 'student123') {
+      console.log('Student dummy login success');
+      const dummyStudent = {
+        id: 'mock-student-id',
+        email: 'student@nscet.org',
+        name: 'Test Student',
+        role: 'student' as UserRole,
+        avatar: '',
+        department: 'Computer Science Engineering',
+        year: 3,
+        semester: 6,
+        rollNo: '21CS001'
+      };
+      setUser(dummyStudent);
+      localStorage.setItem('eduvertex_user', JSON.stringify(dummyStudent));
+      return true;
+    }
+
     try {
       const response = await fetch('/api/v1/auth/login', {
         method: 'POST',

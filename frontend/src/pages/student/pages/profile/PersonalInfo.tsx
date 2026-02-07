@@ -2,9 +2,11 @@
 import PageHeader from '@/pages/student/components/layout/PageHeader';
 import SectionCard from '@/pages/student/components/common/SectionCard';
 import ProfileNavBar from '@/pages/student/components/layout/ProfileNavBar';
-import { Save, X, Edit, Clock, Upload, User } from 'lucide-react';
+import { Save, X, Edit, Clock, Upload, User as UserIcon, Camera } from 'lucide-react';
 import { useToast } from '@/pages/student/hooks/use-toast';
 import { Button } from '@/pages/student/components/ui/button';
+import { useAuth } from '@/contexts/AuthContext';
+import { useRef } from 'react';
 
 /* -------------------- STATIC DATA (Mock API) -------------------- */
 
@@ -44,9 +46,11 @@ const basicInfoData = {
 
 export default function PersonalInfo() {
   const { toast } = useToast();
+  const { user, updateUserData } = useAuth();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const initialFormData = {
-    email: personalData.email,
+    email: user?.email || personalData.email,
     linkedinUrl: personalData.linkedinUrl,
     phone: personalData.phone,
     alternatePhone: personalData.alternatePhone,
@@ -162,6 +166,43 @@ export default function PersonalInfo() {
     });
   };
 
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setUploading(true);
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/v1/auth/avatar', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        updateUserData({ avatar: result.data });
+        toast({
+          title: 'Photo Uploaded',
+          description: 'Your profile photo has been updated successfully.',
+        });
+      } else {
+        throw new Error(result.message || 'Upload failed');
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast({
+        title: 'Upload Failed',
+        description: 'There was an error uploading your photo.',
+        variant: 'destructive',
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
+
   /* -------------------- UI -------------------- */
 
   return (
@@ -180,13 +221,36 @@ export default function PersonalInfo() {
       <div className="section-card p-6 mb-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-6">
-            <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
-              <User className="w-10 h-10 text-primary" />
+            <div className="relative group">
+              <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden border-2 border-primary/20 shadow-inner">
+                {user?.avatar ? (
+                  <img
+                    src={user.avatar}
+                    alt={user.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <UserIcon className="w-10 h-10 text-primary" />
+                )}
+              </div>
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+              >
+                <Camera className="w-6 h-6 text-white" />
+              </button>
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleAvatarUpload}
+                accept="image/*"
+                className="hidden"
+              />
             </div>
             <div>
-              <h2 className="text-xl font-bold">{basicInfoData.name}</h2>
-              <p className="text-muted-foreground">{basicInfoData.rollNo}</p>
-              <span className="badge badge-info mt-2">{basicInfoData.department}</span>
+              <h2 className="text-xl font-bold">{user?.name || basicInfoData.name}</h2>
+              <p className="text-muted-foreground">{user?.rollNo || basicInfoData.rollNo}</p>
+              <span className="badge badge-info mt-2">{user?.department || basicInfoData.department}</span>
             </div>
           </div>
 
