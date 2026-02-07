@@ -27,6 +27,22 @@ export const protect = asyncHandler(async (req, res, next) => {
     // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
+    // Handle dummy student access without DB
+    if (decoded.id === '507f1f77bcf86cd799439011') {
+      req.user = {
+        _id: '507f1f77bcf86cd799439011',
+        name: 'Dummy Student',
+        email: 'student@nscet.com',
+        role: 'student',
+        isActive: true,
+        department: 'Computer Science',
+        year: '3rd',
+        semester: '6th',
+        rollNo: 'NSC21CS001'
+      };
+      return next();
+    }
+
     req.user = await User.findById(decoded.id);
 
     if (!req.user) {
