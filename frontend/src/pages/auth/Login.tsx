@@ -84,9 +84,12 @@ export default function Login() {
 
           <div>
             <h2 className="text-2xl font-bold text-foreground">Sign in to your account</h2>
-            <p className="mt-2 text-muted-foreground">
-              Select your role and enter your default credentials
+            <p className="mt-2 text-muted-foreground text-sm">
+              Select your role and enter your default credentials.
             </p>
+            <div className="mt-2 p-2 bg-primary/5 border border-primary/10 rounded-lg text-[10px] text-muted-foreground">
+              <p><span className="font-semibold">Student Dummy:</span> student@nscet.com / student123</p>
+            </div>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
