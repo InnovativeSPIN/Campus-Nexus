@@ -16,6 +16,8 @@ import {
   ChevronRight,
   Users,
   LogOut,
+  GraduationCap,
+
 } from "lucide-react";
 import { cn } from "@/pages/admin/department-admin/lib/utils";
 
@@ -25,8 +27,9 @@ const menuItems = [
   { title: "Timetable", url: "/admin/department-admin/timetable", icon: Calendar },
   { title: "Attendance", url: "/admin/department-admin/attendance", icon: ClipboardCheck },
   { title: "Academics", url: "/admin/department-admin/academics", icon: BookOpen },
-  { title: "Leave Mangement", url: "/admin/department-admin/leave", icon: CalendarDays },
+  { title: "Leave Management", url: "/admin/department-admin/leave", icon: CalendarDays },
   { title: "Assessments", url: "/admin/department-admin/assessments", icon: FileText },
+  { title: "Mentorship", url: "/admin/department-admin/mentor", icon: GraduationCap },
   { title: "Counseling", url: "/admin/department-admin/counseling", icon: Users },
   { title: "Announcement", url: "/admin/department-admin/communication", icon: MessageSquare },
   { title: "Reports", url: "/admin/department-admin/reports", icon: BarChart3 },

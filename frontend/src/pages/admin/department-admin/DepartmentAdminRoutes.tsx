@@ -19,7 +19,7 @@ import { MentorDashboard } from "./pages/MentorDashboard";
 import { MenteesList } from "./pages/MenteesList";
 import { StudentProfileView } from "./pages/StudentProfileView";
 
-import './faculty.css';
+import './department-admin.css';
 
 const queryClient = new QueryClient();
 
@@ -30,7 +30,7 @@ const DepartmentAdminRoutes = () => (
         <TooltipProvider>
           <Toaster />
           <Sonner />
-          <div className="faculty-portal min-h-screen">
+          <div className="department-admin-portal min-h-screen">
             <Routes>
               <Route index element={<Navigate to="dashboard" replace />} />
               <Route path="dashboard" element={<Dashboard />} />

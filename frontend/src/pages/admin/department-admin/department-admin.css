@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 @layer base {
-  .faculty-portal {
+  .department-admin-portal {
     --background: 210 20% 98%;
     --foreground: 0 28% 25%;
 
@@ -48,7 +48,7 @@
     --sidebar-accent-foreground: 0 0% 100%;
   }
 
-  .faculty-portal {
+  .department-admin-portal {
     background: linear-gradient(135deg, #790c0c 0%, #01898d 50%, #790c0c 100%);
     background-attachment: fixed;
     --sidebar-border: 0 60% 22%;
@@ -108,6 +108,7 @@
     --sidebar-muted: 0 15% 40%;
   }
 }
+
 
 @layer base {
   * {

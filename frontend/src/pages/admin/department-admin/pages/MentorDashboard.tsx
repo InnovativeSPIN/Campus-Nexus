@@ -17,7 +17,7 @@ export function MentorDashboard() {
 
   const handleYearClick = (year: "2nd" | "3rd" | "Final") => {
     setSelectedYear(year);
-    navigate(`/faculty/mentor/${year.toLowerCase()}`);
+    navigate(`/admin/department-admin/mentor/${year.toLowerCase()}`);
   };
 
   return (
@@ -31,7 +31,7 @@ export function MentorDashboard() {
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          onClick={() => navigate("/faculty/dashboard")}
+          onClick={() => navigate("/admin/department-admin/dashboard")}
           className="flex items-center gap-2 text-white hover:text-gray-200 transition-colors"
         >
           <ArrowLeft size={20} />

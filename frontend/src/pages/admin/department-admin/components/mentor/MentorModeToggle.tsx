@@ -9,9 +9,9 @@ export function MentorModeToggle() {
   const handleToggle = () => {
     toggleMentorMode();
     if (!isMentorMode) {
-      navigate("/faculty/mentor");
+      navigate("/admin/department-admin/mentor");
     } else {
-      navigate("/faculty/dashboard");
+      navigate("/admin/department-admin/dashboard");
     }
   };
 
@@ -61,7 +61,7 @@ export function MentorModeToggle() {
           }`}
         animate={{ color: isMentorMode ? "#790c0c" : "#4b5563" }}
       >
-        {isMentorMode ? "Faculty Mode" : "Mentor Mode"}
+        {isMentorMode ? "HOD Mode" : "Mentor Mode"}
       </motion.span>
     </motion.div>
   );

@@ -17,6 +17,7 @@ import {
   ClipboardList,
 } from "lucide-react";
 import { cn } from "@/pages/faculty/lib/utils";
+import { InternalMarksEntry } from "./InternalMarksEntry";
 
 interface InvigilationDuty {
   id: string;
@@ -261,45 +262,7 @@ export default function Assessments() {
         </TabsContent>
 
         <TabsContent value="marks">
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="widget-card"
-          >
-            <h3 className="section-title flex items-center gap-2">
-              <ClipboardList className="w-5 h-5 text-primary" />
-              Internal Assessment Marks Entry
-            </h3>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Subject</label>
-                <Input placeholder="Select subject" />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Internal category</label>
-                <Input placeholder="select Internal I (or) II" />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Department</label>
-                <Input placeholder="CSE-" />
-              </div>
-               <div className="space-y-2">
-                <label className="text-sm font-medium">Select Year</label>
-                <Input placeholder="2025-2026" />
-              </div>
-            </div>
-
-            <div className="border-2 border-dashed border-border rounded-xl p-12 text-center">
-              <Users className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-              <p className="font-medium text-foreground mb-2">
-                Select subject and section to load students
-              </p>
-              <p className="text-sm text-muted-foreground">
-                Internal assessment marks can be entered for continuous evaluation
-              </p>
-            </div>
-          </motion.div>
+          <InternalMarksEntry />
         </TabsContent>
 
         <TabsContent value="evaluation">

@@ -4,18 +4,18 @@ import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 
 export function MenteesList() {
-  const { selectedYear, setSelectedStudent, getStudentsByYear } = useMentor();
+  const { setSelectedStudent, getStudentsByYear } = useMentor();
   const { year } = useParams<{ year: string }>();
   const navigate = useNavigate();
 
-  const yearValue = (year?.charAt(0).toUpperCase() + year?.slice(1)) as "2nd" | "3rd" | "Final" | undefined;
+  const yearValue = year ? (year.charAt(0).toUpperCase() + year.slice(1)) as "2nd" | "3rd" | "Final" : undefined;
   const students = yearValue ? getStudentsByYear(yearValue) : [];
 
   const handleStudentClick = (studentId: string) => {
     const student = students.find((s) => s.id === studentId);
     if (student) {
       setSelectedStudent(student);
-      navigate(`/faculty/mentor/student/${studentId}`);
+      navigate(`/admin/department-admin/mentor/student/${studentId}`);
     }
   };
 
@@ -30,7 +30,7 @@ export function MenteesList() {
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          onClick={() => navigate("/faculty/mentor")}
+          onClick={() => navigate("/admin/department-admin/mentor")}
           className="p-2 hover:bg-white rounded-lg transition-colors"
         >
           <ArrowLeft className="text-gray-700" size={24} />
