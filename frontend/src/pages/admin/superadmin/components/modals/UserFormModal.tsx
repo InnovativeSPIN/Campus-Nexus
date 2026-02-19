@@ -156,15 +156,65 @@ export function UserFormModal({ open, onClose, onSave, type, initialData, mode }
             )}
 
             {type === 'faculty' && (
-              <div className="space-y-2">
-                <Label htmlFor="employeeId">Employee ID</Label>
-                <Input
-                  id="employeeId"
-                  value={(formData as Faculty).employeeId || ''}
-                  onChange={(e) => updateField('employeeId', e.target.value)}
-                  required
-                />
-              </div>
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="orcidId">ORCID ID</Label>
+                  <Input
+                    id="orcidId"
+                    value={(formData as Faculty).orcidId || ''}
+                    onChange={(e) => updateField('orcidId', e.target.value)}
+                    placeholder="0000-0000-0000-0000"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="employeeId">Employee ID</Label>
+                  <Input
+                    id="employeeId"
+                    value={(formData as Faculty).employeeId || ''}
+                    onChange={(e) => updateField('employeeId', e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phdStatus">PhD Status</Label>
+                  <Select
+                    value={(formData as Faculty).phdStatus || ''}
+                    onValueChange={(value) => updateField('phdStatus', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select PhD status" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover">
+                      <SelectItem value="Completed">PhD Completed</SelectItem>
+                      <SelectItem value="Pursuing">PhD Pursuing</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="thesisTitle">Title of the thesis / Field of research</Label>
+                  <Input
+                    id="thesisTitle"
+                    value={(formData as Faculty).thesisTitle || ''}
+                    onChange={(e) => updateField('thesisTitle', e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="registerNo">Register No</Label>
+                  <Input
+                    id="registerNo"
+                    value={(formData as Faculty).registerNo || ''}
+                    onChange={(e) => updateField('registerNo', e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="guideName">Guide Name</Label>
+                  <Input
+                    id="guideName"
+                    value={(formData as Faculty).guideName || ''}
+                    onChange={(e) => updateField('guideName', e.target.value)}
+                  />
+                </div>
+              </>
             )}
 
             {(type !== 'admin' || (type === 'admin' && ((formData as Admin).role === 'academic' || (formData as Admin).role === 'department-admin'))) && (

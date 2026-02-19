@@ -90,6 +90,26 @@ const Faculty = sequelize.define('Faculty', {
   bankDetails: {
     type: DataTypes.JSON,
     allowNull: true
+  },
+  orcidId: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  phdStatus: {
+    type: DataTypes.ENUM('Completed', 'Pursuing'),
+    allowNull: true
+  },
+  thesisTitle: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  registerNo: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  guideName: {
+    type: DataTypes.STRING,
+    allowNull: true
   }
 }, {
   tableName: 'faculty',

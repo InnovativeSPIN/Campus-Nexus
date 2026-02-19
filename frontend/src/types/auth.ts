@@ -48,6 +48,11 @@ export interface Faculty {
 	joinDate: string;
 	status: 'active' | 'inactive';
 	avatar?: string;
+	orcidId?: string;
+	phdStatus?: 'Completed' | 'Pursuing';
+	thesisTitle?: string;
+	registerNo?: string;
+	guideName?: string;
 }
 
 export interface Admin {

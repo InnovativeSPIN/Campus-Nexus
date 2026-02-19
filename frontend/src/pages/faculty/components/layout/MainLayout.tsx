@@ -6,9 +6,10 @@ import { IntegratedNotificationBell } from "@/components/common/IntegratedNotifi
 
 interface MainLayoutProps {
   children: ReactNode;
+  hideHeader?: boolean;
 }
 
-export function MainLayout({ children }: MainLayoutProps) {
+export function MainLayout({ children, hideHeader = false }: MainLayoutProps) {
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
@@ -38,23 +39,25 @@ export function MainLayout({ children }: MainLayoutProps) {
       <AppSidebar />
       <div className="flex-1 ml-20 lg:ml-[280px] transition-all duration-300">
         {/* Header */}
-        <header className="sticky top-0 z-40 h-16 border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
-          <div className="flex h-full items-center justify-end px-6">
-            <div className="flex items-center gap-6">
-              <div className="hidden md:flex flex-col items-end border-r pr-6 border-border/50">
-                <div className="flex items-center gap-2 text-sm font-bold text-foreground font-serif">
-                  <Calendar className="w-4 h-4 text-primary" />
-                  {formatDate(currentTime)}
+        {!hideHeader && (
+          <header className="sticky top-0 z-40 h-16 border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
+            <div className="flex h-full items-center justify-end px-6">
+              <div className="flex items-center gap-6">
+                <div className="hidden md:flex flex-col items-end border-r pr-6 border-border/50">
+                  <div className="flex items-center gap-2 text-sm font-bold text-foreground font-serif">
+                    <Calendar className="w-4 h-4 text-primary" />
+                    {formatDate(currentTime)}
+                  </div>
+                  <div className="flex items-center gap-2 text-[11px] font-bold text-muted-foreground uppercase tracking-widest">
+                    <Clock className="w-3.5 h-3.5 text-secondary" />
+                    {formatTime(currentTime)}
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 text-[11px] font-bold text-muted-foreground uppercase tracking-widest">
-                  <Clock className="w-3.5 h-3.5 text-secondary" />
-                  {formatTime(currentTime)}
-                </div>
+                <IntegratedNotificationBell />
               </div>
-              <IntegratedNotificationBell />
             </div>
-          </div>
-        </header>
+          </header>
+        )}
 
         {/* Page content */}
         <motion.main

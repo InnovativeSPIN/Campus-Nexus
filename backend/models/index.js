@@ -16,6 +16,7 @@ import TimetableSlot from './TimetableSlot.model.js';
 import FacultySubject from './FacultySubject.model.js';
 import FacultyClass from './FacultyClass.model.js';
 import StudentSubject from './StudentSubject.model.js';
+import FacultyPhd from './FacultyPhd.model.js';
 
 let initialized = false;
 
@@ -38,6 +39,9 @@ const initModels = () => {
 
   Department.belongsTo(Faculty, { as: 'head', foreignKey: 'headId' });
   Faculty.hasOne(Department, { as: 'headedDepartment', foreignKey: 'headId' });
+
+  Faculty.hasMany(FacultyPhd, { as: 'phds', foreignKey: 'faculty_id' });
+  FacultyPhd.belongsTo(Faculty, { as: 'faculty', foreignKey: 'faculty_id' });
 
   User.hasOne(Faculty, { foreignKey: 'userId' });
   Faculty.belongsTo(User, { as: 'user', foreignKey: 'userId' });

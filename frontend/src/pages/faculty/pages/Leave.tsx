@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { IntegratedNotificationBell } from "@/components/common/IntegratedNotificationBell";
 import { MainLayout } from "@/pages/faculty/components/layout/MainLayout";
 import { motion } from "framer-motion";
 import { Button } from "@/pages/faculty/components/ui/button";
@@ -23,6 +24,7 @@ import {
     User,
     FileText,
     ArrowRight,
+    Calendar,
 } from "lucide-react";
 import { cn } from "@/pages/faculty/lib/utils";
 
@@ -118,20 +120,50 @@ const statusConfig = {
 };
 
 export default function Leave() {
+    const [currentTime, setCurrentTime] = useState(new Date());
+
+    useEffect(() => {
+        const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+        return () => clearInterval(timer);
+    }, []);
+
+    const formatDate = (date: Date) => {
+        return date.toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
+    };
+
+    const formatTime = (date: Date) => {
+        return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    };
+
     const [activeTab, setActiveTab] = useState("apply");
     const [leaveType, setLeaveType] = useState("");
 
     return (
-        <MainLayout>
+        <MainLayout hideHeader={true}>
             <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mb-8"
+                className="mb-8 flex items-start justify-between"
             >
-                <h1 className="page-header font-serif">Leave Management</h1>
-                <p className="text-muted-foreground -mt-4">
-                    Apply for leave and track your requests
-                </p>
+                <div>
+                    <h1 className="page-header font-serif">Leave Management</h1>
+                    <p className="text-muted-foreground -mt-4">
+                        Apply for leave and track your requests
+                    </p>
+                </div>
+                <div className="flex items-center gap-4">
+                    <div className="text-right">
+                        <p className="text-sm font-medium text-foreground flex items-center gap-2">
+                            <Calendar className="w-4 h-4 text-primary" />
+                            {formatDate(currentTime)}
+                        </p>
+                        <p className="text-sm text-muted-foreground flex items-center gap-2 mt-1">
+                            <Clock className="w-4 h-4 text-secondary" />
+                            {formatTime(currentTime)}
+                        </p>
+                    </div>
+                    <IntegratedNotificationBell />
+                </div>
             </motion.div>
 
             {/* Leave Balance Summary */}

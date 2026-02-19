@@ -199,6 +199,22 @@ CREATE TABLE `faculy_edu_qualification` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `faculty_phd`
+--
+
+CREATE TABLE `faculty_phd` (
+  `phd_id` int(11) NOT NULL,
+  `faculty_id` int(11) NOT NULL,
+  `status` varchar(100) DEFAULT NULL,
+  `orcid_id` varchar(100) DEFAULT NULL,
+  `thesis_title` text DEFAULT NULL,
+  `register_no` varchar(100) DEFAULT NULL,
+  `guide_name` varchar(255) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `roles`
 --
 
@@ -274,6 +290,13 @@ ALTER TABLE `faculy_edu_qualification`
   ADD UNIQUE KEY `membership_id` (`membership_id`);
 
 --
+-- Indexes for table `faculty_phd`
+--
+ALTER TABLE `faculty_phd`
+  ADD PRIMARY KEY (`phd_id`),
+  ADD KEY `faculty_id` (`faculty_id`);
+
+--
 -- AUTO_INCREMENT for dumped tables
 --
 
@@ -308,6 +331,12 @@ ALTER TABLE `faculy_edu_qualification`
   MODIFY `membership_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT for table `faculty_phd`
+--
+ALTER TABLE `faculty_phd`
+  MODIFY `phd_id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- Constraints for dumped tables
 --
 
@@ -337,6 +366,12 @@ ALTER TABLE `faculty_leaves`
 ALTER TABLE `faculy_edu_qualification`
   ADD CONSTRAINT `faculy_edu_qualification_ibfk_1` FOREIGN KEY (`faculty_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE CASCADE,
   ADD CONSTRAINT `faculy_edu_qualification_ibfk_2` FOREIGN KEY (`faculty_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `faculty_phd`
+--
+ALTER TABLE `faculty_phd`
+  ADD CONSTRAINT `faculty_phd_ibfk_1` FOREIGN KEY (`faculty_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

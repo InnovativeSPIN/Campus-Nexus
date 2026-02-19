@@ -15,6 +15,7 @@ import { RadioGroup, RadioGroupItem } from "@/pages/faculty/components/ui/radio-
 import { Label } from "@/pages/faculty/components/ui/label";
 import { Switch } from "@/pages/faculty/components/ui/switch";
 import { Textarea } from "@/pages/faculty/components/ui/textarea";
+import { IntegratedNotificationBell } from "@/components/common/IntegratedNotificationBell";
 import {
   ClipboardCheck,
   Search,
@@ -22,6 +23,7 @@ import {
   CheckCircle2,
   XCircle,
   Clock,
+  Calendar,
   Save,
   History,
   Filter,
@@ -93,8 +95,8 @@ const students: Student[] = [
 const attendanceHistory = [
   { date: "2024-01-15", subject: "Data Structures", section: "CSE-A", present: 58, absent: 4, leave: 2 },
   { date: "2024-01-14", subject: "Data Structures", section: "CSE-A", present: 60, absent: 2, leave: 2 },
-  { date: "2024-01-13", subject: "OOP", section: "CSE-B", present: 55, absent: 3, leave: 0 },
-  { date: "2024-01-12", subject: "Algorithms", section: "CSE-C", present: 52, absent: 6, leave: 2 },
+  { id: "3", date: "2024-01-13", subject: "OOP", section: "CSE-B", present: 55, absent: 3, leave: 0 },
+  { id: "4", date: "2024-01-12", subject: "Algorithms", section: "CSE-C", present: 52, absent: 6, leave: 2 },
 ];
 
 export default function Attendance() {
@@ -117,9 +119,15 @@ export default function Attendance() {
   const [topicCovered, setTopicCovered] = useState("");
   const [currentPage, setCurrentPage] = useState(0);
   const itemsPerPage = 10;
+  const [currentTime, setCurrentTime] = useState(new Date());
 
   const today = new Date().toISOString().split("T")[0];
   const isToday = selectedDate === today;
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     const key = `attendance_${selectedDate}`;
@@ -160,6 +168,14 @@ export default function Attendance() {
     setMarkAllPresent(false);
     setDigitSearch("");
   }, [selectedDate, isToday]);
+
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
+  };
+
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  };
 
   const handleSave = (showSummary = false) => {
     if (!isToday) return;
@@ -204,7 +220,6 @@ export default function Attendance() {
     setBulkError("");
     setBulkSuccess("");
 
-    // Validate input
     if (!bulkDigits.trim()) {
       setBulkError("Please enter at least one 2-digit number");
       return;
@@ -215,7 +230,6 @@ export default function Attendance() {
       return;
     }
 
-    // Parse and validate digits
     const digits = bulkDigits
       .split(",")
       .map((d) => d.trim())
@@ -230,7 +244,6 @@ export default function Attendance() {
       validDigits.push(digit);
     }
 
-    // Find matching students and update attendance
     const newAttendance = { ...attendanceData };
     let matchedCount = 0;
 
@@ -282,16 +295,31 @@ export default function Attendance() {
   };
 
   return (
-    <MainLayout>
+    <MainLayout hideHeader={true}>
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mb-8"
+        className="mb-8 flex items-start justify-between"
       >
-        <h1 className="page-header font-serif">Attendance Management</h1>
-        <p className="text-muted-foreground -mt-4">
-          Mark and manage student attendance
-        </p>
+        <div>
+          <h1 className="page-header font-serif">Attendance Management</h1>
+          <p className="text-muted-foreground -mt-4">
+            Mark and manage student attendance
+          </p>
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="text-right">
+            <p className="text-sm font-medium text-foreground flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-primary" />
+              {formatDate(currentTime)}
+            </p>
+            <p className="text-sm text-muted-foreground flex items-center gap-2 mt-1">
+              <Clock className="w-4 h-4 text-secondary" />
+              {formatTime(currentTime)}
+            </p>
+          </div>
+          <IntegratedNotificationBell />
+        </div>
       </motion.div>
 
       <Tabs defaultValue="mark" className="w-full">

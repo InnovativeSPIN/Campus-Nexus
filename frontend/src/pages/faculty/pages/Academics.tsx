@@ -1,4 +1,5 @@
-﻿import { useState } from "react";
+﻿import { useState, useEffect } from "react";
+import { IntegratedNotificationBell } from "@/components/common/IntegratedNotificationBell";
 import { MainLayout } from "@/pages/faculty/components/layout/MainLayout";
 import { motion } from "framer-motion";
 import { Button } from "@/pages/faculty/components/ui/button";
@@ -28,6 +29,8 @@ import {
   RefreshCw,
   FileIcon,
   X,
+  Clock,
+  Calendar,
 } from "lucide-react";
 import { cn } from "@/pages/faculty/lib/utils";
 import {
@@ -299,6 +302,21 @@ const typeIcons = {
 };
 
 export default function Academics() {
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
+  };
+
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  };
+
   const [selectedClassId, setSelectedClassId] = useState(classesHandled[0].id);
   const [topicsData, setTopicsData] = useState<Record<string, Topic[]>>(syllabusDataByClass);
   const [materialsData, setMaterialsData] = useState<Record<string, Material[]>>(materialsDataByClass);
@@ -474,16 +492,31 @@ export default function Academics() {
   };
 
   return (
-    <MainLayout>
+    <MainLayout hideHeader={true}>
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mb-8"
+        className="mb-8 flex items-start justify-between"
       >
-        <h1 className="page-header font-serif">Academic Activities</h1>
-        <p className="text-muted-foreground -mt-4">
-          Manage syllabus, materials, and internal marks for your classes
-        </p>
+        <div>
+          <h1 className="page-header font-serif">Academic Activities</h1>
+          <p className="text-muted-foreground -mt-4">
+            Manage syllabus, materials, and internal marks for your classes
+          </p>
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="text-right">
+            <p className="text-sm font-medium text-foreground flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-primary" />
+              {formatDate(currentTime)}
+            </p>
+            <p className="text-sm text-muted-foreground flex items-center gap-2 mt-1">
+              <Clock className="w-4 h-4 text-secondary" />
+              {formatTime(currentTime)}
+            </p>
+          </div>
+          <IntegratedNotificationBell />
+        </div>
       </motion.div>
 
       {/* Class Selector */}

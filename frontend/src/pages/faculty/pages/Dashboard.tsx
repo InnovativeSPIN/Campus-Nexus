@@ -71,7 +71,7 @@ export default function Dashboard() {
   };
 
   return (
-    <MainLayout>
+    <MainLayout hideHeader={true}>
       {/* Page Header */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
