@@ -3,7 +3,8 @@ import { User, UserRole } from '@/types/auth';
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string, role: UserRole) => Promise<boolean>;
+  // identifier may be an email address or a student ID when role is student
+  login: (identifier: string, password: string, role: UserRole) => Promise<boolean>;
   logout: () => void;
   updateUserData: (newData: Partial<User>) => void;
   isAuthenticated: boolean;
@@ -22,12 +23,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   });
 
-  const login = async (email: string, password: string, role: UserRole): Promise<boolean> => {
-    const trimmedEmail = email.trim().toLowerCase();
+  const login = async (identifier: string, password: string, role: UserRole): Promise<boolean> => {
+    const trimmedId = identifier.trim().toLowerCase();
     const trimmedPassword = password.trim();
 
     console.log('Login attempt:', {
-      email: trimmedEmail,
+      identifier: trimmedId,
       password: trimmedPassword,
       passwordLength: trimmedPassword.length,
       role
@@ -36,21 +37,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       let response;
       
-      if (role === 'student') {
-        // Use regular login endpoint for students
-        response = await fetch('/api/v1/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: trimmedEmail, password: trimmedPassword }),
-        });
-      } else {
-        // Use regular login endpoint for faculty and admin
-        response = await fetch('/api/v1/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: trimmedEmail, password: trimmedPassword }),
-        });
-      }
+      // regardless of role, backend login endpoint now understands either studentId or email
+      response = await fetch('/api/v1/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: trimmedId, password: trimmedPassword }),
+      });
 
       const result = await response.json();
 

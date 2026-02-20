@@ -49,13 +49,13 @@ export default function Login() {
     setEmail('');
   }, [role]);
 
-  // Fetch student details when student ID is entered
+  // Fetch student details when the identifier (ID or email) is entered
   useEffect(() => {
     const fetchStudentDetails = async () => {
       if (role === 'student' && email.trim().length > 0) {
         setIsFetchingDetails(true);
         try {
-          const response = await fetch(`/api/v1/auth/student-details/${email.trim()}`);
+          const response = await fetch(`/api/v1/auth/student-details/${email.trim()}`); // backend accepts both ID and email
           const result = await response.json();
           
           if (result.success && result.data) {
@@ -86,7 +86,7 @@ export default function Login() {
     // Simulate API delay
     await new Promise((resolve) => setTimeout(resolve, 800));
 
-    const success = await login(email, password, role);
+    const success = await login(email, password, role); // "email" holds identifier (email or student ID)
     setIsLoading(false);
 
     if (success) {
@@ -194,14 +194,18 @@ export default function Login() {
             <div className="space-y-2">
               <Label htmlFor="email" className="flex items-center gap-2">
                 <Mail className="h-4 w-4" />
-                Email Address
+                {role === 'student' ? 'Email or Student ID' : 'Email Address'}
               </Label>
               <Input
                 id="email"
-                type="email"
+                type={role === 'student' ? 'text' : 'email'}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email address"
+                placeholder={
+                  role === 'student'
+                    ? 'Email address or student ID'
+                    : 'Enter your email address'
+                }
                 className="h-12"
                 required
               />
