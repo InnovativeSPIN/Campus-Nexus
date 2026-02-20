@@ -1,8 +1,8 @@
 import path from 'path';
 import ErrorResponse from '../../utils/errorResponse.js';
 import asyncHandler from '../../middleware/async.js';
-import Announcement from '../../models/Announcement.model.js';
-import User from '../../models/User.model.js';
+import { models } from '../../models/index.js';
+const { Announcement, User } = models;
 import { Op, Sequelize } from 'sequelize';
 
 // @desc      Get all announcements for user
@@ -46,7 +46,7 @@ export const getAnnouncements = asyncHandler(async (req, res, next) => {
         include: [{
             model: User,
             as: 'createdBy',
-            attributes: ['name', 'avatar']
+            attributes: ['name']
         }],
         order: [['createdAt', 'DESC']]
     });

@@ -16,7 +16,7 @@ const sequelize = new Sequelize(
 const connectDB = async () => {
   try {
     await sequelize.authenticate();
-    await sequelize.sync();
+    // await sequelize.sync(); // Comment out sync since tables already exist from SQL dump
 
     console.log(
       `MySQL Connected: ${sequelize.config.host}`.cyan.underline.bold

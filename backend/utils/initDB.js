@@ -1,5 +1,9 @@
-import User from '../models/User.model.js';
+import initModels from '../models/index.js';
 import colors from 'colors';
+
+// Initialize models
+const models = initModels();
+const { User } = models;
 
 const seedSuperAdmin = async () => {
     try {
@@ -9,13 +13,11 @@ const seedSuperAdmin = async () => {
         if (!exists) {
             console.log('Creating initial Super Admin...'.yellow);
             await User.create({
-                admin_id: '01',
-                admin_name: 'vasanth',
-                name: 'vasanth', // Fallback for standard name field
+                name: 'vasanth',
                 email: superAdminEmail,
-                pwd: '123',
-                role: 'super-admin',
-                admintype: 'super-admin',
+                password: 'password',
+                role_id: 2, // super-admin
+                phone: '9876543210',
                 isActive: true
             });
             console.log('Super Admin "vasanth" created successfully.'.green.bold);

@@ -1,12 +1,7 @@
 import ErrorResponse from '../../utils/errorResponse.js';
 import asyncHandler from '../../middleware/async.js';
-import Attendance from '../../models/Attendance.model.js';
-import FacultyAttendance from '../../models/FacultyAttendance.model.js';
-import Student from '../../models/Student.model.js';
-import AttendanceStudent from '../../models/AttendanceStudent.model.js';
-import ClassModel from '../../models/Class.model.js';
-import Subject from '../../models/Subject.model.js';
-import Faculty from '../../models/Faculty.model.js';
+import { models } from '../../models/index.js';
+const { Attendance, FacultyAttendance, Student, AttendanceStudent, Class: ClassModel, Subject, Faculty } = models;
 import { Op } from 'sequelize';
 
 // @desc      Get all attendance records

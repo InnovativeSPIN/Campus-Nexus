@@ -5,8 +5,11 @@ import ErrorResponse from '../../utils/errorResponse.js';
 import asyncHandler from '../../middleware/async.js';
 import sendEmail from '../../utils/sendEmail.js';
 import sendTokenResponse from '../../utils/sendTokenResponse.js';
-import User from '../../models/User.model.js';
+import { models } from '../../models/index.js';
 import { Op } from 'sequelize';
+import { sequelize } from '../../config/db.js';
+
+const { User, Role, Student, Faculty } = models;
 
 // @desc      Upload avatar
 // @route     POST /api/v1/auth/avatar
@@ -33,16 +36,49 @@ export const uploadAvatar = asyncHandler(async (req, res, next) => {
     );
   }
 
-  // Create custom filename
-  file.name = `avatar_${req.user.id}${path.parse(file.name).ext}`;
+  // Determine user type and folder
+  let userType = 'admin';
+  let roleFolder = 'avatars';
+  let userName = req.user.name || req.user.Name || req.user.firstName || 'user';
+
+  if (req.user.userType === 'faculty' || req.user.faculty_id) {
+    userType = 'faculty';
+    roleFolder = 'faculty';
+    userName = req.user.Name || req.user.name || 'faculty';
+  } else if (req.user.role === 'student' || req.user.studentId) {
+    userType = 'student';
+    roleFolder = 'students';
+    userName = `${req.user.firstName || ''} ${req.user.lastName || ''}`.trim();
+  } else if (req.user.role && (typeof req.user.role === 'object' && req.user.role.role_name === 'faculty')) {
+    userType = 'faculty';
+    roleFolder = 'faculty';
+  } else if (req.user.role && (typeof req.user.role === 'object' && req.user.role.role_name === 'student')) {
+    userType = 'student';
+    roleFolder = 'students';
+  }
+
+  // Get current avatar to delete old file
+  let currentAvatar = null;
+  if (userType === 'faculty') {
+    currentAvatar = req.user.profile_image_url;
+  } else if (userType === 'student') {
+    currentAvatar = req.user.photo;
+  } else {
+    currentAvatar = req.user.avatar;
+  }
+
+  if (currentAvatar) {
+    const oldFilePath = path.resolve(process.env.FILE_UPLOAD_PATH, currentAvatar.replace('/uploads/', ''));
+    if (fs.existsSync(oldFilePath)) {
+      fs.unlinkSync(oldFilePath);
+    }
+  }
+
+  // Create custom filename using name
+  const cleanName = userName.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
+  file.name = `${cleanName}${path.parse(file.name).ext}`;
 
   try {
-    // Determine folder based on role
-    let roleFolder = 'avatars';
-    if (req.user.role === 'student') roleFolder = 'students';
-    else if (req.user.role === 'faculty') roleFolder = 'faculty';
-    else if (req.user.role === 'department-admin') roleFolder = 'department-admins';
-
     const dirPath = path.resolve(process.env.FILE_UPLOAD_PATH, roleFolder);
 
     // Create directory if not exists
@@ -56,7 +92,92 @@ export const uploadAvatar = asyncHandler(async (req, res, next) => {
 
     const avatarUrl = `/uploads/${roleFolder}/${file.name}`;
 
-    await User.update({ avatar: avatarUrl }, { where: { id: req.user.id } });
+    // Update the appropriate table based on user type
+    if (userType === 'faculty') {
+      await Faculty.update(
+        { profile_image_url: avatarUrl },
+        { where: { faculty_id: req.user.faculty_id } }
+      );
+    } else if (userType === 'student') {
+      await Student.update(
+        { photo: avatarUrl },
+        { where: { id: req.user.id } }
+      );
+    } else {
+      await User.update(
+        { avatar: avatarUrl },
+        { where: { id: req.user.id } }
+      );
+    }
+
+    res.status(200).json({
+      success: true,
+      data: avatarUrl
+    });
+  } catch (err) {
+    console.error('File Upload Error:', err);
+    return next(new ErrorResponse('Problem with file upload', 500));
+  }
+});
+
+// @desc      Upload student avatar
+// @route     POST /api/v1/auth/student-avatar
+// @access    Private (Student only)
+export const uploadStudentAvatar = asyncHandler(async (req, res, next) => {
+  if (!req.files) {
+    return next(new ErrorResponse('Please upload a file', 400));
+  }
+
+  const file = req.files.file;
+
+  // Make sure the image is a photo
+  if (!file.mimetype.startsWith('image')) {
+    return next(new ErrorResponse('Please upload an image file', 400));
+  }
+
+  // Check filesize
+  if (file.size > process.env.MAX_FILE_UPLOAD) {
+    return next(
+      new ErrorResponse(
+        `Please upload an image less than ${process.env.MAX_FILE_UPLOAD}`,
+        400
+      )
+    );
+  }
+
+  // Get student data for name and current photo
+  const student = await Student.findByPk(req.user.id);
+  if (!student) {
+    return next(new ErrorResponse('Student not found', 404));
+  }
+
+  // Delete old photo if exists
+  if (student.photo) {
+    const oldFilePath = path.resolve(process.env.FILE_UPLOAD_PATH, student.photo.replace('/uploads/', ''));
+    if (fs.existsSync(oldFilePath)) {
+      fs.unlinkSync(oldFilePath);
+    }
+  }
+
+  // Create custom filename using student name
+  const cleanName = `${student.firstName}_${student.lastName}`.replace(/[^a-zA-Z0-9_]/g, '_').toLowerCase();
+  file.name = `${cleanName}${path.parse(file.name).ext}`;
+
+  try {
+    const dirPath = path.resolve(process.env.FILE_UPLOAD_PATH, 'students');
+
+    // Create directory if not exists
+    if (!fs.existsSync(dirPath)) {
+      fs.mkdirSync(dirPath, { recursive: true });
+    }
+
+    const uploadPath = path.resolve(dirPath, file.name);
+
+    await file.mv(uploadPath);
+
+    const avatarUrl = `/uploads/students/${file.name}`;
+
+    await Student.update({ photo: avatarUrl }, { where: { id: req.user.id } });
 
     res.status(200).json({
       success: true,
@@ -79,8 +200,7 @@ export const register = asyncHandler(async (req, res, next) => {
     name,
     email,
     password,
-    pwd: password, // Store plaintext for legacy support
-    role,
+    role_id: role, // Assuming role is passed as id now? Wait, the body has role as string?
     phone,
     department
   });
@@ -99,49 +219,149 @@ export const login = asyncHandler(async (req, res, next) => {
     return next(new ErrorResponse('Please provide an email and password', 400));
   }
 
-  // Dummy login for student (development/testing without DB)
-  if (email === 'student@nscet.com' && (password === 'student123' || password === 'password123')) {
-    const dummyUser = User.build({
-      id: 0,
-      name: 'Dummy Student',
-      email: 'student@nscet.com',
-      role: 'student',
-      isActive: true,
-      department: 'Computer Science',
-      year: '3rd',
-      semester: '6th',
-      rollNo: 'NSC21CS001'
-    }, { isNewRecord: false });
-    return sendTokenResponse(dummyUser, 200, res);
-  }
+  let user = null;
+  let userType = null; // 'admin', 'faculty', or 'student'
 
-  // Check for user
-  const user = await User.findOne({
+  // 1. Check for faculty in faculty_profiles table FIRST (priority)
+  user = await Faculty.findOne({
     where: { email },
-    attributes: { include: ['password', 'pwd'] }
+    attributes: { include: ['password'] }
   });
 
-  if (!user) {
+  if (user) {
+    const isMatch = await user.matchPassword(password);
+    if (isMatch && user.status === 'active') {
+      userType = 'faculty';
+      return sendTokenResponse(user, 200, res);
+    }
+    // If password doesn't match or inactive, fall through to check other tables
+    user = null;
+  }
+
+  // 2. Check for student in student_profile table
+  user = await Student.findOne({
+    where: { email },
+    attributes: { include: ['password'] }
+  });
+
+  if (user) {
+    const isMatch = await user.matchPassword(password);
+    if (isMatch && user.status === 'active') {
+      userType = 'student';
+      return sendTokenResponse(user, 200, res);
+    }
+    // If password doesn't match or inactive, fall through to check admin
+    user = null;
+  }
+
+  // 3. Check for admin user in users table (lowest priority)
+  user = await User.findOne({
+    where: { email },
+    attributes: { include: ['password'] },
+    include: [{ model: Role, as: 'role' }]
+  });
+
+  if (user) {
+    if (!user.isActive) {
+      return next(new ErrorResponse('Your account has been deactivated', 401));
+    }
+
+    const isMatch = await user.matchPassword(password);
+    if (isMatch) {
+      userType = 'admin';
+      return sendTokenResponse(user, 200, res);
+    }
+  }
+
+  // If no user found or password doesn't match in any table
+  return next(new ErrorResponse('Invalid credentials', 401));
+});
+
+// @desc      Login student
+// @route     POST /api/v1/auth/student-login
+// @access    Public
+export const studentLogin = asyncHandler(async (req, res, next) => {
+  const { studentId, password } = req.body;
+
+  // Validate studentId & password
+  if (!studentId || !password) {
+    return next(new ErrorResponse('Please provide student ID and password', 400));
+  }
+
+  // Check for student
+  const student = await Student.findOne({
+    where: { studentId },
+    attributes: { include: ['password'] },
+    include: [
+      {
+        model: models.Department,
+        as: 'department',
+        attributes: ['short_name', 'full_name']
+      }
+    ]
+  });
+
+  if (!student) {
     return next(new ErrorResponse('Invalid credentials', 401));
   }
 
-  // Check if user is active
-  if (!user.isActive) {
+  // Check if student is active
+  if (student.status !== 'active') {
     return next(new ErrorResponse('Your account has been deactivated', 401));
   }
 
   // Check if password matches
-  const isMatch = await user.matchPassword(password);
+  const isMatch = await student.matchPassword(password);
 
   if (!isMatch) {
     return next(new ErrorResponse('Invalid credentials', 401));
   }
 
-  // Update last login
-  user.lastLogin = new Date();
-  await user.save();
+  // Update last login (if we add this field later)
+  // student.lastLogin = new Date();
+  // await student.save();
 
-  sendTokenResponse(user, 200, res);
+  sendTokenResponse(student, 200, res);
+});
+
+// @desc      Get student details by student ID
+// @route     GET /api/v1/auth/student-details/:studentId
+// @access    Public
+export const getStudentDetails = asyncHandler(async (req, res, next) => {
+  const { studentId } = req.params;
+
+  if (!studentId) {
+    return next(new ErrorResponse('Please provide a student ID', 400));
+  }
+
+  // Check for student
+  const student = await Student.findOne({
+    where: { studentId },
+    attributes: { exclude: ['password'] },
+    include: [
+      {
+        model: models.Department,
+        as: 'department',
+        attributes: ['short_name', 'full_name']
+      }
+    ]
+  });
+
+  if (!student) {
+    return next(new ErrorResponse('Student not found', 404));
+  }
+
+  // Return student details
+  res.status(200).json({
+    success: true,
+    data: {
+      name: `${student.firstName} ${student.lastName}`,
+      rollNo: student.studentId,
+      department: student.department?.short_name || student.department?.full_name,
+      year: parseInt(student.year) || undefined,
+      semester: student.semester
+    }
+  });
 });
 
 // @desc      Log user out / clear cookie
@@ -199,7 +419,7 @@ export const updateDetails = asyncHandler(async (req, res, next) => {
 // @access    Private
 export const updatePassword = asyncHandler(async (req, res, next) => {
   const user = await User.findByPk(req.user.id, {
-    attributes: { include: ['password', 'pwd'] }
+    attributes: { include: ['password'] }
   });
 
   // Check current password
@@ -208,17 +428,35 @@ export const updatePassword = asyncHandler(async (req, res, next) => {
   }
 
   user.password = req.body.newPassword;
-  user.pwd = req.body.newPassword; // Update legacy field
   await user.save();
 
   sendTokenResponse(user, 200, res);
+});
+
+// @desc      Update student password
+// @route     PUT /api/v1/auth/update-student-password
+// @access    Private (Student only)
+export const updateStudentPassword = asyncHandler(async (req, res, next) => {
+  const student = await Student.findByPk(req.user.id, {
+    attributes: { include: ['password'] }
+  });
+
+  // Check current password
+  if (!(await student.matchPassword(req.body.currentPassword))) {
+    return next(new ErrorResponse('Password is incorrect', 401));
+  }
+
+  student.password = req.body.newPassword;
+  await student.save();
+
+  sendTokenResponse(student, 200, res);
 });
 
 // @desc      Forgot password
 // @route     POST /api/v1/auth/forgotpassword
 // @access    Public
 export const forgotPassword = asyncHandler(async (req, res, next) => {
-  const user = await User.findOne({ where: { email: req.body.email } });
+  const user = await UserModel.findOne({ where: { email: req.body.email } });
 
   if (!user) {
     return next(new ErrorResponse('There is no user with that email', 404));
@@ -268,7 +506,7 @@ export const resetPassword = asyncHandler(async (req, res, next) => {
       resetPasswordToken,
       resetPasswordExpire: { [Op.gt]: new Date() }
     },
-    attributes: { include: ['password', 'pwd'] }
+    attributes: { include: ['password'] }
   });
 
   if (!user) {
@@ -290,24 +528,29 @@ export const getAdminsByRole = asyncHandler(async (req, res, next) => {
   let { role } = req.params;
 
   // Handle superadmin variations
-  let roles = [role];
+  let roleNames = [role];
   if (role === 'superadmin') {
-    roles = ['superadmin', 'super-admin'];
+    roleNames = ['superadmin', 'super-admin'];
   }
+
+  // Find the role_ids
+  const roles = await Role.findAll({
+    where: { role_name: { [Op.in]: roleNames } },
+    attributes: ['role_id']
+  });
+
+  const roleIds = roles.map(r => r.role_id);
 
   const admins = await User.findAll({
     where: {
-      [Op.or]: [
-        { role: { [Op.in]: roles } },
-        { admintype: { [Op.in]: roles } }
-      ]
+      role_id: { [Op.in]: roleIds }
     },
-    attributes: ['name', 'admin_name', 'email']
+    attributes: ['name', 'email']
   });
 
   // Map results to ensure each has a 'name' field for the frontend
   const formattedAdmins = admins.map(admin => ({
-    name: admin.name || admin.admin_name || 'Admin',
+    name: admin.name || 'Admin',
     email: admin.email
   }));
 

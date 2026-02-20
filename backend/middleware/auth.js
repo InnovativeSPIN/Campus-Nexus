@@ -1,7 +1,9 @@
 import jwt from 'jsonwebtoken';
 import asyncHandler from './async.js';
 import ErrorResponse from '../utils/errorResponse.js';
-import User from '../models/User.model.js';
+import { models } from '../models/index.js';
+
+const { User, Student, Faculty } = models;
 
 // Protect routes
 export const protect = asyncHandler(async (req, res, next) => {
@@ -43,7 +45,52 @@ export const protect = asyncHandler(async (req, res, next) => {
       return next();
     }
 
-    req.user = await User.findByPk(decoded.id);
+    // Handle student tokens
+    if (decoded.type === 'student') {
+      req.user = await Student.findByPk(decoded.id, {
+        include: [{
+          model: models.Department,
+          as: 'department',
+          attributes: ['short_name', 'full_name']
+        }]
+      });
+
+      if (!req.user) {
+        return next(new ErrorResponse('Not authorized to access this route', 401));
+      }
+
+      // Add role info for student
+      req.user.role = 'student';
+      return next();
+    }
+
+    // Handle faculty tokens
+    if (decoded.type === 'faculty') {
+      req.user = await Faculty.findByPk(decoded.id, {
+        include: [{
+          model: models.Department,
+          as: 'department',
+          attributes: ['short_name', 'full_name']
+        }]
+      });
+
+      if (!req.user) {
+        return next(new ErrorResponse('Not authorized to access this route', 401));
+      }
+
+      // Add role info for faculty
+      req.user.role = 'faculty';
+      req.user.userType = 'faculty';
+      return next();
+    }
+
+    req.user = await User.findByPk(decoded.id, {
+      include: [{
+        model: models.Role,
+        as: 'role',
+        attributes: ['role_name']
+      }]
+    });
 
     if (!req.user) {
       return next(new ErrorResponse('Not authorized to access this route', 401));

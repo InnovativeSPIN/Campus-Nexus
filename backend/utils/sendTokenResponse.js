@@ -14,22 +14,50 @@ const sendTokenResponse = (user, statusCode, res) => {
     options.secure = true;
   }
 
+  // Check user type
+  let userData;
+  if (user.role === 'student' || user.studentId) {
+    userData = {
+      id: user.id,
+      name: `${user.firstName} ${user.lastName}`,
+      email: user.email,
+      role: 'student',
+      department: user.department,
+      year: user.year,
+      semester: user.semester,
+      rollNo: user.studentId,
+      avatar: user.photo || null
+    };
+  } else if (user.role === 'faculty' || user.role?.role_name === 'faculty' || user.Name) {
+    userData = {
+      id: user.id,
+      name: user.Name || user.name,
+      email: user.email,
+      role: 'faculty',
+      department: user.department,
+      avatar: user.profile_image_url || null
+    };
+  } else {
+    userData = {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role?.role_name || user.role,
+      department: user.department,
+      year: user.year,
+      semester: user.semester,
+      rollNo: user.rollNo,
+      avatar: user.avatar || null
+    };
+  }
+
   res
     .status(statusCode)
     .cookie('token', token, options)
     .json({
       success: true,
       token,
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        department: user.department,
-        year: user.year,
-        semester: user.semester,
-        rollNo: user.rollNo
-      }
+      user: userData
     });
 };
 
