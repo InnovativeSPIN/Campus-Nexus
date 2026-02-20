@@ -23,7 +23,8 @@ const router = express.Router();
 router.post('/register', register);
 router.post('/login', login);
 router.post('/student-login', studentLogin);
-router.get('/student-details/:studentId', getStudentDetails);
+// identifier may be either a student ID or email address
+router.get('/student-details/:identifier', getStudentDetails);
 router.get('/logout', logout);
 router.get('/admins/:role', getAdminsByRole);
 router.get('/me', protect, getMe);

@@ -238,9 +238,14 @@ export const login = asyncHandler(async (req, res, next) => {
     user = null;
   }
 
-  // 2. Check for student in student_profile table
+  // 2. Check for student in student_profile table (email or studentId)
   user = await Student.findOne({
-    where: { email },
+    where: {
+      [Op.or]: [
+        { email },
+        { studentId: email } // 'email' variable really holds the identifier string
+      ]
+    },
     attributes: { include: ['password'] }
   });
 
@@ -281,16 +286,24 @@ export const login = asyncHandler(async (req, res, next) => {
 // @route     POST /api/v1/auth/student-login
 // @access    Public
 export const studentLogin = asyncHandler(async (req, res, next) => {
-  const { studentId, password } = req.body;
+  let { studentId, password } = req.body;
 
-  // Validate studentId & password
-  if (!studentId || !password) {
-    return next(new ErrorResponse('Please provide student ID and password', 400));
+  // allow sending either id or email under "studentId" field for backward compatibility
+  const identifier = studentId?.toString().trim();
+
+  // Validate identifier & password
+  if (!identifier || !password) {
+    return next(new ErrorResponse('Please provide student ID/email and password', 400));
   }
 
-  // Check for student
+  // Check for student by id or email
   const student = await Student.findOne({
-    where: { studentId },
+    where: {
+      [Op.or]: [
+        { studentId: identifier },
+        { email: identifier }
+      ]
+    },
     attributes: { include: ['password'] },
     include: [
       {
@@ -324,19 +337,24 @@ export const studentLogin = asyncHandler(async (req, res, next) => {
   sendTokenResponse(student, 200, res);
 });
 
-// @desc      Get student details by student ID
-// @route     GET /api/v1/auth/student-details/:studentId
+// @desc      Get student details by student ID or email
+// @route     GET /api/v1/auth/student-details/:identifier
 // @access    Public
 export const getStudentDetails = asyncHandler(async (req, res, next) => {
-  const { studentId } = req.params;
+  const identifier = req.params.identifier; // may be actual studentId or email
 
-  if (!studentId) {
-    return next(new ErrorResponse('Please provide a student ID', 400));
+  if (!identifier) {
+    return next(new ErrorResponse('Please provide a student identifier', 400));
   }
 
-  // Check for student
+  // Check for student by either ID or email
   const student = await Student.findOne({
-    where: { studentId },
+    where: {
+      [Op.or]: [
+        { studentId: identifier },
+        { email: identifier }
+      ]
+    },
     attributes: { exclude: ['password'] },
     include: [
       {
