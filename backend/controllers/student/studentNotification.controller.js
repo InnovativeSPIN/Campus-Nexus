@@ -4,17 +4,19 @@ import { models } from '../../models/index.js';
 const { StudentNotification, Student } = models;
 import { Op } from 'sequelize';
 
-const getStudentId = async (userId, next) => {
-    const student = await Student.findOne({ where: { userId } });
-    if (!student) { next(new ErrorResponse('Student profile not found', 404)); return null; }
-    return student.id;
+const getStudentId = async (userOrId, next) => {
+    if (userOrId && typeof userOrId === 'object' && userOrId.studentId) {
+        return userOrId.id;
+    }
+    next(new ErrorResponse('Student profile not accessible', 404));
+    return null;
 };
 
 // @desc   Get all notifications for logged-in student
 // @route  GET /api/student/notifications?isRead=&type=
 // @access Private/Student
 export const getMyNotifications = asyncHandler(async (req, res, next) => {
-    const studentId = await getStudentId(req.user.id, next);
+    const studentId = await getStudentId(req.user, next);
     if (!studentId) return;
 
     const where = { studentId };
@@ -40,7 +42,7 @@ export const getMyNotifications = asyncHandler(async (req, res, next) => {
 // @route  PUT /api/student/notifications/:id/read
 // @access Private/Student
 export const markAsRead = asyncHandler(async (req, res, next) => {
-    const studentId = await getStudentId(req.user.id, next);
+    const studentId = await getStudentId(req.user, next);
     if (!studentId) return;
 
     await StudentNotification.markAsRead(req.params.id, studentId);
@@ -51,7 +53,7 @@ export const markAsRead = asyncHandler(async (req, res, next) => {
 // @route  PUT /api/student/notifications/read-all
 // @access Private/Student
 export const markAllAsRead = asyncHandler(async (req, res, next) => {
-    const studentId = await getStudentId(req.user.id, next);
+    const studentId = await getStudentId(req.user, next);
     if (!studentId) return;
 
     await StudentNotification.markAllAsRead(studentId);
@@ -62,7 +64,7 @@ export const markAllAsRead = asyncHandler(async (req, res, next) => {
 // @route  DELETE /api/student/notifications/:id
 // @access Private/Student
 export const deleteNotification = asyncHandler(async (req, res, next) => {
-    const studentId = await getStudentId(req.user.id, next);
+    const studentId = await getStudentId(req.user, next);
     if (!studentId) return;
 
     const notification = await StudentNotification.findOne({ where: { id: req.params.id, studentId } });

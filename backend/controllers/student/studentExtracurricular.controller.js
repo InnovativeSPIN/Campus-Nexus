@@ -3,10 +3,12 @@ import ErrorResponse from '../../utils/errorResponse.js';
 import { models } from '../../models/index.js';
 const { StudentSport, StudentEvent, Student, User } = models;
 
-const getStudentId = async (userId, next) => {
-    const student = await Student.findOne({ where: { userId } });
-    if (!student) { next(new ErrorResponse('Student profile not found', 404)); return null; }
-    return student.id;
+const getStudentId = async (userOrId, next) => {
+    if (userOrId && typeof userOrId === 'object' && userOrId.studentId) {
+        return userOrId.id;
+    }
+    next(new ErrorResponse('Student profile not accessible', 404));
+    return null;
 };
 
 // ──────────────────────────────── SPORTS ──────────────────────────────────
@@ -15,7 +17,7 @@ const getStudentId = async (userId, next) => {
 // @route  GET /api/student/sports
 // @access Private/Student
 export const getMySports = asyncHandler(async (req, res, next) => {
-    const studentId = await getStudentId(req.user.id, next);
+    const studentId = await getStudentId(req.user, next);
     if (!studentId) return;
 
     const where = { studentId };
@@ -35,7 +37,7 @@ export const getMySports = asyncHandler(async (req, res, next) => {
 // @route  GET /api/student/sports/:id
 // @access Private/Student
 export const getSport = asyncHandler(async (req, res, next) => {
-    const studentId = await getStudentId(req.user.id, next);
+    const studentId = await getStudentId(req.user, next);
     if (!studentId) return;
 
     const sport = await StudentSport.findOne({ where: { id: req.params.id, studentId } });
@@ -47,7 +49,7 @@ export const getSport = asyncHandler(async (req, res, next) => {
 // @route  POST /api/student/sports
 // @access Private/Student
 export const createSport = asyncHandler(async (req, res, next) => {
-    const studentId = await getStudentId(req.user.id, next);
+    const studentId = await getStudentId(req.user, next);
     if (!studentId) return;
 
     const sport = await StudentSport.create({ ...req.body, studentId, approvalStatus: 'pending' });
@@ -58,7 +60,7 @@ export const createSport = asyncHandler(async (req, res, next) => {
 // @route  PUT /api/student/sports/:id
 // @access Private/Student
 export const updateSport = asyncHandler(async (req, res, next) => {
-    const studentId = await getStudentId(req.user.id, next);
+    const studentId = await getStudentId(req.user, next);
     if (!studentId) return;
 
     const sport = await StudentSport.findOne({ where: { id: req.params.id, studentId } });
@@ -73,7 +75,7 @@ export const updateSport = asyncHandler(async (req, res, next) => {
 // @route  DELETE /api/student/sports/:id
 // @access Private/Student
 export const deleteSport = asyncHandler(async (req, res, next) => {
-    const studentId = await getStudentId(req.user.id, next);
+    const studentId = await getStudentId(req.user, next);
     if (!studentId) return;
 
     const sport = await StudentSport.findOne({ where: { id: req.params.id, studentId } });
@@ -104,7 +106,7 @@ export const updateSportApproval = asyncHandler(async (req, res, next) => {
 // @route  GET /api/student/events
 // @access Private/Student
 export const getMyEvents = asyncHandler(async (req, res, next) => {
-    const studentId = await getStudentId(req.user.id, next);
+    const studentId = await getStudentId(req.user, next);
     if (!studentId) return;
 
     const where = { studentId };
@@ -124,7 +126,7 @@ export const getMyEvents = asyncHandler(async (req, res, next) => {
 // @route  GET /api/student/events/:id
 // @access Private/Student
 export const getEvent = asyncHandler(async (req, res, next) => {
-    const studentId = await getStudentId(req.user.id, next);
+    const studentId = await getStudentId(req.user, next);
     if (!studentId) return;
 
     const event = await StudentEvent.findOne({ where: { id: req.params.id, studentId } });
@@ -136,7 +138,7 @@ export const getEvent = asyncHandler(async (req, res, next) => {
 // @route  POST /api/student/events
 // @access Private/Student
 export const createEvent = asyncHandler(async (req, res, next) => {
-    const studentId = await getStudentId(req.user.id, next);
+    const studentId = await getStudentId(req.user, next);
     if (!studentId) return;
 
     const event = await StudentEvent.create({ ...req.body, studentId, approvalStatus: 'pending' });
@@ -147,7 +149,7 @@ export const createEvent = asyncHandler(async (req, res, next) => {
 // @route  PUT /api/student/events/:id
 // @access Private/Student
 export const updateEvent = asyncHandler(async (req, res, next) => {
-    const studentId = await getStudentId(req.user.id, next);
+    const studentId = await getStudentId(req.user, next);
     if (!studentId) return;
 
     const event = await StudentEvent.findOne({ where: { id: req.params.id, studentId } });
@@ -162,7 +164,7 @@ export const updateEvent = asyncHandler(async (req, res, next) => {
 // @route  DELETE /api/student/events/:id
 // @access Private/Student
 export const deleteEvent = asyncHandler(async (req, res, next) => {
-    const studentId = await getStudentId(req.user.id, next);
+    const studentId = await getStudentId(req.user, next);
     if (!studentId) return;
 
     const event = await StudentEvent.findOne({ where: { id: req.params.id, studentId } });

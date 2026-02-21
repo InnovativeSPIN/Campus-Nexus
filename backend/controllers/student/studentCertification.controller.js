@@ -3,17 +3,21 @@ import ErrorResponse from '../../utils/errorResponse.js';
 import { models } from '../../models/index.js';
 const { StudentCertification, Student, User } = models;
 
-const getStudentId = async (userId, next) => {
-    const student = await Student.findOne({ where: { userId } });
-    if (!student) { next(new ErrorResponse('Student profile not found', 404)); return null; }
-    return student.id;
+const getStudentId = async (userOrId, next) => {
+    // if already a student instance (has studentId), return its id
+    if (userOrId && typeof userOrId === 'object' && userOrId.studentId) {
+        return userOrId.id;
+    }
+    // userId column doesn't exist in database
+    next(new ErrorResponse('Student profile not accessible', 404));
+    return null;
 };
 
 // @desc   Get all certifications for logged-in student
 // @route  GET /api/student/certifications
 // @access Private/Student
 export const getMyCertifications = asyncHandler(async (req, res, next) => {
-    const studentId = await getStudentId(req.user.id, next);
+    const studentId = await getStudentId(req.user, next);
     if (!studentId) return;
 
     const where = { studentId };
@@ -32,7 +36,7 @@ export const getMyCertifications = asyncHandler(async (req, res, next) => {
 // @route  GET /api/student/certifications/:id
 // @access Private/Student
 export const getCertification = asyncHandler(async (req, res, next) => {
-    const studentId = await getStudentId(req.user.id, next);
+    const studentId = await getStudentId(req.user, next);
     if (!studentId) return;
 
     const cert = await StudentCertification.findOne({
@@ -48,7 +52,7 @@ export const getCertification = asyncHandler(async (req, res, next) => {
 // @route  POST /api/student/certifications
 // @access Private/Student
 export const createCertification = asyncHandler(async (req, res, next) => {
-    const studentId = await getStudentId(req.user.id, next);
+    const studentId = await getStudentId(req.user, next);
     if (!studentId) return;
 
     const cert = await StudentCertification.create({
@@ -64,7 +68,7 @@ export const createCertification = asyncHandler(async (req, res, next) => {
 // @route  PUT /api/student/certifications/:id
 // @access Private/Student
 export const updateCertification = asyncHandler(async (req, res, next) => {
-    const studentId = await getStudentId(req.user.id, next);
+    const studentId = await getStudentId(req.user, next);
     if (!studentId) return;
 
     const cert = await StudentCertification.findOne({ where: { id: req.params.id, studentId } });
@@ -83,7 +87,7 @@ export const updateCertification = asyncHandler(async (req, res, next) => {
 // @route  DELETE /api/student/certifications/:id
 // @access Private/Student
 export const deleteCertification = asyncHandler(async (req, res, next) => {
-    const studentId = await getStudentId(req.user.id, next);
+    const studentId = await getStudentId(req.user, next);
     if (!studentId) return;
 
     const cert = await StudentCertification.findOne({ where: { id: req.params.id, studentId } });

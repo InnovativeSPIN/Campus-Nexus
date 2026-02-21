@@ -4,13 +4,14 @@ import { models } from '../../models/index.js';
 const { StudentMarks, StudentInternalMark, Subject, Student } = models;
 
 // ─── Helper ────────────────────────────────────────────────────────────────
-const getStudentRecord = async (userId, next) => {
-    const student = await Student.findOne({ where: { userId } });
-    if (!student) {
-        next(new ErrorResponse('Student profile not found', 404));
-        return null;
+const getStudentRecord = async (userOrId, next) => {
+    // if already a student instance, just return it
+    if (userOrId && userOrId.id && userOrId.studentId) {
+        return userOrId;
     }
-    return student;
+    // userId column doesn't exist; can't look up students this way
+    next(new ErrorResponse('Student profile not accessible', 404));
+    return null;
 };
 
 // @desc   Get semester marks for logged-in student

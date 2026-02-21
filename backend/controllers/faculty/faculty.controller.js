@@ -48,7 +48,7 @@ export const getAllFaculty = asyncHandler(async (req, res, next) => {
     ],
     offset: startIndex,
     limit,
-    order: [['createdAt', 'DESC']]
+    order: [['created_at', 'DESC']]
   });
 
   // transform to match frontend shape

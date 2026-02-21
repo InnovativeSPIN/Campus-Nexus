@@ -12,25 +12,16 @@ export const getDepartments = asyncHandler(async (req, res, next) => {
         order: [['short_name', 'ASC']]
     });
 
-    // Fetch counts and HOD for each department
+    // Fetch counts for each department
     const departmentsWithInfo = await Promise.all(departments.map(async (dept) => {
-        // the user table has no departmentCode column; use short_name from dept
-        const hod = await User.findOne({
-            where: {
-                role: 'department-admin',
-                departmentCode: dept.short_name || dept.full_name
-            },
-            attributes: ['name', 'email']
-        });
-
-        const facultyCount = await Faculty.count({ where: { departmentId: dept.id } });
+        const facultyCount = await Faculty.count({ where: { department_id: dept.id } });
         const studentCount = await Student.count({ where: { departmentId: dept.id } });
 
         return {
             ...dept.toJSON(),
             name: dept.short_name || dept.full_name,
-            headOfDepartment: hod ? hod.name : 'Not Assigned',
-            hodCount: hod ? 1 : 0,
+            headOfDepartment: 'Not Assigned',
+            hodCount: 0,
             facultyCount: facultyCount,
             studentCount: studentCount
         };
@@ -52,24 +43,16 @@ export const getDepartment = asyncHandler(async (req, res, next) => {
         return next(new ErrorResponse(`Department not found with id of ${req.params.id}`, 404));
     }
 
-    // lookup HOD using department short_name/full_name since there is no code field
-    const hod = await User.findOne({
-        where: {
-            role: 'department-admin',
-            departmentCode: department.short_name || department.full_name
-        },
-        attributes: ['name', 'email']
-    });
-
-    const facultyCount = await Faculty.count({ where: { departmentId: department.id } });
+    const facultyCount = await Faculty.count({ where: { department_id: department.id } });
     const studentCount = await Student.count({ where: { departmentId: department.id } });
 
     res.status(200).json({
         success: true,
         data: {
             ...department.toJSON(),
-            headOfDepartment: hod ? hod.name : 'Not Assigned',
-            hodCount: hod ? 1 : 0,
+            name: department.short_name || department.full_name,
+            headOfDepartment: 'Not Assigned',
+            hodCount: 0,
             facultyCount: facultyCount,
             studentCount: studentCount
         }

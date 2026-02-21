@@ -427,7 +427,7 @@ export const getTodaySchedule = asyncHandler(async (req, res, next) => {
     }
   } else if (req.user.role === 'student') {
     // Get student's class schedule for today
-    const student = await Student.findOne({ where: { userId: req.user.id } });
+    const student = req.user; // already validated by protect middleware
 
     if (student && student.classId) {
       const timetable = await Timetable.findOne({

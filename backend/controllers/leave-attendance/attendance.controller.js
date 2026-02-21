@@ -350,7 +350,7 @@ export const getStudentAttendance = asyncHandler(async (req, res, next) => {
 // @route     GET /api/v1/attendance/my-attendance
 // @access    Private/Student
 export const getMyAttendance = asyncHandler(async (req, res, next) => {
-  const student = await Student.findOne({ where: { userId: req.user.id } });
+  const student = req.user; // already validated as student by protect middleware
 
   if (!student) {
     return next(new ErrorResponse('Student profile not found', 404));

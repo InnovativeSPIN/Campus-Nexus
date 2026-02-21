@@ -3,17 +3,21 @@ import ErrorResponse from '../../utils/errorResponse.js';
 import { models } from '../../models/index.js';
 const { DisciplinaryRecord, Student, Faculty } = models;
 
-const getStudentId = async (userId, next) => {
-    const student = await Student.findOne({ where: { userId } });
-    if (!student) { next(new ErrorResponse('Student profile not found', 404)); return null; }
-    return student.id;
+const getStudentId = async (userOrId, next) => {
+    // if already a student instance, just return the id
+    if (userOrId && userOrId.id && userOrId.studentId) {
+        return userOrId.id;
+    }
+    // userId column doesn't exist; can't look up this way
+    next(new ErrorResponse('Student profile not accessible', 404));
+    return null;
 };
 
 // @desc   Get disciplinary records for logged-in student (read-only)
 // @route  GET /api/student/disciplinary
 // @access Private/Student
 export const getMyDisciplinaryRecords = asyncHandler(async (req, res, next) => {
-    const studentId = await getStudentId(req.user.id, next);
+    const studentId = await getStudentId(req.user, next);
     if (!studentId) return;
 
     const where = { studentId };
@@ -33,7 +37,7 @@ export const getMyDisciplinaryRecords = asyncHandler(async (req, res, next) => {
 // @route  GET /api/student/disciplinary/:id
 // @access Private/Student
 export const getDisciplinaryRecord = asyncHandler(async (req, res, next) => {
-    const studentId = await getStudentId(req.user.id, next);
+    const studentId = await getStudentId(req.user, next);
     if (!studentId) return;
 
     const record = await DisciplinaryRecord.findOne({

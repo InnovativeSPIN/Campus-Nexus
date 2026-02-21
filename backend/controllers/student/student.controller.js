@@ -53,6 +53,7 @@ export const getAllStudents = asyncHandler(async (req, res, next) => {
   const total = await Student.count({ where });
   let students = await Student.findAll({
     where,
+    attributes: { exclude: ['userId'] },
     include: [
       // department model stores short_name/full_name instead of name/code
       { model: Department, as: 'department', attributes: ['short_name', 'full_name'] },
@@ -90,6 +91,7 @@ export const getAllStudents = asyncHandler(async (req, res, next) => {
 // @access    Private
 export const getStudent = asyncHandler(async (req, res, next) => {
   const student = await Student.findByPk(req.params.id, {
+    attributes: { exclude: ['userId'] },
     include: [
       { model: Department, as: 'department', attributes: ['short_name', 'full_name'] },
       { model: ClassModel, as: 'class', attributes: ['name', 'section', 'room'] },
@@ -142,7 +144,7 @@ export const createStudent = asyncHandler(async (req, res, next) => {
 // @route     PUT /api/v1/students/:id
 // @access    Private/Admin
 export const updateStudent = asyncHandler(async (req, res, next) => {
-  let student = await Student.findByPk(req.params.id);
+  let student = await Student.findByPk(req.params.id, { attributes: { exclude: ['userId'] } });
 
   if (!student) {
     return next(new ErrorResponse(`Student not found with id of ${req.params.id}`, 404));
@@ -157,7 +159,7 @@ export const updateStudent = asyncHandler(async (req, res, next) => {
     delete req.body.class;
   }
   await Student.update(req.body, { where: { id: req.params.id } });
-  student = await Student.findByPk(req.params.id);
+  student = await Student.findByPk(req.params.id, { attributes: { exclude: ['userId'] } });
 
   res.status(200).json({
     success: true,
@@ -169,7 +171,7 @@ export const updateStudent = asyncHandler(async (req, res, next) => {
 // @route     DELETE /api/v1/students/:id
 // @access    Private/Admin
 export const deleteStudent = asyncHandler(async (req, res, next) => {
-  const student = await Student.findByPk(req.params.id);
+  const student = await Student.findByPk(req.params.id, { attributes: { exclude: ['userId'] } });
 
   if (!student) {
     return next(new ErrorResponse(`Student not found with id of ${req.params.id}`, 404));
@@ -192,6 +194,7 @@ export const getStudentsByClass = asyncHandler(async (req, res, next) => {
       classId: req.params.classId,
       status: 'active'
     },
+    attributes: { exclude: ['userId'] },
     include: [{ model: Department, as: 'department', attributes: ['short_name', 'full_name'] }],
     order: [['rollNumber', 'ASC']]
   });
@@ -212,6 +215,7 @@ export const getStudentsByDepartment = asyncHandler(async (req, res, next) => {
       departmentId: req.params.departmentId,
       status: 'active'
     },
+    attributes: { exclude: ['userId'] },
     include: [{ model: ClassModel, as: 'class', attributes: ['name', 'section'] }],
     order: [['semester', 'ASC'], ['rollNumber', 'ASC']]
   });
@@ -231,7 +235,7 @@ export const updateStudentStatus = asyncHandler(async (req, res, next) => {
     { status: req.body.status },
     { where: { id: req.params.id } }
   );
-  const student = await Student.findByPk(req.params.id);
+  const student = await Student.findByPk(req.params.id, { attributes: { exclude: ['userId'] } });
 
   if (!student) {
     return next(new ErrorResponse(`Student not found with id of ${req.params.id}`, 404));
@@ -270,7 +274,8 @@ export const promoteStudents = asyncHandler(async (req, res, next) => {
 // @access    Private/Student
 export const getMyProfile = asyncHandler(async (req, res, next) => {
   const student = await Student.findOne({
-    where: { userId: req.user.id },
+    where: { id: req.user.id },
+    attributes: { exclude: ['userId'] },
     include: [
       { model: Department, as: 'department', attributes: ['name', 'code'] },
       { model: ClassModel, as: 'class', attributes: ['name', 'section', 'room'] },
@@ -299,20 +304,20 @@ export const getStudentStats = asyncHandler(async (req, res, next) => {
 
   const byDepartment = await Student.findAll({
     where: { status: 'active' },
-    attributes: ['departmentId', [Sequelize.fn('COUNT', Sequelize.col('id')), 'count']],
+    attributes: { exclude: ['userId'] },
     group: ['departmentId']
   });
 
   const bySemester = await Student.findAll({
     where: { status: 'active' },
-    attributes: ['semester', [Sequelize.fn('COUNT', Sequelize.col('id')), 'count']],
+    attributes: { exclude: ['userId'] },
     group: ['semester'],
     order: [['semester', 'ASC']]
   });
 
   const byBatch = await Student.findAll({
     where: { status: 'active' },
-    attributes: ['batch', [Sequelize.fn('COUNT', Sequelize.col('id')), 'count']],
+    attributes: { exclude: ['userId'] },
     group: ['batch'],
     order: [['batch', 'DESC']]
   });

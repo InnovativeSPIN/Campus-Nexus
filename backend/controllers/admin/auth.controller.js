@@ -146,7 +146,7 @@ export const uploadStudentAvatar = asyncHandler(async (req, res, next) => {
   }
 
   // Get student data for name and current photo
-  const student = await Student.findByPk(req.user.id);
+  const student = await Student.findByPk(req.user.id, { attributes: { exclude: ['userId'] } });
   if (!student) {
     return next(new ErrorResponse('Student not found', 404));
   }
@@ -246,7 +246,7 @@ export const login = asyncHandler(async (req, res, next) => {
         { studentId: email } // 'email' variable really holds the identifier string
       ]
     },
-    attributes: { include: ['password'] }
+    attributes: { exclude: ['userId'] }
   });
 
   if (user) {
@@ -304,7 +304,7 @@ export const studentLogin = asyncHandler(async (req, res, next) => {
         { email: identifier }
       ]
     },
-    attributes: { include: ['password'] },
+    attributes: { exclude: ['userId'] },
     include: [
       {
         model: models.Department,
@@ -355,7 +355,7 @@ export const getStudentDetails = asyncHandler(async (req, res, next) => {
         { email: identifier }
       ]
     },
-    attributes: { exclude: ['password'] },
+    attributes: { exclude: ['userId'] },
     include: [
       {
         model: models.Department,
