@@ -23,7 +23,6 @@ const adminRoles = [
     { value: 'exam_cell_admin', label: 'Exam Cell Admin' },
     { value: 'placement_cell_admin', label: 'Placement Cell Admin' },
     { value: 'research_development_admin', label: 'Research & Development Admin' },
-    { value: 'department-admin', label: 'Department Admin' },
 ];
 
 const roleRoutes: Partial<Record<UserRole, string>> = {
@@ -36,7 +35,7 @@ const roleRoutes: Partial<Record<UserRole, string>> = {
     exam_cell_admin: '/admin/superadmin', // Default to superadmin or specific dashboard if available
     placement_cell_admin: '/admin/superadmin',
     research_development_admin: '/admin/superadmin',
-    'department-admin': '/admin/department-admin',
+    
 };
 
 export default function AdminLogin() {

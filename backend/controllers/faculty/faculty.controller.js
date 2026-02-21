@@ -304,3 +304,53 @@ export const getMyProfile = asyncHandler(async (req, res, next) => {
     data: req.user
   });
 });
+// @desc      Update faculty profile (for logged in faculty)
+// @route     PUT /api/v1/faculty/update-profile
+// @access    Private/Faculty
+export const updateFacultyProfile = asyncHandler(async (req, res, next) => {
+  if (!req.user) {
+    console.error('[UPDATE PROFILE] No user found in request');
+    return next(new ErrorResponse('Not authorized to access this route', 401));
+  }
+
+  // Only allow updating specific fields
+  const allowedFields = ['email', 'phone', 'linkedin_url'];
+  const fieldsToUpdate = {};
+  
+  allowedFields.forEach(field => {
+    if (req.body[field] !== undefined && req.body[field] !== null) {
+      fieldsToUpdate[field] = req.body[field];
+    }
+  });
+
+  if (Object.keys(fieldsToUpdate).length === 0) {
+    return next(new ErrorResponse('No valid fields provided to update', 400));
+  }
+
+  // Map phone to phone_number for Faculty model
+  const facultyUpdateFields = { ...fieldsToUpdate };
+  if (facultyUpdateFields.phone) {
+    facultyUpdateFields.phone_number = facultyUpdateFields.phone;
+    delete facultyUpdateFields.phone;
+  }
+
+  // Update Faculty table (Faculty has its own email, phone, linkedin_url fields)
+  try {
+    await Faculty.update(facultyUpdateFields, { where: { faculty_id: req.user.faculty_id } });
+
+    // Fetch updated faculty record
+    const updatedFaculty = await Faculty.findByPk(req.user.faculty_id, {
+      include: [
+        { model: Department, as: 'department', attributes: ['short_name', 'full_name'] }
+      ]
+    });
+
+    res.status(200).json({
+      success: true,
+      data: updatedFaculty
+    });
+  } catch (error) {
+    console.error('[UPDATE PROFILE ERROR]', error);
+    return next(new ErrorResponse('Failed to update profile', 500));
+  }
+});

@@ -83,6 +83,7 @@ export const protect = asyncHandler(async (req, res, next) => {
       });
 
       if (!req.user) {
+        console.error(`[AUTH ERROR] Faculty record not found for ID: ${decoded.id}`);
         return next(new ErrorResponse('Not authorized to access this route', 401));
       }
 

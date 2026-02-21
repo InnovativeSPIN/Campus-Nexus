@@ -13,13 +13,19 @@ export type UserRole =
 	| 'faculty'
 	| 'student';
 
+export interface Department {
+	short_name: string;
+	full_name: string;
+}
+
 export interface User {
 	id: string;
 	email: string;
 	name: string;
 	role: UserRole;
 	avatar?: string;
-	department?: string;
+	department?: Department | string;
+	designation?: string;
 	rollNo?: string;
 	year?: number;
 	semester?: number;

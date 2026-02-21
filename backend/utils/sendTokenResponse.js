@@ -34,6 +34,7 @@ const sendTokenResponse = (user, statusCode, res) => {
       name: user.Name || user.name,
       email: user.email,
       role: 'faculty',
+      designation: user.designation || null,
       department: user.department,
       avatar: user.profile_image_url || null
     };

@@ -364,7 +364,7 @@ export default function Profile() {
 
     setLoading(true);
     try {
-      const token = (user as any)?.token || localStorage.getItem('token');
+      const token = (user as any)?.token || localStorage.getItem('authToken');
       const response = await fetch('/api/v1/auth/avatar', {
         method: 'POST',
         headers: {
@@ -428,7 +428,7 @@ export default function Profile() {
 
     setLoading(true);
     try {
-      const token = (user as any)?.token || localStorage.getItem('token');
+      const token = (user as any)?.token || localStorage.getItem('authToken');
       const response = await fetch('/api/v1/auth/updatedetails', {
         method: 'PUT',
         headers: {
@@ -1018,7 +1018,7 @@ export default function Profile() {
   const handleDownloadProfile = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token'); // Assuming token is stored here
+      const token = localStorage.getItem('authToken');
 
       const response = await fetch('http://localhost:5000/api/v1/faculty/download-profile', {
         method: 'POST',

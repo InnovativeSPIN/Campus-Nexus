@@ -99,6 +99,10 @@ const Faculty = (sequelize) => {
       type: DataTypes.TEXT,
       allowNull: true,
     },
+    linkedin_url: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
   }, {
     tableName: 'faculty_profiles',
     timestamps: true,

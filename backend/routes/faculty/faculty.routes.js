@@ -9,7 +9,8 @@ import {
   assignSubjects,
   assignClasses,
   updateFacultyStatus,
-  getMyProfile
+  getMyProfile,
+  updateFacultyProfile
 } from '../../controllers/faculty/faculty.controller.js';
 import { handleDownloadProfile } from '../../controllers/faculty/handleDownloadProfile.js';
 
@@ -22,6 +23,8 @@ router.use(protect);
 
 // Faculty can access their own profile
 router.get('/me/profile', authorize('faculty'), getMyProfile);
+// Faculty can update their own profile
+router.put('/update-profile', authorize('faculty'), updateFacultyProfile);
 // Route to download profile as DOCX
 router.post('/download-profile', authorize('faculty', 'superadmin', 'super-admin', 'executiveadmin', 'academicadmin'), handleDownloadProfile);
 

@@ -84,7 +84,7 @@ export function AppSidebar() {
                     {user?.name || 'Faculty'}
                   </span>
                   <span className="text-[10px] text-white/70 uppercase tracking-widest font-semibold mt-1">
-                    {user?.role?.replace('-', ' ') || 'Assistant Professor'}
+                    {user?.designation || 'Faculty'}
                   </span>
                   <span className="text-[10px] text-white/50 uppercase tracking-wider">
                     {user?.department?.short_name || user?.department?.full_name || 'Department'}

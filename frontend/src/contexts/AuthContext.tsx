@@ -59,6 +59,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             role: result.user.role as UserRole,
             avatar: result.user.avatar || '',
             department: departmentObj || null,
+            designation: result.user.designation || '',
             year: result.user.year,
             semester: result.user.semester,
             rollNo: result.user.rollNo,
