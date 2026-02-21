@@ -44,7 +44,7 @@ export interface Student {
 	admissionDate?: string;
 	admissionType?: 'regular' | 'lateral' | 'management';
 	feeStatus?: 'paid' | 'pending' | 'partial';
-	status?: 'active' | 'inactive' | 'graduated' | 'dropped' | 'suspended';
+	status?: 'active' | 'completed' | 'inactive';
 	createdAt: string;
 	updatedAt: string;
 }
@@ -67,7 +67,7 @@ export interface Faculty {
 	date_of_birth?: string;
 	date_of_joining?: string;
 	profile_image_url?: string;
-	status?: 'active' | 'on_leave' | 'retired';
+	status?: 'active' | 'completed' | 'inactive';
 	blood_group?: string;
 	aadhar_number?: string;
 	pan_number?: string;

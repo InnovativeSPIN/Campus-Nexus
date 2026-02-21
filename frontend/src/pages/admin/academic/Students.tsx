@@ -31,7 +31,10 @@ export default function AcademicStudents() {
       render: (student: Student) => (
         <Badge
           variant={student.status === 'active' ? 'default' : 'secondary'}
-          className={student.status === 'active' ? 'bg-success' : student.status === 'graduated' ? 'bg-secondary' : ''}
+          className={
+            student.status === 'active' ? 'bg-success' :
+            student.status === 'completed' ? 'bg-secondary' : ''
+          }
         >
           {student.status}
         </Badge>

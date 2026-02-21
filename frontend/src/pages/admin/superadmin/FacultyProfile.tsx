@@ -2,26 +2,55 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { AdminLayout } from '@/pages/admin/superadmin/components/layout/AdminLayout';
 import { Button } from '@/pages/admin/superadmin/components/ui/button';
 import { ChevronLeft, Mail, Phone, Building2, Calendar, Award, User, MapPin, Briefcase } from 'lucide-react';
-import { mockFaculty } from '@/data/mockData';
+// import data is no longer needed; fetch from API instead
 import { Badge } from '@/pages/admin/superadmin/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/pages/admin/superadmin/components/ui/tabs';
 
 export default function SuperAdminFacultyProfile() {
     const { id } = useParams();
     const navigate = useNavigate();
-    const faculty = mockFaculty.find(f => f.id === id);
+    const [faculty, setFaculty] = useState<any | null>(null);
+    const [loading, setLoading] = useState<boolean>(true);
+
+    useEffect(() => {
+      const fetchFaculty = async () => {
+        try {
+          setLoading(true);
+          const res = await fetch(`/api/v1/faculty/${id}`, { credentials: 'include' });
+          const json = await res.json();
+          if (json.success) {
+            setFaculty(json.data);
+          }
+        } catch (err) {
+          console.error('Failed to load faculty', err);
+        } finally {
+          setLoading(false);
+        }
+      };
+      if (id) fetchFaculty();
+    }, [id]);
+
+    if (loading) {
+      return (
+        <AdminLayout>
+          <div className="flex items-center justify-center h-[60vh]">
+            <p>Loading...</p>
+          </div>
+        </AdminLayout>
+      );
+    }
 
     if (!faculty) {
-        return (
-            <AdminLayout>
-                <div className="flex flex-col items-center justify-center h-[60vh]">
-                    <h2 className="text-2xl font-bold">Faculty not found</h2>
-                    <Button variant="link" onClick={() => navigate('/admin/superadmin/faculty')}>
-                        Back to Faculty List
-                    </Button>
-                </div>
-            </AdminLayout>
-        );
+      return (
+        <AdminLayout>
+          <div className="flex flex-col items-center justify-center h-[60vh]">
+            <h2 className="text-2xl font-bold">Faculty not found</h2>
+            <Button variant="link" onClick={() => navigate('/admin/superadmin/faculty')}>
+              Back to Faculty List
+            </Button>
+          </div>
+        </AdminLayout>
+      );
     }
 
     return (

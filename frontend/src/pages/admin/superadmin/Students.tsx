@@ -1,9 +1,8 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AdminLayout } from '@/pages/admin/superadmin/components/layout/AdminLayout';
 import { DataTable } from '@/pages/admin/superadmin/components/dashboard/DataTable';
 import { UserFormModal } from '@/pages/admin/superadmin/components/modals/UserFormModal';
-import { mockStudents as initialStudents, mockDepartments } from '@/data/mockData';
 import { Student } from '@/types/auth';
 import { Badge } from '@/pages/admin/superadmin/components/ui/badge';
 import { toast } from 'sonner';
@@ -28,9 +27,41 @@ import {
 
 export default function SuperAdminStudents() {
   const navigate = useNavigate();
-  const [students, setStudents] = useState<Student[]>(initialStudents);
+  const [students, setStudents] = useState<Student[]>([]);
+  const [departments, setDepartments] = useState<any[]>([]);
   const [departmentFilter, setDepartmentFilter] = useState<string>('all');
   const [yearFilter, setYearFilter] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch('/api/v1/students', { credentials: 'include' });
+        const json = await res.json();
+        if (json.success) {
+          setStudents(
+            json.data.map((s: any) => ({
+              ...s,
+              department: s.department ? s.department.name : ''
+            }))
+          );
+        }
+
+        const deptRes = await fetch('/api/v1/departments', { credentials: 'include' });
+        const deptJson = await deptRes.json();
+        if (deptJson.success) {
+          setDepartments(deptJson.data);
+        }
+      } catch (err) {
+        console.error('Failed to load students or departments', err);
+        toast.error('Unable to load data');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
   const [formModal, setFormModal] = useState<{ open: boolean; mode: 'add' | 'edit'; data?: Student }>({
     open: false,
@@ -60,7 +91,10 @@ export default function SuperAdminStudents() {
       render: (student: Student) => (
         <Badge
           variant={student.status === 'active' ? 'default' : 'secondary'}
-          className={student.status === 'active' ? 'bg-success' : student.status === 'graduated' ? 'bg-secondary' : ''}
+          className={
+            student.status === 'active' ? 'bg-success' :
+            student.status === 'completed' ? 'bg-secondary' : ''
+          }
         >
           {student.status}
         </Badge>
@@ -138,7 +172,7 @@ export default function SuperAdminStudents() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Departments</SelectItem>
-                {mockDepartments.map(dept => (
+                {departments.map(dept => (
                   <SelectItem key={dept.id} value={dept.name}>{dept.name}</SelectItem>
                 ))}
               </SelectContent>

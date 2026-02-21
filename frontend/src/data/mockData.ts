@@ -11,17 +11,20 @@ export const dashboardStats = {
   activeAdmins: 8,
 };
 
+// legacy mock data used by some admin modules; superadmin now fetches real data from the API
 export const mockStudents: Student[] = [
   { id: "1", name: "Alice Johnson", email: "alice@example.com", phone: "1234567890", department: "CSE", enrollmentYear: 2023, semester: 3, status: "active" },
   { id: "2", name: "Bob Smith", email: "bob@example.com", phone: "1234567890", department: "Mechanical Engineering", enrollmentYear: 2022, semester: 5, status: "active" },
-  { id: "3", name: "Carol Lee", email: "carol@example.com", phone: "1234567890", department: "ECE", enrollmentYear: 2024, semester: 1, status: "active" },
+  { id: "3", name: "Carol Lee", email: "carol@example.com", phone: "1234567890", department: "ECE", enrollmentYear: 2024, semester: 1, status: "completed" },
   { id: "4", name: "David Kim", email: "david@example.com", phone: "1234567890", department: "Civil Engineering", enrollmentYear: 2021, semester: 7, status: "inactive" },
   { id: "5", name: "Eva Brown", email: "eva@example.com", phone: "1234567890", department: "AI & DS", enrollmentYear: 2023, semester: 3, status: "active" },
   { id: "6", name: "Frank Green", email: "frank@example.com", phone: "1234567890", department: "B.Tech IT", enrollmentYear: 2023, semester: 3, status: "active" },
   { id: "7", name: "Grace Miller", email: "grace@example.com", phone: "1234567890", department: "EEE", enrollmentYear: 2023, semester: 3, status: "active" },
   { id: "8", name: "Henry Wilson", email: "henry@example.com", phone: "1234567890", department: "Mechanical Engineering", enrollmentYear: 2022, semester: 5, status: "active" },
+  { id: "9", name: "Isla Martinez", email: "isla@example.com", phone: "1234567890", department: "CSE", enrollmentYear: 2020, semester: 7, status: "completed" },
 ];
 
+// legacy faculty mock list (kept for offline examples)
 export const mockFaculty: Faculty[] = [
   { id: "1", employeeId: "FAC001", name: "Prof. Xavier", email: "xavier@edu.com", phone: "9876543210", designation: "Professor", department: "CSE", joinDate: "2015-06-01", status: "active" },
   { id: "2", employeeId: "FAC002", name: "Dr. Jane Foster", email: "jane@edu.com", phone: "9876543210", designation: "Associate Professor", department: "AI & DS", joinDate: "2018-08-15", status: "active" },

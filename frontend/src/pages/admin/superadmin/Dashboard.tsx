@@ -1,6 +1,7 @@
+import React, { useState, useEffect } from 'react';
 import { AdminLayout } from '@/pages/admin/superadmin/components/layout/AdminLayout';
 import { StatsCard } from '@/pages/admin/superadmin/components/dashboard/StatsCard';
-import { dashboardStats, mockStudents, mockFaculty } from '@/data/mockData';
+import { dashboardStats } from '@/data/mockData'; // stats still static for now, lists fetched from API
 import {
   Users,
   GraduationCap,
@@ -14,8 +15,28 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/pages/admin/superadm
 import { Badge } from '@/pages/admin/superadmin/components/ui/badge';
 
 export default function SuperAdminDashboard() {
-  const recentStudents = mockStudents.slice(0, 5);
-  const recentFaculty = mockFaculty.slice(0, 3);
+  const [recentStudents, setRecentStudents] = useState<any[]>([]);
+  const [recentFaculty, setRecentFaculty] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchRecent = async () => {
+      try {
+        const stuRes = await fetch('/api/v1/students?limit=5&sort=createdAt:desc');
+        const stuJson = await stuRes.json();
+        if (stuJson.success) setRecentStudents(stuJson.data);
+      } catch (e) {
+        console.error('Failed to load recent students', e);
+      }
+      try {
+        const facRes = await fetch('/api/v1/faculty?limit=3&sort=createdAt:desc');
+        const facJson = await facRes.json();
+        if (facJson.success) setRecentFaculty(facJson.data);
+      } catch (e) {
+        console.error('Failed to load recent faculty', e);
+      }
+    };
+    fetchRecent();
+  }, []);
 
   return (
     <AdminLayout>
@@ -95,10 +116,10 @@ export default function SuperAdminDashboard() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {recentStudents.map((student) => {
+                {recentStudents.map((student, index) => {
                   const fullName = `${student.firstName || 'Unknown'} ${student.lastName || ''}`.trim();
                   return (
-                    <div key={student.id} className="flex items-center justify-between">
+                    <div key={student.id || index} className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary font-medium">
                           {fullName.split(' ').map((n: string) => (n[0])).join('')}
@@ -127,8 +148,8 @@ export default function SuperAdminDashboard() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {recentFaculty.map((faculty) => (
-                  <div key={faculty.faculty_id} className="flex items-center justify-between">
+                {recentFaculty.map((faculty, idx) => (
+                  <div key={faculty.faculty_id || idx} className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary/10 text-secondary font-medium">
                         {(faculty.Name || 'Unknown').split(' ').map((n: string) => (n[0])).join('')}

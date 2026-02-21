@@ -304,8 +304,8 @@ export function UserFormModal({ open, onClose, onSave, type, initialData, mode }
                     </SelectTrigger>
                     <SelectContent className="bg-popover">
                       <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="completed">Completed</SelectItem>
                       <SelectItem value="inactive">Inactive</SelectItem>
-                      <SelectItem value="graduated">Graduated</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
