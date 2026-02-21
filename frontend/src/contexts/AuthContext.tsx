@@ -47,18 +47,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const result = await response.json();
 
       if (result.success && result.user) {
-        const userObj = {
-          id: result.user.id,
-          email: result.user.email,
-          name: result.user.name,
-          role: result.user.role as UserRole,
-          avatar: result.user.avatar || '',
-          department: result.user.department || '',
-          year: result.user.year,
-          semester: result.user.semester,
-          rollNo: result.user.rollNo,
-          token: result.token
-        };
+          let departmentObj = result.user.department;
+          // If department is a string, convert to object with short_name
+          if (departmentObj && typeof departmentObj === 'string') {
+            departmentObj = { short_name: departmentObj, full_name: departmentObj };
+          }
+          const userObj = {
+            id: result.user.id,
+            email: result.user.email,
+            name: result.user.name,
+            role: result.user.role as UserRole,
+            avatar: result.user.avatar || '',
+            department: departmentObj || null,
+            year: result.user.year,
+            semester: result.user.semester,
+            rollNo: result.user.rollNo,
+            token: result.token
+          };
         
         console.log('Login successful:', userObj.name, userObj.role);
         setUser(userObj);

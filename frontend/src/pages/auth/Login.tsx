@@ -33,6 +33,7 @@ export default function Login() {
     department?: string;
     semester?: number;
     rollNo?: string;
+    designation?: string;
   } | null>(null);
   const { login, isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
@@ -52,25 +53,45 @@ export default function Login() {
   // Fetch student details when the identifier (ID or email) is entered
   useEffect(() => {
     const fetchStudentDetails = async () => {
-      if (role === 'student' && email.trim().length > 0) {
-        setIsFetchingDetails(true);
-        try {
-          const response = await fetch(`/api/v1/auth/student-details/${email.trim()}`); // backend accepts both ID and email
+      if (email.trim().length === 0) {
+        setUserDetails(null);
+        return;
+      }
+
+      setIsFetchingDetails(true);
+      try {
+        if (role === 'student') {
+          const response = await fetch(`/api/v1/auth/student-details/${email.trim()}`);
           const result = await response.json();
-          
           if (result.success && result.data) {
             setUserDetails(result.data);
           } else {
             setUserDetails(null);
           }
-        } catch (error) {
-          console.error('Error fetching student details:', error);
+        } else if (role === 'faculty') {
+          const response = await fetch(`/api/v1/auth/faculty-details/${email.trim()}`);
+          const result = await response.json();
+          if (result.success && result.data) {
+            // normalize to same shape used by UI
+            setUserDetails({
+              name: result.data.name,
+              rollNo: result.data.collegeId || result.data.college_id || undefined,
+              department: result.data.department,
+              semester: undefined,
+              year: undefined,
+              designation: result.data.designation
+            });
+          } else {
+            setUserDetails(null);
+          }
+        } else {
           setUserDetails(null);
-        } finally {
-          setIsFetchingDetails(false);
         }
-      } else {
+      } catch (error) {
+        console.error('Error fetching user details:', error);
         setUserDetails(null);
+      } finally {
+        setIsFetchingDetails(false);
       }
     };
 
@@ -169,8 +190,15 @@ export default function Login() {
                   {userDetails.rollNo && (
                     <div className="flex items-center gap-2">
                       <Mail className="h-3 w-3 text-muted-foreground" />
-                      <span className="text-muted-foreground">Roll No:</span>
+                      <span className="text-muted-foreground">{role === 'faculty' ? 'Faculty ID:' : 'Roll No:'}</span>
                       <span className="font-medium">{userDetails.rollNo}</span>
+                    </div>
+                  )}
+                  {userDetails.designation && (
+                    <div className="flex items-center gap-2">
+                      <Users className="h-3 w-3 text-muted-foreground" />
+                      <span className="text-muted-foreground">Designation:</span>
+                      <span className="font-medium">{userDetails.designation}</span>
                     </div>
                   )}
                   {userDetails.year && (

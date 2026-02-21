@@ -7,7 +7,6 @@ import {
   Building2,
   Calendar,
   GraduationCap,
-  AlertTriangle,
   Users,
   BookOpen,
   FileText,
@@ -87,7 +86,7 @@ export default function StudentDashboard() {
         />
         <InfoCard
           label="Department"
-          value={user?.department?.short_name || user?.department?.full_name || 'N/A'}
+          value={typeof user?.department === 'object' ? (user?.department?.short_name || user?.department?.full_name || 'N/A') : (user?.department || 'N/A')}
           icon={Building2}
         />
         <InfoCard

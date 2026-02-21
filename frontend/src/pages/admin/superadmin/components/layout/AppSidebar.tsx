@@ -81,42 +81,7 @@ export function AppSidebar() {
       className="fixed left-0 top-0 h-screen bg-sidebar z-50 flex flex-col shadow-xl"
       style={{ pointerEvents: 'auto' }}
     >
-      {/* Logo & Branding Section */}
-      <div className="p-4 border-b border-sidebar-border bg-gradient-to-b from-sidebar-accent/20 to-sidebar-accent/5">
-        <div className="flex items-center justify-between">
-          <AnimatePresence>
-            {!collapsed && (
-              <motion.div
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -10 }}
-                className="flex-1 overflow-hidden"
-              >
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-secondary to-primary flex items-center justify-center flex-shrink-0">
-                    <Home className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <h1 className="font-bold text-white text-sm leading-tight">NSCET</h1>
-                    <p className="text-[10px] text-white/70 uppercase tracking-widest">SuperAdmin</p>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {collapsed && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="w-8 h-8 rounded-lg bg-gradient-to-br from-secondary to-primary flex items-center justify-center"
-            >
-              <Home className="w-5 h-5 text-white" />
-            </motion.div>
-          )}
-        </div>
-      </div>
+   
 
       {/* User Profile Section */}
       {user && (

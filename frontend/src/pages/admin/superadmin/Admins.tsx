@@ -43,7 +43,10 @@ export default function SuperAdminAdmins() {
                         email: user.email,
                         role: user.role,
                         role_id: user.role_id,
-                        department: user.department,
+                        // normalize department: prefer short_name when department is an object
+                        department: (user.department && typeof user.department === 'object')
+                            ? (user.department.short_name || user.department.full_name || user.department.name)
+                            : (user.department || null),
                         avatar: user.avatar,
                         status: user.isActive ? 'active' : 'inactive',
                     }));
@@ -79,7 +82,7 @@ export default function SuperAdminAdmins() {
             key: 'role',
             label: 'Role',
             render: (item: Admin) => (
-                <span className="capitalize">{item.role.replace('_', ' ').replace('-', ' ').replace('admin', ' admin')}</span>
+                <span className="capitalize">{(item.role || 'N/A').replace('_', ' ').replace('-', ' ').replace('admin', ' admin')}</span>
             )
         },
         {
