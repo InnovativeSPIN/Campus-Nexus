@@ -54,6 +54,7 @@ export const protect = asyncHandler(async (req, res, next) => {
     // Handle student tokens
     if (decoded.type === 'student') {
       req.user = await Student.findByPk(decoded.id, {
+        attributes: { exclude: ['userId'] },
         include: [{
           model: models.Department,
           as: 'department',
@@ -75,6 +76,7 @@ export const protect = asyncHandler(async (req, res, next) => {
     // Handle faculty tokens
     if (decoded.type === 'faculty') {
       req.user = await Faculty.findByPk(decoded.id, {
+        attributes: { exclude: ['userId'] },
         include: [{
           model: models.Department,
           as: 'department',
