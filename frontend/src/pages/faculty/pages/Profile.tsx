@@ -1300,6 +1300,48 @@ export default function Profile() {
             {/* Email */}
             <div className="flex items-start gap-3 text-sm group">
               <Mail className="w-4 h-4 text-primary flex-shrink-0 mt-1" />
+<<<<<<< HEAD
+              {editingField === "email" ? (
+                <div className="flex-1">
+                  <input
+                    type="email"
+                    value={tempValue}
+                    onChange={(e) => setTempValue(e.target.value)}
+                    disabled={loading}
+                    className="w-full px-2 py-1 border border-primary rounded text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    placeholder="Enter email address"
+                  />
+                  {fieldError && <p className="text-red-500 text-xs mt-1">{fieldError}</p>}
+                  <div className="flex gap-2 mt-2">
+                    <button
+                      onClick={() => handleSaveField("email")}
+                      disabled={loading}
+                      className="px-2 py-1 bg-green-600 hover:bg-green-700 text-white rounded text-xs flex items-center gap-1 transition-colors"
+                    >
+                      <Check className="w-3 h-3" />
+                      Save
+                    </button>
+                    <button
+                      onClick={handleCancelEdit}
+                      disabled={loading}
+                      className="px-2 py-1 bg-gray-400 hover:bg-gray-500 text-white rounded text-xs flex items-center gap-1 transition-colors"
+                    >
+                      <X className="w-3 h-3" />
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 flex-1">
+                  <span className="font-medium text-sm break-all flex-1">{facultyData.email}</span>
+                  <button
+                    onClick={() => handleEditField("email", facultyData.email)}
+                    disabled={loading}
+                    className="p-1 hover:bg-muted rounded transition-colors"
+                    title="Edit email"
+                  >
+                    <Edit2 className="w-3.5 h-3.5 text-secondary" />
+=======
               {editingField === 'email' ? (
                 <div className="flex-1 space-y-2">
                   <input
@@ -1350,6 +1392,7 @@ export default function Profile() {
                     title="Edit email"
                   >
                     <Edit2 className="w-4 h-4 text-muted-foreground" />
+>>>>>>> 20b84a9efb264f64628acb161c00db9afd82ebce
                   </button>
                 </div>
               )}
@@ -1358,6 +1401,48 @@ export default function Profile() {
             {/* Phone */}
             <div className="flex items-start gap-3 text-sm group">
               <Phone className="w-4 h-4 text-primary flex-shrink-0 mt-1" />
+<<<<<<< HEAD
+              {editingField === "phone" ? (
+                <div className="flex-1">
+                  <input
+                    type="tel"
+                    value={tempValue}
+                    onChange={(e) => setTempValue(e.target.value)}
+                    disabled={loading}
+                    className="w-full px-2 py-1 border border-primary rounded text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    placeholder="Enter phone number"
+                  />
+                  {fieldError && <p className="text-red-500 text-xs mt-1">{fieldError}</p>}
+                  <div className="flex gap-2 mt-2">
+                    <button
+                      onClick={() => handleSaveField("phone")}
+                      disabled={loading}
+                      className="px-2 py-1 bg-green-600 hover:bg-green-700 text-white rounded text-xs flex items-center gap-1 transition-colors"
+                    >
+                      <Check className="w-3 h-3" />
+                      Save
+                    </button>
+                    <button
+                      onClick={handleCancelEdit}
+                      disabled={loading}
+                      className="px-2 py-1 bg-gray-400 hover:bg-gray-500 text-white rounded text-xs flex items-center gap-1 transition-colors"
+                    >
+                      <X className="w-3 h-3" />
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 flex-1">
+                  <span className="font-medium flex-1">{facultyData.phone}</span>
+                  <button
+                    onClick={() => handleEditField("phone", facultyData.phone)}
+                    disabled={loading}
+                    className="p-1 hover:bg-muted rounded transition-colors"
+                    title="Edit phone number"
+                  >
+                    <Edit2 className="w-3.5 h-3.5 text-secondary" />
+=======
               {editingField === 'phone' ? (
                 <div className="flex-1 space-y-2">
                   <input
@@ -1408,6 +1493,7 @@ export default function Profile() {
                     title="Edit phone"
                   >
                     <Edit2 className="w-4 h-4 text-muted-foreground" />
+>>>>>>> 20b84a9efb264f64628acb161c00db9afd82ebce
                   </button>
                 </div>
               )}
