@@ -29,6 +29,9 @@ export interface User {
 	rollNo?: string;
 	year?: number;
 	semester?: number;
+	// additional flags for faculty
+	is_timetable_incharge?: boolean;
+	is_placement_coordinator?: boolean;
 }
 
 export interface Student {

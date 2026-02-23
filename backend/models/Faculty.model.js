@@ -58,6 +58,11 @@ const Faculty = (sequelize) => {
       type: DataTypes.STRING(255),
       allowNull: true,
     },
+    phd_status: {
+      type: DataTypes.ENUM('Yes', 'No', 'Pursuing'),
+      defaultValue: 'No',
+      allowNull: true,
+    },
     gender: {
       type: DataTypes.ENUM('Male', 'Female', 'Other'),
       allowNull: true,
@@ -103,6 +108,14 @@ const Faculty = (sequelize) => {
       type: DataTypes.TEXT,
       allowNull: true,
     },
+    is_timetable_incharge: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
+    is_placement_coordinator: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
   }, {
     tableName: 'faculty_profiles',
     timestamps: true,
@@ -135,10 +148,24 @@ const Faculty = (sequelize) => {
   };
 
   FacultyModel.associate = (models) => {
-    // Define associations here if needed
+    // Faculty belongs to Department
     FacultyModel.belongsTo(models.Department, {
       foreignKey: 'department_id',
       as: 'department',
+    });
+
+    // Faculty can be assigned to many subjects through faculty_subject_assignments
+    FacultyModel.belongsToMany(models.Subject, {
+      through: 'faculty_subject_assignments',
+      foreignKey: 'faculty_id',
+      otherKey: 'subject_id',
+      as: 'assignedSubjects',
+    });
+
+    // Faculty has many subject assignments
+    FacultyModel.hasMany(models.FacultySubjectAssignment, {
+      foreignKey: 'faculty_id',
+      as: 'subjectAssignments',
     });
   };
 

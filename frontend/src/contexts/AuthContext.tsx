@@ -1,12 +1,14 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, ReactNode, useCallback } from 'react';
 import { User, UserRole } from '@/types/auth';
 
 interface AuthContextType {
   user: User | null;
+  authToken: string | null; // JWT stored separately
   // identifier may be an email address or a student ID when role is student
   login: (identifier: string, password: string, role: UserRole) => Promise<boolean>;
   logout: () => void;
   updateUserData: (newData: Partial<User>) => void;
+  refreshUserData: () => Promise<void>;
   isAuthenticated: boolean;
 }
 
@@ -63,6 +65,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             year: result.user.year,
             semester: result.user.semester,
             rollNo: result.user.rollNo,
+            is_timetable_incharge: result.user.is_timetable_incharge || false,
+            is_placement_coordinator: result.user.is_placement_coordinator || false,
             token: result.token
           };
         
@@ -86,6 +90,59 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.removeItem('eduvertex_user');
   };
 
+  const refreshUserData = useCallback(async () => {
+    // Get current user from localStorage to avoid dependency issues
+    const userDataStr = localStorage.getItem('eduvertex_user');
+    if (!userDataStr) return;
+    
+    try {
+      const userData = JSON.parse(userDataStr);
+      if (!userData || !userData.role) return;
+
+      const token = localStorage.getItem('authToken');
+      let response;
+      
+      // Fetch fresh user data based on role
+      if (userData.role === 'faculty') {
+        response = await fetch('/api/v1/faculty/me/profile', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+      } else if (userData.role === 'student') {
+        response = await fetch('/api/v1/student/me/profile', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+      } else {
+        // For admin users, use the standard getMe endpoint
+        response = await fetch('/api/v1/auth/me', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+      }
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && result.data) {
+          const freshData = result.data;
+          setUser(prev => {
+            if (!prev) return null;
+            const updatedUser = {
+              ...prev,
+              name: freshData.name || freshData.Name || prev.name,
+              email: freshData.email || prev.email,
+              designation: freshData.designation || prev.designation,
+              avatar: freshData.avatar || freshData.profile_image_url || prev.avatar,
+              is_timetable_incharge: freshData.is_timetable_incharge || false,
+              is_placement_coordinator: freshData.is_placement_coordinator || false
+            };
+            localStorage.setItem('eduvertex_user', JSON.stringify(updatedUser));
+            return updatedUser;
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error refreshing user data:', error);
+    }
+  }, []);
+
   const updateUserData = (newData: Partial<User>) => {
     setUser(prev => {
       if (!prev) return null;
@@ -95,8 +152,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
+  // derive token from localStorage so it stays updated
+  const authToken = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
+
   return (
-    <AuthContext.Provider value={{ user, login, logout, updateUserData, isAuthenticated: !!user }}>
+    <AuthContext.Provider value={{ user, authToken, login, logout, updateUserData, refreshUserData, isAuthenticated: !!user }}>
       {children}
     </AuthContext.Provider>
   );

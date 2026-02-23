@@ -27,6 +27,13 @@ import timetableRoutes from './routes/timetable/timetable.routes.js';
 import leaveRoutes from './routes/leave-attendance/leave.routes.js';
 import attendanceRoutes from './routes/leave-attendance/attendance.routes.js';
 import announcementRoutes from './routes/admin/announcement.routes.js';
+import timetableManagementRoutes from './routes/department-admin/timetable-management.routes.js';
+import breakTimingRoutes from './routes/department-admin/break-timing.routes.js';
+import timetableNotificationRoutes from './routes/faculty/timetable-notification.routes.js';
+import coordinatorRoutes from './routes/department-admin/coordinator.routes.js';
+import subjectRoutes from './routes/department-admin/subject.routes.js';
+import generalSubjectRoutes from './routes/subject.routes.js';
+import classRoutes from './routes/class.routes.js';
 
 // Load env vars
 dotenv.config();
@@ -113,10 +120,17 @@ const startServer = () => {
   app.use('/api/v1/departments', departmentRoutes);
   app.use('/api/v1/faculty', facultyRoutes);
   app.use('/api/v1/students', studentRoutes);
+  app.use('/api/v1/subjects', generalSubjectRoutes);
+  app.use('/api/v1/classes', classRoutes);
   app.use('/api/v1/timetable', timetableRoutes);
   app.use('/api/v1/leave', leaveRoutes);
   app.use('/api/v1/attendance', attendanceRoutes);
   app.use('/api/v1/announcements', announcementRoutes);
+  app.use('/api/v1/department-admin/timetable', timetableManagementRoutes);
+  app.use('/api/v1/department-admin/break-timings', breakTimingRoutes);
+  app.use('/api/v1/department-admin/coordinators', coordinatorRoutes);
+  app.use('/api/v1/department-admin/subjects', subjectRoutes);
+  app.use('/api/v1/faculty/notifications', timetableNotificationRoutes);
 
   // Health check
   app.get('/api/v1/health', (req, res) => {

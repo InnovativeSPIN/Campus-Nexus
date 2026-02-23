@@ -36,7 +36,9 @@ const sendTokenResponse = (user, statusCode, res) => {
       role: 'faculty',
       designation: user.designation || null,
       department: user.department,
-      avatar: user.profile_image_url || null
+      avatar: user.profile_image_url || null,
+      is_timetable_incharge: user.is_timetable_incharge || false,
+      is_placement_coordinator: user.is_placement_coordinator || false
     };
   } else {
     userData = {

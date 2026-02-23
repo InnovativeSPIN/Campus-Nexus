@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+﻿import { useState, useEffect, useRef } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
@@ -16,6 +16,8 @@ import {
   ChevronRight,
   Users,
   LogOut,
+  Briefcase,
+  Clock,
 } from "lucide-react";
 import { cn } from "@/pages/faculty/lib/utils";
 
@@ -36,7 +38,29 @@ export function AppSidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { logout, user } = useAuth();
+  const { logout, user, refreshUserData } = useAuth();
+  const refreshedRef = useRef(false);
+  const [isTimetableIncharge, setIsTimetableIncharge] = useState(user?.is_timetable_incharge || false);
+  const [isPlacementCoordinator, setIsPlacementCoordinator] = useState(user?.is_placement_coordinator || false);
+
+  useEffect(() => {
+    // Refresh user data once when sidebar mounts to get latest coordinator status
+    if (!refreshedRef.current) {
+      refreshedRef.current = true;
+      refreshUserData();
+    }
+  }, [refreshUserData]);
+
+  // Watch for user changes and update local state
+  useEffect(() => {
+    setIsTimetableIncharge(user?.is_timetable_incharge || false);
+    setIsPlacementCoordinator(user?.is_placement_coordinator || false);
+    console.log('User updated:', {
+      name: user?.name,
+      is_timetable_incharge: user?.is_timetable_incharge,
+      is_placement_coordinator: user?.is_placement_coordinator
+    });
+  }, [user]);
 
   const handleLogout = () => {
     logout();
@@ -87,7 +111,11 @@ export function AppSidebar() {
                     {user?.designation || 'Faculty'}
                   </span>
                   <span className="text-[10px] text-white/50 uppercase tracking-wider">
-                    {user?.department?.short_name || user?.department?.full_name || 'Department'}
+                    {typeof user?.department === 'object'
+                      ? user.department.short_name || user.department.full_name
+                      : typeof user?.department === 'string'
+                        ? user.department
+                        : 'Department'}
                   </span>
                 </div>
               </motion.div>
@@ -139,6 +167,88 @@ export function AppSidebar() {
               </motion.li>
             );
           })}
+
+          {/* Conditional: Timetable Alteration - shows only if faculty is timetable incharge */}
+          {isTimetableIncharge && (
+            <motion.li
+              key="timetable-alteration"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.5 }}
+            >
+              <NavLink
+                to="/faculty/timetable/alterations"
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group",
+                  location.pathname.startsWith("/faculty/timetable/alterations")
+                    ? "bg-sidebar-accent text-white"
+                    : "text-white/70 hover:bg-sidebar-accent/50 hover:text-white"
+                )}
+              >
+                <Clock
+                  className={cn(
+                    "w-5 h-5 flex-shrink-0 transition-colors",
+                    location.pathname.startsWith("/faculty/timetable/alterations")
+                      ? "text-secondary"
+                      : "text-white/70 group-hover:text-secondary"
+                  )}
+                />
+                <AnimatePresence>
+                  {!collapsed && (
+                    <motion.span
+                      initial={{ opacity: 0, width: 0 }}
+                      animate={{ opacity: 1, width: "auto" }}
+                      exit={{ opacity: 0, width: 0 }}
+                      className="font-medium text-sm whitespace-nowrap overflow-hidden"
+                    >
+                      Timetable Alteration
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+              </NavLink>
+            </motion.li>
+          )}
+
+          {/* Conditional: Placement - shows only if faculty is placement coordinator */}
+          {isPlacementCoordinator && (
+            <motion.li
+              key="placement"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.55 }}
+            >
+              <NavLink
+                to="/faculty/placement"
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group",
+                  location.pathname.startsWith("/faculty/placement")
+                    ? "bg-sidebar-accent text-white"
+                    : "text-white/70 hover:bg-sidebar-accent/50 hover:text-white"
+                )}
+              >
+                <Briefcase
+                  className={cn(
+                    "w-5 h-5 flex-shrink-0 transition-colors",
+                    location.pathname.startsWith("/faculty/placement")
+                      ? "text-secondary"
+                      : "text-white/70 group-hover:text-secondary"
+                  )}
+                />
+                <AnimatePresence>
+                  {!collapsed && (
+                    <motion.span
+                      initial={{ opacity: 0, width: 0 }}
+                      animate={{ opacity: 1, width: "auto" }}
+                      exit={{ opacity: 0, width: 0 }}
+                      className="font-medium text-sm whitespace-nowrap overflow-hidden"
+                    >
+                      Placement
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+              </NavLink>
+            </motion.li>
+          )}
         </ul>
       </nav>
 

@@ -6,6 +6,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NotificationProvider, MentorProvider } from "@/pages/admin/department-admin/context";
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
+import CoordinatorManagement from "./pages/CoordinatorManagement";
+import SubjectManagement from "./pages/SubjectManagement";
 import Timetable from "./pages/Timetable";
 import Attendance from "./pages/Attendance";
 import Academics from "./pages/Academics";
@@ -35,6 +37,8 @@ const DepartmentAdminRoutes = () => (
               <Route index element={<Navigate to="dashboard" replace />} />
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="profile" element={<Profile />} />
+              <Route path="coordinators" element={<CoordinatorManagement />} />
+              <Route path="subjects" element={<SubjectManagement />} />
               <Route path="timetable" element={<Timetable />} />
               <Route path="attendance" element={<Attendance />} />
               <Route path="academics" element={<Academics />} />

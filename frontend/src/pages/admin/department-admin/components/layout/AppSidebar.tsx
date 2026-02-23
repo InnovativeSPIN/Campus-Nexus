@@ -24,6 +24,7 @@ import { cn } from "@/pages/admin/department-admin/lib/utils";
 const menuItems = [
   { title: "Dashboard", url: "/admin/department-admin/dashboard", icon: LayoutDashboard },
   { title: "Profile", url: "/admin/department-admin/profile", icon: User },
+  { title: "Coordinators", url: "/admin/department-admin/coordinators", icon: Users },
   { title: "Timetable", url: "/admin/department-admin/timetable", icon: Calendar },
   { title: "Attendance", url: "/admin/department-admin/attendance", icon: ClipboardCheck },
   { title: "Academics", url: "/admin/department-admin/academics", icon: BookOpen },
@@ -90,7 +91,13 @@ export function AppSidebar() {
                     {user?.role?.replace('-', ' ') || 'HEAD OF THE DEPARTMENT'}
                   </span>
                   <span className="text-[10px] text-white/50 uppercase tracking-wider">
-                    {user?.department?.short_name || user?.department?.full_name || 'Department'}
+                    {(() => {
+                      const dept = user?.department;
+                      if (typeof dept === 'object' && dept !== null) {
+                        return dept.short_name || dept.full_name || 'Department';
+                      }
+                      return dept || 'Department';
+                    })()}
                   </span>
                 </div>
               </motion.div>

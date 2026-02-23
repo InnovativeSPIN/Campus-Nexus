@@ -7,6 +7,8 @@ import { NotificationProvider, MentorProvider } from "@/pages/faculty/context";
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
 import ChangePassword from "./pages/ChangePassword";
+import TimetableAlteration from "./pages/TimetableAlteration";
+import PlacementCoordinator from "./pages/PlacementCoordinator";
 import Timetable from "./pages/Timetable";
 import Attendance from "./pages/Attendance";
 import Academics from "./pages/Academics";
@@ -38,6 +40,8 @@ const FacultyRoutes = () => (
               <Route path="profile" element={<Profile />} />
               <Route path="change-password" element={<ChangePassword />} />
               <Route path="timetable" element={<Timetable />} />
+              <Route path="timetable/alterations" element={<TimetableAlteration />} />
+              <Route path="placement" element={<PlacementCoordinator />} />
               <Route path="attendance" element={<Attendance />} />
               <Route path="academics" element={<Academics />} />
               <Route path="leave" element={<Leave />} />
