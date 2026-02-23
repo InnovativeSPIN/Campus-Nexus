@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { BookOpen, Plus, Edit, Trash2, Users, Save, X } from 'lucide-react';
+import { MainLayout } from '@/pages/admin/department-admin/components/layout/MainLayout';
+import { motion } from 'framer-motion';
 
 interface Subject {
   id: number;
@@ -226,27 +227,31 @@ export default function SubjectManagement() {
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-3">
-            <BookOpen className="h-8 w-8 text-blue-500" />
-            <div>
-              <h1 className="text-4xl font-bold text-white mb-2">Subject Management</h1>
-              <p className="text-slate-400">Manage subjects and faculty assignments</p>
-            </div>
+    <MainLayout>
+      <motion.div
+        initial={{ opacity: 0, y: -6 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mb-8 flex items-center justify-between"
+      >
+        <div className="flex items-center gap-3">
+          <BookOpen className="h-8 w-8 text-primary" />
+          <div>
+            <h1 className="page-header font-serif">Subject Management</h1>
+            <p className="text-muted-foreground -mt-4">Manage subjects and faculty assignments</p>
           </div>
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-6 py-2 rounded-lg font-medium transition-colors"
-          >
-            <Plus className="h-5 w-5" />
-            Add Subject
-          </button>
         </div>
 
+        <button
+          onClick={() => setShowCreateModal(true)}
+          className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+        >
+          <Plus className="h-5 w-5" />
+          Add Subject
+        </button>
+      </motion.div>
+
         {/* Filters */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 p-6 bg-slate-800 rounded-lg border border-slate-700">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 p-6 bg-muted/40 rounded-lg border border-border">
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-2">
               Semester
@@ -296,29 +301,29 @@ export default function SubjectManagement() {
         </div>
 
         {/* Subjects Table */}
-        <div className="bg-slate-800 rounded-lg border border-slate-700 shadow overflow-hidden">
+        <div className="widget-card">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-slate-700">
-              <thead className="bg-slate-700">
+            <table className="min-w-full divide-y divide-border">
+              <thead className="bg-muted/20">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Subject Details
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Semester
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Type & Credits
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Assigned Faculty
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-slate-800 divide-y divide-slate-700">
+              <tbody className="bg-background divide-y divide-border">
               {loading ? (
                 <tr>
                   <td colSpan={5} className="px-6 py-4 text-center text-slate-400">
@@ -629,7 +634,6 @@ export default function SubjectManagement() {
             </div>
           </div>
         )}
-      </div>
-    </div>
+    </MainLayout>
   );
 }

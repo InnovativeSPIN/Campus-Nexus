@@ -92,6 +92,10 @@ const initialFacultyData = {
   orcidId: "0000-0001-5391-3610",
   linkedinUrl: "https://www.linkedin.com/in/prathap/",
   profilePhoto: "",
+  phdStatus: "Pursuing",
+  thesisTitle: "Advanced Machine Learning Algorithms for Predictive Analytics",
+  registerNo: "PHD2023101",
+  guideName: "Dr. S. Ramasamy",
 };
 
 // Educational Qualifications
@@ -333,6 +337,16 @@ export default function Profile() {
     period: "",
     current: false,
     url: "",
+  });
+
+  // PhD editing states
+  const [editingPhd, setEditingPhd] = useState(false);
+  const [tempPhd, setTempPhd] = useState({
+    phdStatus: "",
+    thesisTitle: "",
+    registerNo: "",
+    guideName: "",
+    orcidId: "",
   });
 
   function validateEmail(email: string) {
@@ -1015,6 +1029,47 @@ export default function Profile() {
     }
   };
 
+  const handleEditPhd = () => {
+    setEditingPhd(true);
+    setTempPhd({
+      phdStatus: facultyData.phdStatus || "Pursuing",
+      thesisTitle: facultyData.thesisTitle || "",
+      registerNo: facultyData.registerNo || "",
+      guideName: facultyData.guideName || "",
+      orcidId: facultyData.orcidId || "",
+    });
+  };
+
+  const handleCancelEditPhd = () => {
+    setEditingPhd(false);
+  };
+
+  const handlePhdFieldChange = (field: string, value: string) => {
+    setTempPhd((prev: any) => ({ ...prev, [field]: value }));
+  };
+
+  const handleSavePhd = async () => {
+    setLoading(true);
+    try {
+      // Simulate API call
+      setTimeout(() => {
+        setFacultyData((prev) => ({
+          ...prev,
+          ...tempPhd,
+        }));
+        setEditingPhd(false);
+        setLoading(false);
+        toast({
+          title: 'PhD details updated',
+          description: 'Your PhD information has been updated successfully.'
+        });
+      }, 500);
+    } catch (error) {
+      console.error('Error updating PhD details:', error);
+      setLoading(false);
+    }
+  };
+
   const handleDownloadProfile = async () => {
     try {
       setLoading(true);
@@ -1392,12 +1447,13 @@ export default function Profile() {
           className="widget-card lg:col-span-2"
         >
           <Tabs defaultValue="education" className="w-full">
-            <TabsList className="grid w-full grid-cols-5 mb-6">
+            <TabsList className="grid w-full grid-cols-6 mb-6">
               <TabsTrigger value="education" className="text-xs">Education</TabsTrigger>
               <TabsTrigger value="experience" className="text-xs">Experience</TabsTrigger>
               <TabsTrigger value="subjects" className="text-xs">Subjects</TabsTrigger>
               <TabsTrigger value="events" className="text-xs">Events</TabsTrigger>
               <TabsTrigger value="research" className="text-xs">Research</TabsTrigger>
+              <TabsTrigger value="phd" className="text-xs">PhD Status</TabsTrigger>
             </TabsList>
 
             {/* Educational Qualifications */}
@@ -2949,6 +3005,175 @@ export default function Profile() {
                   </motion.div>
                 ))}
               </div>
+            </TabsContent>
+
+            {/* PhD Status Section */}
+            <TabsContent value="phd">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-2xl font-serif font-bold text-foreground border-b-2 border-primary/20 pb-2 flex items-center gap-2">
+                  <GraduationCap className="w-6 h-6 text-secondary" />
+                  PhD Status
+                </h3>
+                {!editingPhd && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="flex items-center gap-2 border-secondary/30 text-secondary hover:bg-secondary/10"
+                    onClick={handleEditPhd}
+                  >
+                    <Edit2 className="w-4 h-4" />
+                    Edit Details
+                  </Button>
+                )}
+              </div>
+
+              {editingPhd ? (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="p-6 bg-card rounded-xl border-2 border-secondary/30 space-y-4"
+                >
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-xs font-semibold text-muted-foreground ml-1">PhD Status</label>
+                      <select
+                        value={tempPhd.phdStatus}
+                        onChange={(e) => handlePhdFieldChange('phdStatus', e.target.value)}
+                        className="select select-bordered w-full bg-white text-foreground"
+                      >
+                        <option value="Pursuing">Pursuing</option>
+                        <option value="Completed">Completed</option>
+                      </select>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-semibold text-muted-foreground ml-1">ORCID ID</label>
+                      <input
+                        type="text"
+                        value={tempPhd.orcidId}
+                        onChange={(e) => handlePhdFieldChange('orcidId', e.target.value)}
+                        className="input input-bordered w-full bg-white text-foreground"
+                        placeholder="0000-0000-0000-0000"
+                      />
+                    </div>
+                    <div className="space-y-1 md:col-span-2">
+                      <label className="text-xs font-semibold text-muted-foreground ml-1">Thesis Title / Field of research</label>
+                      <input
+                        type="text"
+                        value={tempPhd.thesisTitle}
+                        onChange={(e) => handlePhdFieldChange('thesisTitle', e.target.value)}
+                        className="input input-bordered w-full bg-white text-foreground"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-semibold text-muted-foreground ml-1">Register No</label>
+                      <input
+                        type="text"
+                        value={tempPhd.registerNo}
+                        onChange={(e) => handlePhdFieldChange('registerNo', e.target.value)}
+                        className="input input-bordered w-full bg-white text-foreground"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-semibold text-muted-foreground ml-1">Guide Name</label>
+                      <input
+                        type="text"
+                        value={tempPhd.guideName}
+                        onChange={(e) => handlePhdFieldChange('guideName', e.target.value)}
+                        className="input input-bordered w-full bg-white text-foreground"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex gap-3 justify-end mt-4">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleCancelEditPhd}
+                      disabled={loading}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="bg-secondary text-white hover:bg-secondary/90 flex items-center gap-2"
+                      onClick={handleSavePhd}
+                      disabled={loading}
+                    >
+                      {loading ? (
+                        <>
+                          <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                          Saving...
+                        </>
+                      ) : (
+                        <>
+                          <Check className="w-4 h-4" />
+                          Save PhD Details
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </motion.div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="p-6 bg-card rounded-xl border border-border shadow-sm space-y-4"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                        <Target className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">PhD Status</p>
+                        <Badge variant={facultyData.phdStatus === "Completed" ? "default" : "secondary"} className="mt-1">
+                          {facultyData.phdStatus || "Pursuing"}
+                        </Badge>
+                      </div>
+                    </div>
+
+                    <div className="pt-2">
+                      <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">Thesis Title / Research Field</p>
+                      <p className="text-foreground font-medium italic">"{facultyData.thesisTitle || "Advanced Machine Learning Algorithms for Predictive Analytics"}"</p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4 pt-2">
+                      <div>
+                        <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">Register No</p>
+                        <p className="text-foreground font-mono">{facultyData.registerNo || "PHD2023101"}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">Guide Name</p>
+                        <p className="text-foreground">{facultyData.guideName || "Dr. S. Ramasamy"}</p>
+                      </div>
+                    </div>
+
+                    <div className="pt-2">
+                      <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">ORCID ID</p>
+                      <div className="flex items-center gap-2 text-primary">
+                        <Globe className="w-4 h-4" />
+                        <span className="font-mono">{facultyData.orcidId || "0000-0001-5391-3610"}</span>
+                      </div>
+                    </div>
+                  </motion.div>
+
+                  <div className="space-y-4">
+                    <div className="p-5 bg-secondary/5 rounded-xl border border-secondary/20 h-full flex flex-col justify-center">
+                      <h4 className="font-bold text-secondary mb-3 flex items-center gap-2">
+                        <Star className="w-5 h-5" /> Research Summary
+                      </h4>
+                      <p className="text-sm text-foreground leading-relaxed">
+                        Currently focusing on deep learning architectures and their applications in real-time data processing.
+                        Actively collaborating with international research teams for publications in high-impact journals.
+                      </p>
+                      <div className="mt-6 flex flex-wrap gap-2">
+                        <Badge variant="outline" className="bg-white">Machine Learning</Badge>
+                        <Badge variant="outline" className="bg-white">Data Science</Badge>
+                        <Badge variant="outline" className="bg-white">Deep Learning</Badge>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </TabsContent>
           </Tabs>
         </motion.div>

@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import { Users, BookOpen, Award, Loader2, Check } from 'lucide-react';
+import { Users, BookOpen, Award, Loader2, Check, Calendar, Clock } from 'lucide-react';
+import { MainLayout } from '@/pages/admin/department-admin/components/layout/MainLayout';
+import { motion } from 'framer-motion';
+import { IntegratedNotificationBell } from '@/components/common/IntegratedNotificationBell';
 
 // Removed unused user
 type FacultyType = {
@@ -17,6 +19,12 @@ const CoordinatorManagement = () => {
   const [faculty, setFaculty] = useState<FacultyType[]>([]);
   const [loading, setLoading] = useState(false);
   const [assignmentLoading, setAssignmentLoading] = useState<Record<string | number, boolean>>({});
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     fetchFaculty();
@@ -42,6 +50,14 @@ const CoordinatorManagement = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
+  };
+
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   };
 
   const toggleTimetableIncharge = async (facultyId: number, currentStatus: boolean) => {
@@ -114,74 +130,109 @@ const CoordinatorManagement = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
+      <MainLayout>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </MainLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">Coordinator Management</h1>
-          <p className="text-slate-400">Assign Timetable Incharge and Placement Coordinators</p>
+    <MainLayout>
+      {/* Page Header */}
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mb-8 flex items-start justify-between"
+      >
+        <div>
+          <h1 className="page-header font-serif">Coordinator Management</h1>
+          <p className="text-muted-foreground -mt-4">
+            Assign Timetable Incharge and Placement Coordinators
+          </p>
         </div>
+        <div className="flex items-center gap-4">
+          <div className="text-right">
+            <p className="text-sm font-medium text-foreground flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-primary" />
+              {formatDate(currentTime)}
+            </p>
+            <p className="text-sm text-muted-foreground flex items-center gap-2 mt-1">
+              <Clock className="w-4 h-4 text-secondary" />
+              {formatTime(currentTime)}
+            </p>
+          </div>
+          <IntegratedNotificationBell />
+        </div>
+      </motion.div>
 
-        {/* Faculty Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {faculty.map((fac) => (
-            <div
+      {/* Faculty Grid */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6"
+      >
+        {faculty.length > 0 ? (
+          faculty.map((fac, index) => (
+            <motion.div
               key={fac.faculty_id}
-              className="bg-slate-800 rounded-lg border border-slate-700 p-6 hover:border-slate-600 transition-colors"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.05 }}
+              className="widget-card hover:shadow-lg transition-all"
             >
               {/* Faculty Header */}
-              <div className="mb-4">
-                <h3 className="text-xl font-bold text-white">{fac.Name}</h3>
-                <p className="text-sm text-slate-400">{fac.designation}</p>
-                <p className="text-sm text-slate-500 mt-1">{fac.email}</p>
+              <div className="mb-5 pb-4 border-b border-border">
+                <h3 className="text-lg font-bold text-foreground">{fac.Name}</h3>
+                <p className="text-sm text-secondary font-medium mt-1">{fac.designation}</p>
+                <p className="text-sm text-muted-foreground mt-1">{fac.email}</p>
               </div>
 
               {/* Current Roles */}
-              <div className="mb-6 p-3 bg-slate-700/50 rounded-lg">
-                <p className="text-sm font-semibold text-slate-300 mb-2">Current Roles</p>
+              <div className="mb-6 p-4 bg-muted/40 rounded-lg border border-border">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+                  Current Roles
+                </p>
                 <div className="flex flex-wrap gap-2">
                   {fac.is_timetable_incharge && (
-                    <span className="inline-flex items-center gap-1 bg-blue-500/20 text-blue-300 px-3 py-1 rounded-full text-xs font-medium">
-                      <BookOpen className="w-3 h-3" />
+                    <span className="inline-flex items-center gap-1.5 bg-blue-500/15 text-blue-600 dark:text-blue-400 px-3 py-1.5 rounded-full text-xs font-medium border border-blue-200 dark:border-blue-500/30">
+                      <BookOpen className="w-3.5 h-3.5" />
                       Timetable Incharge
                     </span>
                   )}
                   {fac.is_placement_coordinator && (
-                    <span className="inline-flex items-center gap-1 bg-green-500/20 text-green-300 px-3 py-1 rounded-full text-xs font-medium">
-                      <Award className="w-3 h-3" />
+                    <span className="inline-flex items-center gap-1.5 bg-green-500/15 text-green-600 dark:text-green-400 px-3 py-1.5 rounded-full text-xs font-medium border border-green-200 dark:border-green-500/30">
+                      <Award className="w-3.5 h-3.5" />
                       Placement Coordinator
                     </span>
                   )}
                   {!fac.is_timetable_incharge && !fac.is_placement_coordinator && (
-                    <span className="text-sm text-slate-400 italic">No roles assigned</span>
+                    <span className="text-xs text-muted-foreground italic">No roles assigned</span>
                   )}
                 </div>
               </div>
 
               {/* Assignment Buttons */}
-              <div className="space-y-3">
+              <div className="space-y-2.5">
                 {/* Timetable Incharge Button */}
                 <button
                   onClick={() => toggleTimetableIncharge(fac.faculty_id, !!fac.is_timetable_incharge)}
                   disabled={assignmentLoading[fac.faculty_id]}
-                  className={`w-full flex items-center justify-between px-4 py-2 rounded-lg font-medium transition-all ${
+                  className={`w-full flex items-center justify-between px-4 py-2.5 rounded-lg font-medium transition-all ${
                     fac.is_timetable_incharge
-                      ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                      : 'bg-slate-700 hover:bg-slate-600 text-slate-200'
+                      ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm'
+                      : 'bg-muted hover:bg-muted/80 text-foreground border border-border hover:border-blue-500/30'
                   } ${
                     assignmentLoading[fac.faculty_id] ? 'opacity-50 cursor-not-allowed' : ''
                   }`}
                 >
                   <div className="flex items-center gap-2">
                     <BookOpen className="w-4 h-4" />
-                    <span>{fac.is_timetable_incharge ? 'Remove' : 'Assign'} Timetable Incharge</span>
+                    <span className="text-sm">
+                      {fac.is_timetable_incharge ? 'Remove' : 'Assign'} Timetable
+                    </span>
                   </div>
                   {assignmentLoading[fac.faculty_id] ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -194,17 +245,19 @@ const CoordinatorManagement = () => {
                 <button
                   onClick={() => togglePlacementCoordinator(fac.faculty_id, !!fac.is_placement_coordinator)}
                   disabled={assignmentLoading[`placement_${fac.faculty_id}`]}
-                  className={`w-full flex items-center justify-between px-4 py-2 rounded-lg font-medium transition-all ${
+                  className={`w-full flex items-center justify-between px-4 py-2.5 rounded-lg font-medium transition-all ${
                     fac.is_placement_coordinator
-                      ? 'bg-green-600 hover:bg-green-700 text-white'
-                      : 'bg-slate-700 hover:bg-slate-600 text-slate-200'
+                      ? 'bg-green-600 hover:bg-green-700 text-white shadow-sm'
+                      : 'bg-muted hover:bg-muted/80 text-foreground border border-border hover:border-green-500/30'
                   } ${
                     assignmentLoading[`placement_${fac.faculty_id}`] ? 'opacity-50 cursor-not-allowed' : ''
                   }`}
                 >
                   <div className="flex items-center gap-2">
                     <Award className="w-4 h-4" />
-                    <span>{fac.is_placement_coordinator ? 'Remove' : 'Assign'} Placement Coordinator</span>
+                    <span className="text-sm">
+                      {fac.is_placement_coordinator ? 'Remove' : 'Assign'} Placement
+                    </span>
                   </div>
                   {assignmentLoading[`placement_${fac.faculty_id}`] ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -213,18 +266,22 @@ const CoordinatorManagement = () => {
                   ) : null}
                 </button>
               </div>
-            </div>
-          ))}
-        </div>
-
-        {faculty.length === 0 && (
-          <div className="text-center py-12">
-            <Users className="w-16 h-16 text-slate-600 mx-auto mb-4" />
-            <p className="text-slate-400">No faculty members found in your department</p>
-          </div>
+            </motion.div>
+          ))
+        ) : (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="col-span-full flex flex-col items-center justify-center py-16 text-center"
+          >
+            <Users className="w-16 h-16 text-muted-foreground/40 mx-auto mb-4" />
+            <p className="text-muted-foreground text-lg">
+              No faculty members found in your department
+            </p>
+          </motion.div>
         )}
-      </div>
-    </div>
+      </motion.div>
+    </MainLayout>
   );
 };
 
