@@ -360,6 +360,11 @@ export default function Profile() {
     registerNo: "",
     guideName: "",
   });
+  const [addingPhd, setAddingPhd] = useState(false);
+  const [newPhd, setNewPhd] = useState({ orcidId: "", phdStatus: "Pursuing", thesisTitle: "", registerNo: "", guideName: "" });
+  const [phdList, setPhdList] = useState<{ orcidId: string; phdStatus: string; thesisTitle: string; registerNo: string; guideName: string }[]>([]);
+  const [editingPhdIndex, setEditingPhdIndex] = useState<number | null>(null);
+  const [tempPhdEntry, setTempPhdEntry] = useState({ orcidId: "", phdStatus: "Pursuing", thesisTitle: "", registerNo: "", guideName: "" });
 
   function validateEmail(email: string) {
     return /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(email);
@@ -1059,6 +1064,42 @@ export default function Profile() {
 
   const handlePhdFieldChange = (field: string, value: string) => {
     setTempPhd(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleAddPhd = () => {
+    setAddingPhd(true);
+    setNewPhd({ orcidId: "", phdStatus: "Pursuing", thesisTitle: "", registerNo: "", guideName: "" });
+  };
+
+  const handleCancelAddPhd = () => {
+    setAddingPhd(false);
+    setNewPhd({ orcidId: "", phdStatus: "Pursuing", thesisTitle: "", registerNo: "", guideName: "" });
+  };
+
+  const handleSaveNewPhd = () => {
+    setPhdList(prev => [...prev, { ...newPhd }]);
+    setAddingPhd(false);
+    setNewPhd({ orcidId: "", phdStatus: "Pursuing", thesisTitle: "", registerNo: "", guideName: "" });
+    toast({ title: 'PhD record added', description: 'New PhD record has been added successfully.' });
+  };
+
+  const handleDeleteAdditionalPhd = (index: number) => {
+    setPhdList(prev => prev.filter((_, i) => i !== index));
+    setEditingPhdIndex(null);
+    toast({ title: 'PhD record deleted' });
+  };
+
+  const handleEditPhdEntry = (index: number) => {
+    setEditingPhdIndex(index);
+    setTempPhdEntry({ ...phdList[index] });
+  };
+
+  const handleSavePhdEntry = (index: number) => {
+    const updated = [...phdList];
+    updated[index] = { ...tempPhdEntry };
+    setPhdList(updated);
+    setEditingPhdIndex(null);
+    toast({ title: 'PhD record updated' });
   };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -3314,17 +3355,15 @@ export default function Profile() {
                   <GraduationCap className="w-6 h-6 text-secondary" />
                   PhD Status
                 </h3>
-                {!editingPhd && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="flex items-center gap-2 border-secondary/30 text-secondary hover:bg-secondary/10"
-                    onClick={handleEditPhd}
-                  >
-                    <Edit2 className="w-4 h-4" />
-                    Edit Details
-                  </Button>
-                )}
+                <Button
+                  size="sm"
+                  className="flex items-center gap-2 bg-secondary text-white hover:bg-secondary/90"
+                  onClick={handleAddPhd}
+                  disabled={addingPhd}
+                >
+                  <Plus className="w-4 h-4" />
+                  Add PhD
+                </Button>
               </div>
 
               {editingPhd ? (
@@ -3413,12 +3452,12 @@ export default function Profile() {
                   </div>
                 </motion.div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="p-6 bg-card rounded-xl border border-border shadow-sm space-y-4"
-                  >
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="p-6 bg-card rounded-xl border border-border shadow-sm space-y-4"
+                >
+                  <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
                         <Target className="w-6 h-6" />
@@ -3430,54 +3469,227 @@ export default function Profile() {
                         </Badge>
                       </div>
                     </div>
+                    <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-muted-foreground hover:text-secondary" onClick={handleEditPhd}>
+                      <Edit2 className="w-4 h-4" />
+                    </Button>
+                  </div>
 
-                    <div className="pt-2">
-                      <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">Thesis Title / Research Field</p>
-                      <p className="text-foreground font-medium italic">"{facultyData.thesisTitle || "Advanced Machine Learning Algorithms for Predictive Analytics"}"</p>
+                  <div className="pt-2">
+                    <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">Thesis Title / Research Field</p>
+                    <p className="text-foreground font-medium italic">"{facultyData.thesisTitle || "Advanced Machine Learning Algorithms for Predictive Analytics"}"</p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 pt-2">
+                    <div>
+                      <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">Register No</p>
+                      <p className="text-foreground font-mono">{facultyData.registerNo || "PHD2023101"}</p>
                     </div>
-
-                    <div className="grid grid-cols-2 gap-4 pt-2">
-                      <div>
-                        <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">Register No</p>
-                        <p className="text-foreground font-mono">{facultyData.registerNo || "PHD2023101"}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">Guide Name</p>
-                        <p className="text-foreground">{facultyData.guideName || "Dr. S. Ramasamy"}</p>
-                      </div>
-                    </div>
-
-                    <div className="pt-2">
-                      <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">ORCID ID</p>
-                      <div className="flex items-center gap-2 text-primary">
-                        <Globe className="w-4 h-4" />
-                        <span className="font-mono">{facultyData.orcidId || "0000-0001-5391-3610"}</span>
-                      </div>
-                    </div>
-                  </motion.div>
-
-                  <div className="space-y-4">
-                    <div className="p-5 bg-secondary/5 rounded-xl border border-secondary/20 h-full flex flex-col justify-center">
-                      <h4 className="font-bold text-secondary mb-3 flex items-center gap-2">
-                        <Star className="w-5 h-5" /> Research Summary
-                      </h4>
-                      <p className="text-sm text-foreground leading-relaxed">
-                        Currently focusing on deep learning architectures and their applications in real-time data processing.
-                        Actively collaborating with international research teams for publications in high-impact journals.
-                      </p>
-                      <div className="mt-6 flex flex-wrap gap-2">
-                        <Badge variant="outline" className="bg-white">Machine Learning</Badge>
-                        <Badge variant="outline" className="bg-white">Data Science</Badge>
-                        <Badge variant="outline" className="bg-white">Deep Learning</Badge>
-                      </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">Guide Name</p>
+                      <p className="text-foreground">{facultyData.guideName || "Dr. S. Ramasamy"}</p>
                     </div>
                   </div>
+
+                  <div className="pt-2">
+                    <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">ORCID ID</p>
+                    <div className="flex items-center gap-2 text-primary">
+                      <Globe className="w-4 h-4" />
+                      <span className="font-mono">{facultyData.orcidId || "0000-0001-5391-3610"}</span>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Add New PhD Form */}
+              {addingPhd && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="p-5 mt-6 bg-primary/5 rounded-xl border-2 border-primary/30 shadow-sm"
+                >
+                  <h4 className="font-bold text-sm mb-4 flex items-center gap-2 text-primary">
+                    <Plus className="w-4 h-4" /> Add New PhD Record
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-xs font-semibold text-muted-foreground ml-1">PhD Status</label>
+                      <select
+                        value={newPhd.phdStatus}
+                        onChange={(e) => setNewPhd(prev => ({ ...prev, phdStatus: e.target.value }))}
+                        className="select select-bordered w-full bg-white text-foreground"
+                      >
+                        <option value="Pursuing">Pursuing</option>
+                        <option value="Completed">Completed</option>
+                      </select>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-semibold text-muted-foreground ml-1">ORCID ID</label>
+                      <input
+                        type="text"
+                        value={newPhd.orcidId}
+                        onChange={(e) => setNewPhd(prev => ({ ...prev, orcidId: e.target.value }))}
+                        className="input input-bordered w-full bg-white text-foreground"
+                        placeholder="0000-0000-0000-0000"
+                      />
+                    </div>
+                    <div className="space-y-1 md:col-span-2">
+                      <label className="text-xs font-semibold text-muted-foreground ml-1">Thesis Title / Field of Research</label>
+                      <input
+                        type="text"
+                        value={newPhd.thesisTitle}
+                        onChange={(e) => setNewPhd(prev => ({ ...prev, thesisTitle: e.target.value }))}
+                        className="input input-bordered w-full bg-white text-foreground"
+                        placeholder="e.g., Deep Learning for Medical Imaging"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-semibold text-muted-foreground ml-1">Register No</label>
+                      <input
+                        type="text"
+                        value={newPhd.registerNo}
+                        onChange={(e) => setNewPhd(prev => ({ ...prev, registerNo: e.target.value }))}
+                        className="input input-bordered w-full bg-white text-foreground"
+                        placeholder="e.g., PHD2024001"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-semibold text-muted-foreground ml-1">Guide Name</label>
+                      <input
+                        type="text"
+                        value={newPhd.guideName}
+                        onChange={(e) => setNewPhd(prev => ({ ...prev, guideName: e.target.value }))}
+                        className="input input-bordered w-full bg-white text-foreground"
+                        placeholder="e.g., Dr. A. Kumar"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex gap-3 justify-end mt-4">
+                    <Button size="sm" variant="outline" onClick={handleCancelAddPhd}>
+                      Cancel
+                    </Button>
+                    <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={handleSaveNewPhd}>
+                      <Check className="w-4 h-4 mr-1" /> Add
+                    </Button>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Additional PhD Records */}
+              {phdList.length > 0 && (
+                <div className="space-y-4 mt-6">
+                  {phdList.map((phd, index) => (
+                    <motion.div
+                      key={index}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                      className="p-6 bg-card rounded-xl border border-border shadow-sm space-y-4"
+                    >
+                      {editingPhdIndex === index ? (
+                        // Inline edit mode
+                        <div className="space-y-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-1">
+                              <label className="text-xs font-semibold text-muted-foreground ml-1">PhD Status</label>
+                              <select
+                                value={tempPhdEntry.phdStatus}
+                                onChange={(e) => setTempPhdEntry(prev => ({ ...prev, phdStatus: e.target.value }))}
+                                className="select select-bordered w-full bg-white text-foreground"
+                              >
+                                <option value="Pursuing">Pursuing</option>
+                                <option value="Completed">Completed</option>
+                              </select>
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-xs font-semibold text-muted-foreground ml-1">ORCID ID</label>
+                              <input type="text" value={tempPhdEntry.orcidId} onChange={(e) => setTempPhdEntry(prev => ({ ...prev, orcidId: e.target.value }))} className="input input-bordered w-full bg-white text-foreground" placeholder="0000-0000-0000-0000" />
+                            </div>
+                            <div className="space-y-1 md:col-span-2">
+                              <label className="text-xs font-semibold text-muted-foreground ml-1">Thesis Title / Field of Research</label>
+                              <input type="text" value={tempPhdEntry.thesisTitle} onChange={(e) => setTempPhdEntry(prev => ({ ...prev, thesisTitle: e.target.value }))} className="input input-bordered w-full bg-white text-foreground" />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-xs font-semibold text-muted-foreground ml-1">Register No</label>
+                              <input type="text" value={tempPhdEntry.registerNo} onChange={(e) => setTempPhdEntry(prev => ({ ...prev, registerNo: e.target.value }))} className="input input-bordered w-full bg-white text-foreground" />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-xs font-semibold text-muted-foreground ml-1">Guide Name</label>
+                              <input type="text" value={tempPhdEntry.guideName} onChange={(e) => setTempPhdEntry(prev => ({ ...prev, guideName: e.target.value }))} className="input input-bordered w-full bg-white text-foreground" />
+                            </div>
+                          </div>
+                          <div className="flex gap-2 justify-end">
+                            <Button size="sm" variant="outline" onClick={() => setEditingPhdIndex(null)}>Cancel</Button>
+                            <Button size="sm" className="bg-secondary text-white hover:bg-secondary/90 flex items-center gap-2" onClick={() => handleSavePhdEntry(index)}>
+                              <Check className="w-4 h-4" /> Save
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        // View mode — same layout as main card
+                        <>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                                <Target className="w-6 h-6" />
+                              </div>
+                              <div>
+                                <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">PhD Status</p>
+                                <Badge variant={phd.phdStatus === "Completed" ? "default" : "secondary"} className="mt-1">
+                                  {phd.phdStatus}
+                                </Badge>
+                              </div>
+                            </div>
+                            <div className="flex gap-1">
+                              <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-muted-foreground hover:text-secondary" onClick={() => handleEditPhdEntry(index)}>
+                                <Edit2 className="w-4 h-4" />
+                              </Button>
+                              <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive" onClick={() => handleDeleteAdditionalPhd(index)}>
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+
+                          {phd.thesisTitle && (
+                            <div className="pt-2">
+                              <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">Thesis Title / Research Field</p>
+                              <p className="text-foreground font-medium italic">"{phd.thesisTitle}"</p>
+                            </div>
+                          )}
+
+                          <div className="grid grid-cols-2 gap-4 pt-2">
+                            {phd.registerNo && (
+                              <div>
+                                <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">Register No</p>
+                                <p className="text-foreground font-mono">{phd.registerNo}</p>
+                              </div>
+                            )}
+                            {phd.guideName && (
+                              <div>
+                                <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">Guide Name</p>
+                                <p className="text-foreground">{phd.guideName}</p>
+                              </div>
+                            )}
+                          </div>
+
+                          {phd.orcidId && (
+                            <div className="pt-2">
+                              <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">ORCID ID</p>
+                              <div className="flex items-center gap-2 text-primary">
+                                <Globe className="w-4 h-4" />
+                                <span className="font-mono">{phd.orcidId}</span>
+                              </div>
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </motion.div>
+                  ))}
                 </div>
               )}
             </TabsContent>
           </Tabs>
         </motion.div>
       </div>
-    </MainLayout>
+    </MainLayout >
   );
 }
