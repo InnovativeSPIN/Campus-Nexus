@@ -33,7 +33,7 @@ export function NotificationItem({ notification, onClick, sourceColor }: Notific
     <motion.button
       onClick={onClick}
       className="w-full text-left p-3 sm:p-4 hover:bg-accent transition-colors duration-200 focus:outline-none"
-      whileHover={{ backgroundColor: "var(--accent)" }}
+      whileHover={{ backgroundColor: 'hsl(var(--accent))' }}
     >
       <div className="flex gap-2 sm:gap-3">
         <div className="text-base sm:text-lg flex-shrink-0 mt-0.5">{getTypeEmoji(notification.type)}</div>

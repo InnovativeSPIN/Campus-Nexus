@@ -55,11 +55,6 @@ export function AppSidebar() {
   useEffect(() => {
     setIsTimetableIncharge(user?.is_timetable_incharge || false);
     setIsPlacementCoordinator(user?.is_placement_coordinator || false);
-    console.log('User updated:', {
-      name: user?.name,
-      is_timetable_incharge: user?.is_timetable_incharge,
-      is_placement_coordinator: user?.is_placement_coordinator
-    });
   }, [user]);
 
   const handleLogout = () => {

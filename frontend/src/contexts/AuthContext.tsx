@@ -69,8 +69,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             is_placement_coordinator: result.user.is_placement_coordinator || false,
             token: result.token
           };
-        
         console.log('Login successful:', userObj.name, userObj.role);
+        // If this user is a department-admin, prefer faculty profile details
+        if (userObj.role === 'department-admin') {
+          try {
+            const profileRes = await fetch('/api/v1/faculty/me/profile', {
+              headers: { 'Authorization': `Bearer ${result.token}` }
+            });
+            if (profileRes.ok) {
+              const profileJson = await profileRes.json();
+              const prof = profileJson.data || profileJson;
+              // Merge selected faculty profile fields into userObj
+              userObj.name = prof.Name || prof.name || userObj.name;
+              userObj.email = prof.email || userObj.email;
+              userObj.avatar = prof.avatar || prof.profile_image_url || userObj.avatar;
+              userObj.designation = prof.designation || userObj.designation;
+              userObj.department = prof.department || userObj.department;
+              userObj.is_timetable_incharge = prof.is_timetable_incharge || userObj.is_timetable_incharge;
+              userObj.is_placement_coordinator = prof.is_placement_coordinator || userObj.is_placement_coordinator;
+            }
+          } catch (err) {
+            console.error('Failed to fetch faculty profile for department-admin:', err);
+          }
+        }
+
         setUser(userObj);
         localStorage.setItem('eduvertex_user', JSON.stringify(userObj));
         localStorage.setItem('authToken', result.token);
@@ -112,10 +134,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           headers: { 'Authorization': `Bearer ${token}` }
         });
       } else {
-        // For admin users, use the standard getMe endpoint
-        response = await fetch('/api/v1/auth/me', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
+        // For admin users, prefer fetching faculty profile for department-admin role
+        if (userData.role === 'department-admin') {
+          response = await fetch('/api/v1/faculty/me/profile', {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+        } else {
+          // For other admin users, use the standard getMe endpoint
+          response = await fetch('/api/v1/auth/me', {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+        }
       }
 
       if (response.ok) {
