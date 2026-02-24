@@ -39,12 +39,12 @@ const router = express.Router();
 // All routes require authentication
 router.use(protect);
 
-// Faculty can access their own profile
-router.get('/me/profile', authorize('faculty'), getMyProfile);
-// Faculty can update their own profile
-router.put('/update-profile', authorize('faculty'), updateFacultyProfile);
-// Route to download profile as DOCX
-router.post('/download-profile', authorize('faculty', 'superadmin', 'super-admin', 'executiveadmin', 'academicadmin'), handleDownloadProfile);
+// Faculty and department-admins can access their own profile
+router.get('/me/profile', authorize('faculty', 'department-admin'), getMyProfile);
+// Faculty and department-admins can update their own profile
+router.put('/update-profile', authorize('faculty', 'department-admin'), updateFacultyProfile);
+// Route to download profile as DOCX (allow department-admin alongside faculty)
+router.post('/download-profile', authorize('faculty', 'department-admin', 'superadmin', 'super-admin', 'executiveadmin', 'academicadmin'), handleDownloadProfile);
 
 // Routes for admin
 router.route('/')
@@ -63,30 +63,30 @@ router.put('/:id(\\d+)/status', authorize('superadmin', 'super-admin', 'executiv
 
 // Education routes
 router.route('/education')
-  .get(authorize('faculty'), getMyEducation)
-  .post(authorize('faculty'), addEducation);
+  .get(authorize('faculty', 'department-admin'), getMyEducation)
+  .post(authorize('faculty', 'department-admin'), addEducation);
 
 router.route('/education/:id')
-  .put(authorize('faculty'), updateEducation)
-  .delete(authorize('faculty'), deleteEducation);
+  .put(authorize('faculty', 'department-admin'), updateEducation)
+  .delete(authorize('faculty', 'department-admin'), deleteEducation);
 
 // Experience routes
 router.route('/experience')
-  .get(authorize('faculty'), getMyExperience)
-  .post(authorize('faculty'), addExperience);
+  .get(authorize('faculty', 'department-admin'), getMyExperience)
+  .post(authorize('faculty', 'department-admin'), addExperience);
 
 router.route('/experience/:id')
-  .put(authorize('faculty'), updateExperience)
-  .delete(authorize('faculty'), deleteExperience);
+  .put(authorize('faculty', 'department-admin'), updateExperience)
+  .delete(authorize('faculty', 'department-admin'), deleteExperience);
 
 // Industry experience (separate table)
 router.route('/experience/industry')
-  .get(authorize('faculty'), getMyIndustryExperience)
-  .post(authorize('faculty'), addIndustryExperience);
+  .get(authorize('faculty', 'department-admin'), getMyIndustryExperience)
+  .post(authorize('faculty', 'department-admin'), addIndustryExperience);
 
 router.route('/experience/industry/:id')
-  .put(authorize('faculty'), updateIndustryExperience)
-  .delete(authorize('faculty'), deleteIndustryExperience);
+  .put(authorize('faculty', 'department-admin'), updateIndustryExperience)
+  .delete(authorize('faculty', 'department-admin'), deleteIndustryExperience);
 
 // PhD records
 import {
@@ -97,11 +97,11 @@ import {
 } from '../../controllers/faculty/phd.controller.js';
 
 router.route('/phd')
-  .get(authorize('faculty'), getMyPhd)
-  .post(authorize('faculty'), addPhd);
+  .get(authorize('faculty', 'department-admin'), getMyPhd)
+  .post(authorize('faculty', 'department-admin'), addPhd);
 
 router.route('/phd/:id')
-  .put(authorize('faculty'), updatePhd)
-  .delete(authorize('faculty'), deletePhd);
+  .put(authorize('faculty', 'department-admin'), updatePhd)
+  .delete(authorize('faculty', 'department-admin'), deletePhd);
 
 export default router;

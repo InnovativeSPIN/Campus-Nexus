@@ -223,9 +223,22 @@ export const login = asyncHandler(async (req, res, next) => {
   let userType = null; // 'admin', 'faculty', or 'student'
 
   // 1. Check for faculty in faculty_profiles table FIRST (priority)
+  // If the request is NOT explicitly requesting an admin login (requestedRole
+  // containing 'admin'), exclude department-admins (role_id === 7) from this
+  // faculty lookup. This prevents department-admin credentials from being
+  // used to login via the faculty module.
+  const requestedRole = (req.body && req.body.requestedRole) ? req.body.requestedRole.toString().toLowerCase() : null;
+  const includeDeptAdmins = requestedRole && requestedRole.includes('admin');
+
+  const facultyWhere = { email };
+  if (!includeDeptAdmins) {
+    // exclude department-admins when not explicitly requested
+    facultyWhere.role_id = { [Op.ne]: 7 };
+  }
+
   user = await Faculty.findOne({
-    where: { email },
-    attributes: { include: ['password'] },
+    where: facultyWhere,
+    attributes: { include: ['password', 'role_id'] },
     include: [{ model: models.Department, as: 'department', attributes: ['short_name', 'full_name'] }]
   });
 
@@ -414,13 +427,16 @@ export const getFacultyDetails = asyncHandler(async (req, res, next) => {
     return next(new ErrorResponse('Please provide a faculty identifier', 400));
   }
 
-  // Search by email or faculty_college_code
+  // Search by email or faculty_college_code. Exclude department-admins
+  // (role_id === 7) from this lookup so admin accounts are not revealed
+  // on the faculty login/details page.
   const faculty = await Faculty.findOne({
     where: {
       [Op.or]: [
         { email: identifier },
         { faculty_college_code: identifier }
-      ]
+      ],
+      role_id: { [Op.ne]: 7 }
     },
     attributes: { exclude: ['password'] },
     include: [
@@ -617,14 +633,16 @@ export const getAdminsByRole = asyncHandler(async (req, res, next) => {
     roleNames = ['superadmin', 'super-admin'];
   }
 
-  // Find the role_ids
-  const roles = await Role.findAll({
-    where: { role_name: { [Op.in]: roleNames } },
-    attributes: ['role_id']
-  });
-
+  // Find matching role_ids. The roles table may contain variants like
+  // 'department_admin' or 'department admin', so fetch all roles and
+  // normalize in JS to match requested role robustly.
+  const allRoles = await Role.findAll({ attributes: ['role_id', 'role_name'] });
+  const normalize = (s) => (s || '').toString().trim().toLowerCase().replace(/[_\s]+/g, '-');
+  const targetNorms = roleNames.map(r => normalize(r));
+  const roles = allRoles.filter(r => targetNorms.includes(normalize(r.role_name)));
   const roleIds = roles.map(r => r.role_id);
 
+  // Fetch users from users table matching the role_ids
   const admins = await User.findAll({
     where: {
       role_id: { [Op.in]: roleIds }
@@ -632,11 +650,29 @@ export const getAdminsByRole = asyncHandler(async (req, res, next) => {
     attributes: ['name', 'email']
   });
 
+  // If one of the matched role ids corresponds to department-admin role,
+  // fetch department-admins stored in `faculty_profiles`. We detect the id
+  // dynamically instead of assuming it is 7.
+  let facultyAdmins = [];
+  const deptAdminIds = roleIds; // if the requested role matched department-admin, it'll be here
+  if (deptAdminIds && deptAdminIds.length > 0) {
+    try {
+      // fetch any faculty whose role_id is one of the matched role ids
+      const facs = await Faculty.findAll({
+        where: { role_id: { [Op.in]: deptAdminIds } },
+        attributes: [['Name', 'name'], 'email']
+      });
+      facultyAdmins = facs.map(f => ({ name: f.name || 'Department Admin', email: f.email }));
+    } catch (err) {
+      console.warn('Failed to fetch faculty department-admins:', err);
+    }
+  }
+
   // Map results to ensure each has a 'name' field for the frontend
-  const formattedAdmins = admins.map(admin => ({
-    name: admin.name || 'Admin',
-    email: admin.email
-  }));
+  const formattedAdmins = [
+    ...admins.map(admin => ({ name: admin.name || 'Admin', email: admin.email })),
+    ...facultyAdmins
+  ];
 
   res.status(200).json({
     success: true,

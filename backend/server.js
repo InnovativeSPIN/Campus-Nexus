@@ -95,12 +95,14 @@ const startServer = () => {
   // Prevent XSS attacks
   app.use(xss());
 
-  // Rate limiting
-  const limiter = rateLimit({
-    windowMs: 10 * 60 * 1000, // 10 mins
-    max: 100
-  });
-  app.use(limiter);
+  // Rate limiting: enable only in production to avoid hitting limits during local development
+  if (process.env.NODE_ENV === 'production') {
+    const limiter = rateLimit({
+      windowMs: 10 * 60 * 1000, // 10 mins
+      max: 100
+    });
+    app.use(limiter);
+  }
 
   // Prevent http param pollution
   app.use(hpp());

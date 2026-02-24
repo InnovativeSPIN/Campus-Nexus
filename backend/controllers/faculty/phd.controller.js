@@ -29,6 +29,16 @@ export const addPhd = asyncHandler(async (req, res, next) => {
 
   const phd = await FacultyPhd.create({ ...req.body, faculty_id: faculty.faculty_id });
   const plain = phd.get ? phd.get({ plain: true }) : phd;
+
+  // Update faculty phd_status to match this record's status
+  try {
+    if (req.body.status) {
+      await Faculty.update({ phd_status: req.body.status }, { where: { faculty_id: faculty.faculty_id } });
+    }
+  } catch (e) {
+    console.warn('Failed to update faculty phd_status after creating PhD record', e);
+  }
+
   res.status(201).json({ success: true, data: plain });
 });
 
@@ -44,6 +54,15 @@ export const updatePhd = asyncHandler(async (req, res, next) => {
 
   const updated = await phd.update(req.body);
   const plain = updated.get ? updated.get({ plain: true }) : updated;
+  // Update faculty phd_status based on updated record
+  try {
+    if (plain.status) {
+      await Faculty.update({ phd_status: plain.status }, { where: { faculty_id: faculty.faculty_id } });
+    }
+  } catch (e) {
+    console.warn('Failed to update faculty phd_status after updating PhD record', e);
+  }
+
   res.status(200).json({ success: true, data: plain });
 });
 
@@ -58,5 +77,20 @@ export const deletePhd = asyncHandler(async (req, res, next) => {
   if (phd.faculty_id !== faculty.faculty_id) return next(new ErrorResponse('Not authorized to delete this record', 401));
 
   await phd.destroy();
+  // After deletion, determine remaining PhD records and update faculty.phd_status accordingly
+  try {
+    const remaining = await FacultyPhd.findAll({ where: { faculty_id: faculty.faculty_id } });
+    let newStatus = 'No';
+    if (remaining && remaining.length > 0) {
+      const statuses = remaining.map(r => r.status && r.status.toString());
+      if (statuses.includes('Yes')) newStatus = 'Yes';
+      else if (statuses.includes('Pursuing')) newStatus = 'Pursuing';
+      else newStatus = statuses[0] || 'Yes';
+    }
+    await Faculty.update({ phd_status: newStatus }, { where: { faculty_id: faculty.faculty_id } });
+  } catch (e) {
+    console.warn('Failed to recompute faculty phd_status after deleting PhD record', e);
+  }
+
   res.status(200).json({ success: true, message: 'PhD record deleted', data: {} });
 });

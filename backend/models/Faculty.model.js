@@ -80,8 +80,7 @@ const Faculty = (sequelize) => {
       allowNull: true,
     },
     status: {
-      // simplified to three states as per new requirement
-      type: DataTypes.ENUM('active', 'completed', 'inactive'),
+      type: DataTypes.ENUM('active', 'on_leave', 'retired'),
       defaultValue: 'active',
     },
     blood_group: {

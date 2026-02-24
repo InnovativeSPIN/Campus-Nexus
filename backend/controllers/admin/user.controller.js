@@ -195,6 +195,50 @@ export const createUser = asyncHandler(async (req, res, next) => {
     return next(new ErrorResponse('A valid admin role is required', 400));
   }
 
+  // If the role corresponds to a department admin (role_id 7), create a
+  // record in the faculty_profiles table instead of the users table. This
+  // ensures department admins are stored with the faculty/profile model.
+  if (parseInt(req.body.role_id, 10) === 7) {
+    // determine department_id if provided (accepts id, short_name or full_name)
+    let department_id = null;
+    try {
+      if (req.body.department) {
+        const dep = !isNaN(parseInt(req.body.department, 10))
+          ? await Department.findByPk(req.body.department)
+          : await Department.findOne({ where: { short_name: req.body.department } }) || await Department.findOne({ where: { full_name: req.body.department } });
+        if (dep) department_id = dep.id;
+      } else if (req.body.departmentCode) {
+        const dep2 = await Department.findOne({ where: { short_name: req.body.departmentCode } });
+        if (dep2) department_id = dep2.id;
+      }
+    } catch (err) {
+      console.warn('Department lookup failed:', err);
+    }
+
+    const facultyPayload = {
+      faculty_college_code: req.body.departmentCode || req.body.faculty_college_code || null,
+      Name: req.body.name || req.body.admin_name || req.body.Name || '',
+      email: req.body.email,
+      password: req.body.password || req.body.pwd || '123',
+      role_id: 7,
+      department_id,
+      status: req.body.isActive === false ? 'inactive' : 'active'
+    };
+
+    const faculty = await Faculty.create(facultyPayload);
+
+    const fpu = faculty.toJSON();
+    // attach role name for consistency with user responses
+    const roleRec = await Role.findByPk(7);
+    fpu.role = roleRec?.role_name || 'department-admin';
+    // provide an `id` field to match frontend expectations (some front-end code
+    // expects `id` or `_id` properties for created records)
+    fpu.id = fpu.faculty_id;
+
+    res.status(201).json({ success: true, data: fpu });
+    return;
+  }
+
   // previously we ensured a department did not have more than one HOD by
   // checking departmentCode. the users table doesn't currently store a
   // departmentCode/dept column, so skip this validation until the schema is
