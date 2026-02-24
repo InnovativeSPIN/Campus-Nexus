@@ -32,6 +32,7 @@ import {
   AlertDialogTitle,
 } from '@/pages/admin/superadmin/components/ui/alert-dialog';
 import { Plus, Edit2, Trash2, Eye, Loader2 } from 'lucide-react';
+import { FacultyUploadModal } from '@/pages/admin/superadmin/components/modals/FacultyUploadModal';
 
 export default function SuperAdminFaculty() {
   const navigate = useNavigate();
@@ -58,6 +59,9 @@ export default function SuperAdminFaculty() {
     open: false,
     data: null,
   });
+
+  const [uploadModalOpen, setUploadModalOpen] = useState(false);
+
 
   const fetchFaculty = async (filters: { department?: string; designation?: string; search?: string } = {}) => {
     try {
@@ -157,12 +161,21 @@ export default function SuperAdminFaculty() {
             <h1 className="text-3xl font-bold tracking-tight">Faculty Management</h1>
             <p className="text-muted-foreground mt-1">Manage all faculty members and their profiles</p>
           </div>
-          <Button
-            onClick={() => setFormModal({ open: true, mode: 'add' })}
-            className="gap-2"
-          >
-            <Plus className="h-4 w-4" /> Add New Faculty
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={() => setFormModal({ open: true, mode: 'add' })}
+              className="gap-2"
+            >
+              <Plus className="h-4 w-4" /> Add New Faculty
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() => setUploadModalOpen(true)}
+              className="gap-2"
+            >
+              <Plus className="h-4 w-4" /> Upload Excel
+            </Button>
+          </div>
         </div>
 
         {/* Filters */}
@@ -317,6 +330,13 @@ export default function SuperAdminFaculty() {
         mode={formModal.mode}
         facultyData={formModal.data}
         departments={departments}
+        onSuccess={fetchFaculty}
+      />
+
+      {/* Upload Modal */}
+      <FacultyUploadModal
+        open={uploadModalOpen}
+        onOpenChange={setUploadModalOpen}
         onSuccess={fetchFaculty}
       />
 
