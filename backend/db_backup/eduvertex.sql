@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Feb 24, 2026 at 11:41 AM
+-- Generation Time: Feb 24, 2026 at 06:55 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -230,14 +230,6 @@ CREATE TABLE `faculty_phd` (
   `guide_name` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `faculty_phd`
---
-
-INSERT INTO `faculty_phd` (`phd_id`, `faculty_id`, `status`, `orcid_id`, `thesis_title`, `register_no`, `guide_name`) VALUES
-(1, 101, 'Pursuing', '0000-0000-0000-0000', 'Test insertion via script', 'TEST-123', 'Dr. Script'),
-(2, 101, 'Pursuing', '0000-0000-0000-0002', 'Node test thesis', 'NODE-002', 'Dr. Node');
-
 -- --------------------------------------------------------
 
 --
@@ -281,7 +273,7 @@ CREATE TABLE `faculty_profiles` (
 --
 
 INSERT INTO `faculty_profiles` (`faculty_id`, `faculty_college_code`, `coe_id`, `AICTE_ID`, `Anna_University_ID`, `Name`, `email`, `phone_number`, `password`, `role_id`, `department_id`, `designation`, `educational_qualification`, `phd_status`, `gender`, `date_of_birth`, `date_of_joining`, `profile_image_url`, `status`, `blood_group`, `aadhar_number`, `pan_number`, `perm_address`, `curr_address`, `created_at`, `updated_at`, `linkedin_url`, `is_timetable_incharge`, `is_placement_coordinator`) VALUES
-(101, 'CS12', NULL, NULL, NULL, 'Dr.MATHALAI RAJ. J', 'drmathalai.raj@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 1, 'HEAD OF THE DEPARTMENT', NULL, 'No', NULL, NULL, NULL, '/uploads/faculty/dr_mathalai_raj__j.jpg', 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:38:21', '2026-02-21 17:51:26', NULL, 0, 0),
+(101, 'CS12', NULL, NULL, NULL, 'Dr.MATHALAI RAJ. J', 'drmathalai.raj@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 7, 1, 'HEAD OF THE DEPARTMENT', NULL, '', NULL, NULL, NULL, '/uploads/faculty/dr_mathalai_raj__j.jpg', 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:38:21', '2026-02-24 15:44:58', NULL, 0, 0),
 (111, 'SH1', NULL, NULL, NULL, 'DR.B.MALLAIYASAMY', 'drbmallaiyasamy.faculty@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 10, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:38:21', '2026-02-20 06:43:32', NULL, 0, 0),
 (121, 'SH10', NULL, NULL, NULL, 'DR.DAVID MATHAN.N', 'drdavid.mathann@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 10, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:38:21', '2026-02-20 06:43:32', NULL, 0, 0),
 (124, 'ME11', NULL, NULL, NULL, 'VEMBATHURAJESH.A', 'vembathurajesha.faculty@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 10, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:38:21', '2026-02-20 06:43:32', NULL, 0, 0),
@@ -311,7 +303,6 @@ INSERT INTO `faculty_profiles` (`faculty_id`, `faculty_college_code`, `coe_id`, 
 (356, 'NS10T35', NULL, NULL, NULL, 'HARI PRASATH T', 'ns10t35@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 2, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-02-20 06:43:32', NULL, 0, 0),
 (357, 'NS20T35', NULL, NULL, NULL, 'ABIRAMI KAYATHIRI S', 'ns20t35@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 1, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-02-20 06:43:32', NULL, 0, 0),
 (358, 'NS20T41', NULL, NULL, NULL, 'ANUSUYA V', 'ns20t41@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 1, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-02-20 06:43:32', NULL, 0, 0),
-(359, 'CS12', NULL, NULL, NULL, 'Dr.MATHALAI RAJ. J', 'cs12@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 1, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-02-20 06:43:32', NULL, 0, 0),
 (360, 'NS20T25', NULL, NULL, NULL, 'VELKUMAR K', 'ns20t25@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 1, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-02-20 06:43:32', NULL, 0, 0),
 (361, 'NS20T33', NULL, NULL, NULL, 'DEEPIGA K', 'ns20t33@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 1, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-02-20 06:43:32', NULL, 0, 0),
 (362, 'NS20T40', NULL, NULL, NULL, 'VENKATALAKSHMI M', 'ns20t40@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 1, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-02-20 06:43:32', NULL, 0, 0),
@@ -358,7 +349,7 @@ INSERT INTO `faculty_profiles` (`faculty_id`, `faculty_college_code`, `coe_id`, 
 (403, 'NS20T37', NULL, NULL, NULL, 'GEERTHIGA G', 'ns20t37@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 6, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-02-23 20:37:47', NULL, 0, 0),
 (404, 'NS20T32', NULL, NULL, NULL, 'VINOTH KUMAR J', 'ns20t32@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 6, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-02-20 06:43:32', NULL, 0, 0),
 (405, 'NS70T02', NULL, NULL, NULL, 'KANIMOLI J', 'ns70t02@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 6, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-02-23 20:26:34', NULL, 0, 0),
-(406, 'NS80T01', NULL, NULL, NULL, 'NAGAJOTHI P', 'ns80t01@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 6, NULL, NULL, 'No', NULL, NULL, NULL, '/uploads/faculty/nagajothi_p.jpg', 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-02-24 04:52:22', 'https://www.linkedin.com/in/prathap/', 1, 0),
+(406, 'NS80T01', NULL, NULL, NULL, 'NAGAJOTHI P', 'ns80t01@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 6, NULL, NULL, 'Pursuing', NULL, NULL, NULL, '/uploads/faculty/nagajothi_p.jpg', 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-02-24 14:46:06', 'https://www.linkedin.com/in/prathap/', 1, 0),
 (408, 'NS2207T15', NULL, NULL, NULL, 'PRATHAP. C', 'ns2207t15@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 6, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-02-23 20:38:00', NULL, 0, 1),
 (409, 'NS30T03', NULL, NULL, NULL, 'GANESH.K', 'ns30t03@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 4, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-02-20 06:43:32', NULL, 0, 0),
 (410, 'NS40T16', NULL, NULL, NULL, 'Dr.R.ATHILINGAM', 'ns40t16@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 4, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-02-20 06:43:32', NULL, 0, 0),
@@ -381,7 +372,8 @@ INSERT INTO `faculty_profiles` (`faculty_id`, `faculty_college_code`, `coe_id`, 
 (427, 'EC13', NULL, NULL, NULL, 'PRATHAP S', 'ec13@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 3, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-02-20 06:43:32', NULL, 0, 0),
 (428, 'EC14', NULL, NULL, NULL, 'BHARATHI KANNAN K', 'ec14@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 3, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-02-20 06:43:32', NULL, 0, 0),
 (429, 'NS40T27', NULL, NULL, NULL, 'RAJESHSHREE S', 'ns40t27@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 3, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-02-20 06:43:32', NULL, 0, 0),
-(430, 'NS20NT23', NULL, NULL, NULL, 'MUTHURAJ', 'ns20nt23@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 2, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-02-20 06:43:32', NULL, 0, 0);
+(430, 'NS20NT23', NULL, NULL, NULL, 'MUTHURAJ', 'ns20nt23@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 2, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-02-20 06:43:32', NULL, 0, 0),
+(431, 'NSTO124', NULL, NULL, NULL, 'Thanush Kumar', 'ThanushKumarematix@gmail.com', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 7, 7, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-24 13:45:58', '2026-02-24 14:18:08', NULL, 0, 0);
 
 -- --------------------------------------------------------
 
@@ -2233,13 +2225,13 @@ ALTER TABLE `faculty_events`
 -- AUTO_INCREMENT for table `faculty_experience`
 --
 ALTER TABLE `faculty_experience`
-  MODIFY `exp_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `exp_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `faculty_industry_experience`
 --
 ALTER TABLE `faculty_industry_experience`
-  MODIFY `exp_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `exp_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `faculty_leaves`
@@ -2251,13 +2243,13 @@ ALTER TABLE `faculty_leaves`
 -- AUTO_INCREMENT for table `faculty_phd`
 --
 ALTER TABLE `faculty_phd`
-  MODIFY `phd_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `phd_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `faculty_profiles`
 --
 ALTER TABLE `faculty_profiles`
-  MODIFY `faculty_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=431;
+  MODIFY `faculty_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=432;
 
 --
 -- AUTO_INCREMENT for table `faculty_subject_assignments`
@@ -2269,7 +2261,7 @@ ALTER TABLE `faculty_subject_assignments`
 -- AUTO_INCREMENT for table `faculy_edu_qualification`
 --
 ALTER TABLE `faculy_edu_qualification`
-  MODIFY `membership_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `membership_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `staff_attendance_entry`

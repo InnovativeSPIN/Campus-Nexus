@@ -5,6 +5,7 @@ const { Faculty, User } = models;
 // additional models imported from models index
 const { Department, Subject, Class: ClassModel } = models;
 import { Op } from 'sequelize';
+import xlsx from 'xlsx';
 
 // @desc      Get all faculty
 // @route     GET /api/v1/faculty
@@ -289,6 +290,111 @@ export const updateFacultyStatus = asyncHandler(async (req, res, next) => {
     success: true,
     data: faculty
   });
+});
+
+// @desc      Bulk upload faculty records from Excel/CSV file
+// @route     POST /api/v1/faculty/upload
+// @access    Private/Admin
+export const uploadFaculty = asyncHandler(async (req, res, next) => {
+  // using express-fileupload middleware
+  if (!req.files || !req.files.file) {
+    return next(new ErrorResponse('No file uploaded', 400));
+  }
+  const file = req.files.file;
+
+  // parse workbook (works for XLSX, XLS, CSV)
+  let workbook;
+  try {
+    workbook = xlsx.read(file.data, { type: 'buffer' });
+  } catch (err) {
+    return next(new ErrorResponse('Unable to parse spreadsheet file', 400));
+  }
+
+  const sheetName = workbook.SheetNames[0];
+  const sheet = workbook.Sheets[sheetName];
+  const rows = xlsx.utils.sheet_to_json(sheet, { defval: '' });
+
+  const created = [];
+  const errors = [];
+
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    try {
+      // basic required fields
+      if (!row.Name || !row.faculty_college_code || !row.email) {
+        throw new Error('Missing required Name, faculty_college_code or email');
+      }
+
+      const payload = {};
+      // copy over any field present in row that matches model column names
+      const allowed = [
+        'faculty_college_code',
+        'coe_id',
+        'AICTE_ID',
+        'Anna_University_ID',
+        'Name',
+        'email',
+        'phone_number',
+        'designation',
+        'gender',
+        'date_of_birth',
+        'date_of_joining',
+        'blood_group',
+        'aadhar_number',
+        'pan_number',
+        'perm_address',
+        'curr_address',
+        'linkedin_url',
+        'role_id'
+      ];
+
+      allowed.forEach((key) => {
+        if (row[key] !== undefined && row[key] !== '') {
+          payload[key] = row[key];
+        }
+      });
+
+      // department handling: accept department_id or department name/code
+      if (row.department_id && row.department_id !== '') {
+        payload.department_id = row.department_id;
+      } else if (row.department && row.department !== '') {
+        // try to lookup department by short_name or full_name
+        const dept = await Department.findOne({
+          where: {
+            [Op.or]: [
+              { short_name: row.department },
+              { full_name: row.department }
+            ]
+          }
+        });
+        if (dept) {
+          payload.department_id = dept.id;
+        }
+      }
+
+      // convert dates if necessary
+      if (payload.date_of_birth) {
+        payload.date_of_birth = new Date(payload.date_of_birth);
+      }
+      if (payload.date_of_joining) {
+        payload.date_of_joining = new Date(payload.date_of_joining);
+      }
+
+      // set default password if missing
+      payload.password = row.password || '123';
+      // if role isn't supplied default to 5 (regular faculty)
+      if (!payload.role_id) {
+        payload.role_id = 5;
+      }
+
+      const faculty = await Faculty.create(payload);
+      created.push(faculty);
+    } catch (err) {
+      errors.push({ row: i + 2, error: err.message });
+    }
+  }
+
+  res.status(200).json({ success: true, count: created.length, errors });
 });
 
 // @desc      Get faculty profile (for logged in faculty)

@@ -9,6 +9,7 @@ import {
   assignSubjects,
   assignClasses,
   updateFacultyStatus,
+  uploadFaculty,
   getMyProfile,
   updateFacultyProfile
 } from '../../controllers/faculty/faculty.controller.js';
@@ -55,6 +56,8 @@ router.route('/:id(\\d+)')
   .get(authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin', 'faculty'), getFaculty)
   .put(authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin'), updateFaculty)
   .delete(authorize('superadmin', 'super-admin'), deleteFaculty);
+
+router.post('/upload', authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin'), uploadFaculty);
 
 router.get('/department/:departmentId', authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin'), getFacultyByDepartment);
 router.put('/:id(\\d+)/subjects', authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin'), assignSubjects);

@@ -33,12 +33,13 @@
     "helmet": "^7.1.0",
     "hpp": "^0.2.3",
     "jsonwebtoken": "^9.0.2",
-    "mysql2": "^3.11.0",
-    "sequelize": "^6.37.3",
     "morgan": "^1.10.0",
+    "mysql2": "^3.11.0",
     "nodemailer": "^6.9.7",
+    "sequelize": "^6.37.3",
     "slugify": "^1.6.6",
     "validator": "^13.11.0",
+    "xlsx": "^0.18.5",
     "xss-clean": "^0.1.4"
   },
   "devDependencies": {
