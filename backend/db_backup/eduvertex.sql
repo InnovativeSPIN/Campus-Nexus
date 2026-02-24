@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Feb 24, 2026 at 07:58 AM
+-- Generation Time: Feb 24, 2026 at 11:41 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -166,7 +166,7 @@ CREATE TABLE `faculty_experience` (
 --
 
 INSERT INTO `faculty_experience` (`exp_id`, `faculty_id`, `designation`, `institution_name`, `university`, `department`, `from_date`, `to_date`, `period`, `is_current`) VALUES
-(2, 406, 'Assistant Professor', 'Nadar Saraswathi College of Engineering and Technology', 'akka', 'Electronics & Communication Engineering', '2026-02-24', '2026-02-24', '4M', 0);
+(2, 406, 'Assistant Professor', 'Nadar Saraswathi College of Engineering and Technology', 'akka university', 'Electronics & Communication Engineering', '2026-02-24', '2026-02-24', '4M', 0);
 
 -- --------------------------------------------------------
 
@@ -192,7 +192,6 @@ CREATE TABLE `faculty_industry_experience` (
 --
 
 INSERT INTO `faculty_industry_experience` (`exp_id`, `faculty_id`, `job_title`, `company`, `location`, `from_date`, `to_date`, `period`, `is_current`, `status`) VALUES
-(2, 101, 'Senior Engineer', 'Acme Corp', 'Bangalore', '2018-01-01', '2020-12-31', '3 years', 0, 'active'),
 (3, 406, 'Data Analyst', 'Ematix private Limited', 'Theni', '2026-02-24', '2026-03-14', '2m', 0, 'active');
 
 -- --------------------------------------------------------
@@ -230,6 +229,14 @@ CREATE TABLE `faculty_phd` (
   `register_no` varchar(100) DEFAULT NULL,
   `guide_name` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `faculty_phd`
+--
+
+INSERT INTO `faculty_phd` (`phd_id`, `faculty_id`, `status`, `orcid_id`, `thesis_title`, `register_no`, `guide_name`) VALUES
+(1, 101, 'Pursuing', '0000-0000-0000-0000', 'Test insertion via script', 'TEST-123', 'Dr. Script'),
+(2, 101, 'Pursuing', '0000-0000-0000-0002', 'Node test thesis', 'NODE-002', 'Dr. Node');
 
 -- --------------------------------------------------------
 
@@ -456,8 +463,7 @@ CREATE TABLE `faculy_edu_qualification` (
 --
 
 INSERT INTO `faculy_edu_qualification` (`faculty_id`, `degree`, `branch`, `college`, `university`, `year`, `percentage`, `membership_id`, `society_name`, `status`) VALUES
-(101, 'Updated Degree', 'Test Branch', NULL, 'Test Univ', NULL, NULL, 1, '', 'Active'),
-(406, 'B.E.', 'Computer Science Engineering', 'Nadar Saraswathi College of Engineering and Technology', 'Anna University', '2022', '60', 2, 'IEEE', 'Active');
+(406, 'B.E.', 'Computer Science Engineering', 'Nadar Saraswathi College of Engineering and Technology', 'Akka University', '2022', '60', 2, 'IEEE', 'Inactive');
 
 -- --------------------------------------------------------
 
@@ -2245,7 +2251,7 @@ ALTER TABLE `faculty_leaves`
 -- AUTO_INCREMENT for table `faculty_phd`
 --
 ALTER TABLE `faculty_phd`
-  MODIFY `phd_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `phd_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `faculty_profiles`
