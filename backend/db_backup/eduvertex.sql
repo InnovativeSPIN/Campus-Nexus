@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Feb 23, 2026 at 10:55 PM
+-- Generation Time: Feb 24, 2026 at 07:58 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -158,11 +158,42 @@ CREATE TABLE `faculty_experience` (
   `from_date` date DEFAULT NULL,
   `to_date` date DEFAULT NULL,
   `period` varchar(50) DEFAULT NULL,
-  `is_current` tinyint(1) DEFAULT 0,
-  `job_title` varchar(150) NOT NULL,
-  `company` varchar(255) NOT NULL,
-  `location` varchar(255) DEFAULT NULL
+  `is_current` tinyint(1) DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `faculty_experience`
+--
+
+INSERT INTO `faculty_experience` (`exp_id`, `faculty_id`, `designation`, `institution_name`, `university`, `department`, `from_date`, `to_date`, `period`, `is_current`) VALUES
+(2, 406, 'Assistant Professor', 'Nadar Saraswathi College of Engineering and Technology', 'akka', 'Electronics & Communication Engineering', '2026-02-24', '2026-02-24', '4M', 0);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `faculty_industry_experience`
+--
+
+CREATE TABLE `faculty_industry_experience` (
+  `exp_id` int(11) NOT NULL,
+  `faculty_id` int(11) NOT NULL,
+  `job_title` varchar(150) DEFAULT NULL,
+  `company` varchar(255) DEFAULT NULL,
+  `location` varchar(255) DEFAULT NULL,
+  `from_date` date DEFAULT NULL,
+  `to_date` date DEFAULT NULL,
+  `period` varchar(50) DEFAULT NULL,
+  `is_current` tinyint(1) DEFAULT 0,
+  `status` enum('active','inactive') DEFAULT 'active'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `faculty_industry_experience`
+--
+
+INSERT INTO `faculty_industry_experience` (`exp_id`, `faculty_id`, `job_title`, `company`, `location`, `from_date`, `to_date`, `period`, `is_current`, `status`) VALUES
+(2, 101, 'Senior Engineer', 'Acme Corp', 'Bangalore', '2018-01-01', '2020-12-31', '3 years', 0, 'active'),
+(3, 406, 'Data Analyst', 'Ematix private Limited', 'Theni', '2026-02-24', '2026-03-14', '2m', 0, 'active');
 
 -- --------------------------------------------------------
 
@@ -320,7 +351,7 @@ INSERT INTO `faculty_profiles` (`faculty_id`, `faculty_college_code`, `coe_id`, 
 (403, 'NS20T37', NULL, NULL, NULL, 'GEERTHIGA G', 'ns20t37@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 6, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-02-23 20:37:47', NULL, 0, 0),
 (404, 'NS20T32', NULL, NULL, NULL, 'VINOTH KUMAR J', 'ns20t32@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 6, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-02-20 06:43:32', NULL, 0, 0),
 (405, 'NS70T02', NULL, NULL, NULL, 'KANIMOLI J', 'ns70t02@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 6, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-02-23 20:26:34', NULL, 0, 0),
-(406, 'NS80T01', NULL, NULL, NULL, 'NAGAJOTHI P', 'ns80t01@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 6, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-02-23 20:37:53', NULL, 1, 0),
+(406, 'NS80T01', NULL, NULL, NULL, 'NAGAJOTHI P', 'ns80t01@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 6, NULL, NULL, 'No', NULL, NULL, NULL, '/uploads/faculty/nagajothi_p.jpg', 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-02-24 04:52:22', 'https://www.linkedin.com/in/prathap/', 1, 0),
 (408, 'NS2207T15', NULL, NULL, NULL, 'PRATHAP. C', 'ns2207t15@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 6, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-02-23 20:38:00', NULL, 0, 1),
 (409, 'NS30T03', NULL, NULL, NULL, 'GANESH.K', 'ns30t03@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 4, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-02-20 06:43:32', NULL, 0, 0),
 (410, 'NS40T16', NULL, NULL, NULL, 'Dr.R.ATHILINGAM', 'ns40t16@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 4, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-02-20 06:43:32', NULL, 0, 0),
@@ -390,6 +421,8 @@ CREATE TABLE `faculty_subject_assignments` (
   `id` int(11) NOT NULL,
   `faculty_id` int(11) NOT NULL,
   `subject_id` int(11) NOT NULL,
+  `assigned_by` int(11) DEFAULT NULL,
+  `assigned_at` datetime DEFAULT NULL,
   `academic_year` varchar(9) NOT NULL,
   `semester` tinyint(2) NOT NULL,
   `class_id` int(11) DEFAULT NULL,
@@ -417,6 +450,14 @@ CREATE TABLE `faculy_edu_qualification` (
   `society_name` varchar(255) NOT NULL,
   `status` enum('Active','Inactive') DEFAULT 'Active'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `faculy_edu_qualification`
+--
+
+INSERT INTO `faculy_edu_qualification` (`faculty_id`, `degree`, `branch`, `college`, `university`, `year`, `percentage`, `membership_id`, `society_name`, `status`) VALUES
+(101, 'Updated Degree', 'Test Branch', NULL, 'Test Univ', NULL, NULL, 1, '', 'Active'),
+(406, 'B.E.', 'Computer Science Engineering', 'Nadar Saraswathi College of Engineering and Technology', 'Anna University', '2022', '60', 2, 'IEEE', 'Active');
 
 -- --------------------------------------------------------
 
@@ -1873,6 +1914,13 @@ ALTER TABLE `faculty_experience`
   ADD UNIQUE KEY `exp_id` (`exp_id`);
 
 --
+-- Indexes for table `faculty_industry_experience`
+--
+ALTER TABLE `faculty_industry_experience`
+  ADD PRIMARY KEY (`exp_id`),
+  ADD KEY `idx_faculty_id` (`faculty_id`);
+
+--
 -- Indexes for table `faculty_leaves`
 --
 ALTER TABLE `faculty_leaves`
@@ -2179,7 +2227,13 @@ ALTER TABLE `faculty_events`
 -- AUTO_INCREMENT for table `faculty_experience`
 --
 ALTER TABLE `faculty_experience`
-  MODIFY `exp_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `exp_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
+-- AUTO_INCREMENT for table `faculty_industry_experience`
+--
+ALTER TABLE `faculty_industry_experience`
+  MODIFY `exp_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `faculty_leaves`
@@ -2209,7 +2263,7 @@ ALTER TABLE `faculty_subject_assignments`
 -- AUTO_INCREMENT for table `faculy_edu_qualification`
 --
 ALTER TABLE `faculy_edu_qualification`
-  MODIFY `membership_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `membership_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `staff_attendance_entry`
@@ -2353,6 +2407,12 @@ ALTER TABLE `faculty_events`
 ALTER TABLE `faculty_experience`
   ADD CONSTRAINT `faculty_experience_ibfk_1` FOREIGN KEY (`faculty_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE CASCADE,
   ADD CONSTRAINT `faculty_experience_ibfk_2` FOREIGN KEY (`faculty_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `faculty_industry_experience`
+--
+ALTER TABLE `faculty_industry_experience`
+  ADD CONSTRAINT `fk_industry_faculty` FOREIGN KEY (`faculty_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `faculty_leaves`

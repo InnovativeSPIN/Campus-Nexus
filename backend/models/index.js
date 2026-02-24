@@ -24,6 +24,9 @@ import TimetableSlotAssignment from './TimetableSlotAssignment.model.js';
 import TimetableNotification from './TimetableNotification.model.js';
 import FacultySubjectAssignment from './FacultySubjectAssignment.model.js';
 import SubjectClassMapping from './SubjectClassMapping.model.js';
+import FacultyEduQualification from './FacultyEduQualification.model.js';
+import FacultyExperience from './FacultyExperience.model.js';
+import FacultyIndustryExperience from './FacultyIndustryExperience.model.js';
 
 // Initialize models
 const models = {
@@ -49,6 +52,9 @@ const models = {
   TimetableNotification: TimetableNotification(sequelize),
   FacultySubjectAssignment: FacultySubjectAssignment(sequelize),
   SubjectClassMapping: SubjectClassMapping(sequelize),
+  FacultyEduQualification: FacultyEduQualification(sequelize),
+  FacultyExperience: FacultyExperience(sequelize),
+  FacultyIndustryExperience: FacultyIndustryExperience(sequelize),
 };
 
 // Define associations

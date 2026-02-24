@@ -11,6 +11,10 @@ const FacultySubjectAssignment = (sequelize) => {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
+    class_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
     subject_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
