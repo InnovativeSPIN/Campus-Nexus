@@ -54,6 +54,13 @@ const ClassModel = (sequelize) => {
       foreignKey: 'classId',
       as: 'students',
     });
+    // Class can be assigned to many faculty through faculty_subject_assignments
+    Class.belongsToMany(models.Faculty, {
+      through: models.FacultySubjectAssignment || 'faculty_subject_assignments',
+      foreignKey: 'class_id',
+      otherKey: 'faculty_id',
+      as: 'assignedFaculty',
+    });
   };
 
   return Class;

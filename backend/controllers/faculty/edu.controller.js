@@ -41,7 +41,7 @@ export const getMyEducation = asyncHandler(async (req, res, next) => {
     });
 });
 
-// @desc      Add or Update education qualification (One row per faculty)
+// @desc      Add new education qualification or membership (supports multiple records per faculty)
 // @route     POST /api/v1/faculty/education
 // @access    Private/Faculty
 export const addEducation = asyncHandler(async (req, res, next) => {
@@ -58,42 +58,18 @@ export const addEducation = asyncHandler(async (req, res, next) => {
         return next(new ErrorResponse('Faculty profile not found', 404));
     }
 
-    // 3. Check if a record already exists for this faculty
-    let education = await FacultyEduQualification.findOne({
-        where: { faculty_id: faculty.faculty_id }
+    // 3. Always create a new record to support multiple education/membership entries
+    const educationData = {
+        ...req.body,
+        faculty_id: faculty.faculty_id
+    };
+    const education = await FacultyEduQualification.create(educationData);
+
+    const plain = education.get ? education.get({ plain: true }) : education;
+    res.status(201).json({
+        success: true,
+        data: { ...plain, id: plain.membership_id ?? null }
     });
-
-    if (education) {
-        // Update existing record
-        // Only update fields that are present in req.body and not null
-        const updateData = {};
-        Object.keys(req.body).forEach(key => {
-            if (req.body[key] !== null && req.body[key] !== undefined) {
-                updateData[key] = req.body[key];
-            }
-        });
-
-        education = await education.update(updateData);
-
-        const plain = education.get ? education.get({ plain: true }) : education;
-        res.status(200).json({
-            success: true,
-            data: { ...plain, id: plain.membership_id ?? null }
-        });
-    } else {
-        // Create new record
-        const educationData = {
-            ...req.body,
-            faculty_id: faculty.faculty_id
-        };
-        education = await FacultyEduQualification.create(educationData);
-
-        const plain = education.get ? education.get({ plain: true }) : education;
-        res.status(201).json({
-            success: true,
-            data: { ...plain, id: plain.membership_id ?? null }
-        });
-    }
 });
 
 // @desc      Update education qualification
@@ -125,7 +101,7 @@ export const updateEducation = asyncHandler(async (req, res, next) => {
     });
 });
 
-// @desc      Delete education qualification (or clear section fields)
+// @desc      Delete education qualification or membership record
 // @route     DELETE /api/v1/faculty/education/:id
 // @access    Private/Faculty
 export const deleteEducation = asyncHandler(async (req, res, next) => {
@@ -145,43 +121,12 @@ export const deleteEducation = asyncHandler(async (req, res, next) => {
         return next(new ErrorResponse('Not authorized to access this record', 401));
     }
 
-    const { section } = req.query;
-
-    if (section === 'education') {
-        // Clear education fields
-        education.degree = null;
-        education.branch = null;
-        education.college = null;
-        education.university = null;
-        education.year = null;
-        education.percentage = null;
-    } else if (section === 'membership') {
-        // Clear membership fields
-        education.membership_id = null;
-        education.society_name = null;
-        education.status = null;
-    }
-
-    // Check if the record is now effectively empty for both sections
-    const hasEducation = education.degree || education.branch || education.university;
-    const hasMembership = education.membership_id || education.society_name;
-
-    if (!hasEducation && !hasMembership) {
-        // Safe to delete if both are empty or no section specified
-        await education.destroy();
-        return res.status(200).json({
-            success: true,
-            message: 'Record deleted successfully',
-            data: {}
-        });
-    } else {
-        // Update the record with nulls
-        await education.save();
-        const plainResult = education.get ? education.get({ plain: true }) : education;
-        return res.status(200).json({
-            success: true,
-            message: `Fields for ${section} cleared successfully`,
-            data: { ...plainResult, id: plainResult.membership_id ?? null }
-        });
-    }
+    // Delete the entire record since each entry is independent
+    await education.destroy();
+    
+    res.status(200).json({
+        success: true,
+        message: 'Record deleted successfully',
+        data: {}
+    });
 });

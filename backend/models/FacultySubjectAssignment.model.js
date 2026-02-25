@@ -77,6 +77,12 @@ const FacultySubjectAssignment = (sequelize) => {
       as: 'subject',
     });
 
+    // Assignment belongs to Class
+    FacultySubjectAssignmentModel.belongsTo(models.Class, {
+      foreignKey: 'class_id',
+      as: 'class',
+    });
+
     // Assignment belongs to User (who assigned)
     FacultySubjectAssignmentModel.belongsTo(models.User, {
       foreignKey: 'assigned_by',

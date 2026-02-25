@@ -4,7 +4,7 @@ const FacultyEduQualification = (sequelize) => {
     const EduQualification = sequelize.define('FacultyEduQualification', {
         membership_id: {
             type: DataTypes.INTEGER,
-            allowNull: true,
+            allowNull: false,
             primaryKey: true,
             autoIncrement: true,
         },
@@ -14,11 +14,11 @@ const FacultyEduQualification = (sequelize) => {
         },
         degree: {
             type: DataTypes.STRING(100),
-            allowNull: true,
+            allowNull: false,
         },
         branch: {
             type: DataTypes.STRING(150),
-            allowNull: true,
+            allowNull: false,
         },
         college: {
             type: DataTypes.STRING(255),
@@ -26,7 +26,7 @@ const FacultyEduQualification = (sequelize) => {
         },
         university: {
             type: DataTypes.STRING(255),
-            allowNull: true,
+            allowNull: false,
         },
         year: {
             type: DataTypes.STRING(50),
@@ -38,7 +38,8 @@ const FacultyEduQualification = (sequelize) => {
         },
         society_name: {
             type: DataTypes.STRING(255),
-            allowNull: true,
+            allowNull: false,
+            defaultValue: '',
         },
         status: {
             type: DataTypes.ENUM('Active', 'Inactive'),
