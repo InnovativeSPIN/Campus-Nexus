@@ -14,12 +14,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/pages/admin/superadmin/components/ui/alert-dialog';
-import { Plus, Trash2, Edit2, ChevronDown } from 'lucide-react';
+import { Plus, Trash2, Edit2, Upload } from 'lucide-react';
 
 interface Subject {
   id: number;
   code: string;
   name: string;
+  description?: string;
   department_id: number;
   department?: { short_name: string; full_name: string };
   semester: number;
@@ -65,6 +66,21 @@ export default function SuperAdminSubjectManagement() {
   }>({
     open: false,
     data: null,
+  });
+
+  const [bulkUploadModal, setBulkUploadModal] = useState<{
+    open: boolean;
+    file: File | null;
+    uploading: boolean;
+    results?: {
+      successful: Array<{ row: number; code: string; name: string; message: string }>;
+      failed: Array<{ row: number; code: string; error: string }>;
+      total: number;
+    };
+  }>({
+    open: false,
+    file: null,
+    uploading: false,
   });
 
   // Form state
@@ -220,6 +236,115 @@ export default function SuperAdminSubjectManagement() {
     }
   };
 
+  const parseCSV = (text: string): Array<Record<string, any>> => {
+    const lines = text.trim().split('\n');
+    if (lines.length < 2) {
+      throw new Error('CSV file must contain headers and at least one data row');
+    }
+
+    const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+    const requiredHeaders = ['code', 'name', 'department_id', 'semester'];
+    const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
+
+    if (missingHeaders.length > 0) {
+      throw new Error(`Missing required headers: ${missingHeaders.join(', ')}`);
+    }
+
+    const data: Array<Record<string, any>> = [];
+    for (let i = 1; i < lines.length; i++) {
+      if (!lines[i].trim()) continue;
+
+      const values = lines[i].split(',').map(v => v.trim());
+      const row: Record<string, any> = {};
+
+      headers.forEach((header, index) => {
+        const value = values[index];
+        // Convert string values to appropriate types
+        if (header === 'department_id' || header === 'semester' || header === 'credits') {
+          row[header] = value ? parseInt(value) : null;
+        } else if (header === 'is_elective' || header === 'is_laboratory') {
+          row[header] = value?.toLowerCase() === 'true' || value === '1';
+        } else {
+          row[header] = value || null;
+        }
+      });
+
+      data.push(row);
+    }
+
+    return data;
+  };
+
+  const handleBulkUpload = async () => {
+    if (!bulkUploadModal.file) {
+      toast.error('Please select a file');
+      return;
+    }
+
+    try {
+      setBulkUploadModal(prev => ({ ...prev, uploading: true }));
+
+      const fileContent = await bulkUploadModal.file.text();
+      const subjects = parseCSV(fileContent);
+
+      if (subjects.length === 0) {
+        toast.error('No valid subjects found in the file');
+        setBulkUploadModal(prev => ({ ...prev, uploading: false }));
+        return;
+      }
+
+      const response = await fetch('/api/v1/admin/subjects/bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subjects }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setBulkUploadModal(prev => ({
+          ...prev,
+          results: result.data,
+          uploading: false,
+        }));
+        toast.success(`${result.data.successful.length} subjects uploaded successfully`);
+        
+        // Refetch subjects after successful upload
+        setTimeout(() => {
+          fetchSubjects();
+        }, 1000);
+      } else {
+        toast.error(result.error || 'Failed to upload subjects');
+        setBulkUploadModal(prev => ({ ...prev, uploading: false }));
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Error parsing CSV file');
+      setBulkUploadModal(prev => ({ ...prev, uploading: false }));
+    }
+  };
+
+  const downloadTemplate = () => {
+    const template = `code,name,description,department_id,semester,sem_type,credits,type,is_elective,is_laboratory,status
+CS101,Programming Fundamentals,Introduction to programming,1,1,odd,4,Theory,false,false,active
+CS102,Data Structures,Basic data structures,1,2,even,4,Theory,false,false,active
+CS201,Database Management,Database concepts,1,3,odd,4,Theory,false,true,active`;
+
+    const blob = new Blob([template], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'subjects_template.csv');
+    link.style.visibility = 'hidden';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    // Clean up the URL object
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <AdminLayout>
       <div className="p-6 bg-gray-50 min-h-screen">
@@ -227,10 +352,16 @@ export default function SuperAdminSubjectManagement() {
           {/* Header */}
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-3xl font-bold text-gray-900">Subject Management</h1>
-            <Button onClick={handleAddClick} className="bg-blue-600 hover:bg-blue-700">
-              <Plus className="w-4 h-4 mr-2" />
-              Add Subject
-            </Button>
+            <div className="flex gap-2">
+              <Button onClick={() => setBulkUploadModal({ ...bulkUploadModal, open: true })} className="bg-green-600 hover:bg-green-700">
+                <Upload className="w-4 h-4 mr-2" />
+                Bulk Upload
+              </Button>
+              <Button onClick={handleAddClick} className="bg-blue-600 hover:bg-blue-700">
+                <Plus className="w-4 h-4 mr-2" />
+                Add Subject
+              </Button>
+            </div>
           </div>
 
           {/* Filters */}
@@ -400,83 +531,99 @@ export default function SuperAdminSubjectManagement() {
               <h2 className="text-xl font-bold mb-4">{formModal.mode === 'add' ? 'Add Subject' : 'Edit Subject'}</h2>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Input
-                  label="Subject Code"
-                  value={formData.code}
-                  onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                  placeholder="e.g., CS101"
-                  required
-                />
-                <Input
-                  label="Subject Name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="e.g., Programming Fundamentals"
-                  required
-                />
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Subject Code *</label>
+                  <Input
+                    value={formData.code}
+                    onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+                    placeholder="e.g., CS101"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Subject Name *</label>
+                  <Input
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    placeholder="e.g., Programming Fundamentals"
+                  />
+                </div>
 
-                <Select value={formData.department_id} onValueChange={(value) => setFormData({ ...formData, department_id: value })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Department" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {departments.map(dept => (
-                      <SelectItem key={dept.id} value={dept.id.toString()}>
-                        {dept.full_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                <Select value={formData.semester} onValueChange={(value) => setFormData({ ...formData, semester: value })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Semester" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {[1, 2, 3, 4, 5, 6, 7, 8].map(sem => {
-                      const year = Math.ceil(sem / 2);
-                      return (
-                        <SelectItem key={sem} value={sem.toString()}>
-                          Semester {sem} (Year {year})
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Department *</label>
+                  <Select value={formData.department_id} onValueChange={(value) => setFormData({ ...formData, department_id: value })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Department" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {departments.map(dept => (
+                        <SelectItem key={dept.id} value={dept.id.toString()}>
+                          {dept.full_name}
                         </SelectItem>
-                      );
-                    })}
-                  </SelectContent>
-                </Select>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-                <Select value={formData.sem_type} onValueChange={(value) => setFormData({ ...formData, sem_type: value as 'odd' | 'even' })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Sem Type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="odd">Odd Semester</SelectItem>
-                    <SelectItem value="even">Even Semester</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Semester *</label>
+                  <Select value={formData.semester} onValueChange={(value) => setFormData({ ...formData, semester: value })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Semester" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[1, 2, 3, 4, 5, 6, 7, 8].map(sem => {
+                        const year = Math.ceil(sem / 2);
+                        return (
+                          <SelectItem key={sem} value={sem.toString()}>
+                            Semester {sem} (Year {year})
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-                <Input
-                  label="Credits (1-10)"
-                  type="number"
-                  value={formData.credits}
-                  onChange={(e) => setFormData({ ...formData, credits: parseInt(e.target.value) })}
-                  min="1"
-                  max="10"
-                  placeholder="e.g., 4"
-                />
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Semester Type</label>
+                  <Select value={formData.sem_type} onValueChange={(value) => setFormData({ ...formData, sem_type: value as 'odd' | 'even' })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Sem Type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="odd">Odd Semester</SelectItem>
+                      <SelectItem value="even">Even Semester</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-                <Select value={formData.type} onValueChange={(value) => setFormData({ ...formData, type: value })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Theory">Theory</SelectItem>
-                    <SelectItem value="Practical">Practical</SelectItem>
-                    <SelectItem value="Theory+Practical">Theory+Practical</SelectItem>
-                    <SelectItem value="Project">Project</SelectItem>
-                    <SelectItem value="Seminar">Seminar</SelectItem>
-                    <SelectItem value="Internship">Internship</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Credits (1-10)</label>
+                  <Input
+                    type="number"
+                    value={formData.credits}
+                    onChange={(e) => setFormData({ ...formData, credits: parseInt(e.target.value) })}
+                    min="1"
+                    max="10"
+                    placeholder="e.g., 4"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                  <Select value={formData.type} onValueChange={(value) => setFormData({ ...formData, type: value })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Theory">Theory</SelectItem>
+                      <SelectItem value="Practical">Practical</SelectItem>
+                      <SelectItem value="Theory+Practical">Theory+Practical</SelectItem>
+                      <SelectItem value="Project">Project</SelectItem>
+                      <SelectItem value="Seminar">Seminar</SelectItem>
+                      <SelectItem value="Internship">Internship</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
                 <div className="flex items-center gap-4">
                   <label className="flex items-center gap-2">
@@ -501,6 +648,7 @@ export default function SuperAdminSubjectManagement() {
               </div>
 
               <div className="mt-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
@@ -547,6 +695,126 @@ export default function SuperAdminSubjectManagement() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+      )}
+
+      {/* Bulk Upload Modal */}
+      {bulkUploadModal.open && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <h2 className="text-xl font-bold mb-4">Bulk Upload Subjects</h2>
+
+              {bulkUploadModal.results ? (
+                // Show results
+                <div className="space-y-4">
+                  <div className="bg-blue-50 border border-blue-200 rounded p-4">
+                    <p className="text-sm font-semibold text-blue-900">
+                      Upload Summary: {bulkUploadModal.results.successful.length} successful, {bulkUploadModal.results.failed.length} failed out of {bulkUploadModal.results.total} total
+                    </p>
+                  </div>
+
+                  {bulkUploadModal.results.successful.length > 0 && (
+                    <div>
+                      <h3 className="font-semibold text-green-700 mb-2">Successful uploads:</h3>
+                      <div className="bg-green-50 border border-green-200 rounded max-h-48 overflow-y-auto">
+                        {bulkUploadModal.results.successful.map((item, idx) => (
+                          <div key={idx} className="p-2 border-b border-green-200 text-sm text-gray-700">
+                            <span className="font-medium">{item.code}</span> - {item.name}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {bulkUploadModal.results.failed.length > 0 && (
+                    <div>
+                      <h3 className="font-semibold text-red-700 mb-2">Failed uploads:</h3>
+                      <div className="bg-red-50 border border-red-200 rounded max-h-48 overflow-y-auto">
+                        {bulkUploadModal.results.failed.map((item, idx) => (
+                          <div key={idx} className="p-2 border-b border-red-200 text-sm">
+                            <span className="font-medium text-red-900">Row {item.row}: {item.code}</span>
+                            <p className="text-red-700 text-xs">{item.error}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="mt-6 flex gap-3 justify-end">
+                    <Button
+                      className="bg-blue-600 hover:bg-blue-700"
+                      onClick={() => setBulkUploadModal({ open: false, file: null, uploading: false })}
+                    >
+                      Close
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                // Show upload form
+                <div className="space-y-4">
+                  <div className="bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-8 relative cursor-pointer hover:bg-gray-100 transition">
+                    <input
+                      type="file"
+                      accept=".csv"
+                      onChange={(e) => setBulkUploadModal({ ...bulkUploadModal, file: e.target.files?.[0] || null })}
+                      className="absolute inset-0 opacity-0 cursor-pointer"
+                      id="csv-input"
+                    />
+                    <label htmlFor="csv-input" className="cursor-pointer">
+                      <div className="text-center pointer-events-none">
+                        <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                        <p className="text-sm font-medium text-gray-700">Drag and drop your CSV file here</p>
+                        <p className="text-xs text-gray-500 mt-1">or click to select from your computer</p>
+                        <span className="text-blue-600 hover:text-blue-700 underline text-sm mt-2 inline-block">Select CSV file</span>
+                      </div>
+                    </label>
+                  </div>
+
+                  {bulkUploadModal.file && (
+                    <div className="bg-blue-50 border border-blue-200 rounded p-3">
+                      <p className="text-sm text-blue-900">
+                        Selected file: <span className="font-semibold">{bulkUploadModal.file.name}</span>
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="bg-yellow-50 border border-yellow-200 rounded p-4">
+                    <p className="text-sm font-semibold text-yellow-900 mb-2">Required CSV columns:</p>
+                    <ul className="text-xs text-yellow-800 space-y-1 list-disc list-inside">
+                      <li><span className="font-semibold">code</span> - Subject code (e.g., CS101)</li>
+                      <li><span className="font-semibold">name</span> - Subject name</li>
+                      <li><span className="font-semibold">department_id</span> - Department ID</li>
+                      <li><span className="font-semibold">semester</span> - Semester number (1-8)</li>
+                    </ul>
+                    <p className="text-xs text-yellow-800 mt-2">Optional: description, sem_type (odd/even), credits, type, is_elective, is_laboratory, status</p>
+                  </div>
+
+                  <div className="mt-6 flex gap-3 justify-end">
+                    <Button
+                      variant="outline"
+                      onClick={downloadTemplate}
+                    >
+                      Download Template
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => setBulkUploadModal({ open: false, file: null, uploading: false, results: undefined })}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      className="bg-green-600 hover:bg-green-700 disabled:opacity-50"
+                      onClick={handleBulkUpload}
+                      disabled={!bulkUploadModal.file || bulkUploadModal.uploading}
+                    >
+                      {bulkUploadModal.uploading ? 'Uploading...' : 'Upload Subjects'}
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </AdminLayout>
   );
