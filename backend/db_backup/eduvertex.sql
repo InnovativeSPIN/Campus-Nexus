@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Feb 25, 2026 at 07:35 AM
+-- Generation Time: Feb 25, 2026 at 09:22 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -350,7 +350,6 @@ INSERT INTO `faculty_profiles` (`faculty_id`, `faculty_college_code`, `coe_id`, 
 (399, 'NS70T05', NULL, NULL, NULL, 'MAHALAKSHMI S', 'ns70t05@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 7, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-02-20 06:43:32', NULL, 0, 0),
 (400, 'NS20T39', NULL, NULL, NULL, 'BHAVANI M', 'ns20t39@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 7, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-02-20 06:43:32', NULL, 0, 0),
 (401, 'NS70T04', NULL, NULL, NULL, 'SAI SUGANYA B', 'ns70t04@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 7, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-02-20 06:43:32', NULL, 0, 0),
-(402, 'NS20T38', NULL, NULL, NULL, 'PAVITHRA M', 'ns20t38@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 6, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-02-20 06:43:32', NULL, 0, 0),
 (403, 'NS20T37', NULL, NULL, NULL, 'GEERTHIGA G', 'ns20t37@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 6, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-02-23 20:37:47', NULL, 0, 0),
 (404, 'NS20T32', NULL, NULL, NULL, 'VINOTH KUMAR J', 'ns20t32@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 6, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-02-20 06:43:32', NULL, 0, 0),
 (405, 'NS70T02', NULL, NULL, NULL, 'KANIMOLI J', 'ns70t02@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 6, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-02-23 20:26:34', NULL, 0, 0),
@@ -377,8 +376,7 @@ INSERT INTO `faculty_profiles` (`faculty_id`, `faculty_college_code`, `coe_id`, 
 (427, 'EC13', NULL, NULL, NULL, 'PRATHAP S', 'ec13@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 3, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-02-20 06:43:32', NULL, 0, 0),
 (428, 'EC14', NULL, NULL, NULL, 'BHARATHI KANNAN K', 'ec14@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 3, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-02-20 06:43:32', NULL, 0, 0),
 (429, 'NS40T27', NULL, NULL, NULL, 'RAJESHSHREE S', 'ns40t27@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 3, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-02-20 06:43:32', NULL, 0, 0),
-(430, 'NS20NT23', NULL, NULL, NULL, 'MUTHURAJ', 'ns20nt23@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 2, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-02-20 06:43:32', NULL, 0, 0),
-(431, 'NSTO124', NULL, NULL, NULL, 'Thanush Kumar', 'ThanushKumarematix@gmail.com', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 7, 7, 'Assitant Professor', NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-24 13:45:58', '2026-02-25 03:50:43', NULL, 0, 0);
+(430, 'NS20NT23', NULL, NULL, NULL, 'MUTHURAJ', 'ns20nt23@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 2, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-02-20 06:43:32', NULL, 0, 0);
 
 -- --------------------------------------------------------
 
@@ -433,7 +431,9 @@ CREATE TABLE `faculty_subject_assignments` (
   `allocation_date` date NOT NULL DEFAULT curdate(),
   `status` enum('active','inactive','suspended') NOT NULL DEFAULT 'active',
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
-  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `total_hours` int(11) DEFAULT 0 COMMENT 'Total hours for the subject',
+  `no_of_periods` int(11) DEFAULT 0 COMMENT 'Number of periods per week'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -1686,6 +1686,7 @@ CREATE TABLE `subjects` (
   `description` text DEFAULT NULL,
   `department_id` int(11) NOT NULL,
   `semester` tinyint(2) NOT NULL COMMENT '1-8 semesters',
+  `sem_type` enum('odd','even') NOT NULL DEFAULT 'odd',
   `class_id` int(11) DEFAULT NULL,
   `credits` decimal(4,2) NOT NULL DEFAULT 4.00,
   `type` enum('Theory','Practical','Theory+Practical','Project','Seminar','Internship') NOT NULL DEFAULT 'Theory',
@@ -1703,15 +1704,10 @@ CREATE TABLE `subjects` (
 -- Dumping data for table `subjects`
 --
 
-INSERT INTO `subjects` (`id`, `subject_code`, `subject_name`, `description`, `department_id`, `semester`, `class_id`, `credits`, `type`, `is_elective`, `is_laboratory`, `min_hours_per_week`, `max_students`, `status`, `created_by`, `created_at`, `updated_at`) VALUES
-(1, 'CS101', 'Programming in C', 'Fundamentals of C programming', 1, 1, NULL, 3.00, 'Theory', 0, 0, 3, NULL, 'active', 1, '2026-02-24 02:39:16', '2026-02-24 02:39:16'),
-(2, 'CS102', 'Programming Lab - C', 'C Programming practical lab sessions', 1, 1, NULL, 1.50, 'Practical', 0, 0, 3, NULL, 'active', 1, '2026-02-24 02:39:16', '2026-02-24 02:39:16'),
-(3, 'CS103', 'Data Structures', 'Arrays, Linked Lists, Stacks, Queues', 1, 2, NULL, 4.00, 'Theory', 0, 0, 3, NULL, 'active', 1, '2026-02-24 02:39:16', '2026-02-24 02:39:16'),
-(4, 'CS104', 'Database Management', 'Relational databases and SQL', 1, 3, NULL, 4.00, 'Theory', 0, 0, 3, NULL, 'active', 1, '2026-02-24 02:39:16', '2026-02-24 02:39:16'),
-(5, 'EC101', 'Basic Electronics', 'Diodes, Transistors, and Applications', 2, 1, NULL, 3.00, 'Theory', 0, 0, 3, NULL, 'active', 1, '2026-02-24 02:39:16', '2026-02-24 02:39:16'),
-(6, 'EC102', 'Electronics Lab', 'Practical electronics experiments', 2, 1, NULL, 1.50, 'Practical', 0, 0, 3, NULL, 'active', 1, '2026-02-24 02:39:16', '2026-02-24 02:39:16'),
-(7, 'ME101', 'Engineering Mechanics', 'Statics and Dynamics', 3, 1, NULL, 4.00, 'Theory', 0, 0, 3, NULL, 'active', 1, '2026-02-24 02:39:16', '2026-02-24 02:39:16'),
-(8, 'ME102', 'Thermodynamics', 'Laws of thermodynamics and applications', 3, 2, NULL, 3.00, 'Theory', 0, 0, 3, NULL, 'active', 1, '2026-02-24 02:39:16', '2026-02-24 02:39:16');
+INSERT INTO `subjects` (`id`, `subject_code`, `subject_name`, `description`, `department_id`, `semester`, `sem_type`, `class_id`, `credits`, `type`, `is_elective`, `is_laboratory`, `min_hours_per_week`, `max_students`, `status`, `created_by`, `created_at`, `updated_at`) VALUES
+(6, 'EC102', 'Electronics Lab', 'Practical electronics experiments', 2, 1, 'odd', NULL, 1.50, 'Practical', 0, 0, 3, NULL, 'active', 1, '2026-02-24 02:39:16', '2026-02-24 02:39:16'),
+(7, 'ME101', 'Engineering Mechanics', 'Statics and Dynamics', 3, 1, 'odd', NULL, 4.00, 'Theory', 0, 0, 3, NULL, 'active', 1, '2026-02-24 02:39:16', '2026-02-24 02:39:16'),
+(8, 'ME102', 'Thermodynamics', 'Laws of thermodynamics and applications', 3, 2, 'odd', NULL, 3.00, 'Theory', 0, 0, 3, NULL, 'active', 1, '2026-02-24 02:39:16', '2026-02-24 02:39:16');
 
 -- --------------------------------------------------------
 
@@ -1863,8 +1859,7 @@ INSERT INTO `users` (`id`, `name`, `email`, `password`, `role_id`, `phone`, `isA
 (2, 'mathalai sundaram', 'executive@nscet.org', '$2a$10$ELjprebdIeb3GTTMKk1oZujDrXZ2g8P41gNfiqVwVCKiflkwpO1eu', 3, '9876543211', 1, '0000-00-00 00:00:00', '2026-02-20 05:08:42', NULL, NULL),
 (3, 'Academic Admin', 'academic@nscet.org', '$2a$10$rtVcTSxhiJKb4Cm3GdJWTety1jN8MAbcweTMHTRw2TQOE79tziyEq', 4, '9876543212', 1, '0000-00-00 00:00:00', '0000-00-00 00:00:00', NULL, NULL),
 (109, 'GOAT', 'nscetadmin@gmail.com', '$2a$10$ELjprebdIeb3GTTMKk1oZujDrXZ2g8P41gNfiqVwVCKiflkwpO1eu', 2, '9876543210', 1, '2026-02-20 05:39:02', '2026-02-20 05:39:02', NULL, NULL),
-(112, 'Test Admin', 'testadmin@nscet.org', '$2a$10$ELjprebdIeb3GTTMKk1oZujDrXZ2g8P41gNfiqVwVCKiflkwpO1eu', 1, '9876543210', 1, '2026-02-20 06:24:50', '2026-02-20 06:24:50', NULL, NULL),
-(115, 'VIGNESH.L.S', 'hodad@nscet.org', '$2a$10$ELjprebdIeb3GTTMKk1oZujDrXZ2g8P41gNfiqVwVCKiflkwpO1eu', 7, '8072435849', 1, '2026-02-21 14:54:39', '2026-02-23 21:51:41', '/uploads/avatars/vignesh_l_s.png', 6);
+(112, 'Test Admin', 'testadmin@nscet.org', '$2a$10$ELjprebdIeb3GTTMKk1oZujDrXZ2g8P41gNfiqVwVCKiflkwpO1eu', 1, '9876543210', 1, '2026-02-20 06:24:50', '2026-02-20 06:24:50', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -2144,7 +2139,9 @@ ALTER TABLE `subjects`
   ADD KEY `idx_subject_dept` (`department_id`),
   ADD KEY `idx_subject_semester` (`semester`),
   ADD KEY `idx_subject_class` (`class_id`),
-  ADD KEY `idx_subject_status` (`status`);
+  ADD KEY `idx_subject_status` (`status`),
+  ADD KEY `idx_sem_type` (`sem_type`),
+  ADD KEY `idx_dept_sem` (`department_id`,`semester`,`sem_type`);
 
 --
 -- Indexes for table `subject_class_mappings`
