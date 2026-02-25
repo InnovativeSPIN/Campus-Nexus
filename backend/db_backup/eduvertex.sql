@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Feb 25, 2026 at 06:00 PM
+-- Generation Time: Feb 25, 2026 at 07:08 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -220,6 +220,24 @@ CREATE TABLE `faculty_leaves` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `faculty_leave_schedules`
+--
+
+CREATE TABLE `faculty_leave_schedules` (
+  `id` int(11) NOT NULL,
+  `faculty_id` int(11) NOT NULL,
+  `leave_id` int(11) DEFAULT NULL,
+  `from_date` date NOT NULL,
+  `to_date` date NOT NULL,
+  `is_active` tinyint(1) DEFAULT 1,
+  `reason` text DEFAULT NULL,
+  `createdAt` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updatedAt` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `faculty_phd`
 --
 
@@ -304,7 +322,7 @@ INSERT INTO `faculty_profiles` (`faculty_id`, `faculty_college_code`, `coe_id`, 
 (354, 'NS10T33', NULL, NULL, NULL, 'NATHIRUN SABINASH', 'ns10t33@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 2, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-02-20 06:43:32', NULL, 0, 0),
 (355, 'NS10T34', NULL, NULL, NULL, 'MANOJ PRABAKAR R', 'ns10t34@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 2, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-02-20 06:43:32', NULL, 0, 0),
 (356, 'NS10T35', NULL, NULL, NULL, 'HARI PRASATH T', 'ns10t35@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 2, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-02-20 06:43:32', NULL, 0, 0),
-(357, 'NS20T35', NULL, NULL, NULL, 'ABIRAMI KAYATHIRI S', 'ns20t35@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 1, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-02-20 06:43:32', NULL, 0, 0),
+(357, 'NS20T35', NULL, NULL, NULL, 'ABIRAMI KAYATHIRI S', 'ns20t35@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 1, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-02-25 18:05:03', NULL, 1, 0),
 (358, 'NS20T41', NULL, NULL, NULL, 'ANUSUYA V', 'ns20t41@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 1, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-02-20 06:43:32', NULL, 0, 0),
 (360, 'NS20T25', NULL, NULL, NULL, 'VELKUMAR K', 'ns20t25@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 1, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-02-20 06:43:32', NULL, 0, 0),
 (361, 'NS20T33', NULL, NULL, NULL, 'DEEPIGA K', 'ns20t33@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 1, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-02-20 06:43:32', NULL, 0, 0),
@@ -437,6 +455,28 @@ CREATE TABLE `faculty_subject_assignments` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `faculty_substitutes`
+--
+
+CREATE TABLE `faculty_substitutes` (
+  `id` int(11) NOT NULL,
+  `faculty_id` int(11) NOT NULL,
+  `substitute_faculty_id` int(11) NOT NULL,
+  `start_date` date NOT NULL,
+  `end_date` date NOT NULL,
+  `reason` text DEFAULT NULL,
+  `leave_id` int(11) DEFAULT NULL,
+  `status` enum('pending','approved','rejected','active','completed') NOT NULL DEFAULT 'pending',
+  `requested_by` int(11) NOT NULL,
+  `approved_by` int(11) DEFAULT NULL,
+  `approval_date` datetime DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `faculy_edu_qualification`
 --
 
@@ -463,6 +503,46 @@ INSERT INTO `faculy_edu_qualification` (`faculty_id`, `degree`, `branch`, `colle
 (101, 'M.Tech', 'Electrical & Electronics Engineering', 'Nadar Saraswathi College of Engineering and Technology', 'akkaa', '2025', '10', 20, '', 'Active'),
 (101, 'Membership', 'Professional Membership', '', 'Professional Organization', NULL, NULL, 21, 'IEEE', 'Inactive'),
 (101, 'Membership', 'Professional Membership', '', 'Professional Organization', NULL, NULL, 22, 'dsd', 'Active');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `period_config`
+--
+
+CREATE TABLE `period_config` (
+  `id` int(11) NOT NULL,
+  `department_id` int(11) DEFAULT NULL,
+  `period_number` int(11) NOT NULL,
+  `start_time` time NOT NULL,
+  `end_time` time NOT NULL,
+  `duration_minutes` int(11) NOT NULL,
+  `is_break` tinyint(1) DEFAULT 0,
+  `break_name` varchar(100) DEFAULT NULL,
+  `status` enum('active','inactive') DEFAULT 'active',
+  `createdAt` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updatedAt` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `period_config`
+--
+
+INSERT INTO `period_config` (`id`, `department_id`, `period_number`, `start_time`, `end_time`, `duration_minutes`, `is_break`, `break_name`, `status`, `createdAt`, `updatedAt`) VALUES
+(1, NULL, 1, '09:00:00', '09:50:00', 50, 0, NULL, 'active', '2026-02-25 18:00:28', '2026-02-25 18:00:28'),
+(2, NULL, 2, '09:50:00', '10:40:00', 50, 0, NULL, 'active', '2026-02-25 18:00:28', '2026-02-25 18:00:28'),
+(3, NULL, 3, '10:40:00', '11:10:00', 30, 1, 'Tea Break', 'active', '2026-02-25 18:00:28', '2026-02-25 18:00:28'),
+(4, NULL, 4, '11:10:00', '12:00:00', 50, 0, NULL, 'active', '2026-02-25 18:00:28', '2026-02-25 18:00:28'),
+(5, NULL, 5, '12:00:00', '12:50:00', 50, 0, NULL, 'active', '2026-02-25 18:00:28', '2026-02-25 18:00:28'),
+(6, NULL, 6, '12:50:00', '13:30:00', 40, 1, 'Lunch Break', 'active', '2026-02-25 18:00:28', '2026-02-25 18:00:28'),
+(7, NULL, 7, '13:30:00', '14:20:00', 50, 0, NULL, 'active', '2026-02-25 18:00:28', '2026-02-25 18:00:28'),
+(8, NULL, 1, '09:00:00', '09:50:00', 50, 0, NULL, 'active', '2026-02-25 18:01:10', '2026-02-25 18:01:10'),
+(9, NULL, 2, '09:50:00', '10:40:00', 50, 0, NULL, 'active', '2026-02-25 18:01:10', '2026-02-25 18:01:10'),
+(10, NULL, 3, '10:40:00', '11:10:00', 30, 1, 'Tea Break', 'active', '2026-02-25 18:01:10', '2026-02-25 18:01:10'),
+(11, NULL, 4, '11:10:00', '12:00:00', 50, 0, NULL, 'active', '2026-02-25 18:01:10', '2026-02-25 18:01:10'),
+(12, NULL, 5, '12:00:00', '12:50:00', 50, 0, NULL, 'active', '2026-02-25 18:01:10', '2026-02-25 18:01:10'),
+(13, NULL, 6, '12:50:00', '13:30:00', 40, 1, 'Lunch Break', 'active', '2026-02-25 18:01:10', '2026-02-25 18:01:10'),
+(14, NULL, 7, '13:30:00', '14:20:00', 50, 0, NULL, 'active', '2026-02-25 18:01:10', '2026-02-25 18:01:10');
 
 -- --------------------------------------------------------
 
@@ -1834,6 +1914,73 @@ INSERT INTO `timetables` (`id`, `name`, `academic_year`, `semester`, `department
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `timetable_details`
+--
+
+CREATE TABLE `timetable_details` (
+  `id` int(11) NOT NULL,
+  `timetable_id` int(11) NOT NULL,
+  `class_id` int(11) NOT NULL,
+  `day_of_week` enum('Monday','Tuesday','Wednesday','Thursday','Friday','Saturday') NOT NULL,
+  `period_number` int(11) NOT NULL,
+  `subject_id` int(11) DEFAULT NULL,
+  `faculty_id` int(11) DEFAULT NULL,
+  `room_number` varchar(50) DEFAULT NULL,
+  `period_type` enum('lecture','practical','tutorial','break','lunch') DEFAULT 'lecture',
+  `is_break` tinyint(1) DEFAULT 0,
+  `status` enum('active','cancelled','pending') DEFAULT 'active',
+  `createdAt` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updatedAt` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `timetable_incharge`
+--
+
+CREATE TABLE `timetable_incharge` (
+  `id` int(11) NOT NULL,
+  `department_id` int(11) NOT NULL,
+  `faculty_id` int(11) NOT NULL,
+  `appointment_date` date NOT NULL,
+  `status` enum('active','inactive') NOT NULL DEFAULT 'active',
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `timetable_master`
+--
+
+CREATE TABLE `timetable_master` (
+  `id` int(11) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `academic_year` varchar(20) NOT NULL,
+  `semester` enum('odd','even') NOT NULL,
+  `department_id` int(11) DEFAULT NULL,
+  `year` enum('1st','2nd','3rd','4th') DEFAULT NULL,
+  `timetable_incharge_id` int(11) DEFAULT NULL,
+  `status` enum('draft','pending_approval','active','inactive') DEFAULT 'draft',
+  `approved_by` int(11) DEFAULT NULL,
+  `approved_at` timestamp NULL DEFAULT NULL,
+  `created_by` int(11) NOT NULL,
+  `createdAt` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updatedAt` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `timetable_master`
+--
+
+INSERT INTO `timetable_master` (`id`, `name`, `academic_year`, `semester`, `department_id`, `year`, `timetable_incharge_id`, `status`, `approved_by`, `approved_at`, `created_by`, `createdAt`, `updatedAt`) VALUES
+(1, 'CSE - 3 RD YEAR SEM-1', '2023-2027', 'odd', 1, '3rd', NULL, 'draft', NULL, NULL, 109, '2026-02-25 18:04:27', '2026-02-25 18:04:27');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `timetable_notifications`
 --
 
@@ -1872,6 +2019,8 @@ CREATE TABLE `timetable_slots` (
   `room` varchar(50) DEFAULT NULL,
   `type` enum('lecture','lab','tutorial') DEFAULT 'lecture',
   `status` enum('active','cancelled') DEFAULT 'active',
+  `is_substitute` tinyint(1) DEFAULT 0,
+  `original_faculty_id` int(11) DEFAULT NULL,
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -1880,9 +2029,9 @@ CREATE TABLE `timetable_slots` (
 -- Dumping data for table `timetable_slots`
 --
 
-INSERT INTO `timetable_slots` (`id`, `timetable_id`, `day`, `period_number`, `start_time`, `end_time`, `subject_id`, `faculty_id`, `class_id`, `room`, `type`, `status`, `created_at`, `updated_at`) VALUES
-(1, 1, 'Monday', 1, '09:00:00', '09:50:00', NULL, 1, 1, '101', 'lecture', 'active', '2024-01-01 00:00:00', '2024-01-01 00:00:00'),
-(2, 1, 'Monday', 2, '09:50:00', '10:40:00', NULL, 8, 1, '101', 'lecture', 'active', '2024-01-01 00:00:00', '2024-01-01 00:00:00');
+INSERT INTO `timetable_slots` (`id`, `timetable_id`, `day`, `period_number`, `start_time`, `end_time`, `subject_id`, `faculty_id`, `class_id`, `room`, `type`, `status`, `is_substitute`, `original_faculty_id`, `created_at`, `updated_at`) VALUES
+(1, 1, 'Monday', 1, '09:00:00', '09:50:00', NULL, 1, 1, '101', 'lecture', 'active', 0, NULL, '2024-01-01 00:00:00', '2024-01-01 00:00:00'),
+(2, 1, 'Monday', 2, '09:50:00', '10:40:00', NULL, 8, 1, '101', 'lecture', 'active', 0, NULL, '2024-01-01 00:00:00', '2024-01-01 00:00:00');
 
 -- --------------------------------------------------------
 
@@ -1897,15 +2046,59 @@ CREATE TABLE `timetable_slot_assignments` (
   `subject_code` varchar(20) NOT NULL,
   `subject_name` varchar(255) NOT NULL,
   `faculty_id` int(11) NOT NULL,
+  `is_substitute` tinyint(1) DEFAULT 0,
+  `original_faculty_id` int(11) DEFAULT NULL,
+  `substitute_assignment_id` int(11) DEFAULT NULL,
   `assigned_by` int(11) NOT NULL,
   `day_of_week` enum('Monday','Tuesday','Wednesday','Thursday','Friday','Saturday') NOT NULL,
   `year` enum('1st','2nd','3rd','4th') NOT NULL,
   `start_time` time NOT NULL,
   `end_time` time NOT NULL,
   `room_number` varchar(50) DEFAULT NULL,
+  `type` enum('lecture','lab','tutorial','practical') DEFAULT 'lecture',
   `status` enum('active','inactive','pending_approval') NOT NULL DEFAULT 'pending_approval',
   `createdAt` datetime NOT NULL DEFAULT current_timestamp(),
   `updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `timetable_staff_alterations`
+--
+
+CREATE TABLE `timetable_staff_alterations` (
+  `id` int(11) NOT NULL,
+  `timetable_id` int(11) NOT NULL,
+  `timetable_detail_id` int(11) NOT NULL,
+  `original_faculty_id` int(11) NOT NULL,
+  `alternative_faculty_id` int(11) NOT NULL,
+  `reason` text NOT NULL,
+  `requested_by` int(11) NOT NULL,
+  `status` enum('pending','accepted','rejected') DEFAULT 'pending',
+  `alternative_response` text DEFAULT NULL,
+  `accepted_at` timestamp NULL DEFAULT NULL,
+  `createdAt` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updatedAt` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `timetable_uploads`
+--
+
+CREATE TABLE `timetable_uploads` (
+  `id` int(11) NOT NULL,
+  `timetable_id` int(11) NOT NULL,
+  `file_name` varchar(255) NOT NULL,
+  `total_records` int(11) DEFAULT 0,
+  `successful_records` int(11) DEFAULT 0,
+  `failed_records` int(11) DEFAULT 0,
+  `uploaded_by` int(11) NOT NULL,
+  `upload_date` datetime NOT NULL DEFAULT current_timestamp(),
+  `status` enum('processing','completed','failed') NOT NULL DEFAULT 'processing',
+  `error_log` longtext DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -1955,6 +2148,20 @@ CREATE TABLE `year_break_timings` (
   `createdAt` datetime NOT NULL DEFAULT current_timestamp(),
   `updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `year_break_timings`
+--
+
+INSERT INTO `year_break_timings` (`id`, `department_id`, `year`, `break_name`, `start_time`, `end_time`, `duration_minutes`, `createdAt`, `updatedAt`) VALUES
+(1, 0, '1st', 'Tea Break', '10:40:00', '11:10:00', 30, '2026-02-25 18:01:10', '2026-02-25 18:01:10'),
+(2, 0, '1st', 'Lunch Break', '12:50:00', '13:30:00', 40, '2026-02-25 18:01:10', '2026-02-25 18:01:10'),
+(3, 0, '2nd', 'Tea Break', '10:40:00', '11:10:00', 30, '2026-02-25 18:01:10', '2026-02-25 18:01:10'),
+(4, 0, '2nd', 'Lunch Break', '12:50:00', '13:30:00', 40, '2026-02-25 18:01:10', '2026-02-25 18:01:10'),
+(5, 0, '3rd', 'Tea Break', '10:40:00', '11:00:00', 20, '2026-02-25 18:01:10', '2026-02-25 18:01:10'),
+(6, 0, '3rd', 'Lunch Break', '12:50:00', '13:20:00', 30, '2026-02-25 18:01:10', '2026-02-25 18:01:10'),
+(7, 0, '4th', 'Tea Break', '10:40:00', '11:00:00', 20, '2026-02-25 18:01:10', '2026-02-25 18:01:10'),
+(8, 0, '4th', 'Lunch Break', '12:50:00', '13:20:00', 30, '2026-02-25 18:01:10', '2026-02-25 18:01:10');
 
 --
 -- Indexes for dumped tables
@@ -2008,6 +2215,14 @@ ALTER TABLE `faculty_leaves`
   ADD KEY `reassign_faculty_id` (`reassign_faculty_id`);
 
 --
+-- Indexes for table `faculty_leave_schedules`
+--
+ALTER TABLE `faculty_leave_schedules`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_faculty` (`faculty_id`),
+  ADD KEY `idx_date_range` (`from_date`,`to_date`);
+
+--
 -- Indexes for table `faculty_phd`
 --
 ALTER TABLE `faculty_phd`
@@ -2049,11 +2264,28 @@ ALTER TABLE `faculty_subject_assignments`
   ADD KEY `idx_fsa_status` (`status`);
 
 --
+-- Indexes for table `faculty_substitutes`
+--
+ALTER TABLE `faculty_substitutes`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `faculty_id` (`faculty_id`),
+  ADD KEY `substitute_faculty_id` (`substitute_faculty_id`),
+  ADD KEY `requested_by` (`requested_by`),
+  ADD KEY `status` (`status`);
+
+--
 -- Indexes for table `faculy_edu_qualification`
 --
 ALTER TABLE `faculy_edu_qualification`
   ADD UNIQUE KEY `membership_id` (`membership_id`),
   ADD KEY `idx_faculty_id` (`faculty_id`);
+
+--
+-- Indexes for table `period_config`
+--
+ALTER TABLE `period_config`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `unique_period_dept` (`department_id`,`period_number`);
 
 --
 -- Indexes for table `roles`
@@ -2241,6 +2473,34 @@ ALTER TABLE `timetables`
   ADD KEY `created_by` (`created_by`);
 
 --
+-- Indexes for table `timetable_details`
+--
+ALTER TABLE `timetable_details`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_timetable` (`timetable_id`),
+  ADD KEY `idx_class` (`class_id`),
+  ADD KEY `idx_faculty` (`faculty_id`),
+  ADD KEY `idx_day_period` (`day_of_week`,`period_number`);
+
+--
+-- Indexes for table `timetable_incharge`
+--
+ALTER TABLE `timetable_incharge`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `unique_dept_timetable_incharge` (`department_id`),
+  ADD KEY `department_id` (`department_id`),
+  ADD KEY `faculty_id` (`faculty_id`);
+
+--
+-- Indexes for table `timetable_master`
+--
+ALTER TABLE `timetable_master`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_department` (`department_id`),
+  ADD KEY `idx_academic_year` (`academic_year`),
+  ADD KEY `idx_status` (`status`);
+
+--
 -- Indexes for table `timetable_notifications`
 --
 ALTER TABLE `timetable_notifications`
@@ -2271,6 +2531,24 @@ ALTER TABLE `timetable_slot_assignments`
   ADD KEY `idx_timetable_class` (`timetable_id`,`class_id`),
   ADD KEY `idx_faculty_year` (`faculty_id`,`year`),
   ADD KEY `idx_class_year_day` (`class_id`,`year`,`day_of_week`);
+
+--
+-- Indexes for table `timetable_staff_alterations`
+--
+ALTER TABLE `timetable_staff_alterations`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_timetable` (`timetable_id`),
+  ADD KEY `idx_original_faculty` (`original_faculty_id`),
+  ADD KEY `idx_alternative_faculty` (`alternative_faculty_id`),
+  ADD KEY `idx_status` (`status`);
+
+--
+-- Indexes for table `timetable_uploads`
+--
+ALTER TABLE `timetable_uploads`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `timetable_id` (`timetable_id`),
+  ADD KEY `uploaded_by` (`uploaded_by`);
 
 --
 -- Indexes for table `users`
@@ -2323,6 +2601,12 @@ ALTER TABLE `faculty_leaves`
   MODIFY `leave_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT for table `faculty_leave_schedules`
+--
+ALTER TABLE `faculty_leave_schedules`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `faculty_phd`
 --
 ALTER TABLE `faculty_phd`
@@ -2341,10 +2625,22 @@ ALTER TABLE `faculty_subject_assignments`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT for table `faculty_substitutes`
+--
+ALTER TABLE `faculty_substitutes`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `faculy_edu_qualification`
 --
 ALTER TABLE `faculy_edu_qualification`
   MODIFY `membership_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
+
+--
+-- AUTO_INCREMENT for table `period_config`
+--
+ALTER TABLE `period_config`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
 
 --
 -- AUTO_INCREMENT for table `staff_attendance_entry`
@@ -2449,6 +2745,24 @@ ALTER TABLE `subject_class_mappings`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT for table `timetable_details`
+--
+ALTER TABLE `timetable_details`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `timetable_incharge`
+--
+ALTER TABLE `timetable_incharge`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `timetable_master`
+--
+ALTER TABLE `timetable_master`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
 -- AUTO_INCREMENT for table `timetable_notifications`
 --
 ALTER TABLE `timetable_notifications`
@@ -2461,6 +2775,18 @@ ALTER TABLE `timetable_slot_assignments`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT for table `timetable_staff_alterations`
+--
+ALTER TABLE `timetable_staff_alterations`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `timetable_uploads`
+--
+ALTER TABLE `timetable_uploads`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
@@ -2470,7 +2796,7 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `year_break_timings`
 --
 ALTER TABLE `year_break_timings`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- Constraints for dumped tables
@@ -2516,6 +2842,14 @@ ALTER TABLE `faculty_subject_assignments`
   ADD CONSTRAINT `fk_fsa_subject` FOREIGN KEY (`subject_id`) REFERENCES `subjects` (`id`) ON DELETE CASCADE;
 
 --
+-- Constraints for table `faculty_substitutes`
+--
+ALTER TABLE `faculty_substitutes`
+  ADD CONSTRAINT `fk_substitute_faculty` FOREIGN KEY (`faculty_id`) REFERENCES `users` (`id`),
+  ADD CONSTRAINT `fk_substitute_faculty_sub` FOREIGN KEY (`substitute_faculty_id`) REFERENCES `users` (`id`),
+  ADD CONSTRAINT `fk_substitute_requested_by` FOREIGN KEY (`requested_by`) REFERENCES `users` (`id`);
+
+--
 -- Constraints for table `faculy_edu_qualification`
 --
 ALTER TABLE `faculy_edu_qualification`
@@ -2551,6 +2885,13 @@ ALTER TABLE `timetable_slot_assignments`
   ADD CONSTRAINT `timetable_slot_assignments_ibfk_2` FOREIGN KEY (`class_id`) REFERENCES `classes` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   ADD CONSTRAINT `timetable_slot_assignments_ibfk_3` FOREIGN KEY (`faculty_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE CASCADE ON UPDATE CASCADE,
   ADD CONSTRAINT `timetable_slot_assignments_ibfk_4` FOREIGN KEY (`assigned_by`) REFERENCES `faculty_profiles` (`faculty_id`) ON UPDATE CASCADE;
+
+--
+-- Constraints for table `timetable_uploads`
+--
+ALTER TABLE `timetable_uploads`
+  ADD CONSTRAINT `fk_timetable_upload_timetable` FOREIGN KEY (`timetable_id`) REFERENCES `timetables` (`id`),
+  ADD CONSTRAINT `fk_timetable_upload_user` FOREIGN KEY (`uploaded_by`) REFERENCES `users` (`id`);
 
 --
 -- Constraints for table `users`
