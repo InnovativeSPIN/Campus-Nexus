@@ -43,15 +43,16 @@ interface EducationDetail {
   university: string;
   year: string;
   percentage: string;
-  url: string;
 }
 
 interface MembershipDetail {
   id?: number;
   membership_id?: string;
+  degree?: string;
+  branch?: string;
+  university?: string;
   society_name: string;
   status: string;
-  url: string;
 }
 
 interface ExperienceDetail {
@@ -64,7 +65,6 @@ interface ExperienceDetail {
   to: string;
   period: string;
   current: boolean;
-  url: string;
 }
 
 interface IndustryDetail {
@@ -76,7 +76,6 @@ interface IndustryDetail {
   to: string;
   period: string;
   current: boolean;
-  url: string;
 }
 
 // Faculty data based on the Self-Appraisal Form
@@ -266,8 +265,7 @@ export default function Profile() {
             college: r.college,
             university: r.university,
             year: r.year,
-            percentage: r.percentage,
-            url: ""
+            percentage: r.percentage
           })));
 
           setMembershipData(pMemberships.map((r: any) => ({
@@ -275,8 +273,7 @@ export default function Profile() {
             id: r.id ?? null,
             membership_id: r.membership_id,
             society_name: r.society_name,
-            status: r.status,
-            url: ""
+            status: r.status
           })));
         }
         // Teaching experiences
@@ -294,8 +291,7 @@ export default function Profile() {
             from: r.from_date,
             to: r.to_date,
             period: r.period,
-            current: r.is_current,
-            url: ""
+            current: r.is_current
           })));
         }
 
@@ -313,8 +309,7 @@ export default function Profile() {
             from: r.from_date,
             to: r.to_date,
             period: r.period,
-            current: r.is_current,
-            url: ""
+            current: r.is_current
           })));
         }
         // PhD records (faculty_phd table)
@@ -397,7 +392,6 @@ export default function Profile() {
     university: "",
     year: "",
     percentage: "",
-    url: "",
   });
   const [newDegreeIsOther, setNewDegreeIsOther] = useState(false);
   const [newBranchIsOther, setNewBranchIsOther] = useState(false);
@@ -410,7 +404,6 @@ export default function Profile() {
     membership_id: "",
     society_name: "",
     status: "Active",
-    url: "",
   });
 
   // Experience states
@@ -427,7 +420,6 @@ export default function Profile() {
     to: "",
     period: "",
     current: false,
-    url: "",
   });
   const [newDesignationIsOther, setNewDesignationIsOther] = useState(false);
   const [newTeachingDeptIsOther, setNewTeachingDeptIsOther] = useState(false);
@@ -444,7 +436,6 @@ export default function Profile() {
     to: "",
     period: "",
     current: false,
-    url: "",
   });
   const [newJobTitleIsOther, setNewJobTitleIsOther] = useState(false);
 
@@ -879,7 +870,7 @@ export default function Profile() {
           university: newEducation.university || null,
           year: newEducation.year || null,
           percentage: newEducation.percentage || null,
-          url: newEducation.url || null
+          society_name: ""
         })
       });
 
@@ -909,7 +900,6 @@ export default function Profile() {
           university: "",
           year: "",
           percentage: "",
-          url: "",
         });
         toast({
           title: 'Education added',
@@ -1023,10 +1013,14 @@ export default function Profile() {
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
+          degree: "Membership",
+          branch: "Professional Membership",
+          college: "",
+          university: "",
+          year: "",
+          percentage: "",
           society_name: newMembership.society_name || null,
-          status: newMembership.status || null,
-          membership_id: newMembership.membership_id || null,
-          url: newMembership.url || null
+          status: newMembership.status || null
         })
       });
 
@@ -1051,7 +1045,6 @@ export default function Profile() {
           membership_id: "",
           society_name: "",
           status: "Active",
-          url: "",
         });
         toast({
           title: 'Membership added'
@@ -1234,7 +1227,6 @@ export default function Profile() {
           to: "",
           period: "",
           current: false,
-          url: "",
         });
         toast({
           title: 'Experience added',
@@ -1500,7 +1492,6 @@ export default function Profile() {
           to: "",
           period: "",
           current: false,
-          url: "",
         });
         toast({
           title: 'Experience added',

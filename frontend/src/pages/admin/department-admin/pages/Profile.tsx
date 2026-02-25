@@ -36,22 +36,22 @@ import {
 // Types for Profile Data
 interface EducationDetail {
   id?: number;
-  membership_id?: string;
+  membership_id?: number | string;
   degree: string;
   branch: string;
-  college: string;
+  college?: string;
   university: string;
-  year: string;
-  percentage: string;
-  url: string;
+  year?: string;
+  percentage?: string;
+  society_name?: string;
+  status?: string;
 }
 
 interface MembershipDetail {
   id?: number;
-  membership_id?: string;
+  membership_id?: number | string;
   society_name: string;
-  status: string;
-  url: string;
+  status?: string;
 }
 
 interface ExperienceDetail {
@@ -62,21 +62,19 @@ interface ExperienceDetail {
   department: string;
   from: string;
   to: string;
-  period: string;
+  period?: string;
   current: boolean;
-  url: string;
 }
 
 interface IndustryDetail {
   id?: number;
   jobTitle: string;
   company: string;
-  location: string;
+  location?: string;
   from: string;
   to: string;
-  period: string;
+  period?: string;
   current: boolean;
-  url: string;
 }
 
 // Faculty data based on the Self-Appraisal Form
@@ -422,7 +420,7 @@ export default function Profile() {
     university: "",
     year: "",
     percentage: "",
-    url: "",
+    society_name: "",
   });
   const [newDegreeIsOther, setNewDegreeIsOther] = useState(false);
   const [newBranchIsOther, setNewBranchIsOther] = useState(false);
@@ -435,7 +433,6 @@ export default function Profile() {
     membership_id: "",
     society_name: "",
     status: "Active",
-    url: "",
   });
 
   // Experience states
@@ -452,7 +449,6 @@ export default function Profile() {
     to: "",
     period: "",
     current: false,
-    url: "",
   });
   const [newDesignationIsOther, setNewDesignationIsOther] = useState(false);
   const [newTeachingDeptIsOther, setNewTeachingDeptIsOther] = useState(false);
@@ -469,7 +465,6 @@ export default function Profile() {
     to: "",
     period: "",
     current: false,
-    url: "",
   });
   const [newJobTitleIsOther, setNewJobTitleIsOther] = useState(false);
 
@@ -847,7 +842,7 @@ export default function Profile() {
       university: "",
       year: "",
       percentage: "",
-      url: "",
+      society_name: "",
     });
   };
 
@@ -862,7 +857,7 @@ export default function Profile() {
       university: "",
       year: "",
       percentage: "",
-      url: "",
+      society_name: "",
     });
   };
 
@@ -889,13 +884,13 @@ export default function Profile() {
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          degree: newEducation.degree || null,
-          branch: newEducation.branch || null,
-          college: newEducation.college || null,
-          university: newEducation.university || null,
-          year: newEducation.year || null,
-          percentage: newEducation.percentage || null,
-          url: newEducation.url || null
+          degree: newEducation.degree || '',
+          branch: newEducation.branch || '',
+          college: newEducation.college || '',
+          university: newEducation.university || '',
+          year: newEducation.year || '',
+          percentage: newEducation.percentage || '',
+          society_name: newEducation.society_name || ''
         })
       });
 
@@ -956,7 +951,7 @@ export default function Profile() {
 
       setLoading(true);
       try {
-        const response = await fetch(`/api/v1/faculty/education/${educationData[index].id}?section=education`, {
+        const response = await fetch(`/api/v1/faculty/education/${educationData[index].id}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${token}`
@@ -965,20 +960,14 @@ export default function Profile() {
 
         const result = await response.json();
         if (result.success) {
-          // If record was fully deleted, remove from both lists
-          if (!result.data || Object.keys(result.data).length === 0) {
-            setEducationData(educationData.filter((_, i) => i !== index));
-            setMembershipData(membershipData.filter(m => m.id !== educationData[index].id));
-          } else {
-            // Record was just updated (section cleared), remove from education list
-            setEducationData(educationData.filter((_, i) => i !== index));
-            // Update membership list if it exists there
-            setMembershipData(membershipData.map(m => m.id === result.data.id ? result.data : m));
-          }
+          // Remove from education list
+          setEducationData(educationData.filter((_, i) => i !== index));
+          // Also remove from membership list if it exists there
+          setMembershipData(membershipData.filter(m => m.id !== educationData[index].id));
 
           toast({
             title: 'Education deleted',
-            description: 'Educational qualification has been cleared successfully.'
+            description: 'Educational qualification has been deleted successfully.'
           });
         } else {
           throw new Error(result.error || 'Failed to delete record');
@@ -1002,7 +991,6 @@ export default function Profile() {
       membership_id: "",
       society_name: "",
       status: "Active",
-      url: "",
     });
   };
 
@@ -1018,10 +1006,10 @@ export default function Profile() {
 
   const handleSaveNewMembership = async () => {
     // Validate required fields
-    if (!newMembership.society_name || !newMembership.membership_id) {
+    if (!newMembership.society_name) {
       toast({
         title: 'Validation Error',
-        description: 'Please fill in society name and ID fields.',
+        description: 'Please fill in society name field.',
         variant: 'destructive'
       });
       return;
@@ -1039,10 +1027,12 @@ export default function Profile() {
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          society_name: newMembership.society_name || null,
-          status: newMembership.status || null,
-          membership_id: newMembership.membership_id || null,
-          url: newMembership.url || null
+          society_name: newMembership.society_name || '',
+          status: newMembership.status || 'Active',
+          degree: 'Membership',
+          branch: 'Professional Membership',
+          university: 'Professional Organization',
+          college: ''
         })
       });
 
@@ -1067,7 +1057,6 @@ export default function Profile() {
           membership_id: "",
           society_name: "",
           status: "Active",
-          url: "",
         });
         toast({
           title: 'Membership added'
@@ -1097,7 +1086,7 @@ export default function Profile() {
 
       setLoading(true);
       try {
-        const response = await fetch(`/api/v1/faculty/education/${membershipData[index].id}?section=membership`, {
+        const response = await fetch(`/api/v1/faculty/education/${membershipData[index].id}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${token}`
@@ -1106,20 +1095,14 @@ export default function Profile() {
 
         const result = await response.json();
         if (result.success) {
-          // If record was fully deleted, remove from both lists
-          if (!result.data || Object.keys(result.data).length === 0) {
-            setMembershipData(membershipData.filter((_, i) => i !== index));
-            setEducationData(educationData.filter(e => e.id !== membershipData[index].id));
-          } else {
-            // Record was just updated (section cleared), remove from membership list
-            setMembershipData(membershipData.filter((_, i) => i !== index));
-            // Update education list if it exists there
-            setEducationData(educationData.map(e => e.id === result.data.id ? result.data : e));
-          }
+          // Remove from membership list
+          setMembershipData(membershipData.filter((_, i) => i !== index));
+          // Also remove from education list if it exists there
+          setEducationData(educationData.filter(e => e.id !== membershipData[index].id));
 
           toast({
             title: 'Membership deleted',
-            description: 'Professional membership has been cleared successfully.'
+            description: 'Professional membership has been deleted successfully.'
           });
         } else {
           throw new Error(result.error || 'Failed to delete record');
@@ -1150,7 +1133,6 @@ export default function Profile() {
       to: "",
       period: "",
       current: false,
-      url: "",
     });
   };
 
@@ -1167,7 +1149,6 @@ export default function Profile() {
       to: "",
       period: "",
       current: false,
-      url: "",
     });
   };
 
@@ -1217,7 +1198,6 @@ export default function Profile() {
           to: result.data.to_date,
           period: result.data.period,
           current: result.data.is_current,
-          url: ""
         };
 
         const existingIndex = teachingExpData.findIndex(e => e.id === result.data.id);
@@ -1250,7 +1230,6 @@ export default function Profile() {
           to: "",
           period: "",
           current: false,
-          url: "",
         });
         toast({
           title: 'Experience added',
@@ -1365,7 +1344,7 @@ export default function Profile() {
 
       setLoading(true);
       try {
-        const response = await fetch(`/api/v1/faculty/experience/${teachingExpData[index].id}?section=teaching`, {
+        const response = await fetch(`/api/v1/faculty/experience/${teachingExpData[index].id}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${token}`
@@ -1374,26 +1353,14 @@ export default function Profile() {
 
         const result = await response.json();
         if (result.success) {
-          // If record was fully deleted, remove from both lists
-          if (!result.data || Object.keys(result.data).length === 0) {
-            setTeachingExpData(teachingExpData.filter((_, i) => i !== index));
-            setIndustryExpData(industryExpData.filter(m => m.id !== teachingExpData[index].id));
-          } else {
-            // Record was just updated (section cleared), remove from teaching list
-            setTeachingExpData(teachingExpData.filter((_, i) => i !== index));
-            // Update industry list if it exists there
-            setIndustryExpData(industryExpData.map(m => m.id === result.data.id ? {
-              ...m,
-              from: result.data.from_date,
-              to: result.data.to_date,
-              period: result.data.period,
-              current: result.data.is_current
-            } : m));
-          }
+          // Remove from teaching list
+          setTeachingExpData(teachingExpData.filter((_, i) => i !== index));
+          // Also remove from industry list if it exists there
+          setIndustryExpData(industryExpData.filter(m => m.id !== teachingExpData[index].id));
 
           toast({
             title: 'Experience deleted',
-            description: 'Teaching experience has been cleared successfully.'
+            description: 'Teaching experience has been deleted successfully.'
           });
         } else {
           throw new Error(result.error || 'Failed to delete record');
@@ -1487,7 +1454,6 @@ export default function Profile() {
           to: result.data.to_date,
           period: result.data.period,
           current: result.data.is_current,
-          url: ""
         };
 
         const existingIndex = industryExpData.findIndex(e => e.id === result.data.id);
@@ -1516,7 +1482,6 @@ export default function Profile() {
           to: "",
           period: "",
           current: false,
-          url: "",
         });
         toast({
           title: 'Experience added',

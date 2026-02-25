@@ -28,7 +28,6 @@ import {
 
 const adminRoles = [
     { value: 'superadmin', label: 'Super Admin' },
-    { value: 'department-admin', label: 'Department Admin' },
     { value: 'executive', label: 'Executive Admin' },
     { value: 'academic', label: 'Academic Admin' },
     { value: 'exam_cell_admin', label: 'Exam Cell Admin' },
