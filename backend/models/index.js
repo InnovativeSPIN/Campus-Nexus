@@ -66,7 +66,7 @@ Object.keys(models).forEach((modelName) => {
   }
 });
 
-const initModels = () => models;
+const initModels = () => ({...models, sequelize});
 
 export default initModels;
-export { models };
+export { models, sequelize };

@@ -51,6 +51,7 @@ export function AppSidebar() {
     { label: 'Students', path: '/admin/superadmin/students', icon: <GraduationCap className="w-5 h-5" /> },
     { label: 'Faculty', path: '/admin/superadmin/faculty', icon: <Users className="w-5 h-5" /> },
     { label: 'Departments', path: '/admin/superadmin/departments', icon: <Building2 className="w-5 h-5" /> },
+    { label: 'Subjects', path: '/admin/superadmin/subjects', icon: <FileText className="w-5 h-5" /> },
     { label: 'Time Table', path: '/admin/superadmin/timetable', icon: <Calendar className="w-5 h-5" /> },
     { label: 'Announcements', path: '/admin/superadmin/announcements', icon: <Bell className="w-5 h-5" /> },
     { label: 'Reports', path: '/admin/superadmin/reports', icon: <FileText className="w-5 h-5" /> },

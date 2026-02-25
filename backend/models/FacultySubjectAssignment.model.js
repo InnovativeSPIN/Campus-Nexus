@@ -44,6 +44,18 @@ const FacultySubjectAssignment = (sequelize) => {
       type: DataTypes.ENUM('active', 'inactive'),
       defaultValue: 'active',
     },
+    total_hours: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      defaultValue: 0,
+      comment: 'Total hours for the subject',
+    },
+    no_of_periods: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      defaultValue: 0,
+      comment: 'Number of periods per week',
+    },
   }, {
     tableName: 'faculty_subject_assignments',
     timestamps: false,

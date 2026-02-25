@@ -7,7 +7,7 @@ import { NotificationProvider, MentorProvider } from "@/pages/admin/department-a
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
 import CoordinatorManagement from "./pages/CoordinatorManagement";
-import SubjectManagement from "./pages/SubjectManagement";
+import FacultyAllocation from "./pages/FacultyAllocation";
 import Timetable from "./pages/Timetable";
 import Attendance from "./pages/Attendance";
 import Academics from "./pages/Academics";
@@ -39,7 +39,7 @@ const DepartmentAdminRoutes = () => (
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="profile" element={<Profile />} />
               <Route path="coordinators" element={<CoordinatorManagement />} />
-              <Route path="subjects" element={<SubjectManagement />} />
+              <Route path="faculty-allocations" element={<FacultyAllocation />} />
               <Route path="timetable" element={<TimetableEditor />} />
               <Route path="attendance" element={<Attendance />} />
               <Route path="academics" element={<Academics />} />

@@ -15,6 +15,7 @@ import SuperAdminTimeTable from './pages/admin/superadmin/TimeTable';
 import SuperAdminFacultyProfile from './pages/admin/superadmin/FacultyProfile';
 import SuperAdminStudentProfile from './pages/admin/superadmin/StudentProfile';
 import SuperAdminAnnouncements from './pages/admin/superadmin/Announcements';
+import SuperAdminSubjectManagement from './pages/admin/superadmin/SubjectManagement';
 //executive admin pages
 import ExecutiveAdminDashboard from '@/pages/admin/executive/Dashboard';
 import ExecutiveStudents from '@/pages/admin/executive/Students';
@@ -82,6 +83,7 @@ const App = () => {
               <Route path="/admin/superadmin/reports" element={<SuperAdminReports />} />
               <Route path="/admin/superadmin/backup" element={<SuperAdminBackup />} />
               <Route path="/admin/superadmin/announcements" element={<SuperAdminAnnouncements />} />
+              <Route path="/admin/superadmin/subjects" element={<SuperAdminSubjectManagement />} />
 
               {/* Executive Admin Routes */}
               <Route path="/admin/executive" element={<ExecutiveAdminDashboard />} />

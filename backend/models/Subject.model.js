@@ -7,14 +7,16 @@ const Subject = (sequelize) => {
       primaryKey: true,
       autoIncrement: true,
     },
-    name: {
+    subject_name: {
       type: DataTypes.STRING(255),
       allowNull: false,
+      field: 'subject_name'
     },
-    code: {
+    subject_code: {
       type: DataTypes.STRING(20),
       allowNull: false,
       unique: true,
+      field: 'subject_code'
     },
     department_id: {
       type: DataTypes.INTEGER,
@@ -28,16 +30,19 @@ const Subject = (sequelize) => {
         max: 8
       }
     },
-    credits: {
-      type: DataTypes.INTEGER,
+    sem_type: {
+      type: DataTypes.ENUM('odd', 'even'),
       allowNull: true,
-      validate: {
-        min: 1,
-        max: 10
-      }
+      defaultValue: 'odd',
+      comment: 'Odd or Even semester type',
+    },
+    credits: {
+      type: DataTypes.DECIMAL(4, 2),
+      allowNull: true,
+      defaultValue: 4.00,
     },
     type: {
-      type: DataTypes.ENUM('Theory', 'Practical', 'Theory+Practical'),
+      type: DataTypes.ENUM('Theory', 'Practical', 'Theory+Practical', 'Project', 'Seminar', 'Internship'),
       defaultValue: 'Theory',
     },
     is_elective: {
@@ -57,23 +62,17 @@ const Subject = (sequelize) => {
       type: DataTypes.INTEGER,
       allowNull: true,
       defaultValue: 3,
-      validate: {
-        min: 0,
-        max: 20
-      }
     },
     max_students: {
       type: DataTypes.INTEGER,
       allowNull: true,
       comment: 'Maximum students allowed, NULL for no limit',
-      validate: {
-        min: 1
-      }
     },
     created_by: {
       type: DataTypes.INTEGER,
-      allowNull: false,
-      comment: 'Department admin who created the subject',
+      allowNull: true,
+      defaultValue: 1,
+      comment: 'Admin who created the subject',
     },
     description: {
       type: DataTypes.TEXT,
