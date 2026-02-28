@@ -8,97 +8,99 @@ import { Op } from 'sequelize';
 // @route     GET /api/v1/leave
 // @access    Private
 export const getAllLeaves = asyncHandler(async (req, res, next) => {
-  const page = parseInt(req.query.page, 10) || 1;
-  const limit = parseInt(req.query.limit, 10) || 25;
-  const startIndex = (page - 1) * limit;
+  try {
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 25;
+    const startIndex = (page - 1) * limit;
 
-  let where = {};
+    let where = {};
 
-  // For non-admin users, show only their leaves
-  if (!['superadmin', 'executiveadmin', 'academicadmin'].includes(req.user.role)) {
-    where.applicantId = req.user.id;
-  }
+    // For non-admin users, show only their leaves
+    if (!['superadmin', 'executiveadmin', 'academicadmin'].includes(req.user.role)) {
+      where.applicantId = req.user.id;
+    }
 
-  // Filter by status
-  if (req.query.status) {
-    where.status = req.query.status;
-  }
+    // Filter by status
+    if (req.query.status) {
+      where.status = req.query.status;
+    }
 
-  // Filter by leave type
-  if (req.query.leaveType) {
-    where.leaveType = req.query.leaveType;
-  }
+    // Filter by leave type
+    if (req.query.leaveType) {
+      where.leaveType = req.query.leaveType;
+    }
 
-  // Filter by department
-  if (req.query.department) {
-    where.departmentId = req.query.department;
-  }
+    // Filter by department
+    if (req.query.department) {
+      where.departmentId = req.query.department;
+    }
 
-  // Filter by applicant type
-  if (req.query.applicantType) {
-    where.applicantType = req.query.applicantType;
-  }
+    // Filter by applicant type
+    if (req.query.applicantType) {
+      where.applicantType = req.query.applicantType;
+    }
 
-  // Filter by date range
-  if (req.query.startDate && req.query.endDate) {
-    where.startDate = { [Op.gte]: new Date(req.query.startDate) };
-    where.endDate = { [Op.lte]: new Date(req.query.endDate) };
-  }
+    // Filter by date range
+    if (req.query.startDate && req.query.endDate) {
+      where.startDate = { [Op.gte]: new Date(req.query.startDate) };
+      where.endDate = { [Op.lte]: new Date(req.query.endDate) };
+    }
 
-  const total = await Leave.count({ where });
-  const leaves = await Leave.findAll({
-    where,
-    include: [
-      { model: User, as: 'applicant', attributes: ['name', 'email', 'role'] },
-      { model: User, as: 'approvedBy', attributes: ['name'] },
-      { model: Department, as: 'department', attributes: ['name'] }
-    ],
-    offset: startIndex,
-    limit,
-    order: [['createdAt', 'DESC']]
-  });
-
-  res.status(200).json({
-    success: true,
-    count: leaves.length,
-    total,
-    pagination: {
-      page,
+    const total = await Leave.count({ where });
+    const leaves = await Leave.findAll({
+      where,
+      offset: startIndex,
       limit,
-      totalPages: Math.ceil(total / limit)
-    },
-    data: leaves
-  });
+      order: [['createdAt', 'DESC']],
+      raw: true
+    });
+
+    res.status(200).json({
+      success: true,
+      count: leaves.length,
+      total,
+      pagination: {
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit)
+      },
+      data: leaves
+    });
+  } catch (error) {
+    console.error('[getAllLeaves] Error:', error.message);
+    return next(new ErrorResponse(`Error fetching leaves: ${error.message}`, 500));
+  }
 });
 
 // @desc      Get single leave application
 // @route     GET /api/v1/leave/:id
 // @access    Private
 export const getLeave = asyncHandler(async (req, res, next) => {
-  const leave = await Leave.findByPk(req.params.id, {
-    include: [
-      { model: User, as: 'applicant', attributes: ['name', 'email', 'role'] },
-      { model: User, as: 'approvedBy', attributes: ['name'] },
-      { model: Department, as: 'department', attributes: ['name'] }
-    ]
-  });
+  try {
+    const leave = await Leave.findByPk(req.params.id, {
+      raw: true
+    });
 
-  if (!leave) {
-    return next(new ErrorResponse(`Leave application not found with id of ${req.params.id}`, 404));
+    if (!leave) {
+      return next(new ErrorResponse(`Leave application not found with id of ${req.params.id}`, 404));
+    }
+
+    // Check if user is authorized to view this leave
+    if (
+      !['superadmin', 'executiveadmin', 'academicadmin'].includes(req.user.role) &&
+      leave.applicantId !== Number(req.user.id)
+    ) {
+      return next(new ErrorResponse('Not authorized to view this leave application', 403));
+    }
+
+    res.status(200).json({
+      success: true,
+      data: leave
+    });
+  } catch (error) {
+    console.error('[getLeave] Error:', error.message);
+    return next(new ErrorResponse(`Error fetching leave: ${error.message}`, 500));
   }
-
-  // Check if user is authorized to view this leave
-  if (
-    !['superadmin', 'executiveadmin', 'academicadmin'].includes(req.user.role) &&
-    leave.applicantId !== Number(req.user.id)
-  ) {
-    return next(new ErrorResponse('Not authorized to view this leave application', 403));
-  }
-
-  res.status(200).json({
-    success: true,
-    data: leave
-  });
 });
 
 // @desc      Create leave application
@@ -291,17 +293,39 @@ export const deleteLeave = asyncHandler(async (req, res, next) => {
 // @route     GET /api/v1/leave/my-leaves
 // @access    Private
 export const getMyLeaves = asyncHandler(async (req, res, next) => {
-  const leaves = await Leave.findAll({
-    where: { applicantId: req.user.id },
-    include: [{ model: User, as: 'approvedBy', attributes: ['name'] }],
-    order: [['createdAt', 'DESC']]
-  });
+  // Check if user is authenticated
+  if (!req.user || !req.user.id) {
+    console.error('[Leave] Authentication failed - req.user:', req.user);
+    return next(new ErrorResponse('User not authenticated', 401));
+  }
 
-  res.status(200).json({
-    success: true,
-    count: leaves.length,
-    data: leaves
-  });
+  try {
+    console.log('[Leave] Fetching leaves for user:', req.user.id, 'Role:', req.user.role);
+    
+    // First, just count the records to verify the query works
+    const count = await Leave.count({
+      where: { applicantId: req.user.id }
+    });
+    console.log('[Leave] Count query returned:', count);
+
+    // Now fetch the leaves
+    const leaves = await Leave.findAll({
+      where: { applicantId: req.user.id },
+      order: [['createdAt', 'DESC']],
+      raw: true  // Return plain objects instead of Sequelize instances
+    });
+
+    console.log('[Leave] Found', leaves.length, 'leaves');
+
+    res.status(200).json({
+      success: true,
+      count: leaves.length,
+      data: leaves
+    });
+  } catch (error) {
+    console.error('[Leave] Query Error:', error.message, error.stack);
+    return next(new ErrorResponse(`Error fetching leaves: ${error.message}`, 500));
+  }
 });
 
 // @desc      Get leave balance
@@ -355,42 +379,50 @@ export const getPendingCount = asyncHandler(async (req, res, next) => {
 // @route     GET /api/v1/leave/pending-approvals
 // @access    Private/Admin
 export const getPendingLeaves = asyncHandler(async (req, res, next) => {
-  const page = parseInt(req.query.page, 10) || 1;
-  const limit = parseInt(req.query.limit, 10) || 25;
-  const startIndex = (page - 1) * limit;
+  try {
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 25;
+    const startIndex = (page - 1) * limit;
 
-  let where = { status: 'pending' };
+    let where = { status: 'pending' };
 
-  // Department admin sees only their department's pending leaves
-  if (req.user.role === 'department-admin' && req.user.departmentId) {
-    where.departmentId = req.user.departmentId;
-  }
+    // Department admin sees only their department's pending leaves
+    if (req.user.role === 'department-admin' && req.user.departmentId) {
+      where.departmentId = req.user.departmentId;
+    }
 
-  // Superadmins, executive, academic see all pending leaves
-  // Department admin sees only from their department
+    console.log('[PendingLeaves] Fetching with where:', where, 'User role:', req.user.role);
 
-  const total = await Leave.count({ where });
-  const leaves = await Leave.findAll({
-    where,
-    include: [
-      { model: User, as: 'applicant', attributes: ['name', 'email', 'role'] },
-      { model: User, as: 'approvedBy', attributes: ['name'] },
-      { model: Department, as: 'department', attributes: ['name', 'code'] }
-    ],
-    offset: startIndex,
-    limit,
-    order: [['createdAt', 'DESC']]
-  });
+    // Superadmins, executive, academic see all pending leaves
+    // Department admin sees only from their department
 
-  res.status(200).json({
-    success: true,
-    count: leaves.length,
-    total,
-    pagination: {
-      page,
+    const total = await Leave.count({ where });
+    console.log('[PendingLeaves] Total count:', total);
+
+    // Query without includes to avoid issues
+    const leaves = await Leave.findAll({
+      where,
+      offset: startIndex,
       limit,
-      totalPages: Math.ceil(total / limit)
-    },
-    data: leaves
-  });
+      order: [['createdAt', 'DESC']],
+      raw: true
+    });
+
+    console.log('[PendingLeaves] Found', leaves.length, 'leaves');
+
+    res.status(200).json({
+      success: true,
+      count: leaves.length,
+      total,
+      pagination: {
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit)
+      },
+      data: leaves
+    });
+  } catch (error) {
+    console.error('[PendingLeaves] Error:', error.message, error.stack);
+    return next(new ErrorResponse(`Error fetching pending leaves: ${error.message}`, 500));
+  }
 });

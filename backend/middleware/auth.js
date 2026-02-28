@@ -91,6 +91,10 @@ export const protect = asyncHandler(async (req, res, next) => {
         return next(new ErrorResponse('Not authorized to access this route', 401));
       }
 
+      // Debug: Log the structure of the faculty object
+      console.log('[AUTH DEBUG] Faculty object keys:', Object.keys(req.user.dataValues || req.user));
+      console.log('[AUTH DEBUG] Faculty ID:', req.user.faculty_id, 'ID:', req.user.id);
+
       // Add role info for faculty and extract department code
       req.user.role = 'faculty';
       req.user.userType = 'faculty';
@@ -99,6 +103,9 @@ export const protect = asyncHandler(async (req, res, next) => {
       req.user.department_id = req.user.department_id || req.user.departmentId || req.user.department?.id || null;
       req.user.departmentId = req.user.department_id;
       req.user.faculty_id = req.user.faculty_id || req.user.facultyId || req.user.id || null;
+      req.user.id = req.user.faculty_id;
+      
+      console.log('[AUTH OK] Faculty logged in - ID:', req.user.id);
       return next();
     }
 
@@ -126,6 +133,7 @@ export const protect = asyncHandler(async (req, res, next) => {
       req.user.department_id = req.user.department_id || req.user.departmentId || req.user.department?.id || null;
       req.user.departmentId = req.user.department_id;
       req.user.faculty_id = req.user.faculty_id || req.user.facultyId || req.user.id || null;
+      req.user.id = req.user.faculty_id;
       return next();
     }
 
