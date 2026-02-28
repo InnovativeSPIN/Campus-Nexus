@@ -108,6 +108,11 @@ export const createLeave = asyncHandler(async (req, res, next) => {
   req.body.applicantId = req.user.id;
   req.body.applicantType = req.user.role === 'faculty' ? 'faculty' : 'student';
 
+  // Set department ID if user has department (faculty or student with department)
+  if (req.user.departmentId) {
+    req.body.departmentId = req.user.departmentId;
+  }
+
   // Calculate total days
   const start = new Date(req.body.startDate);
   const end = new Date(req.body.endDate);
@@ -178,6 +183,12 @@ export const updateLeaveStatus = asyncHandler(async (req, res, next) => {
 
   if (leave.status !== 'pending') {
     return next(new ErrorResponse('Leave application has already been processed', 400));
+  }
+
+  // Check authorization - department admin can only approve leaves from their department
+  const superRoles = ['superadmin', 'super-admin', 'executiveadmin', 'academicadmin'];
+  if (req.user.role === 'department-admin' && leave.departmentId !== Number(req.user.departmentId)) {
+    return next(new ErrorResponse('Not authorized to approve leave applications from other departments', 403));
   }
 
   leave.status = req.body.status;
@@ -325,10 +336,61 @@ export const getLeaveBalance = asyncHandler(async (req, res, next) => {
 // @route     GET /api/v1/leave/pending-count
 // @access    Private/Admin
 export const getPendingCount = asyncHandler(async (req, res, next) => {
-  const count = await Leave.count({ where: { status: 'pending' } });
+  let where = { status: 'pending' };
+
+  // Department admin sees only their department's pending leaves
+  if (req.user.role === 'department-admin' && req.user.departmentId) {
+    where.departmentId = req.user.departmentId;
+  }
+
+  const count = await Leave.count({ where });
 
   res.status(200).json({
     success: true,
     data: { pendingCount: count }
+  });
+});
+
+// @desc      Get pending leaves for approval
+// @route     GET /api/v1/leave/pending-approvals
+// @access    Private/Admin
+export const getPendingLeaves = asyncHandler(async (req, res, next) => {
+  const page = parseInt(req.query.page, 10) || 1;
+  const limit = parseInt(req.query.limit, 10) || 25;
+  const startIndex = (page - 1) * limit;
+
+  let where = { status: 'pending' };
+
+  // Department admin sees only their department's pending leaves
+  if (req.user.role === 'department-admin' && req.user.departmentId) {
+    where.departmentId = req.user.departmentId;
+  }
+
+  // Superadmins, executive, academic see all pending leaves
+  // Department admin sees only from their department
+
+  const total = await Leave.count({ where });
+  const leaves = await Leave.findAll({
+    where,
+    include: [
+      { model: User, as: 'applicant', attributes: ['name', 'email', 'role'] },
+      { model: User, as: 'approvedBy', attributes: ['name'] },
+      { model: Department, as: 'department', attributes: ['name', 'code'] }
+    ],
+    offset: startIndex,
+    limit,
+    order: [['createdAt', 'DESC']]
+  });
+
+  res.status(200).json({
+    success: true,
+    count: leaves.length,
+    total,
+    pagination: {
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit)
+    },
+    data: leaves
   });
 });

@@ -99,6 +99,28 @@ export const getAdminAnnouncements = asyncHandler(async (req, res, next) => {
     });
 });
 
+// @desc      Get single announcement by ID
+// @route     GET /api/v1/announcements/:id
+// @access    Private
+export const getAnnouncement = asyncHandler(async (req, res, next) => {
+    const announcement = await Announcement.findByPk(req.params.id, {
+        include: [{
+            model: User,
+            as: 'createdBy',
+            attributes: ['name', 'avatar']
+        }]
+    });
+
+    if (!announcement) {
+        return next(new ErrorResponse(`Announcement not found with id of ${req.params.id}`, 404));
+    }
+
+    res.status(200).json({
+        success: true,
+        data: announcement
+    });
+});
+
 // @desc      Create announcement
 // @route     POST /api/v1/announcements
 // @access    Private/Admin

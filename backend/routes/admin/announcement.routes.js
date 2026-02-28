@@ -1,6 +1,7 @@
 import express from 'express';
 import {
     getAnnouncements,
+    getAnnouncement,
     getAdminAnnouncements,
     createAnnouncement,
     deleteAnnouncement
@@ -20,6 +21,7 @@ router.route('/admin')
     .get(authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin', 'department-admin'), getAdminAnnouncements);
 
 router.route('/:id')
+    .get(getAnnouncement)
     .delete(authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin', 'department-admin', 'faculty'), deleteAnnouncement);
 
 export default router;

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { MainLayout } from "@/pages/admin/department-admin/components/layout/MainLayout";
+import { LeaveApprovals } from "@/pages/admin/department-admin/components/LeaveApprovals";
 import { motion } from "framer-motion";
 import { Button } from "@/pages/admin/department-admin/components/ui/button";
 import { Input } from "@/pages/admin/department-admin/components/ui/input";
@@ -456,92 +457,7 @@ export default function Leave() {
         </TabsContent>
 
         <TabsContent value="approvals">
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="space-y-4"
-          >
-            {approvals.map((request, index) => {
-              const config = statusConfig[request.status as keyof typeof statusConfig] || statusConfig.pending;
-              const StatusIcon = config.icon;
-
-              return (
-                <motion.div
-                  key={request.id}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  className={cn(
-                    "widget-card border-l-4",
-                    config.border
-                  )}
-                >
-                  <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <div className="w-10 h-10 rounded-full bg-secondary/10 flex items-center justify-center text-secondary">
-                          <User className="w-6 h-6" />
-                        </div>
-                        <div>
-                          <h4 className="font-bold text-foreground">{request.facultyName}</h4>
-                          <p className="text-xs text-muted-foreground">Applied on {request.appliedOn}</p>
-                        </div>
-                        <span className={cn(
-                          "ml-auto px-2 py-0.5 rounded-full text-xs font-medium flex items-center gap-1",
-                          config.bg,
-                          config.color
-                        )}>
-                          <StatusIcon className="w-3 h-3" />
-                          {config.label}
-                        </span>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                        <div className="space-y-1">
-                          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Leave Type & Duration</p>
-                          <p className="text-sm font-medium">{request.type} ({request.days} days)</p>
-                          <p className="text-xs text-muted-foreground">{request.fromDate} to {request.toDate}</p>
-                        </div>
-                        <div className="space-y-1">
-                          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Proxy Arrangements</p>
-                          <p className="text-sm font-medium">{request.proxy}</p>
-                        </div>
-                      </div>
-
-                      <div className="mt-4 space-y-3">
-                        <div>
-                          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Reason</p>
-                          <p className="text-sm border border-border p-2 rounded bg-muted/30">{request.reason}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Load Assignment Details</p>
-                          <p className="text-sm border border-border p-2 rounded bg-muted/30 italic">"{request.loadAssign}"</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {request.status === "pending" && (
-                      <div className="flex md:flex-col gap-2 self-center md:self-start">
-                        <Button
-                          onClick={() => handleApprove(request)}
-                          className="bg-success hover:bg-success/90 text-white min-w-[100px]"
-                        >
-                          <CheckCircle2 className="w-4 h-4 mr-2" /> Approve
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          onClick={() => handleDecline(request)}
-                          className="min-w-[100px]"
-                        >
-                          <XCircle className="w-4 h-4 mr-2" /> Decline
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                </motion.div>
-              );
-            })}
-          </motion.div>
+          <LeaveApprovals />
         </TabsContent>
       </Tabs>
 

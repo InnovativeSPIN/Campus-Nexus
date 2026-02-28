@@ -45,32 +45,7 @@ export function IntegratedNotificationBell({}: IntegratedNotificationBellProps) 
         }
     };
 
-    // Determine the route dynamically based on current location
-    const getAnnouncementUrl = (announcementId: number) => {
-        const pathname = location.pathname;
-        
-        if (pathname.includes('/admin/superadmin')) {
-            return `/admin/superadmin/announcements/${announcementId}`;
-        }
-        if (pathname.includes('/admin/executive')) {
-            return `/admin/executive/announcements/${announcementId}`;
-        }
-        if (pathname.includes('/admin/academic')) {
-            return `/admin/academic/announcements/${announcementId}`;
-        }
-        if (pathname.includes('/admin/department-admin')) {
-            return `/admin/department-admin/announcements/${announcementId}`;
-        }
-        if (pathname.includes('/faculty')) {
-            return `/faculty/announcements/${announcementId}`;
-        }
-        if (pathname.includes('/student')) {
-            return `/student/announcements/${announcementId}`;
-        }
-        
-        return `/announcements/${announcementId}`;
-    };
-
+    // Navigate to announcements list (detail will show in modal on list page)
     const getAnnouncementsListUrl = () => {
         const pathname = location.pathname;
         
@@ -97,9 +72,11 @@ export function IntegratedNotificationBell({}: IntegratedNotificationBellProps) 
     };
 
     const handleAnnouncementClick = (announcement: Announcement) => {
-        const url = getAnnouncementUrl(announcement.id);
+        // Navigate to announcements list - modal will open on list page
+        const url = getAnnouncementsListUrl();
         setIsOpen(false);
-        navigate(url);
+        // Navigate with state to indicate which announcement to open
+        navigate(url, { state: { openAnnouncementId: announcement.id } });
     };
 
     useEffect(() => {

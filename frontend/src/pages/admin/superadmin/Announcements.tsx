@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { AdminLayout } from "@/pages/admin/superadmin/components/layout/AdminLayout";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -45,6 +46,7 @@ interface Announcement {
 
 export default function SuperAdminAnnouncements() {
     const { user } = useAuth();
+    const navigate = useNavigate();
     const [announcements, setAnnouncements] = useState<Announcement[]>([]);
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
@@ -350,7 +352,8 @@ export default function SuperAdminAnnouncements() {
                                 key={announcement.id}
                                 initial={{ opacity: 0, scale: 0.95 }}
                                 animate={{ opacity: 1, scale: 1 }}
-                                className="bg-card group rounded-2xl border border-border hover:border-primary/30 transition-all shadow-sm hover:shadow-xl hover:-translate-y-1 overflow-hidden"
+                                onClick={() => navigate(`/admin/superadmin/announcements/${announcement.id}`)}
+                                className="bg-card group rounded-2xl border border-border hover:border-primary/30 transition-all shadow-sm hover:shadow-xl hover:-translate-y-1 overflow-hidden cursor-pointer"
                             >
                                 <div className="p-5 flex flex-col h-full">
                                     <div className="flex justify-between items-start mb-4">
@@ -396,7 +399,6 @@ export default function SuperAdminAnnouncements() {
                                                     <a
                                                         key={i}
                                                         href={file.url}
-                                                        target="_blank"
                                                         rel="noopener noreferrer"
                                                         className="flex items-center gap-1.5 px-2 py-1 rounded bg-muted/50 text-[10px] font-bold text-foreground hover:bg-muted transition-colors border border-border/60"
                                                     >

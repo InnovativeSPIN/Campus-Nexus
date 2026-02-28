@@ -2,53 +2,77 @@ import { DataTypes } from 'sequelize';
 
 const Leave = (sequelize) => {
   const LeaveModel = sequelize.define('Leave', {
-    staff_leave_id: {
+    id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,
     },
-    staff_id: {
+    applicantId: {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
-    leave_type: {
+    departmentId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+    leaveType: {
       type: DataTypes.ENUM('Medical', 'Casual', 'Earned', 'On-Duty', 'Personal', 'Maternity', 'Comp-Off'),
       allowNull: false,
     },
-    start_date: {
+    startDate: {
       type: DataTypes.DATE,
       allowNull: false,
     },
-    end_date: {
+    endDate: {
       type: DataTypes.DATE,
       allowNull: false,
     },
-    total_leave_days: {
+    totalDays: {
       type: DataTypes.DECIMAL(4, 1),
       allowNull: false,
     },
-    leave_reason: {
+    reason: {
       type: DataTypes.TEXT,
       allowNull: false,
     },
-    applied_timestamp: {
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
+    status: {
+      type: DataTypes.ENUM('pending', 'approved', 'rejected', 'cancelled'),
+      defaultValue: 'pending',
     },
-    leave_status: {
-      type: DataTypes.ENUM('Pending', 'Approved', 'Rejected', 'Cancelled'),
-      defaultValue: 'Pending',
+    approvedById: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+    approvalDate: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    approvalRemarks: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    applicantType: {
+      type: DataTypes.ENUM('faculty', 'student'),
+      allowNull: false,
+      defaultValue: 'faculty',
     },
   }, {
-    tableName: 'staff_leave_request',
-    timestamps: false, // Uses applied_timestamp instead
+    tableName: 'leaves',
+    timestamps: true,
   });
 
   LeaveModel.associate = (models) => {
-    // Define associations here if needed
     LeaveModel.belongsTo(models.User, {
-      foreignKey: 'staff_id',
-      as: 'staff',
+      foreignKey: 'applicantId',
+      as: 'applicant',
+    });
+    LeaveModel.belongsTo(models.User, {
+      foreignKey: 'approvedById',
+      as: 'approvedBy',
+    });
+    LeaveModel.belongsTo(models.Department, {
+      foreignKey: 'departmentId',
+      as: 'department',
     });
   };
 
