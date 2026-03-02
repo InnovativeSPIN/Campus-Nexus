@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Feb 25, 2026 at 07:08 PM
+-- Generation Time: Mar 02, 2026 at 06:15 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -49,7 +49,8 @@ CREATE TABLE `announcements` (
 --
 
 INSERT INTO `announcements` (`id`, `title`, `message`, `type`, `priority`, `targetRole`, `department`, `attachments`, `isActive`, `createdById`, `creatorRole`, `expiresAt`, `createdAt`, `updatedAt`) VALUES
-(5, 'Welcome to eduvertex', 'The Eduvertex is a real time ERP Enterpersise Resource Planning ', 'general', 'low', '[\"all\"]', NULL, '[]', 1, 109, 'super-admin', NULL, '2026-02-25 16:30:00', '2026-02-25 16:30:00');
+(5, 'Welcome to eduvertex', 'The Eduvertex is a real time ERP Enterpersise Resource Planning ', 'general', 'low', '[\"all\"]', NULL, '[]', 1, 109, 'super-admin', NULL, '2026-02-25 16:30:00', '2026-02-25 16:30:00'),
+(6, 'welocme ', 'welcome', 'general', 'low', '[\"faculty\",\"student\",\"department-admin\"]', NULL, '[]', 1, 109, 'super-admin', NULL, '2026-02-28 07:15:59', '2026-02-28 07:15:59');
 
 -- --------------------------------------------------------
 
@@ -165,9 +166,7 @@ CREATE TABLE `faculty_experience` (
 
 INSERT INTO `faculty_experience` (`exp_id`, `faculty_id`, `designation`, `institution_name`, `university`, `department`, `from_date`, `to_date`, `period`, `is_current`) VALUES
 (2, 406, 'Assistant Professor', 'Nadar Saraswathi College of Engineering and Technology', 'akka university', 'Electronics & Communication Engineering', '2026-02-24', '2026-02-24', '4M', 0),
-(4, 101, 'Assistant Professor', 'Nadar Saraswathi College of Engineering and Technology', 'asdfasf', 'Internet of Things', '2026-02-25', '2026-02-17', '232', 0),
 (5, 101, 'Assistant Professor', 'Nadar Saraswathi College of Engineering and Technology', 'Anna University', 'Computer Science Engineering', '2020-01-01', '2023-12-31', '3 years', 0),
-(6, 101, 'Assistant Professor', 'Nadar Saraswathi College of Engineering and Technology', 'Anna University', 'Computer Science Engineering', '2020-01-01', '2023-12-31', '3 years', 0),
 (7, 101, 'Assistant Professor', 'Nadar Saraswathi College of Engineering and Technology', 'Anna University', 'Computer Science Engineering', '2020-01-01', '2023-12-31', '3 years', 0);
 
 -- --------------------------------------------------------
@@ -294,7 +293,7 @@ CREATE TABLE `faculty_profiles` (
 --
 
 INSERT INTO `faculty_profiles` (`faculty_id`, `faculty_college_code`, `coe_id`, `AICTE_ID`, `Anna_University_ID`, `Name`, `email`, `phone_number`, `password`, `role_id`, `department_id`, `designation`, `educational_qualification`, `phd_status`, `gender`, `date_of_birth`, `date_of_joining`, `profile_image_url`, `status`, `blood_group`, `aadhar_number`, `pan_number`, `perm_address`, `curr_address`, `created_at`, `updated_at`, `linkedin_url`, `is_timetable_incharge`, `is_placement_coordinator`) VALUES
-(101, 'CS12', NULL, NULL, NULL, 'Dr.MATHALAI RAJ. J', 'drmathalai.raj@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 7, 1, 'HEAD OF THE DEPARTMENT', NULL, '', NULL, NULL, NULL, '/uploads/faculty/dr_mathalai_raj__j.jpg', 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:38:21', '2026-02-24 15:44:58', NULL, 0, 0),
+(101, 'CS12', NULL, NULL, NULL, 'Dr.MATHALAI RAJ. J', 'drmathalai.raj@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 7, 1, 'HEAD OF THE DEPARTMENT', NULL, '', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:38:21', '2026-02-28 11:07:03', NULL, 0, 0),
 (111, 'SH1', NULL, NULL, NULL, 'DR.B.MALLAIYASAMY', 'drbmallaiyasamy.faculty@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 10, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:38:21', '2026-02-20 06:43:32', NULL, 0, 0),
 (121, 'SH10', NULL, NULL, NULL, 'DR.DAVID MATHAN.N', 'drdavid.mathann@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 10, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:38:21', '2026-02-20 06:43:32', NULL, 0, 0),
 (124, 'ME11', NULL, NULL, NULL, 'VEMBATHURAJESH.A', 'vembathurajesha.faculty@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 10, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:38:21', '2026-02-20 06:43:32', NULL, 0, 0),
@@ -369,7 +368,7 @@ INSERT INTO `faculty_profiles` (`faculty_id`, `faculty_college_code`, `coe_id`, 
 (403, 'NS20T37', NULL, NULL, NULL, 'GEERTHIGA G', 'ns20t37@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 6, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-02-23 20:37:47', NULL, 0, 0),
 (404, 'NS20T32', NULL, NULL, NULL, 'VINOTH KUMAR J', 'ns20t32@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 6, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-02-20 06:43:32', NULL, 0, 0),
 (405, 'NS70T02', NULL, NULL, NULL, 'KANIMOLI J', 'ns70t02@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 6, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-02-23 20:26:34', NULL, 0, 0),
-(406, 'NS80T01', NULL, NULL, NULL, 'NAGAJOTHI P', 'ns80t01@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 6, NULL, NULL, 'Pursuing', NULL, NULL, NULL, '/uploads/faculty/nagajothi_p.jpg', 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-02-24 14:46:06', 'https://www.linkedin.com/in/prathap/', 1, 0),
+(406, 'NS80T01', NULL, NULL, NULL, 'NAGAJOTHI P', 'ns80t01@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 6, NULL, NULL, 'Pursuing', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-02-28 11:06:57', 'https://www.linkedin.com/in/prathap/', 1, 0),
 (408, 'NS2207T15', NULL, NULL, NULL, 'PRATHAP. C', 'ns2207t15@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 6, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-02-23 20:38:00', NULL, 0, 1),
 (409, 'NS30T03', NULL, NULL, NULL, 'GANESH.K', 'ns30t03@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 4, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-02-20 06:43:32', NULL, 0, 0),
 (410, 'NS40T16', NULL, NULL, NULL, 'Dr.R.ATHILINGAM', 'ns40t16@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 4, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-02-20 06:43:32', NULL, 0, 0),
@@ -499,10 +498,73 @@ CREATE TABLE `faculy_edu_qualification` (
 
 INSERT INTO `faculy_edu_qualification` (`faculty_id`, `degree`, `branch`, `college`, `university`, `year`, `percentage`, `membership_id`, `society_name`, `status`) VALUES
 (406, 'B.E.', 'Computer Science Engineering', 'Nadar Saraswathi College of Engineering and Technology', 'Akka University', '2022', '60', 2, 'IEEE', 'Inactive'),
-(101, 'B.E.', 'Cyber Security', 'Nadar Saraswathi College of Engineering and Technology', 'akka', '2023', '58', 5, '', 'Active'),
-(101, 'M.Tech', 'Electrical & Electronics Engineering', 'Nadar Saraswathi College of Engineering and Technology', 'akkaa', '2025', '10', 20, '', 'Active'),
+(101, 'B.E.', 'Cyber Security', 'Nadar Saraswathi College of Engineering and Technology', 'anna university', '2021', '67', 5, '', 'Active'),
+(101, 'M.Tech', 'Electrical & Electronics Engineering', 'Nadar Saraswathi College of Engineering and Technology', 'anna university', '2025', '96', 20, '', 'Active'),
 (101, 'Membership', 'Professional Membership', '', 'Professional Organization', NULL, NULL, 21, 'IEEE', 'Inactive'),
-(101, 'Membership', 'Professional Membership', '', 'Professional Organization', NULL, NULL, 22, 'dsd', 'Active');
+(406, 'M.E.', 'Information Technology', 'Nadar Saraswathi College of Engineering and Technology', 'anna university', '2026', '85', 23, '', 'Active');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `leaves`
+--
+
+CREATE TABLE `leaves` (
+  `id` int(11) NOT NULL,
+  `applicantId` int(11) NOT NULL COMMENT 'Faculty ID or Student ID',
+  `departmentId` int(11) DEFAULT NULL COMMENT 'Department ID of the applicant',
+  `leaveType` enum('Medical','Casual','Earned','On-Duty','Personal','Maternity','Comp-Off') NOT NULL DEFAULT 'Casual',
+  `startDate` datetime NOT NULL,
+  `endDate` datetime NOT NULL,
+  `totalDays` decimal(4,1) NOT NULL,
+  `reason` text NOT NULL,
+  `status` enum('pending','approved','rejected','cancelled') NOT NULL DEFAULT 'pending',
+  `applicantType` enum('faculty','student') NOT NULL DEFAULT 'faculty',
+  `approvedById` int(11) DEFAULT NULL COMMENT 'ID of the admin/HOD who approved',
+  `approvalDate` datetime DEFAULT NULL COMMENT 'When the leave was approved/rejected',
+  `approvalRemarks` text DEFAULT NULL COMMENT 'Remarks from the approver',
+  `createdAt` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updatedAt` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `leaves`
+--
+
+INSERT INTO `leaves` (`id`, `applicantId`, `departmentId`, `leaveType`, `startDate`, `endDate`, `totalDays`, `reason`, `status`, `applicantType`, `approvedById`, `approvalDate`, `approvalRemarks`, `createdAt`, `updatedAt`) VALUES
+(1, 1, 1, 'Medical', '2026-03-01 09:00:00', '2026-03-02 17:00:00', 2.0, 'Medical emergency - dental appointment', 'pending', 'faculty', NULL, NULL, NULL, '2026-02-28 11:12:15', '2026-02-28 11:12:15'),
+(2, 1, 1, 'Casual', '2026-02-15 09:00:00', '2026-02-17 17:00:00', 3.0, 'Family visit', 'pending', 'faculty', NULL, NULL, NULL, '2026-02-28 11:12:15', '2026-02-28 11:12:15'),
+(3, 2, 2, 'On-Duty', '2026-03-10 09:00:00', '2026-03-12 17:00:00', 3.0, 'Conference attendance at IIIT Delhi', 'pending', 'faculty', NULL, NULL, NULL, '2026-02-28 11:12:15', '2026-02-28 11:12:15');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `leave_balance`
+--
+
+CREATE TABLE `leave_balance` (
+  `id` int(11) NOT NULL,
+  `userId` int(11) NOT NULL COMMENT 'Faculty ID or Student ID',
+  `userType` enum('faculty','student') NOT NULL DEFAULT 'faculty',
+  `academicYear` varchar(9) NOT NULL COMMENT 'Academic year in format YYYY',
+  `Medical` longtext DEFAULT NULL COMMENT 'JSON: {balance: 10, used: 0}',
+  `Casual` longtext DEFAULT NULL COMMENT 'JSON: {balance: 12, used: 0}',
+  `Earned` longtext DEFAULT NULL COMMENT 'JSON: {balance: 15, used: 0}',
+  `On-Duty` longtext DEFAULT NULL COMMENT 'JSON: {balance: 10, used: 0}',
+  `Personal` longtext DEFAULT NULL COMMENT 'JSON: {balance: 5, used: 0}',
+  `Maternity` longtext DEFAULT NULL COMMENT 'JSON: {balance: 90, used: 0}',
+  `Comp-Off` longtext DEFAULT NULL COMMENT 'JSON: {balance: 0, used: 0}',
+  `createdAt` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updatedAt` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `leave_balance`
+--
+
+INSERT INTO `leave_balance` (`id`, `userId`, `userType`, `academicYear`, `Medical`, `Casual`, `Earned`, `On-Duty`, `Personal`, `Maternity`, `Comp-Off`, `createdAt`, `updatedAt`) VALUES
+(1, 1, 'faculty', '2026', '{\"balance\":10,\"used\":0}', '{\"balance\":12,\"used\":0}', '{\"balance\":15,\"used\":0}', '{\"balance\":10,\"used\":0}', '{\"balance\":5,\"used\":0}', '{\"balance\":90,\"used\":0}', '{\"balance\":0,\"used\":0}', '2026-02-28 11:12:15', '2026-02-28 11:12:15'),
+(2, 2, 'faculty', '2026', '{\"balance\":10,\"used\":0}', '{\"balance\":12,\"used\":0}', '{\"balance\":15,\"used\":0}', '{\"balance\":10,\"used\":0}', '{\"balance\":5,\"used\":0}', '{\"balance\":90,\"used\":0}', '{\"balance\":0,\"used\":0}', '2026-02-28 11:12:15', '2026-02-28 11:12:15');
 
 -- --------------------------------------------------------
 
@@ -2129,7 +2191,8 @@ INSERT INTO `users` (`id`, `name`, `email`, `password`, `role_id`, `phone`, `isA
 (2, 'mathalai sundaram', 'executive@nscet.org', '$2a$10$ELjprebdIeb3GTTMKk1oZujDrXZ2g8P41gNfiqVwVCKiflkwpO1eu', 3, '9876543211', 1, '0000-00-00 00:00:00', '2026-02-20 05:08:42', NULL, NULL),
 (3, 'Academic Admin', 'academic@nscet.org', '$2a$10$rtVcTSxhiJKb4Cm3GdJWTety1jN8MAbcweTMHTRw2TQOE79tziyEq', 4, '9876543212', 1, '0000-00-00 00:00:00', '0000-00-00 00:00:00', NULL, NULL),
 (109, 'GOAT', 'nscetadmin@gmail.com', '$2a$10$ELjprebdIeb3GTTMKk1oZujDrXZ2g8P41gNfiqVwVCKiflkwpO1eu', 2, '9876543210', 1, '2026-02-20 05:39:02', '2026-02-20 05:39:02', NULL, NULL),
-(112, 'Test Admin', 'testadmin@nscet.org', '$2a$10$ELjprebdIeb3GTTMKk1oZujDrXZ2g8P41gNfiqVwVCKiflkwpO1eu', 1, '9876543210', 1, '2026-02-20 06:24:50', '2026-02-20 06:24:50', NULL, NULL);
+(112, 'Test Admin', 'testadmin@nscet.org', '$2a$10$ELjprebdIeb3GTTMKk1oZujDrXZ2g8P41gNfiqVwVCKiflkwpO1eu', 1, '9876543210', 1, '2026-02-20 06:24:50', '2026-02-20 06:24:50', NULL, NULL),
+(116, 'Thanush Kumar', 'ThanushKumarematix@gmail.com', '$2a$10$AWl/01cpXoK7MToiH3DS6.vwqn/v3kK8aEIqmkQngkg1j8.pJdTb.', 5, NULL, 1, '2026-02-28 09:14:14', '2026-02-28 09:14:14', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -2279,6 +2342,26 @@ ALTER TABLE `faculty_substitutes`
 ALTER TABLE `faculy_edu_qualification`
   ADD UNIQUE KEY `membership_id` (`membership_id`),
   ADD KEY `idx_faculty_id` (`faculty_id`);
+
+--
+-- Indexes for table `leaves`
+--
+ALTER TABLE `leaves`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_applicantId` (`applicantId`),
+  ADD KEY `idx_departmentId` (`departmentId`),
+  ADD KEY `idx_status` (`status`),
+  ADD KEY `idx_leaveType` (`leaveType`),
+  ADD KEY `idx_startDate` (`startDate`),
+  ADD KEY `idx_endDate` (`endDate`);
+
+--
+-- Indexes for table `leave_balance`
+--
+ALTER TABLE `leave_balance`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `unique_user_year` (`userId`,`academicYear`),
+  ADD KEY `idx_userId` (`userId`);
 
 --
 -- Indexes for table `period_config`
@@ -2574,7 +2657,7 @@ ALTER TABLE `year_break_timings`
 -- AUTO_INCREMENT for table `announcements`
 --
 ALTER TABLE `announcements`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `faculty_events`
@@ -2634,7 +2717,19 @@ ALTER TABLE `faculty_substitutes`
 -- AUTO_INCREMENT for table `faculy_edu_qualification`
 --
 ALTER TABLE `faculy_edu_qualification`
-  MODIFY `membership_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
+  MODIFY `membership_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
+
+--
+-- AUTO_INCREMENT for table `leaves`
+--
+ALTER TABLE `leaves`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+
+--
+-- AUTO_INCREMENT for table `leave_balance`
+--
+ALTER TABLE `leave_balance`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `period_config`
@@ -2790,7 +2885,7 @@ ALTER TABLE `timetable_uploads`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=116;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=119;
 
 --
 -- AUTO_INCREMENT for table `year_break_timings`
