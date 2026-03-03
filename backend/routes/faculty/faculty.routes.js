@@ -31,6 +31,13 @@ import {
   updateIndustryExperience,
   deleteIndustryExperience
 } from '../../controllers/faculty/industry.controller.js';
+import {
+  getMyEvents,
+  addEvent,
+  updateEvent,
+  deleteEvent,
+  getEventsByCategory
+} from '../../controllers/faculty/events.controller.js';
 import { handleDownloadProfile } from '../../controllers/faculty/handleDownloadProfile.js';
 
 import { protect, authorize } from '../../middleware/auth.js';
@@ -106,5 +113,16 @@ router.route('/phd')
 router.route('/phd/:id')
   .put(authorize('faculty', 'department-admin'), updatePhd)
   .delete(authorize('faculty', 'department-admin'), deletePhd);
+
+// Events routes
+router.route('/events')
+  .get(authorize('faculty', 'department-admin'), getMyEvents)
+  .post(authorize('faculty', 'department-admin'), addEvent);
+
+router.route('/events/:id')
+  .put(authorize('faculty', 'department-admin'), updateEvent)
+  .delete(authorize('faculty', 'department-admin'), deleteEvent);
+
+router.get('/events/category/:category', authorize('faculty', 'department-admin'), getEventsByCategory);
 
 export default router;

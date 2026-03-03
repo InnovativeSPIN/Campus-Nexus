@@ -29,64 +29,16 @@ import {
 import { cn } from "@/pages/faculty/lib/utils";
 
 interface LeaveRequest {
-    id: string;
-    type: string;
-    fromDate: string;
-    toDate: string;
-    days: number;
+    id: number;
+    leaveType: string;
+    startDate: string;
+    endDate: string;
+    totalDays: number;
     reason: string;
-    proxy: string;
-    loadAssign: string;
-    status: "pending" | "hod_approved" | "approved" | "rejected";
-    appliedOn: string;
+    status: "pending" | "approved" | "rejected" | "cancelled";
+    createdAt: string;
+    approvalDate?: string;
 }
-
-const leaveRequests: LeaveRequest[] = [
-    {
-        id: "1",
-        type: "Casual Leave",
-        fromDate: "2024-01-20",
-        toDate: "2024-01-21",
-        days: 2,
-        reason: "Family function",
-        proxy: "Dr. Anita Rao",
-        loadAssign: "Conduct CS101 lectures for 2 sessions, Grade assignments for Data Structures course",
-        status: "approved",
-        appliedOn: "2024-01-15",
-    },
-    {
-        id: "2",
-        type: "Medical Leave",
-        fromDate: "2024-01-25",
-        toDate: "2024-01-25",
-        days: 1,
-        reason: "Medical appointment",
-        proxy: "Prof. Suresh Kumar",
-        loadAssign: "Evaluate lab reports from Database course, Conduct 1 practical session",
-        status: "hod_approved",
-        appliedOn: "2024-01-18",
-    },
-    {
-        id: "3",
-        type: "On-Duty Leave",
-        fromDate: "2024-02-01",
-        toDate: "2024-02-03",
-        days: 3,
-        reason: "Conference attendance at IIT Delhi",
-        proxy: "Dr. Priya Menon",
-        loadAssign: "Handle 3 lecture sessions for Web Development course, Coordinate project submissions, Attend departmental meetings on 2024-02-01",
-        status: "pending",
-        appliedOn: "2024-01-19",
-    },
-];
-
-const colleagues = [
-    "Dr. Anita Rao",
-    "Prof. Suresh Kumar",
-    "Dr. Priya Menon",
-    "Prof. Ramesh Iyer",
-    "Dr. Kavitha Nair",
-];
 
 const statusConfig = {
     pending: {
@@ -95,13 +47,6 @@ const statusConfig = {
         color: "text-warning",
         bg: "bg-warning/10",
         border: "border-warning/30",
-    },
-    hod_approved: {
-        label: "HOD Approved",
-        icon: AlertCircle,
-        color: "text-secondary",
-        bg: "bg-secondary/10",
-        border: "border-secondary/30",
     },
     approved: {
         label: "Approved",
@@ -117,15 +62,69 @@ const statusConfig = {
         bg: "bg-destructive/10",
         border: "border-destructive/30",
     },
+    cancelled: {
+        label: "Cancelled",
+        icon: AlertCircle,
+        color: "text-secondary",
+        bg: "bg-secondary/10",
+        border: "border-secondary/30",
+    },
 };
 
 export default function Leave() {
     const [currentTime, setCurrentTime] = useState(new Date());
+    const [myLeaves, setMyLeaves] = useState<LeaveRequest[]>([]);
+    const [leaveBalance, setLeaveBalance] = useState<any>(null);
+    const [loading, setLoading] = useState(false);
+    const [loadingBalance, setLoadingBalance] = useState(false);
+    const [activeTab, setActiveTab] = useState("apply");
+    const [leaveType, setLeaveType] = useState("");
 
     useEffect(() => {
         const timer = setInterval(() => setCurrentTime(new Date()), 1000);
         return () => clearInterval(timer);
     }, []);
+
+    useEffect(() => {
+        fetchMyLeaves();
+        fetchLeaveBalance();
+    }, []);
+
+    const fetchLeaveBalance = async () => {
+        try {
+            setLoadingBalance(true);
+            const token = localStorage.getItem("authToken");
+            const response = await fetch("/api/v1/leave/balance", {
+                headers: token ? { Authorization: `Bearer ${token}` } : {},
+            });
+            const result = await response.json();
+            if (result.success) {
+                setLeaveBalance(result.data);
+            }
+        } catch (error) {
+            console.error("Error fetching leave balance:", error);
+        } finally {
+            setLoadingBalance(false);
+        }
+    };
+
+    const fetchMyLeaves = async () => {
+        try {
+            setLoading(true);
+            const token = localStorage.getItem("authToken");
+            const response = await fetch("/api/v1/leave/my-leaves", {
+                headers: token ? { Authorization: `Bearer ${token}` } : {},
+            });
+            const result = await response.json();
+            if (result.success) {
+                setMyLeaves(result.data || []);
+            }
+        } catch (error) {
+            console.error("Error fetching leaves:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const formatDate = (date: Date) => {
         return date.toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
@@ -135,8 +134,9 @@ export default function Leave() {
         return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     };
 
-    const [activeTab, setActiveTab] = useState("apply");
-    const [leaveType, setLeaveType] = useState("");
+    const formatApiDate = (dateString: string) => {
+        return new Date(dateString).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    };
 
     return (
         <MainLayout hideHeader={true}>
@@ -172,34 +172,36 @@ export default function Leave() {
                 animate={{ opacity: 1, y: 0 }}
                 className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6"
             >
-                {[
-                    { type: "Casual Leave", total: 12, used: 4, color: "primary" },
-                    { type: "Medical Leave", total: 10, used: 2, color: "secondary" },
-                    { type: "On-Duty Leave", total: 15, used: 3, color: "success" },
-                    { type: "Vacation", total: 30, used: 10, color: "warning" },
-                ].map((leave, index) => (
-                    <motion.div
-                        key={leave.type}
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: index * 0.1 }}
-                        className="widget-card text-center"
-                    >
-                        <p className="text-xs text-muted-foreground mb-2">{leave.type}</p>
-                        <p className={cn(
-                            "text-3xl font-bold",
-                            leave.color === "primary" && "text-primary",
-                            leave.color === "secondary" && "text-secondary",
-                            leave.color === "success" && "text-success",
-                            leave.color === "warning" && "text-warning"
-                        )}>
-                            {leave.total - leave.used}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                            of {leave.total} remaining
-                        </p>
-                    </motion.div>
-                ))}
+                {loadingBalance ? (
+                    <div className="col-span-2 md:col-span-4 text-center text-muted-foreground py-8">
+                        Loading leave balance...
+                    </div>
+                ) : leaveBalance ? (
+                    Object.entries(leaveBalance)
+                        .filter(([key]) => !['id', 'userId', 'userType', 'academicYear', 'createdAt', 'updatedAt'].includes(key))
+                        .map(([leaveType, balance]: any, index) => {
+                            const parsed = typeof balance === 'string' ? JSON.parse(balance) : balance;
+                            const remaining = parsed.balance - parsed.used;
+                            
+                            return (
+                                <motion.div
+                                    key={leaveType}
+                                    initial={{ opacity: 0, scale: 0.95 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    transition={{ delay: index * 0.1 }}
+                                    className="widget-card text-center"
+                                >
+                                    <p className="text-xs text-muted-foreground mb-2">{leaveType}</p>
+                                    <p className="text-3xl font-bold text-primary">
+                                        {remaining}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">
+                                        of {parsed.balance} remaining
+                                    </p>
+                                </motion.div>
+                            );
+                        })
+                ) : null}
             </motion.div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -240,21 +242,6 @@ export default function Leave() {
                                             <SelectItem value="vacation">Vacation Leave</SelectItem>
                                             <SelectItem value="special">Special Leave</SelectItem>
                                             <SelectItem value="lop">Leave Loss of Pay (LOP)</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label>Reassign Faculty</Label>
-                                    <Select>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select reassign faculty" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {colleagues.map((colleague) => (
-                                                <SelectItem key={colleague} value={colleague.toLowerCase().replace(/\s/g, "-")}>
-                                                    {colleague}
-                                                </SelectItem>
-                                            ))}
                                         </SelectContent>
                                     </Select>
                                 </div>
@@ -316,87 +303,93 @@ export default function Leave() {
                         animate={{ opacity: 1, y: 0 }}
                         className="space-y-4"
                     >
-                        {leaveRequests.map((request, index) => {
-                            const config = statusConfig[request.status];
-                            const StatusIcon = config.icon;
+                        {loading ? (
+                            <div className="flex flex-col items-center justify-center py-12">
+                                <Clock className="w-8 h-8 text-muted-foreground animate-spin mb-4" />
+                                <p className="text-muted-foreground">Loading your leave requests...</p>
+                            </div>
+                        ) : myLeaves.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center py-12 border border-dashed rounded-lg bg-muted/10">
+                                <FileText className="w-8 h-8 text-muted-foreground mb-4" />
+                                <p className="text-muted-foreground">No leave requests yet</p>
+                                <p className="text-sm text-muted-foreground mt-1">Apply for leave using the form above</p>
+                            </div>
+                        ) : (
+                            myLeaves.map((request, index) => {
+                                const config = statusConfig[request.status] || statusConfig["pending"];
+                                const StatusIcon = config.icon;
 
-                            return (
-                                <motion.div
-                                    key={request.id}
-                                    initial={{ opacity: 0, x: -10 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: index * 0.1 }}
-                                    className={cn(
-                                        "widget-card border-l-4",
-                                        config.border
-                                    )}
-                                >
-                                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                                        <div className="flex-1">
-                                            <div className="flex items-center gap-3 mb-2">
-                                                <h4 className="font-semibold text-foreground">{request.type}</h4>
-                                                <span className={cn(
-                                                    "px-2 py-0.5 rounded-full text-xs font-medium flex items-center gap-1",
-                                                    config.bg,
-                                                    config.color
+                                return (
+                                    <motion.div
+                                        key={request.id}
+                                        initial={{ opacity: 0, x: -10 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{ delay: index * 0.1 }}
+                                        className={cn(
+                                            "widget-card border-l-4",
+                                            config.border
+                                        )}
+                                    >
+                                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                            <div className="flex-1">
+                                                <div className="flex items-center gap-3 mb-2">
+                                                    <h4 className="font-semibold text-foreground">{request.leaveType}</h4>
+                                                    <span className={cn(
+                                                        "px-2 py-0.5 rounded-full text-xs font-medium flex items-center gap-1",
+                                                        config.bg,
+                                                        config.color
+                                                    )}>
+                                                        <StatusIcon className="w-3 h-3" />
+                                                        {config.label}
+                                                    </span>
+                                                </div>
+                                                <p className="text-sm text-muted-foreground mb-2">
+                                                    {request.reason}
+                                                </p>
+                                                <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
+                                                    <span className="flex items-center gap-1">
+                                                        <CalendarDays className="w-3 h-3" />
+                                                        {formatApiDate(request.startDate)} {formatApiDate(request.endDate)} ({Math.ceil(request.totalDays)} days)
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            {/* Status Timeline */}
+                                            <div className="flex items-center gap-2">
+                                                <div className={cn(
+                                                    "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold",
+                                                    request.status !== "rejected" ? "bg-success/20 text-success" : "bg-destructive/20 text-destructive"
                                                 )}>
-                                                    <StatusIcon className="w-3 h-3" />
-                                                    {config.label}
-                                                </span>
-                                            </div>
-                                            <p className="text-sm text-muted-foreground mb-2">
-                                                {request.reason}
-                                            </p>
-                                            <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
-                                                <span className="flex items-center gap-1">
-                                                    <CalendarDays className="w-3 h-3" />
-                                                    {request.fromDate} {request.toDate} ({request.days} days)
-                                                </span>
-                                                <span className="flex items-center gap-1">
-                                                    <User className="w-3 h-3" />
-                                                    Reassign: {request.proxy}
-                                                </span>
-                                            </div>
-                                            <p className="text-sm text-muted-foreground mt-3 p-3 bg-muted/50 rounded border border-border">
-                                                <span className="font-medium text-foreground">Workload Details: </span>{request.loadAssign}
-                                            </p>
-                                        </div>
-
-                                        {/* Status Timeline */}
-                                        <div className="flex items-center gap-2">
-                                            <div className={cn(
-                                                "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold",
-                                                request.status !== "rejected" ? "bg-success/20 text-success" : "bg-destructive/20 text-destructive"
-                                            )}>
-                                                1
-                                            </div>
-                                            <ArrowRight className="w-4 h-4 text-muted-foreground" />
-                                            <div className={cn(
-                                                "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold",
-                                                request.status === "hod_approved" || request.status === "approved"
-                                                    ? "bg-success/20 text-success"
-                                                    : request.status === "rejected"
-                                                        ? "bg-destructive/20 text-destructive"
-                                                        : "bg-muted text-muted-foreground"
-                                            )}>
-                                                2
-                                            </div>
-                                            <ArrowRight className="w-4 h-4 text-muted-foreground" />
-                                            <div className={cn(
-                                                "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold",
-                                                request.status === "approved"
-                                                    ? "bg-success/20 text-success"
-                                                    : request.status === "rejected"
-                                                        ? "bg-destructive/20 text-destructive"
-                                                        : "bg-muted text-muted-foreground"
-                                            )}>
-                                                3
+                                                    1
+                                                </div>
+                                                <ArrowRight className="w-4 h-4 text-muted-foreground" />
+                                                <div className={cn(
+                                                    "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold",
+                                                    request.status === "approved"
+                                                        ? "bg-success/20 text-success"
+                                                        : request.status === "rejected"
+                                                            ? "bg-destructive/20 text-destructive"
+                                                            : "bg-muted text-muted-foreground"
+                                                )}>
+                                                    2
+                                                </div>
+                                                <ArrowRight className="w-4 h-4 text-muted-foreground" />
+                                                <div className={cn(
+                                                    "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold",
+                                                    request.status === "approved"
+                                                        ? "bg-success/20 text-success"
+                                                        : request.status === "rejected"
+                                                            ? "bg-destructive/20 text-destructive"
+                                                            : "bg-muted text-muted-foreground"
+                                                )}>
+                                                    3
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                </motion.div>
-                            );
-                        })}
+                                    </motion.div>
+                                );
+                            })
+                        )}
                     </motion.div>
                 </TabsContent>
             </Tabs>

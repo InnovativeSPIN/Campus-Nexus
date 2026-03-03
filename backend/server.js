@@ -11,6 +11,7 @@ import hpp from 'hpp';
 import cors from 'cors';
 import fileupload from 'express-fileupload';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 
 import errorHandler from './middleware/error.js';
@@ -118,6 +119,20 @@ const startServer = () => {
 
   // Set static folder
   app.use(express.static(path.join(__dirname, 'public')));
+
+  // Handle missing uploads - serve default image
+  app.use('/uploads/', (req, res, next) => {
+    const filePath = path.join(__dirname, 'public', req.path);
+    try {
+      if (!fs.existsSync(filePath)) {
+        // File doesn't exist, serve a default image
+        return res.sendFile(path.join(__dirname, 'public/uploads/faculty/avatar_7.jpg'));
+      }
+    } catch (error) {
+      console.error('Error checking file:', error);
+    }
+    next();
+  });
 
   // Mount routers
   app.use('/api/v1/auth', authRoutes);

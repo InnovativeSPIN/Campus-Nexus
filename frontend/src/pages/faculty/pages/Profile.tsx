@@ -7,7 +7,6 @@ import { Button } from "@/pages/faculty/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/pages/faculty/components/ui/tabs";
 import { Badge } from "@/pages/faculty/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/pages/faculty/components/ui/select";
-import { NotificationBell } from "@/pages/faculty/components/notifications/NotificationBell";
 import {
   Mail,
   Phone,
@@ -43,6 +42,7 @@ interface EducationDetail {
   university: string;
   year: string;
   percentage: string;
+  url?: string;
 }
 
 interface MembershipDetail {
@@ -53,6 +53,7 @@ interface MembershipDetail {
   university?: string;
   society_name: string;
   status: string;
+  url?: string;
 }
 
 interface ExperienceDetail {
@@ -65,6 +66,7 @@ interface ExperienceDetail {
   to: string;
   period: string;
   current: boolean;
+  url?: string;
 }
 
 interface IndustryDetail {
@@ -76,6 +78,24 @@ interface IndustryDetail {
   to: string;
   period: string;
   current: boolean;
+  url?: string;
+}
+
+interface EventDetail {
+  id?: number;
+  event_id?: number;
+  event_name: string;
+  category: 'Resource Person' | 'FDP' | 'Seminar' | 'Workshop';
+  organizer_type?: 'organized' | 'participated';
+  organizer: string;
+  event_date: string;
+  url?: string;
+  document_url?: string;
+  created_at?: string;
+  updated_at?: string;
+  // For frontend compatibility with local form
+  name?: string;
+  date?: string;
 }
 
 // Faculty data based on the Self-Appraisal Form
@@ -103,28 +123,6 @@ const initialFacultyData = {
   guideName: "",
 };
 
-// Educational Qualifications
-const educationalQualifications = [
-  {
-    degree: "M.E",
-    branch: "Computer Science Engineering",
-    college: "Nehru Institute of Technology, Coimbatore",
-    university: "Anna University",
-    year: "2019",
-    percentage: "81%",
-    url: "https://example.com/me-certificate.pdf"
-  },
-  {
-    degree: "B.E",
-    branch: "Electronics and Communication Engineering",
-    college: "Nehru Institute of Technology, Coimbatore",
-    university: "Anna University",
-    year: "2017",
-    percentage: "66%",
-    url: "https://example.com/be-certificate.pdf"
-  },
-];
-
 // Experience Details (split into teaching and industry)
 // Subjects Handled
 const subjectsHandled = [
@@ -133,9 +131,6 @@ const subjectsHandled = [
   { program: "B.Tech - IT", semester: "4", subject: "IT3401 - Web Technology", result: "92%", category: "TCL", url: "https://example.com/subject-proof-3.pdf" },
 ];
 
-// Professional Memberships
-
-
 // Leave Details
 const leaveDetails = {
   totalWorkingDays: 265,
@@ -143,25 +138,6 @@ const leaveDetails = {
   onDuty: 0,
   effectiveAttendance: 260,
   attendancePercentage: "95%",
-};
-
-// Events Data
-const initialEventsData = {
-  "Resource Person": [
-    { name: "Expert Talk on GenAI", date: "15.12.2023", organizer: "IIT Madras", url: "https://example.com/certificate.pdf" },
-    { name: "Data Science Workshop", date: "10.05.2023", organizer: "Sathyabama University", url: "https://example.com/workshop.pdf" },
-  ],
-  "FDP": [
-    { name: "Advanced Deep Learning", date: "10.11.2023", organizer: "NIT Trichy", url: "https://example.com/fdp-1.pdf" },
-    { name: "Cloud Computing Essentials", date: "01.03.2024", organizer: "Anna University", url: "https://example.com/fdp-2.pdf" },
-  ],
-  "Seminar": [
-    { name: "Future of Robotics", date: "05.10.2023", organizer: "Anna University", url: "https://example.com/seminar.pdf" },
-  ],
-  "Workshop": [
-    { name: "React Development Workshop", date: "20.08.2023", organizer: "Tech Academy India", url: "https://example.com/workshop-2.pdf" },
-    { name: "Python for AI", date: "15.02.2024", organizer: "TCS iON", url: "https://example.com/workshop-3.pdf" },
-  ]
 };
 
 // Research Data
@@ -180,9 +156,13 @@ const initialResearchData = {
   ]
 };
 
+// Event categories
+const EVENT_CATEGORIES = ['Resource Person', 'FDP', 'Seminar', 'Workshop'] as const;
+type EventCategoryType = typeof EVENT_CATEGORIES[number];
+
 export default function Profile() {
   const { user, updateUserData } = useAuth();
-  const [selectedEventCategory, setSelectedEventCategory] = useState<keyof typeof initialEventsData>("Resource Person");
+  const [selectedEventCategory, setSelectedEventCategory] = useState<EventCategoryType>("Resource Person");
   const [selectedResearchCategory, setSelectedResearchCategory] = useState<keyof typeof initialResearchData>("Conference");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [facultyData, setFacultyData] = useState({
@@ -351,6 +331,36 @@ export default function Profile() {
         } catch (e) {
           console.warn('Failed to fetch PhD records', e);
         }
+
+        // Fetch events from API
+        try {
+          const eventsResponse = await fetch('/api/v1/faculty/events', {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (eventsResponse.ok) {
+            const eventsResult = await eventsResponse.json();
+            if (eventsResult.success && Array.isArray(eventsResult.data)) {
+              setEventsData(eventsResult.data.map((r: any) => ({
+                id: r.id ?? r.event_id ?? null,
+                event_id: r.event_id,
+                event_name: r.event_name,
+                category: r.category,
+                organizer_type: r.organizer_type,
+                organizer: r.organizer,
+                event_date: r.event_date,
+                document_url: r.document_url,
+                url: r.url,
+                created_at: r.created_at,
+                updated_at: r.updated_at,
+                // Add frontend compatibility fields
+                name: r.event_name,
+                date: r.event_date
+              })));
+            }
+          }
+        } catch (e) {
+          console.warn('Failed to fetch events', e);
+        }
       } catch (error) {
         console.error('Failed to fetch data:', error);
       }
@@ -360,14 +370,14 @@ export default function Profile() {
   }, [user]);
 
   // Events and Research states
-  const [eventsData, setEventsData] = useState(initialEventsData);
+  const [eventsData, setEventsData] = useState<EventDetail[]>([]);
   const [researchData, setResearchData] = useState(initialResearchData);
   const [selectedSubjectFilter, setSelectedSubjectFilter] = useState<string | null>(null);
 
   const [addingEvent, setAddingEvent] = useState(false);
-  const [editingEvent, setEditingEvent] = useState<{ index: number } | null>(null);
-  const [newEvent, setNewEvent] = useState({ name: "", date: "", organizer: "", url: "" });
-  const [tempEvent, setTempEvent] = useState({ name: "", date: "", organizer: "", url: "" });
+  const [editingEvent, setEditingEvent] = useState<number | null>(null);
+  const [newEvent, setNewEvent] = useState<Partial<EventDetail>>({ event_name: "", event_date: "", organizer: "", url: "" });
+  const [tempEvent, setTempEvent] = useState<Partial<EventDetail>>({ event_name: "", event_date: "", organizer: "", url: "" });
   const [newEventOrganizerType, setNewEventOrganizerType] = useState<"" | "organized" | "participated">("");
 
   const [addingResearch, setAddingResearch] = useState(false);
@@ -392,6 +402,7 @@ export default function Profile() {
     university: "",
     year: "",
     percentage: "",
+    url: "",
   });
   const [newDegreeIsOther, setNewDegreeIsOther] = useState(false);
   const [newBranchIsOther, setNewBranchIsOther] = useState(false);
@@ -404,6 +415,7 @@ export default function Profile() {
     membership_id: "",
     society_name: "",
     status: "Active",
+    url: "",
   });
 
   // Experience states
@@ -870,7 +882,8 @@ export default function Profile() {
           university: newEducation.university || null,
           year: newEducation.year || null,
           percentage: newEducation.percentage || null,
-          society_name: ""
+          society_name: "",
+          url: newEducation.url || null
         })
       });
 
@@ -1020,7 +1033,8 @@ export default function Profile() {
           year: "",
           percentage: "",
           society_name: newMembership.society_name || null,
-          status: newMembership.status || null
+          status: newMembership.status || null,
+          url: newMembership.url || null
         })
       });
 
@@ -1045,6 +1059,7 @@ export default function Profile() {
           membership_id: "",
           society_name: "",
           status: "Active",
+          url: "",
         });
         toast({
           title: 'Membership added'
@@ -1652,47 +1667,167 @@ export default function Profile() {
   const handleAddEvent = () => {
     setAddingEvent(true);
     setNewEventOrganizerType("");
-    setNewEvent({ name: "", date: "", organizer: "", url: "" });
+    setNewEvent({ event_name: "", event_date: "", organizer: "", url: "", category: selectedEventCategory });
   };
 
   const handleEditEvent = (index: number) => {
-    setEditingEvent({ index });
-    setTempEvent({ ...eventsData[selectedEventCategory][index] });
+    setEditingEvent(index);
+    const event = getEventsByCategory(selectedEventCategory)[index];
+    setTempEvent({...event});
   };
 
-  const handleSaveNewEvent = () => {
-    if (!newEvent.name || !newEvent.date) {
-      toast({ title: "Validation Error", description: "Name and Date are required.", variant: "destructive" });
+  const getEventsByCategory = (category: EventCategoryType): EventDetail[] => {
+    return eventsData.filter((e) => e.category === category);
+  };
+
+  const handleSaveNewEvent = async () => {
+    if (!newEvent.event_name || !newEvent.event_date) {
+      toast({ title: "Validation Error", description: "Event Name and Date are required.", variant: "destructive" });
       return;
     }
-    setEventsData(prev => ({
-      ...prev,
-      [selectedEventCategory]: [...prev[selectedEventCategory], newEvent]
-    }));
-    setAddingEvent(false);
-    setNewEventOrganizerType("");
-    toast({ title: "Event added", description: "New event has been added successfully." });
+
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+      toast({ title: 'Not authenticated', description: 'Please log in and try again.', variant: 'destructive' });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await fetch('/api/v1/faculty/events', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          event_name: newEvent.event_name,
+          event_date: newEvent.event_date,
+          category: newEvent.category || selectedEventCategory,
+          organizer: newEvent.organizer,
+          organizer_type: newEventOrganizerType || 'participated',
+          url: newEvent.url,
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to add event: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      if (result.success) {
+        setEventsData([...eventsData, result.data]);
+        setAddingEvent(false);
+        setNewEventOrganizerType("");
+        setNewEvent({ event_name: "", event_date: "", organizer: "", url: "" });
+        toast({ title: "Event added", description: "New event has been added successfully." });
+      }
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to add event.',
+        variant: 'destructive'
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleSaveEditEvent = (index: number) => {
-    const updated = [...eventsData[selectedEventCategory]];
-    updated[index] = tempEvent;
-    setEventsData(prev => ({
-      ...prev,
-      [selectedEventCategory]: updated
-    }));
-    setEditingEvent(null);
-    toast({ title: "Event updated", description: "Event has been updated successfully." });
+  const handleSaveEditEvent = async () => {
+    if (!tempEvent.event_id) {
+      toast({ title: 'Error', description: 'Event ID missing', variant: 'destructive' });
+      return;
+    }
+
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+      toast({ title: 'Not authenticated', description: 'Please log in and try again.', variant: 'destructive' });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await fetch(`/api/v1/faculty/events/${tempEvent.event_id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          event_name: tempEvent.event_name,
+          event_date: tempEvent.event_date,
+          category: tempEvent.category,
+          organizer: tempEvent.organizer,
+          organizer_type: tempEvent.organizer_type,
+          url: tempEvent.url,
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to update event: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      if (result.success) {
+        setEventsData(eventsData.map(e => e.event_id === tempEvent.event_id ? result.data : e));
+        setEditingEvent(null);
+        setTempEvent({});
+        toast({ title: "Event updated", description: "Event has been updated successfully." });
+      }
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to update event.',
+        variant: 'destructive'
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleDeleteEvent = (index: number) => {
+  const handleDeleteEvent = async (index: number) => {
+    const events = getEventsByCategory(selectedEventCategory);
+    const event = events[index];
+
+    if (!event.event_id) {
+      toast({ title: 'Error', description: 'Event ID missing', variant: 'destructive' });
+      return;
+    }
+
     if (window.confirm("Are you sure you want to delete this event?")) {
-      const updated = eventsData[selectedEventCategory].filter((_, i) => i !== index);
-      setEventsData(prev => ({
-        ...prev,
-        [selectedEventCategory]: updated
-      }));
-      toast({ title: "Event deleted", description: "Event has been deleted successfully." });
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        toast({ title: 'Not authenticated', description: 'Please log in and try again.', variant: 'destructive' });
+        return;
+      }
+
+      setLoading(true);
+      try {
+        const response = await fetch(`/api/v1/faculty/events/${event.event_id}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to delete event: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+        if (result.success) {
+          setEventsData(eventsData.filter(e => e.event_id !== event.event_id));
+          toast({ title: "Event deleted", description: "Event has been deleted successfully." });
+        }
+      } catch (error: any) {
+        toast({
+          title: 'Error',
+          description: error.message || 'Failed to delete event.',
+          variant: 'destructive'
+        });
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -2036,6 +2171,57 @@ export default function Profile() {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleViewDocument = (url: string, fileName?: string) => {
+    if (!url) {
+      toast({
+        title: "Error",
+        description: "Document URL not available.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    try {
+      // Fetch the document
+      fetch(url)
+        .then(response => {
+          if (!response.ok) throw new Error('Failed to fetch document');
+          return response.blob();
+        })
+        .then(blob => {
+          // Create a blob URL and trigger download
+          const blobUrl = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = blobUrl;
+          link.download = fileName || `document_${Date.now()}.pdf`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(blobUrl);
+          
+          toast({
+            title: "Success",
+            description: "Document downloaded successfully."
+          });
+        })
+        .catch(error => {
+          console.error('Document download error:', error);
+          toast({
+            title: "Error",
+            description: "Failed to download document. Please try again.",
+            variant: "destructive"
+          });
+        });
+    } catch (error) {
+      console.error('Error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to process document.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -3742,9 +3928,9 @@ export default function Profile() {
                         </div>
                         <div className="text-right">
                           <p className="text-xs text-muted-foreground">Result</p>
-                          <p className={`text - lg font - bold ${parseInt(subject.result) >= 90 ? "text-success" :
+                          <p className={`text-lg font-bold ${parseInt(subject.result) >= 90 ? "text-success" :
                             parseInt(subject.result) >= 80 ? "text-secondary" : "text-warning"
-                            } `}>
+                            }`}>
                             {subject.result}
                           </p>
                         </div>
@@ -3783,11 +3969,11 @@ export default function Profile() {
 
               {/* Category Buttons */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
-                {Object.keys(eventsData).map((category) => (
+                {EVENT_CATEGORIES.map((category) => (
                   <Button
                     key={category}
                     variant={selectedEventCategory === category ? "default" : "outline"}
-                    onClick={() => setSelectedEventCategory(category as any)}
+                    onClick={() => setSelectedEventCategory(category)}
                     className="w-full text-xs"
                   >
                     {category}
@@ -3811,18 +3997,17 @@ export default function Profile() {
                       <input
                         type="text"
                         placeholder="e.g., Workshop on AI"
-                        value={newEvent.name}
-                        onChange={(e) => setNewEvent({ ...newEvent, name: e.target.value })}
+                        value={newEvent.event_name}
+                        onChange={(e) => setNewEvent({ ...newEvent, event_name: e.target.value })}
                         className="input input-bordered w-full bg-white text-foreground"
                       />
                     </div>
                     <div className="space-y-1">
                       <label className="text-xs font-semibold text-muted-foreground ml-1">Date</label>
                       <input
-                        type="text"
-                        placeholder="DD.MM.YYYY"
-                        value={newEvent.date}
-                        onChange={(e) => setNewEvent({ ...newEvent, date: e.target.value })}
+                        type="date"
+                        value={newEvent.event_date}
+                        onChange={(e) => setNewEvent({ ...newEvent, event_date: e.target.value })}
                         className="input input-bordered w-full bg-white text-foreground"
                       />
                     </div>
@@ -3893,37 +4078,37 @@ export default function Profile() {
                     </div>
                   </div>
                   <div className="flex gap-3 justify-end mt-6">
-                    <Button size="sm" variant="outline" onClick={() => { setAddingEvent(false); setNewEventOrganizerType(""); setNewEvent({ name: "", date: "", organizer: "", url: "" }); }}>Cancel</Button>
-                    <Button size="sm" onClick={handleSaveNewEvent} className="bg-green-600 hover:bg-green-700">Save Event</Button>
+                    <Button size="sm" variant="outline" onClick={() => { setAddingEvent(false); setNewEventOrganizerType(""); setNewEvent({ event_name: "", event_date: "", organizer: "", url: "" }); }}>Cancel</Button>
+                    <Button size="sm" onClick={handleSaveNewEvent} disabled={loading} className="bg-green-600 hover:bg-green-700">Save Event</Button>
                   </div>
                 </motion.div>
               )}
 
               {/* Events List */}
               <div className="space-y-4">
-                {eventsData[selectedEventCategory].length === 0 && (
+                {getEventsByCategory(selectedEventCategory).length === 0 && (
                   <p className="text-center text-muted-foreground py-8 italic">No records found for this category.</p>
                 )}
-                {eventsData[selectedEventCategory].map((event, index) => (
+                {getEventsByCategory(selectedEventCategory).map((event, index) => (
                   <motion.div
-                    key={index}
+                    key={event.id || index}
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     className="p-5 bg-card rounded-xl border border-border hover:border-primary/30 hover:shadow-md transition-all group"
                   >
-                    {editingEvent?.index === index ? (
+                    {editingEvent === index ? (
                       <div className="space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <input
                             type="text"
-                            value={tempEvent.name}
-                            onChange={(e) => setTempEvent({ ...tempEvent, name: e.target.value })}
+                            value={tempEvent.event_name}
+                            onChange={(e) => setTempEvent({ ...tempEvent, event_name: e.target.value })}
                             className="input input-bordered w-full text-foreground"
                           />
                           <input
-                            type="text"
-                            value={tempEvent.date}
-                            onChange={(e) => setTempEvent({ ...tempEvent, date: e.target.value })}
+                            type="date"
+                            value={tempEvent.event_date}
+                            onChange={(e) => setTempEvent({ ...tempEvent, event_date: e.target.value })}
                             className="input input-bordered w-full text-foreground"
                           />
                           <input
@@ -3945,7 +4130,7 @@ export default function Profile() {
                         </div>
                         <div className="flex gap-2 justify-end">
                           <Button size="sm" variant="outline" onClick={() => setEditingEvent(null)}>Cancel</Button>
-                          <Button size="sm" onClick={() => handleSaveEditEvent(index)} className="bg-green-600">Update</Button>
+                          <Button size="sm" onClick={() => handleSaveEditEvent()} disabled={loading} className="bg-green-600">Update</Button>
                         </div>
                       </div>
                     ) : (
@@ -3955,15 +4140,22 @@ export default function Profile() {
                             <Star className="w-6 h-6" />
                           </div>
                           <div>
-                            <h4 className="font-bold text-foreground text-lg">{event.name}</h4>
+                            <h4 className="font-bold text-foreground text-lg">{event.event_name}</h4>
                             <p className="text-sm text-muted-foreground font-medium flex items-center gap-2">
                               <Building className="w-3.5 h-3.5" /> {event.organizer} •
-                              <Calendar className="w-3.5 h-3.5 ml-1" /> {event.date}
+                              <Calendar className="w-3.5 h-3.5 ml-1" /> {event.event_date}
                             </p>
+                            {event.organizer_type && (
+                              <p className="text-xs text-muted-foreground mt-1">
+                                <span className="inline-block px-2 py-0.5 rounded-full bg-primary/10 text-primary capitalize">
+                                  {event.organizer_type}
+                                </span>
+                              </p>
+                            )}
                             {event.url && (
-                              <a href={event.url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline mt-2 flex items-center gap-1.5 font-medium bg-primary/5 w-fit px-3 py-1 rounded-full border border-primary/20 transition-all hover:bg-primary/10">
+                              <button onClick={() => handleViewDocument(event.url, `${event.event_name}.pdf`)} className="text-sm text-primary hover:underline mt-2 flex items-center gap-1.5 font-medium bg-primary/5 w-fit px-3 py-1 rounded-full border border-primary/20 transition-all hover:bg-primary/10 cursor-pointer">
                                 <FileText className="w-4 h-4" /> View Document
-                              </a>
+                              </button>
                             )}
                           </div>
                         </div>
@@ -3971,7 +4163,7 @@ export default function Profile() {
                           <Button size="icon" variant="ghost" onClick={() => handleEditEvent(index)} className="h-9 w-9 text-muted-foreground hover:text-primary">
                             <Edit2 className="w-4 h-4" />
                           </Button>
-                          <Button size="icon" variant="ghost" onClick={() => handleDeleteEvent(index)} className="h-9 w-9 text-muted-foreground hover:text-red-500">
+                          <Button size="icon" variant="ghost" onClick={() => handleDeleteEvent(index)} disabled={loading} className="h-9 w-9 text-muted-foreground hover:text-red-500">
                             <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>
@@ -3980,23 +4172,6 @@ export default function Profile() {
                   </motion.div>
                 ))}
               </div>
-
-              {/* Hidden file input */}
-              <input
-                ref={fileInputRef}
-                type="file"
-                onChange={handleFileUpload}
-                className="hidden"
-                accept=".pdf,.doc,.docx,.xlsx,.jpg,.jpeg,.png"
-              />
-
-              <Button
-                variant="outline"
-                className="w-full mt-8 border-dashed border-2 hover:bg-primary/5 hover:border-primary/50 transition-all py-6"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <Plus className="w-4 h-4 mr-2" /> Upload New Supporting Document
-              </Button>
             </TabsContent>
 
             {/* Research Section */}
@@ -4184,9 +4359,9 @@ export default function Profile() {
                               {item.organizer} • {item.date}
                             </p>
                             {item.url && (
-                              <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-sm text-secondary hover:underline mt-3 flex items-center gap-1.5 font-semibold bg-secondary/5 w-fit px-3 py-1 rounded-full border border-secondary/20 transition-all hover:bg-secondary/10">
+                              <button onClick={() => handleViewDocument(item.url, `${item.title}.pdf`)} className="text-sm text-secondary hover:underline mt-3 flex items-center gap-1.5 font-semibold bg-secondary/5 w-fit px-3 py-1 rounded-full border border-secondary/20 transition-all hover:bg-secondary/10 cursor-pointer">
                                 <FileText className="w-4 h-4" /> View Document
-                              </a>
+                              </button>
                             )}
                           </div>
                         </div>

@@ -62,14 +62,8 @@ const Leave = (sequelize) => {
   });
 
   LeaveModel.associate = (models) => {
-    LeaveModel.belongsTo(models.User, {
-      foreignKey: 'applicantId',
-      as: 'applicant',
-    });
-    LeaveModel.belongsTo(models.User, {
-      foreignKey: 'approvedById',
-      as: 'approvedBy',
-    });
+    // Note: applicantId contains Faculty.faculty_id or Student.id, not User.id
+    // So we don't directly associate with User here
     LeaveModel.belongsTo(models.Department, {
       foreignKey: 'departmentId',
       as: 'department',
