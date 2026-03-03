@@ -33,6 +33,7 @@ import FacultyExperience from './FacultyExperience.model.js';
 import FacultyIndustryExperience from './FacultyIndustryExperience.model.js';
 import FacultyPhd from './FacultyPhd.model.js';
 import FacultyEvents from './FacultyEvents.model.js';
+import FacultyResearch from './FacultyResearch.model.js';
 
 // Initialize models
 const models = {
@@ -67,6 +68,7 @@ const models = {
   FacultyIndustryExperience: FacultyIndustryExperience(sequelize),
   FacultyPhd: FacultyPhd(sequelize),
   FacultyEvents: FacultyEvents(sequelize),
+  FacultyResearch: FacultyResearch(sequelize),
 };
 
 // Define associations

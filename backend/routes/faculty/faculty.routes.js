@@ -38,6 +38,12 @@ import {
   deleteEvent,
   getEventsByCategory
 } from '../../controllers/faculty/events.controller.js';
+import {
+  getMyResearch,
+  addResearch,
+  updateResearch,
+  deleteResearch
+} from '../../controllers/faculty/research.controller.js';
 import { handleDownloadProfile } from '../../controllers/faculty/handleDownloadProfile.js';
 
 import { protect, authorize } from '../../middleware/auth.js';
@@ -124,5 +130,14 @@ router.route('/events/:id')
   .delete(authorize('faculty', 'department-admin'), deleteEvent);
 
 router.get('/events/category/:category', authorize('faculty', 'department-admin'), getEventsByCategory);
+
+// Research routes
+router.route('/research')
+  .get(authorize('faculty', 'department-admin'), getMyResearch)
+  .post(authorize('faculty', 'department-admin'), addResearch);
+
+router.route('/research/:id')
+  .put(authorize('faculty', 'department-admin'), updateResearch)
+  .delete(authorize('faculty', 'department-admin'), deleteResearch);
 
 export default router;

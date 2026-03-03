@@ -10,6 +10,10 @@ const FacultyEvents = (sequelize) => {
         faculty_id: {
             type: DataTypes.INTEGER,
             allowNull: false,
+            references: {
+                model: 'faculty_profiles',
+                key: 'faculty_id'
+            }
         },
         category: {
             type: DataTypes.ENUM('Resource Person', 'FDP', 'Seminar', 'Workshop'),
