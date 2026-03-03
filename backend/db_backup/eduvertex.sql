@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Mar 03, 2026 at 05:46 PM
+-- Generation Time: Mar 03, 2026 at 07:52 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -261,13 +261,6 @@ CREATE TABLE `faculty_phd` (
   `guide_name` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `faculty_phd`
---
-
-INSERT INTO `faculty_phd` (`phd_id`, `faculty_id`, `status`, `orcid_id`, `thesis_title`, `register_no`, `guide_name`) VALUES
-(5, 406, '', '', '', '', '');
-
 -- --------------------------------------------------------
 
 --
@@ -418,16 +411,37 @@ INSERT INTO `faculty_profiles` (`faculty_id`, `faculty_college_code`, `coe_id`, 
 --
 
 CREATE TABLE `faculty_research` (
-  `ORCID_ID` int(20) DEFAULT NULL,
+  `research_id` int(11) NOT NULL,
+  `ORCID_ID` varchar(50) DEFAULT NULL,
   `faculty_id` int(11) NOT NULL,
   `category` enum('Conference','Journal','Patent','Book Chapter') NOT NULL,
   `title` text NOT NULL,
+  `author_names` text DEFAULT NULL COMMENT 'Comma-separated author names',
+  `abstract` longtext DEFAULT NULL,
+  `keywords` varchar(500) DEFAULT NULL,
+  `issn_isbn` varchar(50) DEFAULT NULL,
+  `volume_issue` varchar(100) DEFAULT NULL,
+  `pages` varchar(50) DEFAULT NULL,
+  `status` enum('Published','Under Review','Accepted','Rejected') DEFAULT 'Published',
+  `research_type` varchar(100) DEFAULT NULL COMMENT 'e.g., Original Research, Review, etc',
+  `impact_factor` decimal(5,2) DEFAULT NULL,
+  `citations` int(11) DEFAULT 0,
+  `indexed_in` varchar(200) DEFAULT NULL COMMENT 'e.g., SCI, SCOPUS, WoS',
   `publication_date` varchar(50) DEFAULT NULL,
   `publisher_organizer` varchar(255) DEFAULT NULL,
   `url` text DEFAULT NULL,
   `document_url` text DEFAULT NULL,
-  `type` enum('International','National') DEFAULT 'International'
+  `type` enum('International','National') DEFAULT 'International',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `faculty_research`
+--
+
+INSERT INTO `faculty_research` (`research_id`, `ORCID_ID`, `faculty_id`, `category`, `title`, `author_names`, `abstract`, `keywords`, `issn_isbn`, `volume_issue`, `pages`, `status`, `research_type`, `impact_factor`, `citations`, `indexed_in`, `publication_date`, `publisher_organizer`, `url`, `document_url`, `type`, `created_at`, `updated_at`) VALUES
+(1, NULL, 101, 'Conference', 'asdfgh', 'sdfgh', 'fghjkl', 'gfhjkhjljl', 'sdfg', 'sdfg', 'sdf', 'Accepted', 'dfghj', 21.00, 0, 'asdfgh', '2026-03-03', 'sdfg', 'fghj', '/uploads/department-admins/dr_mathalai_raj__j/research/research_dr_mathalai_raj__j_1772557331730_474970496.pdf', 'National', '2026-03-03 17:02:11', '2026-03-03 17:02:46');
 
 -- --------------------------------------------------------
 
@@ -2327,8 +2341,11 @@ ALTER TABLE `faculty_profiles`
 -- Indexes for table `faculty_research`
 --
 ALTER TABLE `faculty_research`
-  ADD PRIMARY KEY (`faculty_id`),
-  ADD UNIQUE KEY `research_id` (`ORCID_ID`);
+  ADD PRIMARY KEY (`research_id`),
+  ADD UNIQUE KEY `research_id_2` (`research_id`),
+  ADD UNIQUE KEY `research_id` (`ORCID_ID`),
+  ADD KEY `idx_faculty_id` (`faculty_id`),
+  ADD KEY `idx_category` (`category`);
 
 --
 -- Indexes for table `faculty_subjects_handled`
@@ -2714,7 +2731,7 @@ ALTER TABLE `faculty_leave_schedules`
 -- AUTO_INCREMENT for table `faculty_phd`
 --
 ALTER TABLE `faculty_phd`
-  MODIFY `phd_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `phd_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `faculty_profiles`
@@ -2723,10 +2740,16 @@ ALTER TABLE `faculty_profiles`
   MODIFY `faculty_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=432;
 
 --
+-- AUTO_INCREMENT for table `faculty_research`
+--
+ALTER TABLE `faculty_research`
+  MODIFY `research_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
 -- AUTO_INCREMENT for table `faculty_subject_assignments`
 --
 ALTER TABLE `faculty_subject_assignments`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `faculty_substitutes`
@@ -2948,6 +2971,12 @@ ALTER TABLE `faculty_leaves`
 --
 ALTER TABLE `faculty_phd`
   ADD CONSTRAINT `faculty_phd_ibfk_1` FOREIGN KEY (`faculty_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `faculty_research`
+--
+ALTER TABLE `faculty_research`
+  ADD CONSTRAINT `faculty_research_ibfk_1` FOREIGN KEY (`faculty_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `faculty_subject_assignments`
