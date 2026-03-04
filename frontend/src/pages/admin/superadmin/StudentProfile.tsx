@@ -1,21 +1,65 @@
 import { useParams, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { AdminLayout } from '@/pages/admin/superadmin/components/layout/AdminLayout';
 import { Button } from '@/pages/admin/superadmin/components/ui/button';
 import { ChevronLeft, Mail, Phone, Building2, Calendar, User, MapPin, GraduationCap, Clock } from 'lucide-react';
-import { mockStudents } from '@/data/mockData';
 import { Badge } from '@/pages/admin/superadmin/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/pages/admin/superadmin/components/ui/tabs';
+import { Student } from '@/types/auth';
 
 export default function SuperAdminStudentProfile() {
-    const { id } = useParams();
+    const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
-    const student = mockStudents.find(s => s.id === id);
+    const [student, setStudent] = useState<Student | null>(null);
+    const [loading, setLoading] = useState<boolean>(true);
+    const [error, setError] = useState<string | null>(null);
 
-    if (!student) {
+    useEffect(() => {
+        const fetchStudent = async () => {
+            if (!id) return;
+            try {
+                setLoading(true);
+                const res = await fetch(`/api/v1/students/${id}`, { credentials: 'include' });
+                const json = await res.json();
+                if (json.success) {
+                    const s = json.data;
+                    // derive name field
+                    s.name = `${s.firstName || ''} ${s.lastName || ''}`.trim();
+                    // compute enrollmentYear from batch if available
+                    s.enrollmentYear = s.batch ? parseInt(s.batch.split('-')[0], 10) : undefined;
+                    // unify photo/avatar
+                    s.avatar = s.photo || s.avatar;
+                    // department normalized already by backend
+                    setStudent(s);
+                } else {
+                    setError(json.message || 'Student not found');
+                }
+            } catch (err) {
+                console.error('Error loading student profile', err);
+                setError('Unable to load student');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchStudent();
+    }, [id]);
+
+    if (loading) {
+        return (
+            <AdminLayout>
+                <div className="flex items-center justify-center h-[60vh]">
+                    <p>Loading...</p>
+                </div>
+            </AdminLayout>
+        );
+    }
+
+    if (error || !student) {
         return (
             <AdminLayout>
                 <div className="flex flex-col items-center justify-center h-[60vh]">
-                    <h2 className="text-2xl font-bold">Student not found</h2>
+                    <h2 className="text-2xl font-bold">{error || 'Student not found'}</h2>
                     <Button variant="link" onClick={() => navigate('/admin/superadmin/students')}>
                         Back to Student List
                     </Button>
@@ -43,14 +87,14 @@ export default function SuperAdminStudentProfile() {
                             <div className="flex items-end gap-6">
                                 <div className="h-24 w-24 rounded-2xl bg-background border-4 border-card shadow-md flex items-center justify-center overflow-hidden">
                                     <img
-                                        src={student.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(student.name)}&background=random&size=128`}
+                                        src={student.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(student.name || '')}&background=random&size=128`}
                                         alt={student.name}
                                         className="w-full h-full object-cover"
                                     />
                                 </div>
                                 <div className="pb-2">
                                     <h1 className="text-2xl font-bold text-foreground">{student.name}</h1>
-                                    <p className="text-muted-foreground">{student.department} • Batch {student.enrollmentYear}</p>
+                                    <p className="text-muted-foreground">{student.department} • Batch {student.enrollmentYear || 'N/A'}</p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-3">
@@ -99,7 +143,7 @@ export default function SuperAdminStudentProfile() {
                                             </div>
                                             <div className="flex items-center gap-3 text-sm">
                                                 <GraduationCap className="h-4 w-4 text-primary" />
-                                                <span>Year: {new Date().getFullYear() - student.enrollmentYear + 1}</span>
+                                                <span>Year: {student.enrollmentYear ? new Date().getFullYear() - student.enrollmentYear + 1 : 'N/A'}</span>
                                             </div>
                                             <div className="flex items-center gap-3 text-sm">
                                                 <Clock className="h-4 w-4 text-primary" />
@@ -117,7 +161,7 @@ export default function SuperAdminStudentProfile() {
                                             </div>
                                             <div className="flex items-center gap-3 text-sm">
                                                 <User className="h-4 w-4 text-primary" />
-                                                <span>Roll No: 21CS{student.id.padStart(3, '0')}</span>
+                                                <span>Roll No: {student.rollNumber || `21CS${String(student.id).padStart(3, '0')}`}</span>
                                             </div>
                                         </div>
                                     </div>

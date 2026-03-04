@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { AdminLayout } from '@/pages/admin/superadmin/components/layout/AdminLayout';
 import { DataTable } from '@/pages/admin/superadmin/components/dashboard/DataTable';
 import { UserFormModal } from '@/pages/admin/superadmin/components/modals/UserFormModal';
@@ -30,38 +30,80 @@ export default function SuperAdminStudents() {
   const [students, setStudents] = useState<Student[]>([]);
   const [departments, setDepartments] = useState<any[]>([]);
   const [departmentFilter, setDepartmentFilter] = useState<string>('all');
-  const [yearFilter, setYearFilter] = useState<string>('');
+  const [yearFilter, setYearFilter] = useState<string>('all');
   const [loading, setLoading] = useState<boolean>(false);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const res = await fetch('/api/v1/students', { credentials: 'include' });
-        const json = await res.json();
-        if (json.success) {
-          setStudents(
-            json.data.map((s: any) => ({
-              ...s,
-              department: s.department ? s.department.name : ''
-            }))
-          );
-        }
-
-        const deptRes = await fetch('/api/v1/departments', { credentials: 'include' });
-        const deptJson = await deptRes.json();
-        if (deptJson.success) {
-          setDepartments(deptJson.data);
-        }
-      } catch (err) {
-        console.error('Failed to load students or departments', err);
-        toast.error('Unable to load data');
-      } finally {
-        setLoading(false);
+  // helper to load students & departments
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      // build query string from current filters
+      const params = new URLSearchParams();
+      if (departmentFilter && departmentFilter !== 'all') {
+        params.append('department', departmentFilter);
       }
-    };
-    fetchData();
+      if (yearFilter && yearFilter !== 'all') {
+        // send studyYear to backend so it can filter by batch prefix
+        params.append('studyYear', yearFilter);
+      }
+      // always ask for unlimited results
+      params.append('limit', '0');
+      const url = '/api/v1/students' + (params.toString() ? `?${params.toString()}` : '');
+      const res = await fetch(url, { credentials: 'include', cache: 'no-store' });
+      const json = await res.json();
+      if (json.success) {
+        setStudents(
+          json.data.map((s: any) => ({
+            ...s,
+            // ensure UI-friendly fields
+            name: `${s.firstName || ''} ${s.lastName || ''}`.trim(),
+            department: s.department ? s.department.name : '',
+            departmentId: s.departmentId ? Number(s.departmentId) : s.department && s.department.id ? Number(s.department.id) : null,
+            enrollmentYear: s.batch ? parseInt(s.batch.split('-')[0], 10) : undefined,
+            studyYear: s.batch ? (new Date().getFullYear() - parseInt(s.batch.split('-')[0], 10) + 1) : undefined,
+          }))
+        );
+      }
+
+      const deptRes = await fetch('/api/v1/departments', { credentials: 'include' });
+      const deptJson = await deptRes.json();
+      if (deptJson.success) {
+        setDepartments(
+          deptJson.data.map((d: any) => ({
+            ...d,
+            name: d.short_name || d.full_name
+          }))
+        );
+      }
+    } catch (err) {
+      console.error('Failed to load students or departments', err);
+      toast.error('Unable to load data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
   }, []);
+
+  // reload when filters change
+  useEffect(() => {
+    loadData();
+  }, [departmentFilter, yearFilter]);
+
+  // open edit modal when url contains ?edit=<id>
+  const location = useLocation();
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const editId = params.get('edit');
+    if (editId && students.length > 0) {
+      const stu = students.find((s) => s.id === editId);
+      if (stu) {
+        handleEdit(stu);
+      }
+    }
+  }, [location.search, students]);
 
   const [formModal, setFormModal] = useState<{ open: boolean; mode: 'add' | 'edit'; data?: Student }>({
     open: false,
@@ -74,8 +116,14 @@ export default function SuperAdminStudents() {
 
   const filteredStudents = useMemo(() => {
     return students.filter(s => {
-      const matchesDept = departmentFilter === 'all' || s.department === departmentFilter;
-      const matchesYear = !yearFilter || (s.enrollmentYear && s.enrollmentYear.toString().includes(yearFilter));
+      const deptId = s.departmentId != null ? Number(s.departmentId) : null;
+      const matchesDept =
+        departmentFilter === 'all' ||
+        (deptId !== null && deptId === parseInt(departmentFilter, 10));
+      let matchesYear = true;
+      if (yearFilter && yearFilter !== 'all') {
+        matchesYear = s.studyYear === parseInt(yearFilter, 10);
+      }
       return matchesDept && matchesYear;
     });
   }, [students, departmentFilter, yearFilter]);
@@ -107,43 +155,80 @@ export default function SuperAdminStudents() {
   };
 
   const handleView = (student: Student) => {
+    // navigate to profile route defined in App.tsx
     navigate(`/admin/superadmin/students/${student.id}`);
   };
 
   const handleEdit = (student: Student) => {
-    setFormModal({ open: true, mode: 'edit', data: student });
+    // pass departmentId (string) rather than department name so modal selects correctly
+    const editData = { ...student, department: student.departmentId != null ? String(student.departmentId) : '' } as any;
+    setFormModal({ open: true, mode: 'edit', data: editData });
   };
 
   const handleDelete = (student: Student) => {
     setDeleteDialog({ open: true, data: student });
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (deleteDialog.data) {
-      setStudents((prev) => prev.filter((s) => s.id !== deleteDialog.data!.id));
-      toast.success('Student deleted successfully');
+      try {
+        await fetch(`/api/v1/students/${deleteDialog.data.id}`, {
+          method: 'DELETE',
+          credentials: 'include'
+        });
+        toast.success('Student deleted successfully');
+        await loadData();
+      } catch (err) {
+        console.error('Failed to delete student', err);
+        toast.error('Unable to delete student');
+      }
     }
     setDeleteDialog({ open: false, data: null });
   };
 
-  const handleSave = (data: any) => {
-    if (formModal.mode === 'add') {
-      const newStudent: Student = {
-        id: String(Date.now()),
-        name: data.name || '',
-        email: data.email || '',
-        phone: data.phone || '',
-        department: data.department || '',
-        enrollmentYear: data.enrollmentYear || new Date().getFullYear(),
-        status: data.status || 'active',
-      };
-      setStudents((prev) => [...prev, newStudent]);
-      toast.success('Student added successfully');
-    } else {
-      setStudents((prev) =>
-        prev.map((s) => (s.id === formModal.data?.id ? { ...s, ...data } : s))
-      );
-      toast.success('Student updated successfully');
+  const handleSave = async (data: any) => {
+    // transform department value to id if it is string
+    const payload: any = { ...data };
+    if (payload.department && typeof payload.department !== 'number') {
+      payload.department = parseInt(payload.department, 10);
+    }
+
+    try {
+      if (formModal.mode === 'add') {
+        const res = await fetch('/api/v1/students', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(payload)
+        });
+        const json = await res.json();
+        if (json.success) {
+          toast.success('Student added successfully');
+          await loadData();
+          navigate('/admin/superadmin/students', { replace: true });
+        } else {
+          toast.error(json.message || 'Failed to add student');
+        }
+      } else {
+        const res = await fetch(`/api/v1/students/${formModal.data?.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(payload)
+        });
+        const json = await res.json();
+        if (json.success) {
+          toast.success('Student updated successfully');
+          await loadData();
+          // clear query param after editing
+          navigate('/admin/superadmin/students', { replace: true });
+        } else {
+          toast.error(json.message || 'Failed to update student');
+        }
+      }
+    } catch (err) {
+      console.error('Error saving student', err);
+      toast.error('Unable to save student');
     }
   };
 
@@ -158,12 +243,18 @@ export default function SuperAdminStudents() {
         {/* Filters */}
         <div className="flex flex-col sm:flex-row gap-4 p-4 bg-card rounded-lg border border-border shadow-sm">
           <div className="flex-1">
-            <Input
-              placeholder="Filter by Year (e.g. 2023)..."
-              value={yearFilter}
-              onChange={(e) => setYearFilter(e.target.value)}
-              type="number"
-            />
+            <Select value={yearFilter} onValueChange={setYearFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="All Years" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Years</SelectItem>
+                <SelectItem value="1">Year 1</SelectItem>
+                <SelectItem value="2">Year 2</SelectItem>
+                <SelectItem value="3">Year 3</SelectItem>
+                <SelectItem value="4">Year 4</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div className="w-full sm:w-[200px]">
             <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
@@ -173,7 +264,7 @@ export default function SuperAdminStudents() {
               <SelectContent>
                 <SelectItem value="all">All Departments</SelectItem>
                 {departments.map(dept => (
-                  <SelectItem key={dept.id} value={dept.name}>{dept.name}</SelectItem>
+                  <SelectItem key={dept.id} value={String(dept.id)}>{dept.name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>

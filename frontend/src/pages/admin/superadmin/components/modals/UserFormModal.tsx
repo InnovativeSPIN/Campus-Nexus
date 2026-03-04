@@ -37,7 +37,16 @@ export function UserFormModal({ open, onClose, onSave, type, initialData, mode }
 
   useEffect(() => {
     if (initialData) {
-      setFormData(initialData);
+      // if department comes as object or name, convert to id
+      let data = { ...initialData } as any;
+      if (data.department && typeof data.department !== 'number') {
+        if (typeof data.department === 'object' && data.department.id) {
+          data.department = String(data.department.id);
+        } else if (!isNaN(parseInt(data.department, 10))) {
+          data.department = String(parseInt(data.department, 10));
+        }
+      }
+      setFormData(data);
     } else {
       setFormData({});
     }
@@ -256,7 +265,7 @@ export function UserFormModal({ open, onClose, onSave, type, initialData, mode }
                   </SelectTrigger>
                   <SelectContent className="bg-popover">
                     {departments.map((dept) => (
-                      <SelectItem key={dept.id || (dept as any)._id} value={dept.short_name}>
+                      <SelectItem key={dept.id || (dept as any)._id} value={String(dept.id)}>
                         {dept.full_name || dept.short_name}
                       </SelectItem>
                     ))}

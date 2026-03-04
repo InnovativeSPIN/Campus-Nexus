@@ -72,12 +72,7 @@ export default function SuperAdminDashboard() {
             value={dashboardStats.totalDepartments}
             icon={<Building2 className="h-6 w-6" />}
           />
-          <StatsCard
-            key="active-programs"
-            title="Active Programs"
-            value={dashboardStats.activePrograms}
-            icon={<BookOpen className="h-6 w-6" />}
-          />
+        
         </div>
 
         {/* System Alerts */}
