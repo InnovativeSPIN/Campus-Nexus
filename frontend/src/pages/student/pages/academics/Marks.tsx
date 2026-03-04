@@ -2,7 +2,6 @@
 import PageHeader from '@/pages/student/components/layout/PageHeader';
 import SectionCard from '@/pages/student/components/common/SectionCard';
 import Badge from '@/pages/student/components/common/Badge';
-import AcademicsNavBar from '@/pages/student/components/layout/AcademicsNavBar';
 import { SEMESTERS } from '@/pages/student/utils/constants';
 import { Award, TrendingUp, BookOpen } from 'lucide-react';
 
@@ -99,8 +98,6 @@ export default function Marks() {
           { label: 'Marks' },
         ]}
       />
-
-      <AcademicsNavBar />
 
       {/* Summary Cards */}
       <div className="grid gap-4 sm:grid-cols-3 mb-6">

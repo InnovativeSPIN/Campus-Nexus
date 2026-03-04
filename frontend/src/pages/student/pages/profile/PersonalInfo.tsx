@@ -30,6 +30,7 @@ const personalData = {
   admissionNo: 'ADM2021-001',
   batch: '2021-2025',
   admissionDate: '2021-08-01',
+  admissionType: 'Regular',
   residenceType: 'Hostel',
 };
 
@@ -250,7 +251,7 @@ export default function PersonalInfo() {
             <div>
               <h2 className="text-xl font-bold">{user?.name || basicInfoData.name}</h2>
               <p className="text-muted-foreground">{user?.rollNo || basicInfoData.rollNo}</p>
-              <span className="badge badge-info mt-2">{user?.department?.short_name || user?.department?.full_name || basicInfoData.department}</span>
+              <span className="badge badge-info mt-2">{typeof user?.department === 'object' ? (user?.department?.short_name || user?.department?.full_name) : (user?.department || basicInfoData.department)}</span>
             </div>
           </div>
 
@@ -302,7 +303,7 @@ export default function PersonalInfo() {
         }
       >
         {/* Admission details */}
-        <div className="grid gap-4 sm:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-5">
           <div>
             <label className="block text-xs font-medium text-gray-500 mb-1">
               Admission Number
@@ -327,6 +328,15 @@ export default function PersonalInfo() {
             </label>
             <p className="text-base font-semibold text-slate-900">
               {personalData.admissionDate}
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1">
+              Admission Type
+            </label>
+            <p className="text-base font-semibold text-slate-900">
+              {personalData.admissionType}
             </p>
           </div>
 

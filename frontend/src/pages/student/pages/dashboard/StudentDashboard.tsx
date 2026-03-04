@@ -11,7 +11,6 @@ import {
   GraduationCap,
   Users,
   BookOpen,
-  FileText,
   Target,
   TrendingUp,
 } from 'lucide-react';
@@ -50,7 +49,6 @@ const dashboardData = {
   quickStats: [
     { label: 'Classmates', value: 42, icon: Users, color: 'text-info', bg: 'bg-info/10' },
     { label: 'Subjects', value: 6, icon: BookOpen, color: 'text-success', bg: 'bg-success/10' },
-    { label: 'Assignments', value: 8, icon: FileText, color: 'text-warning', bg: 'bg-warning/10' },
   ],
   upcomingClasses: [
     { subject: 'Data Structures', time: '10:00 AM', room: 'CS-201' },
@@ -228,7 +226,7 @@ export default function StudentDashboard() {
 
         {/* Quick Stats */}
         <SectionCard title="Quick Stats" subtitle="Overview of your classroom">
-          <div className="grid grid-cols-3 gap-4 h-full">
+          <div className="grid grid-cols-2 gap-4 h-full">
             {dashboardData.quickStats.map((stat, index) => {
               const Icon = stat.icon;
               return (

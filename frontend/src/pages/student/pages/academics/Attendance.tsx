@@ -3,10 +3,10 @@ import PageHeader from '@/pages/student/components/layout/PageHeader';
 import SectionCard from '@/pages/student/components/common/SectionCard';
 import ProgressBar from '@/pages/student/components/common/ProgressBar';
 import Badge from '@/pages/student/components/common/Badge';
-import AcademicsNavBar from '@/pages/student/components/layout/AcademicsNavBar';
+
 import { getAttendanceStatus, getAttendanceMessage, calculateAttendancePercentage } from '@/pages/student/utils/calculateAttendance';
 import { SEMESTERS, ATTENDANCE_THRESHOLD } from '@/pages/student/utils/constants';
-import { Calendar, AlertTriangle, CheckCircle } from 'lucide-react';
+import { AlertTriangle, CheckCircle } from 'lucide-react';
 
 const attendanceData = {
   5: {
@@ -64,7 +64,6 @@ export default function Attendance() {
         }
       />
 
-      <AcademicsNavBar />
 
       {/* Low Attendance Alert */}
       {lowAttendanceSubjects.length > 0 && (

@@ -22,7 +22,7 @@ const menuItems = [
   { title: "Profile", url: "/student/profile/personal", icon: User },
   { title: "Attendance", url: "/student/academics/attendance", icon: ClipboardCheck },
   { title: "Timetable", url: "/student/academics/timetable", icon: Calendar },
-  { title: "Academics/Marks", url: "/student/academics/marks", icon: BookOpen },
+  { title: "Marks", url: "/student/academics/marks", icon: BookOpen },
   { title: "Leave", url: "/student/academics/leave", icon: FileText },
   { title: "Change Password", url: "/student/profile/change-password", icon: Lock },
   { title: "Portfolio", url: "/student/portfolio/sports", icon: Award },

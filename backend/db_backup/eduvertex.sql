@@ -807,29 +807,6 @@ CREATE TABLE `student_certifications` (
 
 -- --------------------------------------------------------
 
---
--- Table structure for table `student_disciplinary_records`
---
-
-CREATE TABLE `student_disciplinary_records` (
-  `id` int(11) NOT NULL,
-  `studentId` int(11) NOT NULL COMMENT 'FK → students.id',
-  `recordDate` date NOT NULL DEFAULT current_timestamp(),
-  `type` enum('warning','suspension','fine','counseling','expulsion','other') NOT NULL,
-  `description` text NOT NULL COMMENT 'Issue description',
-  `actionTaken` text NOT NULL COMMENT 'Disciplinary action that was taken',
-  `staffRemarks` text DEFAULT NULL COMMENT 'Staff / faculty remarks',
-  `issuedByFacultyId` int(11) DEFAULT NULL COMMENT 'FK → faculty_profiles.faculty_id',
-  `resolved` tinyint(1) DEFAULT 0,
-  `resolvedDate` date DEFAULT NULL,
-  `fineAmount` decimal(10,2) DEFAULT NULL COMMENT 'Fine amount if type is fine',
-  `finePaid` tinyint(1) DEFAULT 0,
-  `attachments` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT 'Array of document/evidence URLs' CHECK (json_valid(`attachments`)),
-  `createdAt` datetime NOT NULL DEFAULT current_timestamp(),
-  `updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- --------------------------------------------------------
 
 --
 -- Table structure for table `student_events`
@@ -887,8 +864,8 @@ CREATE TABLE `student_marks` (
   `subjectId` int(11) NOT NULL COMMENT 'FK → subjects.id',
   `semester` int(11) NOT NULL,
   `academicYear` varchar(9) NOT NULL COMMENT 'e.g. 2023-2024',
-  `internalMarks` decimal(5,2) DEFAULT 0.00 COMMENT 'Internal marks out of 50',
-  `externalMarks` decimal(5,2) DEFAULT 0.00 COMMENT 'External exam marks out of 50',
+  `internalMarks` decimal(5,2) DEFAULT 0.00 COMMENT 'Internal marks out of 60',
+  `externalMarks` decimal(5,2) DEFAULT 0.00 COMMENT 'External exam marks out of 40',
   `totalMarks` decimal(5,2) DEFAULT 0.00,
   `grade` enum('A+','A','A-','B+','B','B-','C+','C','C-','D','F') DEFAULT NULL,
   `gradePoints` decimal(4,2) DEFAULT NULL,
@@ -1808,11 +1785,9 @@ CREATE TABLE `student_projects` (
   `techStack` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT 'Array of technology strings' CHECK (json_valid(`techStack`)),
   `startDate` date DEFAULT NULL,
   `endDate` date DEFAULT NULL COMMENT 'Null = ongoing',
-  `projectUrl` varchar(500) DEFAULT NULL,
+  `demoUrl` varchar(500) DEFAULT NULL,
   `repoUrl` varchar(500) DEFAULT NULL,
-  `thumbnailUrl` varchar(500) DEFAULT NULL,
   `status` enum('in-progress','completed','planned','paused') DEFAULT 'in-progress' COMMENT 'Matches frontend values',
-  `imageUrl` varchar(500) DEFAULT NULL COMMENT 'Project thumbnail/screenshot URL',
   `approvalStatus` enum('pending','approved','rejected') DEFAULT 'pending',
   `approvedById` int(11) DEFAULT NULL COMMENT 'FK → users.id',
   `approvalRemarks` varchar(500) DEFAULT NULL,
@@ -2482,15 +2457,7 @@ ALTER TABLE `student_certifications`
   ADD KEY `idx_student` (`studentId`),
   ADD KEY `idx_student_approval` (`studentId`,`approvalStatus`);
 
---
--- Indexes for table `student_disciplinary_records`
---
-ALTER TABLE `student_disciplinary_records`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `idx_student` (`studentId`),
-  ADD KEY `idx_student_resolved` (`studentId`,`resolved`),
-  ADD KEY `idx_student_date` (`studentId`,`recordDate`),
-  ADD KEY `idx_issued_by` (`issuedByFacultyId`);
+
 
 --
 -- Indexes for table `student_events`
@@ -2823,11 +2790,7 @@ ALTER TABLE `student_bio`
 ALTER TABLE `student_certifications`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
---
--- AUTO_INCREMENT for table `student_disciplinary_records`
---
-ALTER TABLE `student_disciplinary_records`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
 
 --
 -- AUTO_INCREMENT for table `student_events`
@@ -3044,6 +3007,317 @@ ALTER TABLE `timetable_uploads`
 ALTER TABLE `users`
   ADD CONSTRAINT `fk_users_role_id` FOREIGN KEY (`role_id`) REFERENCES `roles` (`role_id`);
 COMMIT;
+-- =====================================================
+-- Student Module Tables
+-- Database: eduvertex (MariaDB 10.4+)
+-- Generated: Mar 4, 2026
+-- =====================================================
+
+-- ──────────────────────────────────────────────────────
+-- TABLE 1: students  (core identity + academic fields)
+-- Loaded on every request — kept lean on purpose.
+-- ──────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS `students` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `userId` int(11) NOT NULL COMMENT 'FK → users.id',
+  `studentId` varchar(30) NOT NULL COMMENT 'e.g. 2023CSE0001',
+  `rollNumber` varchar(30) NOT NULL,
+  `firstName` varchar(100) NOT NULL,
+  `lastName` varchar(100) NOT NULL,
+  `email` varchar(150) NOT NULL,
+  `phone` varchar(20) NOT NULL,
+  `photo` varchar(255) DEFAULT 'default-student.png',
+  `gender` enum('male','female','other') NOT NULL,
+  `departmentId` int(11) NOT NULL COMMENT 'FK → departments.id',
+  `classId` int(11) DEFAULT NULL,
+  `batch` varchar(20) NOT NULL COMMENT 'e.g. 2023-2027',
+  `semester` tinyint(2) NOT NULL,
+  `section` varchar(10) DEFAULT NULL,
+  `admissionDate` date DEFAULT (CURRENT_DATE),
+  `admissionType` enum('regular','lateral','management') DEFAULT 'regular',
+  `status` enum('active','inactive','graduated','dropped','suspended') DEFAULT 'active',
+  `createdAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updatedAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_studentId` (`studentId`),
+  UNIQUE KEY `uq_email` (`email`),
+  KEY `fk_student_user` (`userId`),
+  KEY `fk_student_department` (`departmentId`),
+  KEY `idx_student_class` (`classId`),
+  KEY `idx_student_batch_sem` (`batch`, `semester`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- ──────────────────────────────────────────────────────
+-- TABLE 2: students1  (extended profile — lazy loaded)
+-- One row per student, created when profile is filled.
+-- Linked to students via studentId (1:1).
+-- ──────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS `students1` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `studentId` int(11) NOT NULL COMMENT 'FK → students.id (1:1)',
+  `admissionNo` varchar(30) DEFAULT NULL COMMENT 'e.g. ADM2021-001 — shown on PersonalInfo page',
+  `alternatePhone` varchar(20) DEFAULT NULL,
+  `linkedinUrl` varchar(255) DEFAULT NULL,
+  `dateOfBirth` date DEFAULT NULL,
+  `bloodGroup` enum('A+','A-','B+','B-','AB+','AB-','O+','O-') DEFAULT NULL,
+  `nationality` varchar(60) DEFAULT NULL,
+  `religion` varchar(60) DEFAULT NULL,
+  `category` varchar(30) DEFAULT NULL COMMENT 'General / OBC / SC / ST / etc.',
+  `aadharNo` varchar(20) DEFAULT NULL,
+  `motherTongue` varchar(60) DEFAULT NULL,
+  `residenceType` enum('hosteller','day_scholar','other') DEFAULT NULL,
+  `address` json DEFAULT NULL COMMENT 'Current address (structured JSON)',
+  `parentInfo` json DEFAULT NULL COMMENT 'father, mother, guardian, siblings',
+  `references` json DEFAULT NULL COMMENT 'Array of reference/relative contacts',
+  `previousEducation` json DEFAULT NULL,
+  `documents` json DEFAULT NULL COMMENT 'Uploaded document URLs',
+  `createdAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updatedAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_students1_studentId` (`studentId`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS `student_marks` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `studentId` int(11) NOT NULL COMMENT 'FK → students.id',
+  `subjectId` int(11) NOT NULL COMMENT 'FK → subjects.id',
+  `semester` int(11) NOT NULL,
+  `academicYear` varchar(9) NOT NULL COMMENT 'e.g. 2023-2024',
+  `internalMarks` decimal(5,2) DEFAULT 0.00 COMMENT 'Internal marks out of 60',
+  `externalMarks` decimal(5,2) DEFAULT 0.00 COMMENT 'External exam marks out of 40',
+  `totalMarks` decimal(5,2) DEFAULT 0.00,
+  `grade` enum('A+','A','A-','B+','B','B-','C+','C','C-','D','F') DEFAULT NULL,
+  `gradePoints` decimal(4,2) DEFAULT NULL,
+  `credits` int(11) NOT NULL DEFAULT 4,
+  `status` enum('pass','fail','absent','withheld','pending') DEFAULT 'pending',
+  `remarks` varchar(255) DEFAULT NULL,
+  `createdAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updatedAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_student_subject_sem_year` (`studentId`,`subjectId`,`semester`,`academicYear`),
+  KEY `idx_student_semester` (`studentId`,`semester`),
+  KEY `idx_subject_semester` (`subjectId`,`semester`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS `student_internal_marks` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `studentId` int(11) NOT NULL COMMENT 'FK → students.id',
+  `subjectId` int(11) NOT NULL COMMENT 'FK → subjects.id',
+  `semester` int(11) NOT NULL,
+  `academicYear` varchar(9) NOT NULL COMMENT 'e.g. 2023-2024',
+  `internalNumber` int(11) NOT NULL COMMENT '1 = Internal 1, 2 = Internal 2',
+  `internalScore` decimal(5,2) DEFAULT 0.00 COMMENT 'Internal test score out of 60',
+  `assessmentScore` decimal(5,2) DEFAULT 0.00 COMMENT 'Assessment/assignment score out of 40',
+  `totalScore` decimal(5,2) DEFAULT 0.00,
+  `remarks` varchar(255) DEFAULT NULL,
+  `createdAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updatedAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_student_subject_sem_year_int` (`studentId`,`subjectId`,`semester`,`academicYear`,`internalNumber`),
+  KEY `idx_student_sem_int` (`studentId`,`semester`,`internalNumber`),
+  KEY `idx_subject_semester` (`subjectId`,`semester`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS `student_certifications` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `studentId` int(11) NOT NULL COMMENT 'FK → students.id',
+  `name` varchar(200) NOT NULL COMMENT 'Certification name',
+  `issuer` varchar(150) NOT NULL COMMENT 'Issuing organization',
+  `issueDate` date NOT NULL,
+  `expiryDate` date DEFAULT NULL COMMENT 'Null = no expiry',
+  `credentialId` varchar(100) DEFAULT NULL,
+  `credentialUrl` varchar(500) DEFAULT NULL,
+  `skills` json DEFAULT NULL COMMENT 'Array of skill strings',
+  `documentUrl` varchar(500) DEFAULT NULL COMMENT 'Uploaded certificate file URL',
+  `approvalStatus` enum('pending','approved','rejected') DEFAULT 'pending',
+  `approvedById` int(11) DEFAULT NULL COMMENT 'FK → users.id (faculty who approved)',
+  `approvalRemarks` varchar(500) DEFAULT NULL,
+  `approvalDate` datetime DEFAULT NULL,
+  `createdAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updatedAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_student` (`studentId`),
+  KEY `idx_student_approval` (`studentId`,`approvalStatus`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS `student_projects` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `studentId` int(11) NOT NULL COMMENT 'FK → students.id',
+  `title` varchar(200) NOT NULL,
+  `description` text DEFAULT NULL,
+  `role` varchar(100) DEFAULT NULL COMMENT 'e.g. Frontend Developer, Team Lead',
+  `techStack` json DEFAULT NULL COMMENT 'Array of technology strings',
+  `startDate` date DEFAULT NULL,
+  `endDate` date DEFAULT NULL COMMENT 'Null = ongoing',
+  `demoUrl` varchar(500) DEFAULT NULL,
+  `repoUrl` varchar(500) DEFAULT NULL,
+  `status` enum('in-progress','completed','planned','paused') DEFAULT 'in-progress' COMMENT 'Matches frontend values',
+  `approvalStatus` enum('pending','approved','rejected') DEFAULT 'pending',
+  `approvedById` int(11) DEFAULT NULL COMMENT 'FK → users.id',
+  `approvalRemarks` varchar(500) DEFAULT NULL,
+  `approvalDate` datetime DEFAULT NULL,
+  `createdAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updatedAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_student` (`studentId`),
+  KEY `idx_student_status` (`studentId`,`status`),
+  KEY `idx_student_approval` (`studentId`,`approvalStatus`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS `student_sports` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `studentId` int(11) NOT NULL COMMENT 'FK → students.id',
+  `name` varchar(100) NOT NULL COMMENT 'Sport name e.g. Football, Basketball',
+  `category` enum('Team Sports','Individual Sports','Aquatics','Combat Sports','Other') NOT NULL DEFAULT 'Other',
+  `joinedDate` date NOT NULL,
+  `status` enum('active','inactive') DEFAULT 'active',
+  `achievements` varchar(500) DEFAULT NULL COMMENT 'e.g. Winner, Runner-up, Participation',
+  `level` enum('college','district','state','national','international') NOT NULL DEFAULT 'college',
+  `documentUrl` varchar(500) DEFAULT NULL COMMENT 'Certificate/proof URL',
+  `approvalStatus` enum('pending','approved','rejected') DEFAULT 'pending',
+  `approvedById` int(11) DEFAULT NULL COMMENT 'FK → users.id',
+  `approvalRemarks` varchar(500) DEFAULT NULL,
+  `approvalDate` datetime DEFAULT NULL,
+  `createdAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updatedAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_student` (`studentId`),
+  KEY `idx_student_status` (`studentId`,`status`),
+  KEY `idx_student_approval` (`studentId`,`approvalStatus`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS `student_events` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `studentId` int(11) NOT NULL COMMENT 'FK → students.id',
+  `eventName` varchar(200) NOT NULL,
+  `eventType` enum('cultural','technical','sports','social','workshop','seminar','other') NOT NULL DEFAULT 'other',
+  `organizer` varchar(150) DEFAULT NULL COMMENT 'Organizing institution or club',
+  `eventDate` date NOT NULL,
+  `role` enum('participant','organizer','volunteer','speaker','judge','other') NOT NULL DEFAULT 'participant',
+  `achievement` varchar(300) DEFAULT NULL COMMENT 'e.g. 1st place, Best Paper Award',
+  `level` enum('college','district','state','national','international') NOT NULL DEFAULT 'college',
+  `certificateUrl` varchar(500) DEFAULT NULL COMMENT 'Participation/achievement certificate URL',
+  `approvalStatus` enum('pending','approved','rejected') DEFAULT 'pending',
+  `approvedById` int(11) DEFAULT NULL COMMENT 'FK → users.id',
+  `approvalRemarks` varchar(500) DEFAULT NULL,
+  `approvalDate` datetime DEFAULT NULL,
+  `createdAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updatedAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_student` (`studentId`),
+  KEY `idx_student_type` (`studentId`,`eventType`),
+  KEY `idx_student_approval` (`studentId`,`approvalStatus`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS `student_notifications` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `studentId` int(11) NOT NULL COMMENT 'FK → students.id',
+  `title` varchar(200) NOT NULL,
+  `message` text NOT NULL,
+  `type` enum('academic','leave','fee','general','disciplinary','attendance','result','approval','announcement') NOT NULL DEFAULT 'general',
+  `priority` enum('low','medium','high','urgent') DEFAULT 'low',
+  `referenceId` int(11) DEFAULT NULL COMMENT 'ID of the related DB record',
+  `referenceType` varchar(50) DEFAULT NULL COMMENT 'Model name of the related record',
+  `actionUrl` varchar(300) DEFAULT NULL COMMENT 'Frontend route to navigate on click',
+  `isRead` tinyint(1) DEFAULT 0,
+  `readAt` datetime DEFAULT NULL,
+  `expiresAt` datetime DEFAULT NULL COMMENT 'Optional expiry; null = never expire',
+  `createdAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updatedAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_student` (`studentId`),
+  KEY `idx_student_read` (`studentId`,`isRead`),
+  KEY `idx_student_type` (`studentId`,`type`),
+  KEY `idx_student_priority` (`studentId`,`priority`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- =====================================================
+-- Foreign Key Constraints
+-- =====================================================
+
+-- students: link to users and departments
+ALTER TABLE `students`
+  ADD CONSTRAINT `fk_student_user` 
+  FOREIGN KEY (`userId`) 
+  REFERENCES `users` (`id`) 
+  ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_student_department` 
+  FOREIGN KEY (`departmentId`) 
+  REFERENCES `departments` (`id`) 
+  ON DELETE CASCADE;
+
+-- students1: 1:1 link back to students
+ALTER TABLE `students1`
+  ADD CONSTRAINT `fk_students1_student`
+  FOREIGN KEY (`studentId`)
+  REFERENCES `students` (`id`)
+  ON DELETE CASCADE;
+
+ALTER TABLE `student_marks`
+  ADD CONSTRAINT `fk_marks_student` 
+  FOREIGN KEY (`studentId`) 
+  REFERENCES `students` (`id`) 
+  ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_marks_subject` 
+  FOREIGN KEY (`subjectId`) 
+  REFERENCES `subjects` (`id`) 
+  ON DELETE CASCADE;
+
+ALTER TABLE `student_internal_marks`
+  ADD CONSTRAINT `fk_intmarks_student` 
+  FOREIGN KEY (`studentId`) 
+  REFERENCES `students` (`id`) 
+  ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_intmarks_subject` 
+  FOREIGN KEY (`subjectId`) 
+  REFERENCES `subjects` (`id`) 
+  ON DELETE CASCADE;
+
+ALTER TABLE `student_certifications`
+  ADD CONSTRAINT `fk_cert_student` 
+  FOREIGN KEY (`studentId`) 
+  REFERENCES `students` (`id`) 
+  ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_cert_approver` 
+  FOREIGN KEY (`approvedById`) 
+  REFERENCES `users` (`id`) 
+  ON DELETE SET NULL;
+
+ALTER TABLE `student_projects`
+  ADD CONSTRAINT `fk_proj_student` 
+  FOREIGN KEY (`studentId`) 
+  REFERENCES `students` (`id`) 
+  ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_proj_approver` 
+  FOREIGN KEY (`approvedById`) 
+  REFERENCES `users` (`id`) 
+  ON DELETE SET NULL;
+
+ALTER TABLE `student_sports`
+  ADD CONSTRAINT `fk_sport_student` 
+  FOREIGN KEY (`studentId`) 
+  REFERENCES `students` (`id`) 
+  ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_sport_approver` 
+  FOREIGN KEY (`approvedById`) 
+  REFERENCES `users` (`id`) 
+  ON DELETE SET NULL;
+
+ALTER TABLE `student_events`
+  ADD CONSTRAINT `fk_event_student` 
+  FOREIGN KEY (`studentId`) 
+  REFERENCES `students` (`id`) 
+  ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_event_approver` 
+  FOREIGN KEY (`approvedById`) 
+  REFERENCES `users` (`id`) 
+  ON DELETE SET NULL;
+
+ALTER TABLE `student_notifications`
+  ADD CONSTRAINT `fk_notif_student` 
+  FOREIGN KEY (`studentId`) 
+  REFERENCES `students` (`id`) 
+  ON DELETE CASCADE;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
