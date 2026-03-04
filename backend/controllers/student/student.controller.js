@@ -9,8 +9,17 @@ import { Op, Sequelize } from 'sequelize';
 // @access    Private
 export const getAllStudents = asyncHandler(async (req, res, next) => {
   const page = parseInt(req.query.page, 10) || 1;
-  const limit = parseInt(req.query.limit, 10) || 25;
-  const startIndex = (page - 1) * limit;
+  const rawLimit = parseInt(req.query.limit, 10);
+  let limit = 25;
+  if (!isNaN(rawLimit)) {
+    if (rawLimit > 0) {
+      limit = rawLimit;
+    } else {
+      // treat 0 or negative as unlimited
+      limit = null;
+    }
+  }
+  const startIndex = (page - 1) * (limit || 0);
 
   let where = {};
 
@@ -34,6 +43,16 @@ export const getAllStudents = asyncHandler(async (req, res, next) => {
     where.batch = req.query.batch;
   }
 
+  // support filtering by study year (1..4) based on current year and batch prefix
+  if (req.query.studyYear) {
+    const sy = parseInt(req.query.studyYear, 10);
+    if (!isNaN(sy)) {
+      const currentYear = new Date().getFullYear();
+      const startYear = currentYear - sy + 1;
+      where.batch = { [Op.like]: `${startYear}%` };
+    }
+  }
+
   // Filter by status
   if (req.query.status) {
     where.status = req.query.status;
@@ -51,7 +70,8 @@ export const getAllStudents = asyncHandler(async (req, res, next) => {
   }
 
   const total = await Student.count({ where });
-  let students = await Student.findAll({
+  let students;
+  const findOpts = {
     where,
     attributes: { exclude: ['userId'] },
     include: [
@@ -59,10 +79,14 @@ export const getAllStudents = asyncHandler(async (req, res, next) => {
       { model: Department, as: 'department', attributes: ['short_name', 'full_name'] },
       { model: ClassModel, as: 'class', attributes: ['name', 'section'] }
     ],
-    offset: startIndex,
-    limit,
     order: [['createdAt', 'DESC']]
-  });
+  };
+  if (limit !== null) {
+    findOpts.offset = startIndex;
+    findOpts.limit = limit;
+  }
+
+  students = await Student.findAll(findOpts);
 
   // convert to plain objects and add a "name" alias for department
   students = students.map((s) => {
