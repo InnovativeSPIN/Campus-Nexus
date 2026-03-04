@@ -164,6 +164,7 @@ export default function Profile() {
   const [selectedEventCategory, setSelectedEventCategory] = useState<EventCategoryType>("Resource Person");
   const [selectedResearchCategory, setSelectedResearchCategory] = useState<keyof typeof initialResearchData>("Conference");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const editFileInputRef = useRef<HTMLInputElement>(null);
   const lastUserIdRef = useRef<any>(null);
   const [facultyData, setFacultyData] = useState({
     ...initialFacultyData,
@@ -386,6 +387,45 @@ export default function Profile() {
         } catch (e) {
           console.warn('Failed to fetch events', e);
         }
+
+        // Fetch research from API
+        try {
+          const researchResponse = await fetch('/api/v1/faculty/research', {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (researchResponse.ok) {
+            const researchResult = await researchResponse.json();
+            if (researchResult.success && Array.isArray(researchResult.data)) {
+              setResearchData(researchResult.data.map((r: any) => ({
+                research_id: r.research_id,
+                id: r.id ?? r.research_id ?? null,
+                title: r.title,
+                category: r.category,
+                author_names: r.author_names,
+                abstract: r.abstract,
+                keywords: r.keywords,
+                publication_date: r.publication_date,
+                publisher_organizer: r.publisher_organizer,
+                issn_isbn: r.issn_isbn,
+                volume_issue: r.volume_issue,
+                pages: r.pages,
+                type: r.type || 'International',
+                status: r.status || 'Published',
+                research_type: r.research_type,
+                impact_factor: r.impact_factor,
+                citations: r.citations || 0,
+                indexed_in: r.indexed_in,
+                url: r.url,
+                document_url: r.document_url,
+                ORCID_ID: r.ORCID_ID,
+                created_at: r.created_at,
+                updated_at: r.updated_at
+              })));
+            }
+          }
+        } catch (e) {
+          console.warn('Failed to fetch research', e);
+        }
       } catch (error) {
         console.error('Failed to fetch data:', error);
       }
@@ -394,9 +434,9 @@ export default function Profile() {
     fetchData();
   }, [user]);
 
-  // Events and Research states
+// Events and Research states
   const [eventsData, setEventsData] = useState<EventDetail[]>([]);
-  const [researchData, setResearchData] = useState(initialResearchData);
+  const [researchData, setResearchData] = useState<any[]>([]);
   const [selectedSubjectFilter, setSelectedSubjectFilter] = useState<string | null>(null);
 
   const [addingEvent, setAddingEvent] = useState(false);
@@ -406,9 +446,25 @@ export default function Profile() {
   const [newEventOrganizerType, setNewEventOrganizerType] = useState<"" | "organized" | "participated">("");
 
   const [addingResearch, setAddingResearch] = useState(false);
-  const [editingResearch, setEditingResearch] = useState<{ index: number } | null>(null);
-  const [newResearch, setNewResearch] = useState({ title: "", date: "", organizer: "", url: "", type: "International" });
-  const [tempResearch, setTempResearch] = useState({ title: "", date: "", organizer: "", url: "", type: "International" });
+  const [editingResearch, setEditingResearch] = useState<number | null>(null);
+  const [newResearch, setNewResearch] = useState({ 
+    title: "", 
+    publication_date: "", 
+    author_names: "", 
+    abstract: "",
+    keywords: "",
+    publisher_organizer: "", 
+    url: "", 
+    issn_isbn: "",
+    volume_issue: "",
+    pages: "",
+    type: "International",
+    status: "Published",
+    research_type: "",
+    impact_factor: "",
+    indexed_in: ""
+  });
+  const [tempResearch, setTempResearch] = useState<any>({});
 
   // Individual edit states for each field
   const [editingField, setEditingField] = useState<string | null>(null);
@@ -1680,20 +1736,21 @@ export default function Profile() {
 
     setLoading(true);
     try {
+      // Always use FormData to avoid content-type mismatches (backend expects multipart for files)
+      const form = new FormData();
+      form.append('event_name', newEvent.event_name!);
+      form.append('event_date', newEvent.event_date!);
+      form.append('category', (newEvent.category || selectedEventCategory) as string);
+      if (newEvent.organizer) form.append('organizer', newEvent.organizer);
+      form.append('organizer_type', newEventOrganizerType || 'participated');
+      if (newEvent.url) form.append('url', newEvent.url);
+      const file = fileInputRef.current?.files?.[0];
+      if (file) form.append('file', file);
+
       const response = await fetch('/api/v1/faculty/events', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          event_name: newEvent.event_name,
-          event_date: newEvent.event_date,
-          category: newEvent.category || selectedEventCategory,
-          organizer: newEvent.organizer,
-          organizer_type: newEventOrganizerType || 'participated',
-          url: newEvent.url,
-        })
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: form
       });
 
       if (!response.ok) {
@@ -1702,7 +1759,23 @@ export default function Profile() {
 
       const result = await response.json();
       if (result.success) {
-        setEventsData([...eventsData, result.data]);
+        const newEventData = {
+          id: result.data.id ?? result.data.event_id ?? null,
+          event_id: result.data.event_id,
+          event_name: result.data.event_name,
+          category: result.data.category,
+          organizer_type: result.data.organizer_type,
+          organizer: result.data.organizer,
+          event_date: result.data.event_date,
+          document_url: result.data.document_url,
+          url: result.data.url,
+          created_at: result.data.created_at,
+          updated_at: result.data.updated_at,
+          name: result.data.event_name,
+          date: result.data.event_date
+        };
+        console.log('[Events] New event created with ID:', newEventData.event_id, 'Category:', newEventData.category);
+        setEventsData([...eventsData, newEventData]);
         setAddingEvent(false);
         setNewEventOrganizerType("");
         setNewEvent({ event_name: "", event_date: "", organizer: "", url: "" });
@@ -1733,21 +1806,40 @@ export default function Profile() {
 
     setLoading(true);
     try {
-      const response = await fetch(`/api/v1/faculty/events/${tempEvent.event_id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          event_name: tempEvent.event_name,
-          event_date: tempEvent.event_date,
-          category: tempEvent.category,
-          organizer: tempEvent.organizer,
-          organizer_type: tempEvent.organizer_type,
-          url: tempEvent.url,
-        })
-      });
+      let response;
+      const file = editFileInputRef.current?.files?.[0];
+      if (file) {
+        const form = new FormData();
+        form.append('event_name', tempEvent.event_name as string);
+        form.append('event_date', tempEvent.event_date as string);
+        if (tempEvent.category) form.append('category', tempEvent.category as string);
+        if (tempEvent.organizer) form.append('organizer', tempEvent.organizer as string);
+        if (tempEvent.organizer_type) form.append('organizer_type', tempEvent.organizer_type as string);
+        if (tempEvent.url) form.append('url', tempEvent.url as string);
+        form.append('file', file);
+
+        response = await fetch(`/api/v1/faculty/events/${tempEvent.event_id}`, {
+          method: 'PUT',
+          headers: { 'Authorization': `Bearer ${token}` },
+          body: form
+        });
+      } else {
+        response = await fetch(`/api/v1/faculty/events/${tempEvent.event_id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            event_name: tempEvent.event_name,
+            event_date: tempEvent.event_date,
+            category: tempEvent.category,
+            organizer: tempEvent.organizer,
+            organizer_type: tempEvent.organizer_type,
+            url: tempEvent.url,
+          })
+        });
+      }
 
       if (!response.ok) {
         throw new Error(`Failed to update event: ${response.statusText}`);
@@ -1820,47 +1912,232 @@ export default function Profile() {
   // Research Handlers
   const handleAddResearch = () => {
     setAddingResearch(true);
-    setNewResearch({ title: "", date: "", organizer: "", url: "", type: "International" });
+    setNewResearch({
+      title: "",
+      publication_date: "",
+      author_names: "",
+      abstract: "",
+      keywords: "",
+      publisher_organizer: "",
+      url: "",
+      issn_isbn: "",
+      volume_issue: "",
+      pages: "",
+      type: "International",
+      status: "Published",
+      research_type: "",
+      impact_factor: "",
+      indexed_in: ""
+    });
   };
 
   const handleEditResearch = (index: number) => {
-    setEditingResearch({ index });
-    const item = researchData[selectedResearchCategory][index] as any;
-    setTempResearch({ ...item, type: item.type || "International" });
+    setEditingResearch(index);
+    const research = getResearchByCategory(selectedResearchCategory)[index];
+    setTempResearch({ ...research });
   };
 
-  const handleSaveNewResearch = () => {
-    if (!newResearch.title || !newResearch.date) {
-      toast({ title: "Validation Error", description: "Title and Date are required.", variant: "destructive" });
+  const getResearchByCategory = (category: string): any[] => {
+    return researchData.filter((r) => r.category === category);
+  };
+
+  const handleSaveNewResearch = async () => {
+    if (!newResearch.title || !selectedResearchCategory) {
+      toast({ title: "Validation Error", description: "Title and Category are required.", variant: "destructive" });
       return;
     }
-    setResearchData(prev => ({
-      ...prev,
-      [selectedResearchCategory]: [...prev[selectedResearchCategory], newResearch]
-    }));
-    setAddingResearch(false);
-    toast({ title: "Research added", description: "New research has been added successfully." });
+
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+      toast({ title: 'Not authenticated', description: 'Please log in and try again.', variant: 'destructive' });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const form = new FormData();
+      form.append('title', newResearch.title);
+      form.append('category', selectedResearchCategory);
+      if (newResearch.publication_date) form.append('publication_date', newResearch.publication_date);
+      if (newResearch.author_names) form.append('author_names', newResearch.author_names);
+      if (newResearch.abstract) form.append('abstract', newResearch.abstract);
+      if (newResearch.keywords) form.append('keywords', newResearch.keywords);
+      if (newResearch.publisher_organizer) form.append('publisher_organizer', newResearch.publisher_organizer);
+      if (newResearch.url) form.append('url', newResearch.url);
+      if (newResearch.issn_isbn) form.append('issn_isbn', newResearch.issn_isbn);
+      if (newResearch.volume_issue) form.append('volume_issue', newResearch.volume_issue);
+      if (newResearch.pages) form.append('pages', newResearch.pages);
+      if (newResearch.type) form.append('type', newResearch.type);
+      if (newResearch.status) form.append('status', newResearch.status);
+      if (newResearch.research_type) form.append('research_type', newResearch.research_type);
+      if (newResearch.impact_factor) form.append('impact_factor', newResearch.impact_factor);
+      if (newResearch.indexed_in) form.append('indexed_in', newResearch.indexed_in);
+      
+      const file = fileInputRef.current?.files?.[0];
+      if (file) form.append('file', file);
+
+      const response = await fetch('/api/v1/faculty/research', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: form
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to add research: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      if (result.success) {
+        const newResearchData = {
+          research_id: result.data.research_id,
+          id: result.data.id ?? result.data.research_id ?? null,
+          title: result.data.title,
+          category: result.data.category,
+          author_names: result.data.author_names,
+          abstract: result.data.abstract,
+          keywords: result.data.keywords,
+          publication_date: result.data.publication_date,
+          publisher_organizer: result.data.publisher_organizer,
+          issn_isbn: result.data.issn_isbn,
+          volume_issue: result.data.volume_issue,
+          pages: result.data.pages,
+          type: result.data.type || 'International',
+          status: result.data.status || 'Published',
+          research_type: result.data.research_type,
+          impact_factor: result.data.impact_factor,
+          citations: result.data.citations || 0,
+          indexed_in: result.data.indexed_in,
+          url: result.data.url,
+          document_url: result.data.document_url,
+          ORCID_ID: result.data.ORCID_ID,
+          created_at: result.data.created_at,
+          updated_at: result.data.updated_at
+        };
+        setResearchData([...researchData, newResearchData]);
+        setAddingResearch(false);
+        setNewResearch({ title: "", publication_date: "", author_names: "", abstract: "", keywords: "", publisher_organizer: "", url: "", issn_isbn: "", volume_issue: "", pages: "", type: "International", status: "Published", research_type: "", impact_factor: "", indexed_in: "" });
+        toast({ title: "Research added", description: "New research has been added successfully." });
+      }
+    } catch (error: any) {
+      toast({ title: 'Error', description: error.message || 'Failed to add research.', variant: 'destructive' });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleSaveEditResearch = (index: number) => {
-    const updated = [...researchData[selectedResearchCategory]];
-    updated[index] = tempResearch;
-    setResearchData(prev => ({
-      ...prev,
-      [selectedResearchCategory]: updated
-    }));
-    setEditingResearch(null);
-    toast({ title: "Research updated", description: "Research has been updated successfully." });
+  const handleSaveEditResearch = async () => {
+    if (!tempResearch.research_id) {
+      toast({ title: 'Error', description: 'Research ID missing', variant: 'destructive' });
+      return;
+    }
+
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+      toast({ title: 'Not authenticated', description: 'Please log in and try again.', variant: 'destructive' });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      let response;
+      const file = editFileInputRef.current?.files?.[0];
+      if (file) {
+        const form = new FormData();
+        form.append('title', tempResearch.title);
+        form.append('category', tempResearch.category);
+        if (tempResearch.publication_date) form.append('publication_date', tempResearch.publication_date);
+        if (tempResearch.author_names) form.append('author_names', tempResearch.author_names);
+        if (tempResearch.abstract) form.append('abstract', tempResearch.abstract);
+        if (tempResearch.keywords) form.append('keywords', tempResearch.keywords);
+        if (tempResearch.publisher_organizer) form.append('publisher_organizer', tempResearch.publisher_organizer);
+        if (tempResearch.url) form.append('url', tempResearch.url);
+        if (tempResearch.issn_isbn) form.append('issn_isbn', tempResearch.issn_isbn);
+        if (tempResearch.volume_issue) form.append('volume_issue', tempResearch.volume_issue);
+        if (tempResearch.pages) form.append('pages', tempResearch.pages);
+        if (tempResearch.type) form.append('type', tempResearch.type);
+        if (tempResearch.status) form.append('status', tempResearch.status);
+        if (tempResearch.research_type) form.append('research_type', tempResearch.research_type);
+        if (tempResearch.impact_factor) form.append('impact_factor', tempResearch.impact_factor);
+        if (tempResearch.indexed_in) form.append('indexed_in', tempResearch.indexed_in);
+        form.append('file', file);
+
+        response = await fetch(`/api/v1/faculty/research/${tempResearch.research_id}`, {
+          method: 'PUT',
+          headers: { 'Authorization': `Bearer ${token}` },
+          body: form
+        });
+      } else {
+        response = await fetch(`/api/v1/faculty/research/${tempResearch.research_id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({
+            title: tempResearch.title,
+            category: tempResearch.category,
+            publication_date: tempResearch.publication_date,
+            author_names: tempResearch.author_names,
+            abstract: tempResearch.abstract,
+            keywords: tempResearch.keywords,
+            publisher_organizer: tempResearch.publisher_organizer,
+            url: tempResearch.url,
+            issn_isbn: tempResearch.issn_isbn,
+            volume_issue: tempResearch.volume_issue,
+            pages: tempResearch.pages,
+            type: tempResearch.type,
+            status: tempResearch.status,
+            research_type: tempResearch.research_type,
+            impact_factor: tempResearch.impact_factor,
+            indexed_in: tempResearch.indexed_in
+          })
+        });
+      }
+
+      if (!response.ok) {
+        throw new Error(`Failed to update research: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      if (result.success) {
+        setResearchData(researchData.map(r => r.research_id === tempResearch.research_id ? result.data : r));
+        setEditingResearch(null);
+        setTempResearch({});
+        toast({ title: "Research updated", description: "Research has been updated successfully." });
+      }
+    } catch (error: any) {
+      toast({ title: 'Error', description: error.message || 'Failed to update research.', variant: 'destructive' });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleDeleteResearch = (index: number) => {
-    if (window.confirm("Are you sure you want to delete this research item?")) {
-      const updated = researchData[selectedResearchCategory].filter((_, i) => i !== index);
-      setResearchData(prev => ({
-        ...prev,
-        [selectedResearchCategory]: updated
-      }));
+  const handleDeleteResearch = async (index: number) => {
+    const research = getResearchByCategory(selectedResearchCategory)[index];
+    if (!research?.research_id) return;
+
+    if (!window.confirm("Are you sure you want to delete this research item?")) return;
+
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+      toast({ title: 'Not authenticated', description: 'Please log in and try again.', variant: 'destructive' });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await fetch(`/api/v1/faculty/research/${research.research_id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to delete research: ${response.statusText}`);
+      }
+
+      setResearchData(researchData.filter(r => r.research_id !== research.research_id));
       toast({ title: "Research deleted", description: "Research has been deleted successfully." });
+    } catch (error: any) {
+      toast({ title: 'Error', description: error.message || 'Failed to delete research.', variant: 'destructive' });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -4083,6 +4360,15 @@ export default function Profile() {
                         className="input input-bordered w-full bg-white text-foreground"
                       />
                     </div>
+                    <div className="space-y-1 md:col-span-2">
+                      <label className="text-xs font-semibold text-muted-foreground ml-1">Upload Document (Optional)</label>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept=".pdf,.doc,.docx,.xlsx,.jpg,.jpeg,.png,.ppt,.pptx"
+                        className="file-input file-input-bordered file-input-sm w-full bg-white text-foreground"
+                      />
+                    </div>
                   </div>
                   <div className="flex gap-3 justify-end mt-6">
                     <Button size="sm" variant="outline" onClick={() => { setAddingEvent(false); setNewEventOrganizerType(""); setNewEvent({ event_name: "", event_date: "", organizer: "", url: "" }); }}>Cancel</Button>
@@ -4130,6 +4416,15 @@ export default function Profile() {
                             onChange={(e) => setTempEvent({ ...tempEvent, url: e.target.value })}
                             className="input input-bordered w-full text-foreground"
                           />
+                          <div className="space-y-1 md:col-span-2">
+                            <label className="text-xs font-semibold text-muted-foreground ml-1">Update Document (Optional)</label>
+                            <input
+                              ref={editFileInputRef}
+                              type="file"
+                              accept=".pdf,.doc,.docx,.xlsx,.jpg,.jpeg,.png,.ppt,.pptx"
+                              className="file-input file-input-bordered file-input-sm w-full bg-white text-foreground"
+                            />
+                          </div>
                         </div>
                         <div className="flex gap-2 justify-end">
                           <Button size="sm" variant="outline" onClick={() => setEditingEvent(null)} disabled={loading}>Cancel</Button>
@@ -4153,8 +4448,8 @@ export default function Profile() {
                                 {event.organizer_type.charAt(0).toUpperCase() + event.organizer_type.slice(1)}
                               </span>
                             )}
-                            {event.url && (
-                              <button onClick={() => handleViewDocument(event.url, `${event.event_name}.pdf`)} className="text-sm text-primary hover:underline mt-2 flex items-center gap-1.5 font-medium bg-primary/5 w-fit px-3 py-1 rounded-full border border-primary/20 transition-all hover:bg-primary/10 cursor-pointer">
+                            {(event.document_url || event.url) && (
+                              <button onClick={() => handleViewDocument(event.document_url || event.url || '', `${event.event_name}.pdf`)} className="text-sm text-primary hover:underline mt-2 flex items-center gap-1.5 font-medium bg-primary/5 w-fit px-3 py-1 rounded-full border border-primary/20 transition-all hover:bg-primary/10 cursor-pointer">
                                 <FileText className="w-4 h-4" /> View Document
                               </button>
                             )}
@@ -4203,19 +4498,20 @@ export default function Profile() {
 
               <div className="mb-8 p-4 bg-muted/40 rounded-xl border border-border flex flex-col md:flex-row md:items-center gap-4">
                 <div>
-                  <label className="text-sm font-bold text-foreground mb-1 block">Selected Category</label>
+                  <label className="text-sm font-bold text-foreground mb-1 block">Research Category</label>
                   <select
                     value={selectedResearchCategory}
                     onChange={(e) => setSelectedResearchCategory(e.target.value as any)}
                     className="select select-bordered w-full md:w-72 bg-white text-foreground"
                   >
-                    {Object.keys(researchData).map(cat => (
-                      <option key={cat} value={cat}>{cat}</option>
-                    ))}
+                    <option value="Conference">Conference</option>
+                    <option value="Journal">Journal</option>
+                    <option value="Patent">Patent</option>
+                    <option value="Book Chapter">Book Chapter</option>
                   </select>
                 </div>
                 <div className="flex-1 text-sm text-muted-foreground italic md:pt-6">
-                  Showing all published and filed records for {selectedResearchCategory}.
+                  Total: {getResearchByCategory(selectedResearchCategory).length} publications in {selectedResearchCategory}
                 </div>
               </div>
 
@@ -4231,36 +4527,150 @@ export default function Profile() {
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-1">
-                      <label className="text-xs font-semibold text-muted-foreground ml-1">Title</label>
+                      <label className="text-xs font-semibold text-muted-foreground ml-1">Title *</label>
                       <input
                         type="text"
-                        placeholder="e.g., Publication Title"
+                        placeholder="e.g., AI in Healthcare"
                         value={newResearch.title}
                         onChange={(e) => setNewResearch({ ...newResearch, title: e.target.value })}
                         className="input input-bordered w-full bg-white text-foreground"
                       />
                     </div>
                     <div className="space-y-1">
-                      <label className="text-xs font-semibold text-muted-foreground ml-1">Year/Date</label>
+                      <label className="text-xs font-semibold text-muted-foreground ml-1">Publication Date</label>
                       <input
-                        type="text"
-                        placeholder="2024"
-                        value={newResearch.date}
-                        onChange={(e) => setNewResearch({ ...newResearch, date: e.target.value })}
+                        type="date"
+                        value={newResearch.publication_date}
+                        onChange={(e) => setNewResearch({ ...newResearch, publication_date: e.target.value })}
                         className="input input-bordered w-full bg-white text-foreground"
                       />
                     </div>
                     <div className="space-y-1">
-                      <label className="text-xs font-semibold text-muted-foreground ml-1">Organizer/Publisher</label>
+                      <label className="text-xs font-semibold text-muted-foreground ml-1">Author Names</label>
                       <input
                         type="text"
-                        placeholder="e.g., IEEE, Elsevier"
-                        value={newResearch.organizer}
-                        onChange={(e) => setNewResearch({ ...newResearch, organizer: e.target.value })}
+                        placeholder="e.g., Author1, Author2"
+                        value={newResearch.author_names}
+                        onChange={(e) => setNewResearch({ ...newResearch, author_names: e.target.value })}
                         className="input input-bordered w-full bg-white text-foreground"
                       />
                     </div>
                     <div className="space-y-1">
+                      <label className="text-xs font-semibold text-muted-foreground ml-1">Publisher/Organizer</label>
+                      <input
+                        type="text"
+                        placeholder="e.g., IEEE, Springer"
+                        value={newResearch.publisher_organizer}
+                        onChange={(e) => setNewResearch({ ...newResearch, publisher_organizer: e.target.value })}
+                        className="input input-bordered w-full bg-white text-foreground"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-semibold text-muted-foreground ml-1">ISSN/ISBN</label>
+                      <input
+                        type="text"
+                        placeholder="e.g., 1234-5678"
+                        value={newResearch.issn_isbn}
+                        onChange={(e) => setNewResearch({ ...newResearch, issn_isbn: e.target.value })}
+                        className="input input-bordered w-full bg-white text-foreground"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-semibold text-muted-foreground ml-1">Volume/Issue</label>
+                      <input
+                        type="text"
+                        placeholder="e.g., Vol 5, Issue 2"
+                        value={newResearch.volume_issue}
+                        onChange={(e) => setNewResearch({ ...newResearch, volume_issue: e.target.value })}
+                        className="input input-bordered w-full bg-white text-foreground"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-semibold text-muted-foreground ml-1">Pages</label>
+                      <input
+                        type="text"
+                        placeholder="e.g., 100-120"
+                        value={newResearch.pages}
+                        onChange={(e) => setNewResearch({ ...newResearch, pages: e.target.value })}
+                        className="input input-bordered w-full bg-white text-foreground"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-semibold text-muted-foreground ml-1">Publication Type</label>
+                      <select
+                        value={newResearch.type}
+                        onChange={(e) => setNewResearch({ ...newResearch, type: e.target.value })}
+                        className="select select-bordered select-sm w-full bg-white text-foreground"
+                      >
+                        <option value="International">International</option>
+                        <option value="National">National</option>
+                      </select>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-semibold text-muted-foreground ml-1">Publication Status</label>
+                      <select
+                        value={newResearch.status}
+                        onChange={(e) => setNewResearch({ ...newResearch, status: e.target.value })}
+                        className="select select-bordered select-sm w-full bg-white text-foreground"
+                      >
+                        <option value="Published">Published</option>
+                        <option value="Under Review">Under Review</option>
+                        <option value="Accepted">Accepted</option>
+                        <option value="Rejected">Rejected</option>
+                      </select>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-semibold text-muted-foreground ml-1">Impact Factor</label>
+                      <input
+                        type="number"
+                        placeholder="e.g., 2.5"
+                        step="0.01"
+                        value={newResearch.impact_factor}
+                        onChange={(e) => setNewResearch({ ...newResearch, impact_factor: e.target.value })}
+                        className="input input-bordered w-full bg-white text-foreground"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-semibold text-muted-foreground ml-1">Research Type</label>
+                      <input
+                        type="text"
+                        placeholder="e.g., Original Research, Review"
+                        value={newResearch.research_type}
+                        onChange={(e) => setNewResearch({ ...newResearch, research_type: e.target.value })}
+                        className="input input-bordered w-full bg-white text-foreground"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-semibold text-muted-foreground ml-1">Indexed In (SCI/SCOPUS/WoS)</label>
+                      <input
+                        type="text"
+                        placeholder="e.g., SCI, SCOPUS"
+                        value={newResearch.indexed_in}
+                        onChange={(e) => setNewResearch({ ...newResearch, indexed_in: e.target.value })}
+                        className="input input-bordered w-full bg-white text-foreground"
+                      />
+                    </div>
+                    <div className="space-y-1 md:col-span-2">
+                      <label className="text-xs font-semibold text-muted-foreground ml-1">Abstract</label>
+                      <textarea
+                        placeholder="Brief summary of the research"
+                        value={newResearch.abstract}
+                        onChange={(e) => setNewResearch({ ...newResearch, abstract: e.target.value })}
+                        className="textarea textarea-bordered w-full bg-white text-foreground"
+                        rows={3}
+                      />
+                    </div>
+                    <div className="space-y-1 md:col-span-2">
+                      <label className="text-xs font-semibold text-muted-foreground ml-1">Keywords</label>
+                      <input
+                        type="text"
+                        placeholder="e.g., AI, Machine Learning, Healthcare"
+                        value={newResearch.keywords}
+                        onChange={(e) => setNewResearch({ ...newResearch, keywords: e.target.value })}
+                        className="input input-bordered w-full bg-white text-foreground"
+                      />
+                    </div>
+                    <div className="space-y-1 md:col-span-2">
                       <label className="text-xs font-semibold text-muted-foreground ml-1">URL (Optional)</label>
                       <input
                         type="text"
@@ -4271,25 +4681,14 @@ export default function Profile() {
                       />
                     </div>
                     <div className="space-y-1 md:col-span-2">
-                      <label className="text-xs font-semibold text-muted-foreground ml-1">Upload Document</label>
+                      <label className="text-xs font-semibold text-muted-foreground ml-1">Upload Document (Optional)</label>
                       <input
+                        ref={fileInputRef}
                         type="file"
+                        accept=".pdf,.doc,.docx,.xlsx,.jpg,.jpeg,.png,.ppt,.pptx"
                         className="file-input file-input-bordered file-input-sm w-full bg-white text-foreground"
                       />
                     </div>
-                    {selectedResearchCategory === "Conference" && (
-                      <div className="space-y-1 md:col-span-2">
-                        <label className="text-xs font-semibold text-muted-foreground ml-1">Conference Type</label>
-                        <select
-                          value={newResearch.type}
-                          onChange={(e) => setNewResearch({ ...newResearch, type: e.target.value })}
-                          className="select select-bordered select-sm w-full bg-white text-foreground"
-                        >
-                          <option value="International">International</option>
-                          <option value="National">National</option>
-                        </select>
-                      </div>
-                    )}
                   </div>
                   <div className="flex gap-3 justify-end mt-6">
                     <Button size="sm" variant="outline" onClick={() => setAddingResearch(false)}>Cancel</Button>
@@ -4300,82 +4699,230 @@ export default function Profile() {
 
               {/* Research List */}
               <div className="space-y-4">
-                {researchData[selectedResearchCategory].length === 0 && (
+                {getResearchByCategory(selectedResearchCategory).length === 0 && (
                   <p className="text-center text-muted-foreground py-8 italic">No records found for this category.</p>
                 )}
-                {researchData[selectedResearchCategory].map((item, index) => (
+                {getResearchByCategory(selectedResearchCategory).map((item, index) => (
                   <motion.div
                     key={index}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="p-5 bg-card rounded-xl border border-border hover:border-secondary/30 hover:shadow-md transition-all group"
                   >
-                    {editingResearch?.index === index ? (
+                    {editingResearch === index ? (
                       <div className="space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <input
-                            type="text"
-                            value={tempResearch.title}
-                            onChange={(e) => setTempResearch({ ...tempResearch, title: e.target.value })}
-                            className="input input-bordered w-full text-foreground"
-                          />
-                          <input
-                            type="text"
-                            value={tempResearch.date}
-                            onChange={(e) => setTempResearch({ ...tempResearch, date: e.target.value })}
-                            className="input input-bordered w-full text-foreground"
-                          />
-                          <input
-                            type="text"
-                            value={tempResearch.organizer}
-                            onChange={(e) => setTempResearch({ ...tempResearch, organizer: e.target.value })}
-                            className="input input-bordered w-full text-foreground"
-                          />
-                          <input
-                            type="text"
-                            value={tempResearch.url}
-                            onChange={(e) => setTempResearch({ ...tempResearch, url: e.target.value })}
-                            className="input input-bordered w-full text-foreground"
-                          />
-                          <input
-                            type="file"
-                            className="file-input file-input-bordered file-input-sm w-full md:col-span-2"
-                          />
-                          {selectedResearchCategory === "Conference" && (
+                          <div className="space-y-1">
+                            <label className="text-xs font-semibold text-muted-foreground ml-1">Title *</label>
+                            <input
+                              type="text"
+                              placeholder="e.g., AI in Healthcare"
+                              value={tempResearch.title || ""}
+                              onChange={(e) => setTempResearch({ ...tempResearch, title: e.target.value })}
+                              className="input input-bordered w-full bg-white text-foreground"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-xs font-semibold text-muted-foreground ml-1">Publication Date</label>
+                            <input
+                              type="date"
+                              value={tempResearch.publication_date || ""}
+                              onChange={(e) => setTempResearch({ ...tempResearch, publication_date: e.target.value })}
+                              className="input input-bordered w-full bg-white text-foreground"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-xs font-semibold text-muted-foreground ml-1">Author Names</label>
+                            <input
+                              type="text"
+                              placeholder="e.g., Author1, Author2"
+                              value={tempResearch.author_names || ""}
+                              onChange={(e) => setTempResearch({ ...tempResearch, author_names: e.target.value })}
+                              className="input input-bordered w-full bg-white text-foreground"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-xs font-semibold text-muted-foreground ml-1">Publisher/Organizer</label>
+                            <input
+                              type="text"
+                              placeholder="e.g., IEEE, Springer"
+                              value={tempResearch.publisher_organizer || ""}
+                              onChange={(e) => setTempResearch({ ...tempResearch, publisher_organizer: e.target.value })}
+                              className="input input-bordered w-full bg-white text-foreground"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-xs font-semibold text-muted-foreground ml-1">ISSN/ISBN</label>
+                            <input
+                              type="text"
+                              placeholder="e.g., 1234-5678"
+                              value={tempResearch.issn_isbn || ""}
+                              onChange={(e) => setTempResearch({ ...tempResearch, issn_isbn: e.target.value })}
+                              className="input input-bordered w-full bg-white text-foreground"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-xs font-semibold text-muted-foreground ml-1">Volume/Issue</label>
+                            <input
+                              type="text"
+                              placeholder="e.g., Vol 5, Issue 2"
+                              value={tempResearch.volume_issue || ""}
+                              onChange={(e) => setTempResearch({ ...tempResearch, volume_issue: e.target.value })}
+                              className="input input-bordered w-full bg-white text-foreground"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-xs font-semibold text-muted-foreground ml-1">Pages</label>
+                            <input
+                              type="text"
+                              placeholder="e.g., 100-120"
+                              value={tempResearch.pages || ""}
+                              onChange={(e) => setTempResearch({ ...tempResearch, pages: e.target.value })}
+                              className="input input-bordered w-full bg-white text-foreground"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-xs font-semibold text-muted-foreground ml-1">Publication Type</label>
                             <select
-                              value={tempResearch.type}
+                              value={tempResearch.type || "International"}
                               onChange={(e) => setTempResearch({ ...tempResearch, type: e.target.value })}
-                              className="select select-bordered select-sm w-full text-foreground md:col-span-2"
+                              className="select select-bordered select-sm w-full bg-white text-foreground"
                             >
                               <option value="International">International</option>
                               <option value="National">National</option>
                             </select>
-                          )}
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-xs font-semibold text-muted-foreground ml-1">Publication Status</label>
+                            <select
+                              value={tempResearch.status || "Published"}
+                              onChange={(e) => setTempResearch({ ...tempResearch, status: e.target.value })}
+                              className="select select-bordered select-sm w-full bg-white text-foreground"
+                            >
+                              <option value="Published">Published</option>
+                              <option value="Under Review">Under Review</option>
+                              <option value="Accepted">Accepted</option>
+                              <option value="Rejected">Rejected</option>
+                            </select>
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-xs font-semibold text-muted-foreground ml-1">Impact Factor</label>
+                            <input
+                              type="number"
+                              placeholder="e.g., 2.5"
+                              step="0.01"
+                              value={tempResearch.impact_factor || ""}
+                              onChange={(e) => setTempResearch({ ...tempResearch, impact_factor: e.target.value })}
+                              className="input input-bordered w-full bg-white text-foreground"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-xs font-semibold text-muted-foreground ml-1">Research Type</label>
+                            <input
+                              type="text"
+                              placeholder="e.g., Original Research, Review"
+                              value={tempResearch.research_type || ""}
+                              onChange={(e) => setTempResearch({ ...tempResearch, research_type: e.target.value })}
+                              className="input input-bordered w-full bg-white text-foreground"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-xs font-semibold text-muted-foreground ml-1">Indexed In (SCI/SCOPUS/WoS)</label>
+                            <input
+                              type="text"
+                              placeholder="e.g., SCI, SCOPUS"
+                              value={tempResearch.indexed_in || ""}
+                              onChange={(e) => setTempResearch({ ...tempResearch, indexed_in: e.target.value })}
+                              className="input input-bordered w-full bg-white text-foreground"
+                            />
+                          </div>
+                          <div className="space-y-1 md:col-span-2">
+                            <label className="text-xs font-semibold text-muted-foreground ml-1">Abstract</label>
+                            <textarea
+                              placeholder="Brief summary of the research"
+                              value={tempResearch.abstract || ""}
+                              onChange={(e) => setTempResearch({ ...tempResearch, abstract: e.target.value })}
+                              className="textarea textarea-bordered w-full bg-white text-foreground"
+                              rows={3}
+                            />
+                          </div>
+                          <div className="space-y-1 md:col-span-2">
+                            <label className="text-xs font-semibold text-muted-foreground ml-1">Keywords</label>
+                            <input
+                              type="text"
+                              placeholder="e.g., AI, Machine Learning, Healthcare"
+                              value={tempResearch.keywords || ""}
+                              onChange={(e) => setTempResearch({ ...tempResearch, keywords: e.target.value })}
+                              className="input input-bordered w-full bg-white text-foreground"
+                            />
+                          </div>
+                          <div className="space-y-1 md:col-span-2">
+                            <label className="text-xs font-semibold text-muted-foreground ml-1">URL (Optional)</label>
+                            <input
+                              type="text"
+                              placeholder="https://..."
+                              value={tempResearch.url || ""}
+                              onChange={(e) => setTempResearch({ ...tempResearch, url: e.target.value })}
+                              className="input input-bordered w-full bg-white text-foreground"
+                            />
+                          </div>
+                          <div className="space-y-1 md:col-span-2">
+                            <label className="text-xs font-semibold text-muted-foreground ml-1">Replace Document (Optional)</label>
+                            <input
+                              ref={editFileInputRef}
+                              type="file"
+                              accept=".pdf,.doc,.docx,.xlsx,.jpg,.jpeg,.png,.ppt,.pptx"
+                              className="file-input file-input-bordered file-input-sm w-full bg-white text-foreground"
+                            />
+                            {tempResearch.document_url && (
+                              <p className="text-xs text-muted-foreground mt-1">Current: <a href={tempResearch.document_url} target="_blank" rel="noopener noreferrer" className="link link-primary">View Document</a></p>
+                            )}
+                          </div>
                         </div>
                         <div className="flex gap-2 justify-end">
                           <Button size="sm" variant="outline" onClick={() => setEditingResearch(null)}>Cancel</Button>
-                          <Button size="sm" onClick={() => handleSaveEditResearch(index)} className="bg-secondary text-white">Update</Button>
+                          <Button size="sm" onClick={handleSaveEditResearch} className="bg-secondary text-white">Update</Button>
                         </div>
                       </div>
                     ) : (
                       <div className="flex justify-between items-start">
-                        <div className="flex items-start gap-4">
-                          <div className="w-12 h-12 rounded-lg bg-secondary/10 flex items-center justify-center text-secondary mt-1">
-                            <BookOpen className="w-6 h-6" />
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <div className="w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center text-secondary">
+                              <BookOpen className="w-5 h-5" />
+                            </div>
+                            <div className="flex-1">
+                              <h4 className="font-bold text-foreground text-lg leading-tight">{item.title}</h4>
+                              <div className="flex items-center gap-2 mt-1 flex-wrap">
+                                <span className="text-xs font-semibold px-2 py-1 rounded-full bg-secondary/15 text-secondary">{item.category}</span>
+                                {item.status && <span className="text-xs font-semibold px-2 py-1 rounded-full bg-primary/15 text-primary">{item.status}</span>}
+                                {item.publication_date && <span className="text-xs text-muted-foreground">{new Date(item.publication_date).toLocaleDateString()}</span>}
+                              </div>
+                            </div>
                           </div>
-                          <div>
-                            <h4 className="font-bold text-foreground text-lg leading-tight">{item.title}</h4>
-                            <p className="text-sm text-muted-foreground font-medium mt-1 flex items-center gap-2">
-                              {item.organizer} • {item.date}
-                            </p>
-                            {item.url && (
-                              <button onClick={() => handleViewDocument(item.url, `${item.title}.pdf`)} className="text-sm text-secondary hover:underline mt-3 flex items-center gap-1.5 font-semibold bg-secondary/5 w-fit px-3 py-1 rounded-full border border-secondary/20 transition-all hover:bg-secondary/10 cursor-pointer">
-                                <FileText className="w-4 h-4" /> View Document
-                              </button>
-                            )}
+                          <div className="ml-13 space-y-1 text-sm">
+                            {item.author_names && <p className="text-muted-foreground"><span className="font-semibold">Authors:</span> {item.author_names}</p>}
+                            {item.publisher_organizer && <p className="text-muted-foreground"><span className="font-semibold">Publisher:</span> {item.publisher_organizer}</p>}
+                            {item.issn_isbn && <p className="text-muted-foreground"><span className="font-semibold">ISSN/ISBN:</span> {item.issn_isbn}</p>}
+                            {item.indexed_in && <p className="text-muted-foreground"><span className="font-semibold">Indexed In:</span> {item.indexed_in}</p>}
+                            {item.citations && <p className="text-muted-foreground"><span className="font-semibold">Citations:</span> {item.citations}</p>}
                           </div>
+                          {(item.document_url || item.url) && (
+                            <div className="mt-3 flex gap-2">
+                              {item.document_url && (
+                                <button onClick={() => handleViewDocument(item.document_url, `${item.title}.pdf`)} className="text-xs text-secondary hover:underline font-semibold bg-secondary/5 px-3 py-1.5 rounded-full border border-secondary/20 transition-all hover:bg-secondary/10 cursor-pointer flex items-center gap-1.5">
+                                  <FileText className="w-3.5 h-3.5" /> Document
+                                </button>
+                              )}
+                              {item.url && (
+                                <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-500 hover:underline font-semibold bg-blue-50 px-3 py-1.5 rounded-full border border-blue-200 transition-all hover:bg-blue-100 flex items-center gap-1.5">
+                                  <FileText className="w-3.5 h-3.5" /> Link
+                                </a>
+                              )}
+                            </div>
+                          )}
                         </div>
-                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex gap-1 ml-3 opacity-0 group-hover:opacity-100 transition-opacity">
                           <Button size="icon" variant="ghost" onClick={() => handleEditResearch(index)} className="h-8 w-8 text-muted-foreground hover:text-secondary">
                             <Edit2 className="w-4 h-4" />
                           </Button>
@@ -4493,7 +5040,7 @@ export default function Profile() {
                     </Button>
                   </div>
                 </motion.div>
-              ) : (
+              ) : facultyData.phdStatus ? (
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
@@ -4556,7 +5103,7 @@ export default function Profile() {
                     </div>
                   ) : null}
                 </motion.div>
-              )}
+              ) : null}
 
               {/* Add New PhD Form */}
               {addingPhd && (

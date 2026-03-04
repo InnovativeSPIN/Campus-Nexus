@@ -12,7 +12,8 @@ import {
   ChevronLeft,
   ChevronRight,
   ClipboardCheck,
-  BookOpen
+  BookOpen,
+  Lock
 } from 'lucide-react';
 import { cn } from '@/pages/student/lib/utils';
 
@@ -23,6 +24,7 @@ const menuItems = [
   { title: "Timetable", url: "/student/academics/timetable", icon: Calendar },
   { title: "Academics/Marks", url: "/student/academics/marks", icon: BookOpen },
   { title: "Leave", url: "/student/academics/leave", icon: FileText },
+  { title: "Change Password", url: "/student/profile/change-password", icon: Lock },
   { title: "Portfolio", url: "/student/portfolio/sports", icon: Award },
   { title: "Announcements", url: "/student/announcements", icon: Megaphone },
 ];

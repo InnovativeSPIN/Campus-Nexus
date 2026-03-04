@@ -11,7 +11,6 @@ const profileNavItems: ProfileNavItem[] = [
   { path: '/student/profile/parent', label: 'Parent Info' },
   { path: '/student/profile/reference', label: 'Reference' },
   { path: '/student/profile/photos', label: 'Photos' },
-  { path: '/student/profile/change-password', label: 'Change Password' },
 ];
 
 export default function ProfileNavBar() {

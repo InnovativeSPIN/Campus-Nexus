@@ -18,6 +18,7 @@ import {
   LogOut,
   Briefcase,
   Clock,
+  Lock,
 } from "lucide-react";
 import { cn } from "@/pages/faculty/lib/utils";
 
@@ -32,6 +33,7 @@ const menuItems = [
   { title: "Counseling", url: "/faculty/counseling", icon: Users },
   { title: "Announcement", url: "/faculty/communication", icon: MessageSquare },
   { title: "Reports", url: "/faculty/reports", icon: BarChart3 },
+  { title: "Change Password", url: "/faculty/change-password", icon: Lock },
 ];
 
 export function AppSidebar() {

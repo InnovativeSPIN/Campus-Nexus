@@ -18,6 +18,7 @@ import {
   LogOut,
   GraduationCap,
   Book,
+  Lock,
 } from "lucide-react";
 import { cn } from "@/pages/admin/department-admin/lib/utils";
 
@@ -35,6 +36,7 @@ const menuItems = [
   { title: "Counseling", url: "/admin/department-admin/counseling", icon: Users },
   { title: "Announcement", url: "/admin/department-admin/communication", icon: MessageSquare },
   { title: "Reports", url: "/admin/department-admin/reports", icon: BarChart3 },
+  { title: "Change Password", url: "/admin/department-admin/change-password", icon: Lock },
 ];
 
 export function AppSidebar() {

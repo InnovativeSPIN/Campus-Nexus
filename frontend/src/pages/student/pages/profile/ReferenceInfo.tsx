@@ -2,7 +2,7 @@
 import PageHeader from '@/pages/student/components/layout/PageHeader';
 import SectionCard from '@/pages/student/components/common/SectionCard';
 import ProfileNavBar from '@/pages/student/components/layout/ProfileNavBar';
-import { User, Phone, MapPin, Plus, ChevronDown, X, Edit, Trash2, MoreVertical, Clock } from 'lucide-react';
+import { User, Phone, MapPin, Plus, ChevronDown, Edit, Trash2, Clock } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from '@/pages/student/components/ui/dialog';
 import { useToast } from '@/pages/student/hooks/use-toast';
 
@@ -36,7 +36,6 @@ const references = [
 export default function ReferenceInfo() {
   const { toast } = useToast();
   const [referenceList, setReferenceList] = useState(references);
-  const [filter, setFilter] = useState<'all' | 'references' | 'relatives'>('all');
   const [showAddMenu, setShowAddMenu] = useState(false);
   const [showDialog, setShowDialog] = useState(false);
   const [pendingRequest, setPendingRequest] = useState(false);
@@ -51,7 +50,6 @@ export default function ReferenceInfo() {
   });
   const [isSaving, setIsSaving] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [openMenuId, setOpenMenuId] = useState<number | null>(null);
 
   const relationshipOptions = [
     'Parent',
@@ -184,7 +182,6 @@ export default function ReferenceInfo() {
       address: reference.address,
     });
     setShowDialog(true);
-    setOpenMenuId(null);
   };
 
   const handleDeleteClick = async (id: number) => {
@@ -192,22 +189,11 @@ export default function ReferenceInfo() {
     await new Promise(resolve => setTimeout(resolve, 500));
     setReferenceList(referenceList.filter(ref => ref.id !== id));
     setIsSaving(false);
-    setOpenMenuId(null);
     toast({
       title: 'Success',
       description: 'Reference deleted successfully.',
     });
   };
-
-  const categorizedReferences = referenceList.map((ref, index) => ({
-    ...ref,
-    type: index < 2 ? 'references' : 'relatives',
-  }));
-
-  const filtered = categorizedReferences.filter((ref) => {
-    if (filter === 'all') return true;
-    return ref.type === filter;
-  });
 
   return (
     <div className="animate-fade-in max-w-4xl">
@@ -266,16 +252,16 @@ export default function ReferenceInfo() {
       </div>
 
       <div className="grid gap-6">
-        {filtered.length === 0 ? (
+        {referenceList.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground">
             <User className="w-12 h-12 mx-auto mb-3 opacity-50" />
-            <p>No {filter !== 'all' ? filter : 'references or relatives'} to show.</p>
+            <p>No references or relatives to show.</p>
           </div>
         ) : (
-          filtered.map((ref, index) => (
+          referenceList.map((ref, index) => (
             <div key={ref.id} className="relative">
               <SectionCard
-                title={`${ref.type === 'references' ? 'Reference' : 'Relative'} ${index + 1}`}
+                title={`Reference ${index + 1}`}
                 actions={
                   <div className="flex gap-2">
                     <button
@@ -324,16 +310,10 @@ export default function ReferenceInfo() {
 
         {/* Dialog for adding/editing references */}
         <Dialog open={showDialog} onOpenChange={setShowDialog}>
-          <DialogContent className="max-w-md">
+          <DialogContent>
             <DialogHeader>
-              <DialogTitle>
-                {editingId ? 'Edit Reference' : `Add New ${addType === 'reference' ? 'Reference' : 'Relative'}`}
-              </DialogTitle>
-              <DialogDescription>
-                {editingId
-                  ? 'Update the information for this reference/relative using the form below.'
-                  : 'Provide the details of a new reference or relative; all fields marked * are required.'}
-              </DialogDescription>
+              <DialogTitle>Add Reference</DialogTitle>
+              <DialogClose />
             </DialogHeader>
             <div className="space-y-4">
               <div>
