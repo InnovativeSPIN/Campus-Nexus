@@ -907,6 +907,7 @@ CREATE TABLE `student_notifications` (
 
 CREATE TABLE `student_profile` (
   `id` int(11) NOT NULL,
+  `userId` int(11) DEFAULT NULL COMMENT 'FK → users.id',
   `role_id` int(11) NOT NULL,
   `studentId` varchar(30) NOT NULL,
   `rollNumber` varchar(30) NOT NULL,
@@ -2503,7 +2504,8 @@ ALTER TABLE `student_profile`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `uq_studentId` (`studentId`),
   ADD UNIQUE KEY `uq_email` (`email`),
-  ADD KEY `fk_student_user` (`role_id`),
+  ADD KEY `fk_student_user` (`userId`),
+  ADD KEY `idx_student_role` (`role_id`),
   ADD KEY `fk_student_department` (`departmentId`),
   ADD KEY `idx_student_class` (`classId`),
   ADD KEY `idx_student_batch_sem` (`batch`,`semester`);
@@ -2629,6 +2631,11 @@ ALTER TABLE `timetable_staff_alterations`
   ADD KEY `idx_original_faculty` (`original_faculty_id`),
   ADD KEY `idx_alternative_faculty` (`alternative_faculty_id`),
   ADD KEY `idx_status` (`status`);
+
+-- Indexes for table `departments`
+
+ALTER TABLE `departments`
+  ADD PRIMARY KEY (id);
 
 --
 -- Indexes for table `timetable_uploads`
@@ -3017,7 +3024,7 @@ COMMIT;
 -- TABLE 1: students  (core identity + academic fields)
 -- Loaded on every request — kept lean on purpose.
 -- ──────────────────────────────────────────────────────
-CREATE TABLE IF NOT EXISTS `students` (
+CREATE TABLE IF NOT EXISTS `student_profile` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `userId` int(11) NOT NULL COMMENT 'FK → users.id',
   `studentId` varchar(30) NOT NULL COMMENT 'e.g. 2023CSE0001',
@@ -3052,7 +3059,7 @@ CREATE TABLE IF NOT EXISTS `students` (
 -- One row per student, created when profile is filled.
 -- Linked to students via studentId (1:1).
 -- ──────────────────────────────────────────────────────
-CREATE TABLE IF NOT EXISTS `students1` (
+CREATE TABLE IF NOT EXISTS `student_bio` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `studentId` int(11) NOT NULL COMMENT 'FK → students.id (1:1)',
   `admissionNo` varchar(30) DEFAULT NULL COMMENT 'e.g. ADM2021-001 — shown on PersonalInfo page',
@@ -3236,7 +3243,7 @@ CREATE TABLE IF NOT EXISTS `student_notifications` (
 -- =====================================================
 
 -- students: link to users and departments
-ALTER TABLE `students`
+ALTER TABLE `student_profile`
   ADD CONSTRAINT `fk_student_user` 
   FOREIGN KEY (`userId`) 
   REFERENCES `users` (`id`) 
@@ -3246,17 +3253,17 @@ ALTER TABLE `students`
   REFERENCES `departments` (`id`) 
   ON DELETE CASCADE;
 
--- students1: 1:1 link back to students
-ALTER TABLE `students1`
+-- student_bio: 1:1 link back to student_profile
+ALTER TABLE `student_bio`
   ADD CONSTRAINT `fk_students1_student`
   FOREIGN KEY (`studentId`)
-  REFERENCES `students` (`id`)
+  REFERENCES `student_profile` (`id`)
   ON DELETE CASCADE;
 
 ALTER TABLE `student_marks`
   ADD CONSTRAINT `fk_marks_student` 
   FOREIGN KEY (`studentId`) 
-  REFERENCES `students` (`id`) 
+  REFERENCES `student_profile` (`id`) 
   ON DELETE CASCADE,
   ADD CONSTRAINT `fk_marks_subject` 
   FOREIGN KEY (`subjectId`) 
@@ -3266,7 +3273,7 @@ ALTER TABLE `student_marks`
 ALTER TABLE `student_internal_marks`
   ADD CONSTRAINT `fk_intmarks_student` 
   FOREIGN KEY (`studentId`) 
-  REFERENCES `students` (`id`) 
+  REFERENCES `student_profile` (`id`) 
   ON DELETE CASCADE,
   ADD CONSTRAINT `fk_intmarks_subject` 
   FOREIGN KEY (`subjectId`) 
@@ -3276,7 +3283,7 @@ ALTER TABLE `student_internal_marks`
 ALTER TABLE `student_certifications`
   ADD CONSTRAINT `fk_cert_student` 
   FOREIGN KEY (`studentId`) 
-  REFERENCES `students` (`id`) 
+  REFERENCES `student_profile` (`id`) 
   ON DELETE CASCADE,
   ADD CONSTRAINT `fk_cert_approver` 
   FOREIGN KEY (`approvedById`) 
@@ -3286,7 +3293,7 @@ ALTER TABLE `student_certifications`
 ALTER TABLE `student_projects`
   ADD CONSTRAINT `fk_proj_student` 
   FOREIGN KEY (`studentId`) 
-  REFERENCES `students` (`id`) 
+  REFERENCES `student_profile` (`id`) 
   ON DELETE CASCADE,
   ADD CONSTRAINT `fk_proj_approver` 
   FOREIGN KEY (`approvedById`) 
@@ -3296,7 +3303,7 @@ ALTER TABLE `student_projects`
 ALTER TABLE `student_sports`
   ADD CONSTRAINT `fk_sport_student` 
   FOREIGN KEY (`studentId`) 
-  REFERENCES `students` (`id`) 
+  REFERENCES `student_profile` (`id`) 
   ON DELETE CASCADE,
   ADD CONSTRAINT `fk_sport_approver` 
   FOREIGN KEY (`approvedById`) 
@@ -3306,7 +3313,7 @@ ALTER TABLE `student_sports`
 ALTER TABLE `student_events`
   ADD CONSTRAINT `fk_event_student` 
   FOREIGN KEY (`studentId`) 
-  REFERENCES `students` (`id`) 
+  REFERENCES `student_profile` (`id`) 
   ON DELETE CASCADE,
   ADD CONSTRAINT `fk_event_approver` 
   FOREIGN KEY (`approvedById`) 
@@ -3316,7 +3323,7 @@ ALTER TABLE `student_events`
 ALTER TABLE `student_notifications`
   ADD CONSTRAINT `fk_notif_student` 
   FOREIGN KEY (`studentId`) 
-  REFERENCES `students` (`id`) 
+  REFERENCES `student_profile` (`id`) 
   ON DELETE CASCADE;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
