@@ -8,6 +8,7 @@ import {
     updateApprovalStatus
 } from '../../controllers/student/studentCertification.controller.js';
 import { protect, authorize } from '../../middleware/auth.js';
+import studentUpload from '../../middleware/studentUpload.js';
 
 const router = express.Router();
 
@@ -16,8 +17,8 @@ router.use(protect);
 // Student routes
 router.get('/', authorize('student'), getMyCertifications);
 router.get('/:id', authorize('student'), getCertification);
-router.post('/', authorize('student'), createCertification);
-router.put('/:id', authorize('student'), updateCertification);
+router.post('/', authorize('student'), studentUpload.single('documentUrl'), createCertification);
+router.put('/:id', authorize('student'), studentUpload.single('documentUrl'), updateCertification);
 router.delete('/:id', authorize('student'), deleteCertification);
 
 // Faculty / Admin approval route

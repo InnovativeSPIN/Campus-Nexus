@@ -1697,7 +1697,7 @@ export default function Profile() {
   const handleEditEvent = (index: number) => {
     setEditingEvent(index);
     const event = getEventsByCategory(selectedEventCategory)[index];
-    setTempEvent({...event});
+    setTempEvent({ ...event });
   };
 
   const getEventsByCategory = (category: EventCategoryType): EventDetail[] => {
@@ -1938,7 +1938,7 @@ export default function Profile() {
       form.append('research_type', newResearch.research_type);
       form.append('impact_factor', newResearch.impact_factor);
       form.append('indexed_in', newResearch.indexed_in);
-      
+
       const file = fileInputRef.current?.files?.[0];
       if (file) {
         form.append('file', file);
@@ -2337,7 +2337,7 @@ export default function Profile() {
       setLoading(true);
       const token = localStorage.getItem('authToken');
 
-      const response = await fetch('http://localhost:5000/api/v1/faculty/download-profile', {
+      const response = await fetch('/api/v1/faculty/download-profile', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -2392,7 +2392,7 @@ export default function Profile() {
       });
       return;
     }
-    
+
     try {
       // Fetch the document
       fetch(url)
@@ -2410,7 +2410,7 @@ export default function Profile() {
           link.click();
           document.body.removeChild(link);
           window.URL.revokeObjectURL(blobUrl);
-          
+
           toast({
             title: "Success",
             description: "Document downloaded successfully."
@@ -2446,7 +2446,7 @@ export default function Profile() {
           <p className="text-muted-foreground -mt-4"></p>
         </div>
         <div className="flex items-center gap-3">
-         
+
           <Button onClick={handleDownloadProfile} className="bg-secondary hover:bg-secondary/90">
             <Download className="w-4 h-4 mr-2" />
             Download Profile
@@ -4974,17 +4974,17 @@ export default function Profile() {
                     <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-muted-foreground hover:text-secondary" onClick={handleEditPhd}>
                       <Edit2 className="w-4 h-4" />
                     </Button>
-                      <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive" onClick={handleDeletePrimaryPhd}>
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                    <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive" onClick={handleDeletePrimaryPhd}>
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
                   </div>
 
-                    {facultyData.thesisTitle ? (
-                      <div className="pt-2">
-                        <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">Thesis Title / Research Field</p>
-                        <p className="text-foreground font-medium italic">{facultyData.thesisTitle}</p>
-                      </div>
-                    ) : null}
+                  {facultyData.thesisTitle ? (
+                    <div className="pt-2">
+                      <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">Thesis Title / Research Field</p>
+                      <p className="text-foreground font-medium italic">{facultyData.thesisTitle}</p>
+                    </div>
+                  ) : null}
 
                   {(facultyData.registerNo || facultyData.guideName) ? (
                     <div className="grid grid-cols-2 gap-4 pt-2">

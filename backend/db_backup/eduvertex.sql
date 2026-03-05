@@ -934,6 +934,31 @@ CREATE TABLE `student_marks` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `student_leaves`
+--
+
+CREATE TABLE `student_leaves` (
+  `id` int(11) NOT NULL,
+  `studentId` int(11) NOT NULL COMMENT 'FK → students.id',
+  `leaveType` enum('Leave','On-Duty') NOT NULL DEFAULT 'Leave',
+  `recipient` varchar(100) DEFAULT NULL,
+  `leaveSubType` varchar(100) DEFAULT NULL,
+  `attachment` varchar(255) DEFAULT NULL,
+  `startDate` date NOT NULL,
+  `endDate` date NOT NULL,
+  `totalDays` decimal(4,1) NOT NULL,
+  `reason` text NOT NULL,
+  `status` enum('pending','approved','rejected','cancelled') NOT NULL DEFAULT 'pending',
+  `approvedById` int(11) DEFAULT NULL COMMENT 'FK → users.id',
+  `approvalRemarks` varchar(500) DEFAULT NULL,
+  `approvalDate` datetime DEFAULT NULL,
+  `createdAt` datetime NOT NULL DEFAULT current_timestamp(),
+  `updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `student_notifications`
 --
 
@@ -2538,6 +2563,15 @@ ALTER TABLE `student_internal_marks`
   ADD KEY `idx_subject_semester` (`subjectId`,`semester`);
 
 --
+-- Indexes for table `student_leaves`
+--
+ALTER TABLE `student_leaves`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_student` (`studentId`),
+  ADD KEY `idx_student_status` (`studentId`,`status`),
+  ADD KEY `fk_leave_approver` (`approvedById`);
+
+--
 -- Indexes for table `student_marks`
 --
 ALTER TABLE `student_marks`
@@ -2846,6 +2880,12 @@ ALTER TABLE `student_internal_marks`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT for table `student_leaves`
+--
+ALTER TABLE `student_leaves`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `student_marks`
 --
 ALTER TABLE `student_marks`
@@ -3045,6 +3085,13 @@ ALTER TABLE `student_events`
 ALTER TABLE `student_internal_marks`
   ADD CONSTRAINT `fk_intmarks_student` FOREIGN KEY (`studentId`) REFERENCES `student_profile` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `fk_intmarks_subject` FOREIGN KEY (`subjectId`) REFERENCES `subjects` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `student_leaves`
+--
+ALTER TABLE `student_leaves`
+  ADD CONSTRAINT `fk_leave_approver` FOREIGN KEY (`approvedById`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `fk_leave_student` FOREIGN KEY (`studentId`) REFERENCES `student_profile` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `student_marks`

@@ -54,7 +54,10 @@ export const createProject = asyncHandler(async (req, res, next) => {
     const studentId = await getStudentId(req.user, next);
     if (!studentId) return;
 
-    const project = await StudentProject.create({ ...req.body, studentId, approvalStatus: 'pending' });
+    const data = { ...req.body, studentId, approvalStatus: 'pending' };
+    if (req.file) data.documentUrl = req.file.filename;
+
+    const project = await StudentProject.create(data);
     res.status(201).json({ success: true, data: project });
 });
 
@@ -72,7 +75,10 @@ export const updateProject = asyncHandler(async (req, res, next) => {
     delete req.body.approvalDate;
     delete req.body.studentId;
 
-    await project.update({ ...req.body, approvalStatus: 'pending' });
+    const dataToUpdate = { ...req.body, approvalStatus: 'pending' };
+    if (req.file) dataToUpdate.documentUrl = req.file.filename;
+
+    await project.update(dataToUpdate);
     res.status(200).json({ success: true, data: project });
 });
 

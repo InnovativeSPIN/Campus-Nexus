@@ -52,7 +52,9 @@ export const createSport = asyncHandler(async (req, res, next) => {
     const studentId = await getStudentId(req.user, next);
     if (!studentId) return;
 
-    const sport = await StudentSport.create({ ...req.body, studentId, approvalStatus: 'pending' });
+    const data = { ...req.body, studentId, approvalStatus: 'pending' };
+    if (req.file) data.documentUrl = req.file.filename;
+    const sport = await StudentSport.create(data);
     res.status(201).json({ success: true, data: sport });
 });
 
@@ -67,7 +69,10 @@ export const updateSport = asyncHandler(async (req, res, next) => {
     if (!sport) return next(new ErrorResponse('Sport record not found', 404));
 
     delete req.body.approvedById; delete req.body.approvalDate; delete req.body.studentId;
-    await sport.update({ ...req.body, approvalStatus: 'pending' });
+    const dataToUpdate = { ...req.body, approvalStatus: 'pending' };
+    if (req.file) dataToUpdate.documentUrl = req.file.filename;
+
+    await sport.update(dataToUpdate);
     res.status(200).json({ success: true, data: sport });
 });
 
@@ -141,7 +146,9 @@ export const createEvent = asyncHandler(async (req, res, next) => {
     const studentId = await getStudentId(req.user, next);
     if (!studentId) return;
 
-    const event = await StudentEvent.create({ ...req.body, studentId, approvalStatus: 'pending' });
+    const data = { ...req.body, studentId, approvalStatus: 'pending' };
+    if (req.file) data.certificateUrl = req.file.filename;
+    const event = await StudentEvent.create(data);
     res.status(201).json({ success: true, data: event });
 });
 
@@ -156,7 +163,10 @@ export const updateEvent = asyncHandler(async (req, res, next) => {
     if (!event) return next(new ErrorResponse('Event record not found', 404));
 
     delete req.body.approvedById; delete req.body.approvalDate; delete req.body.studentId;
-    await event.update({ ...req.body, approvalStatus: 'pending' });
+    const dataToUpdate = { ...req.body, approvalStatus: 'pending' };
+    if (req.file) dataToUpdate.certificateUrl = req.file.filename;
+
+    await event.update(dataToUpdate);
     res.status(200).json({ success: true, data: event });
 });
 

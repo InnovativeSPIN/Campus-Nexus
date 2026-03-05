@@ -23,13 +23,18 @@ interface Event {
   achievement?: string;
   level: string;
   approvalStatus?: ApprovalStatus;
+  certificateUrl?: string;
+}
+
+interface EventFormData extends Omit<Event, 'id'> {
+  document?: File | null;
 }
 
 interface EventsProps {
   onPendingChange?: (hasPending: boolean) => void;
 }
 
-const emptyForm: Omit<Event, 'id'> = {
+const emptyForm: EventFormData = {
   eventName: '',
   eventDate: '',
   eventType: 'other',
@@ -38,6 +43,8 @@ const emptyForm: Omit<Event, 'id'> = {
   achievement: '',
   level: 'college',
   approvalStatus: 'pending',
+  certificateUrl: '',
+  document: null,
 };
 
 export default function Events({ onPendingChange }: EventsProps) {
@@ -47,7 +54,7 @@ export default function Events({ onPendingChange }: EventsProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [showDialog, setShowDialog] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [formData, setFormData] = useState<Omit<Event, 'id'>>(emptyForm);
+  const [formData, setFormData] = useState<EventFormData>(emptyForm);
 
   useEffect(() => {
     setLoading(true);
@@ -59,7 +66,7 @@ export default function Events({ onPendingChange }: EventsProps) {
 
   const handleEdit = (event: Event) => {
     setEditingId(event.id);
-    setFormData({ ...event });
+    setFormData({ ...event, document: null });
     setShowDialog(true);
     if (onPendingChange) onPendingChange(true);
   };
@@ -88,13 +95,26 @@ export default function Events({ onPendingChange }: EventsProps) {
     }
 
     setIsSaving(true);
+    const submitData = new FormData();
+    submitData.append('eventName', formData.eventName);
+    submitData.append('eventDate', formData.eventDate);
+    submitData.append('eventType', formData.eventType);
+    if (formData.organizer) submitData.append('organizer', formData.organizer);
+    submitData.append('role', formData.role);
+    if (formData.achievement) submitData.append('achievement', formData.achievement);
+    submitData.append('level', formData.level);
+
+    if (formData.document) {
+      submitData.append('certificateUrl', formData.document);
+    }
+
     try {
       if (editingId) {
-        const res: any = await updateEvent(editingId, formData);
+        const res: any = await updateEvent(editingId, submitData);
         setEvents((prev) => prev.map((e) => (e.id === editingId ? res.data : e)));
         toast({ title: 'Request Submitted', description: 'Changes submitted for faculty approval.' });
       } else {
-        const res: any = await createEvent(formData);
+        const res: any = await createEvent(submitData);
         setEvents((prev) => [res.data, ...prev]);
         toast({ title: 'Request Submitted', description: 'Event submitted for faculty approval.' });
       }
@@ -226,6 +246,10 @@ export default function Events({ onPendingChange }: EventsProps) {
             <div>
               <label className="block text-sm font-medium mb-2">Achievement</label>
               <input type="text" placeholder="e.g., 1st Place, Best Speaker" value={formData.achievement || ''} onChange={(e) => setFormData({ ...formData, achievement: e.target.value })} className="w-full px-3 py-2 border border-input rounded-lg bg-background" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">Upload Certificate (Optional)</label>
+              <input type="file" onChange={(e) => setFormData({ ...formData, document: e.target.files?.[0] || null })} className="w-full px-3 py-1.5 border border-input rounded-lg bg-background" accept=".jpg,.jpeg,.png,.pdf" />
             </div>
             <div className="flex gap-2 justify-end mt-6">
               <DialogClose asChild>

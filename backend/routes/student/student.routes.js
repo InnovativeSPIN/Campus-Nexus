@@ -17,7 +17,7 @@ import {
 } from '../../controllers/student/student.controller.js';
 
 import { protect, authorize } from '../../middleware/auth.js';
-import photoUpload from '../../middleware/photo-upload.js';
+import studentUpload from '../../middleware/studentUpload.js';
 
 const router = express.Router();
 
@@ -30,7 +30,7 @@ router.route('/me/profile')
   .put(authorize('student'), updateMyProfile);
 
 // Student can upload their own photo
-router.post('/me/photo', authorize('student'), photoUpload.single('photo'), uploadStudentPhoto);
+router.post('/me/photo', authorize('student'), studentUpload.single('photo'), uploadStudentPhoto);
 
 // fetch academic years (batches) for dropdowns
 router.get('/academic-years', authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin', 'department-admin', 'faculty'), getAcademicYears);

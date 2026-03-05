@@ -55,6 +55,7 @@ const emptyForm = {
   credentialId: '',
   credentialUrl: '',
   skills: '',
+  document: null as File | null,
 };
 
 export default function Certifications({ onPendingChange }: CertificationsProps) {
@@ -90,6 +91,7 @@ export default function Certifications({ onPendingChange }: CertificationsProps)
       credentialId: cert.credentialId || '',
       credentialUrl: cert.credentialUrl || '',
       skills: ensureArray(cert.skills).join(', '),
+      document: null,
     });
     setIsModalOpen(true);
     if (onPendingChange) onPendingChange(true);
@@ -103,23 +105,29 @@ export default function Certifications({ onPendingChange }: CertificationsProps)
     }
 
     setSaving(true);
-    const payload = {
-      name: formData.name,
-      issuer: formData.issuer,
-      issueDate: formData.issueDate,
-      expiryDate: formData.expiryDate || null,
-      credentialId: formData.credentialId || null,
-      credentialUrl: formData.credentialUrl || null,
-      skills: formData.skills.split(',').map((s) => s.trim()).filter(Boolean),
-    };
+    const submitData = new FormData();
+    submitData.append('name', formData.name);
+    submitData.append('issuer', formData.issuer);
+    submitData.append('issueDate', formData.issueDate);
+    if (formData.expiryDate) submitData.append('expiryDate', formData.expiryDate);
+    if (formData.credentialId) submitData.append('credentialId', formData.credentialId);
+    if (formData.credentialUrl) submitData.append('credentialUrl', formData.credentialUrl);
+
+    // Skills array to JSON string to parse on backend
+    const skillsArray = formData.skills.split(',').map((s) => s.trim()).filter(Boolean);
+    submitData.append('skills', JSON.stringify(skillsArray));
+
+    if (formData.document) {
+      submitData.append('documentUrl', formData.document);
+    }
 
     try {
       if (editingCert) {
-        const res: any = await updateCertification(editingCert.id, payload);
+        const res: any = await updateCertification(editingCert.id, submitData);
         setCertifications((prev) => prev.map((c) => (c.id === editingCert.id ? res.data : c)));
         toast({ title: 'Request Submitted', description: 'Changes submitted for faculty approval.' });
       } else {
-        const res: any = await createCertification(payload);
+        const res: any = await createCertification(submitData);
         setCertifications((prev) => [res.data, ...prev]);
         toast({ title: 'Request Submitted', description: 'Certification submitted for faculty approval.' });
       }
@@ -269,6 +277,10 @@ export default function Certifications({ onPendingChange }: CertificationsProps)
           <div>
             <label className="block text-sm font-medium mb-2">Skills</label>
             <input type="text" value={formData.skills} onChange={(e) => setFormData({ ...formData, skills: e.target.value })} className="input-field" placeholder="Cloud, AWS, Infrastructure (comma separated)" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-2">Upload Certificate (Optional)</label>
+            <input type="file" onChange={(e) => setFormData({ ...formData, document: e.target.files?.[0] || null })} className="input-field py-1.5" accept=".jpg,.jpeg,.png,.pdf" />
           </div>
           <div className="flex justify-end gap-3 pt-4">
             <button type="button" onClick={closeModal} className="px-4 py-2 rounded-lg border border-border hover:bg-muted transition-colors">Cancel</button>

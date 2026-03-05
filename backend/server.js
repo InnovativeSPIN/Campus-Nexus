@@ -47,6 +47,7 @@ import studentCertificationRoutes from './routes/student/studentCertification.ro
 import studentExtracurricularRoutes from './routes/student/studentExtracurricular.routes.js';
 import studentNotificationRoutes from './routes/student/studentNotification.routes.js';
 import studentDisciplinaryRoutes from './routes/student/disciplinary.routes.js';
+import studentLeaveRoutes from './routes/student/studentLeave.routes.js';
 
 // Load env vars
 dotenv.config();
@@ -97,12 +98,19 @@ const startServer = () => {
     app.use(morgan('dev'));
   }
 
-  // File uploading - skip for bulk-upload route to avoid conflict with Multer
+  // File uploading - skip for routes using Multer to avoid conflicts
   app.use((req, res, next) => {
-    // Skip express-fileupload for endpoints using Multer
-    if (req.path === '/api/v1/timetable/bulk-upload' || 
-        req.path.includes('/photo') ||
-        req.path === '/api/v1/students/me/photo') {
+    const multerPaths = [
+      '/api/v1/timetable/bulk-upload',
+      '/api/v1/students/me/photo',
+      '/api/v1/student-leaves',
+      '/api/v1/student/certifications',
+      '/api/v1/student/projects',
+      '/api/v1/student/extracurricular',
+      '/api/v1/student/sports'
+    ];
+
+    if (multerPaths.some(p => req.path.includes(p)) || req.path.includes('/photo')) {
       return next();
     }
     fileupload()(req, res, next);
@@ -181,6 +189,7 @@ const startServer = () => {
   app.use('/api/v1/student/extracurricular', studentExtracurricularRoutes);
   app.use('/api/v1/student/notifications', studentNotificationRoutes);
   app.use('/api/v1/student/disciplinary', studentDisciplinaryRoutes);
+  app.use('/api/v1/student-leaves', studentLeaveRoutes);
 
   // Health check
   app.get('/api/v1/health', (req, res) => {

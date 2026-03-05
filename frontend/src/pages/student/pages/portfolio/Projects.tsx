@@ -22,6 +22,7 @@ interface Project {
   status: 'completed' | 'in-progress' | 'planned' | 'paused';
   createdAt: string;
   approvalStatus?: ApprovalStatus;
+  documentUrl?: string;
 }
 
 const ensureArray = (val: any): string[] => {
@@ -41,18 +42,30 @@ const ensureArray = (val: any): string[] => {
   return [];
 };
 
+interface ProjectFormData {
+  title: string;
+  description: string;
+  technologies: string;
+  githubUrl: string;
+  demoUrl: string;
+  status: Project['status'];
+  documentUrl?: string;
+  document?: File | null;
+}
 
 interface ProjectsProps {
   onPendingChange?: (hasPending: boolean) => void;
 }
 
-const emptyForm = {
+const emptyForm: ProjectFormData = {
   title: '',
   description: '',
   technologies: '',
   githubUrl: '',
   demoUrl: '',
   status: 'in-progress' as Project['status'],
+  documentUrl: '',
+  document: null,
 };
 
 export default function Projects({ onPendingChange }: ProjectsProps) {
@@ -62,7 +75,7 @@ export default function Projects({ onPendingChange }: ProjectsProps) {
   const [saving, setSaving] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
-  const [formData, setFormData] = useState(emptyForm);
+  const [formData, setFormData] = useState<ProjectFormData>(emptyForm);
 
   useEffect(() => {
     setLoading(true);
@@ -87,6 +100,8 @@ export default function Projects({ onPendingChange }: ProjectsProps) {
       githubUrl: project.repoUrl || '',
       demoUrl: project.demoUrl || '',
       status: project.status,
+      documentUrl: project.documentUrl || '',
+      document: null,
     });
     setIsModalOpen(true);
   };
@@ -99,22 +114,29 @@ export default function Projects({ onPendingChange }: ProjectsProps) {
     }
 
     setSaving(true);
-    const payload = {
-      title: formData.title,
-      description: formData.description,
-      techStack: formData.technologies.split(',').map((t) => t.trim()).filter(Boolean),
-      repoUrl: formData.githubUrl || null,
-      demoUrl: formData.demoUrl || null,
-      status: formData.status,
-    };
+
+    const submitData = new FormData();
+    submitData.append('title', formData.title);
+    if (formData.description) submitData.append('description', formData.description);
+
+    const techArray = formData.technologies.split(',').map((t) => t.trim()).filter(Boolean);
+    submitData.append('techStack', JSON.stringify(techArray));
+
+    if (formData.githubUrl) submitData.append('repoUrl', formData.githubUrl);
+    if (formData.demoUrl) submitData.append('demoUrl', formData.demoUrl);
+    submitData.append('status', formData.status);
+
+    if (formData.document) {
+      submitData.append('documentUrl', formData.document);
+    }
 
     try {
       if (editingProject) {
-        const res: any = await updateProject(editingProject.id, payload);
+        const res: any = await updateProject(editingProject.id, submitData);
         setProjects((prev) => prev.map((p) => (p.id === editingProject.id ? res.data : p)));
         toast({ title: 'Request Submitted', description: 'Changes submitted for faculty approval.' });
       } else {
-        const res: any = await createProject(payload);
+        const res: any = await createProject(submitData);
         setProjects((prev) => [res.data, ...prev]);
         toast({ title: 'Request Submitted', description: 'Project submitted for faculty approval.' });
       }
@@ -253,6 +275,10 @@ export default function Projects({ onPendingChange }: ProjectsProps) {
               <option value="completed">Completed</option>
               <option value="paused">Paused</option>
             </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-2">Upload Document (Optional)</label>
+            <input type="file" onChange={(e) => setFormData({ ...formData, document: e.target.files?.[0] || null })} className="input-field py-1.5" accept=".jpg,.jpeg,.png,.pdf" />
           </div>
           <div className="flex justify-end gap-3 pt-4">
             <button type="button" onClick={closeModal} className="px-4 py-2 rounded-lg border border-border hover:bg-muted transition-colors">Cancel</button>

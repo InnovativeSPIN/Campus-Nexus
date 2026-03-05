@@ -21,19 +21,26 @@ interface Sport {
     joinedDate: string;
     achievements: string;
     approvalStatus?: ApprovalStatus;
+    documentUrl?: string;
+}
+
+interface SportFormData extends Omit<Sport, 'id'> {
+    document?: File | null;
 }
 
 interface SportsProps {
     onPendingChange?: (hasPending: boolean) => void;
 }
 
-const emptyForm: Omit<Sport, 'id'> = {
+const emptyForm: SportFormData = {
     name: '',
     category: '',
     status: 'active',
     joinedDate: '',
     achievements: '',
     approvalStatus: 'pending',
+    documentUrl: '',
+    document: null,
 };
 
 export default function Sports({ onPendingChange }: SportsProps) {
@@ -43,7 +50,7 @@ export default function Sports({ onPendingChange }: SportsProps) {
     const [isSaving, setIsSaving] = useState(false);
     const [showDialog, setShowDialog] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
-    const [formData, setFormData] = useState<Omit<Sport, 'id'>>(emptyForm);
+    const [formData, setFormData] = useState<SportFormData>(emptyForm);
 
     useEffect(() => {
         setLoading(true);
@@ -55,7 +62,16 @@ export default function Sports({ onPendingChange }: SportsProps) {
 
     const handleEdit = (sport: Sport) => {
         setEditingId(sport.id);
-        setFormData({ name: sport.name, category: sport.category, status: sport.status, joinedDate: sport.joinedDate, achievements: sport.achievements, approvalStatus: 'pending' });
+        setFormData({
+            name: sport.name,
+            category: sport.category,
+            status: sport.status,
+            joinedDate: sport.joinedDate,
+            achievements: sport.achievements,
+            approvalStatus: 'pending',
+            documentUrl: sport.documentUrl || '',
+            document: null
+        });
         setShowDialog(true);
         if (onPendingChange) onPendingChange(true);
     };
@@ -84,13 +100,24 @@ export default function Sports({ onPendingChange }: SportsProps) {
         }
 
         setIsSaving(true);
+        const submitData = new FormData();
+        submitData.append('name', formData.name);
+        submitData.append('category', formData.category);
+        submitData.append('status', formData.status);
+        submitData.append('joinedDate', formData.joinedDate);
+        if (formData.achievements) submitData.append('achievements', formData.achievements);
+
+        if (formData.document) {
+            submitData.append('documentUrl', formData.document);
+        }
+
         try {
             if (editingId) {
-                const res: any = await updateSport(editingId, formData);
+                const res: any = await updateSport(editingId, submitData);
                 setSports((prev) => prev.map((s) => (s.id === editingId ? res.data : s)));
                 toast({ title: 'Request Submitted', description: 'Changes submitted for faculty approval.' });
             } else {
-                const res: any = await createSport(formData);
+                const res: any = await createSport(submitData);
                 setSports((prev) => [res.data, ...prev]);
                 toast({ title: 'Request Submitted', description: 'Sport submitted for faculty approval.' });
             }
@@ -201,6 +228,10 @@ export default function Sports({ onPendingChange }: SportsProps) {
                                 <option value="active">Active</option>
                                 <option value="inactive">Inactive</option>
                             </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium mb-2">Upload Certificate (Optional)</label>
+                            <input type="file" onChange={(e) => setFormData({ ...formData, document: e.target.files?.[0] || null })} className="w-full px-3 py-1.5 border border-input rounded-lg bg-background" accept=".jpg,.jpeg,.png,.pdf" />
                         </div>
                         <div className="flex gap-2 justify-end mt-6">
                             <DialogClose asChild>

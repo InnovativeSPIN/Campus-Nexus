@@ -58,7 +58,8 @@ export const createCertification = asyncHandler(async (req, res, next) => {
     const cert = await StudentCertification.create({
         ...req.body,
         studentId,
-        approvalStatus: 'pending'
+        approvalStatus: 'pending',
+        documentUrl: req.file ? req.file.filename : req.body.documentUrl
     });
 
     res.status(201).json({ success: true, data: cert });
@@ -79,7 +80,10 @@ export const updateCertification = asyncHandler(async (req, res, next) => {
     delete req.body.approvalDate;
     delete req.body.studentId;
 
-    await cert.update({ ...req.body, approvalStatus: 'pending' });
+    const dataToUpdate = { ...req.body, approvalStatus: 'pending' };
+    if (req.file) dataToUpdate.documentUrl = req.file.filename;
+
+    await cert.update(dataToUpdate);
     res.status(200).json({ success: true, data: cert });
 });
 
