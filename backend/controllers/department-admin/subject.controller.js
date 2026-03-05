@@ -9,35 +9,50 @@ const { Subject, Department, Faculty, FacultySubjectAssignment, User } = models;
 // @access  Private (Department Admin)
 export const getDepartmentSubjects = asyncHandler(async (req, res, next) => {
   const departmentId = req.user.department_id;
-  const { semester, status } = req.query;
+  const { semester, status, academic_year } = req.query;
 
   const where = { department_id: departmentId };
   
   if (semester) where.semester = semester;
   if (status) where.status = status;
 
+  const includeOptions = [
+    {
+      model: Department,
+      as: 'department',
+      attributes: ['id', 'short_name', 'full_name']
+    },
+    {
+      model: Faculty,
+      as: 'assignedFaculty',
+      attributes: ['faculty_id', 'Name', 'email', 'designation'],
+      through: { 
+        attributes: ['academic_year', 'status', 'assigned_at', 'semester'],
+        where: academic_year ? { academic_year } : {}
+      }
+    }
+  ];
+
   const subjects = await Subject.findAll({
     where,
-    include: [
-      {
-        model: Department,
-        as: 'department',
-        attributes: ['id', 'short_name', 'full_name']
-      },
-      {
-        model: Faculty,
-        as: 'assignedFaculty',
-        attributes: ['faculty_id', 'Name', 'email'],
-        through: { attributes: ['academic_year', 'status'] }
-      }
-    ],
-    order: [['semester', 'ASC'], ['name', 'ASC']]
+    include: includeOptions,
+    order: [['semester', 'ASC'], ['subject_name', 'ASC']]
+  });
+
+  // Transform response to match frontend expectations
+  const transformedSubjects = subjects.map(subject => {
+    const obj = subject.toJSON();
+    return {
+      ...obj,
+      name: obj.subject_name,
+      code: obj.subject_code
+    };
   });
 
   res.status(200).json({
     success: true,
-    count: subjects.length,
-    data: subjects
+    count: transformedSubjects.length,
+    data: transformedSubjects
   });
 });
 
@@ -59,16 +74,9 @@ export const getSubjectDetails = asyncHandler(async (req, res, next) => {
       {
         model: Faculty,
         as: 'assignedFaculty',
-        attributes: ['faculty_id', 'Name', 'email', 'designation'],
+        attributes: ['faculty_id', 'Name', 'email', 'designation', 'department_id'],
         through: { 
-          attributes: ['academic_year', 'status', 'assigned_at'],
-          include: [
-            {
-              model: User,
-              as: 'assignedBy',
-              attributes: ['id', 'name']
-            }
-          ]
+          attributes: ['academic_year', 'status', 'assigned_at', 'semester', 'total_hours', 'no_of_periods']
         }
       }
     ]
@@ -78,9 +86,17 @@ export const getSubjectDetails = asyncHandler(async (req, res, next) => {
     return next(new ErrorResponse('Subject not found', 404));
   }
 
+  // Transform response to match frontend expectations
+  const subjectData = subject.toJSON();
+  const transformedSubject = {
+    ...subjectData,
+    name: subjectData.subject_name,
+    code: subjectData.subject_code
+  };
+
   res.status(200).json({
     success: true,
-    data: subject
+    data: transformedSubject
   });
 });
 
@@ -90,10 +106,19 @@ export const getSubjectDetails = asyncHandler(async (req, res, next) => {
 export const createSubject = asyncHandler(async (req, res, next) => {
   const departmentId = req.user.department_id;
   
+  // Map frontend field names to database field names
+  const { name, code, ...restData } = req.body;
+  const subjectData = {
+    subject_name: name,
+    subject_code: code,
+    department_id: departmentId,
+    ...restData
+  };
+
   // Check if subject code already exists in department
   const existingSubject = await Subject.findOne({
     where: { 
-      code: req.body.code,
+      subject_code: code,
       department_id: departmentId 
     }
   });
@@ -101,11 +126,6 @@ export const createSubject = asyncHandler(async (req, res, next) => {
   if (existingSubject) {
     return next(new ErrorResponse('Subject with this code already exists in your department', 400));
   }
-
-  const subjectData = {
-    ...req.body,
-    department_id: departmentId
-  };
 
   const subject = await Subject.create(subjectData);
 
@@ -120,10 +140,18 @@ export const createSubject = asyncHandler(async (req, res, next) => {
     ]
   });
 
+  // Transform response
+  const subjData = createdSubject.toJSON();
+  const transformedSubject = {
+    ...subjData,
+    name: subjData.subject_name,
+    code: subjData.subject_code
+  };
+
   res.status(201).json({
     success: true,
     message: 'Subject created successfully',
-    data: createdSubject
+    data: transformedSubject
   });
 });
 
@@ -142,11 +170,17 @@ export const updateSubject = asyncHandler(async (req, res, next) => {
     return next(new ErrorResponse('Subject not found', 404));
   }
 
+  // Map frontend field names to database field names
+  const { name, code, ...restData } = req.body;
+  const updateData = { ...restData };
+  if (name) updateData.subject_name = name;
+  if (code) updateData.subject_code = code;
+
   // Check if subject code is being changed and if it conflicts
-  if (req.body.code && req.body.code !== subject.code) {
+  if (code && code !== subject.subject_code) {
     const existingSubject = await Subject.findOne({
       where: { 
-        code: req.body.code,
+        subject_code: code,
         department_id: departmentId,
         id: { [models.Sequelize.Op.ne]: id } // Exclude current subject
       }
@@ -157,7 +191,7 @@ export const updateSubject = asyncHandler(async (req, res, next) => {
     }
   }
 
-  await subject.update(req.body);
+  await subject.update(updateData);
 
   // Fetch updated subject with associations
   const updatedSubject = await Subject.findByPk(id, {
@@ -170,16 +204,24 @@ export const updateSubject = asyncHandler(async (req, res, next) => {
       {
         model: Faculty,
         as: 'assignedFaculty',
-        attributes: ['faculty_id', 'Name', 'email'],
-        through: { attributes: ['academic_year', 'status'] }
+        attributes: ['faculty_id', 'Name', 'email', 'designation'],
+        through: { attributes: ['academic_year', 'status', 'assigned_at', 'semester'] }
       }
     ]
   });
 
+  // Transform response
+  const subjData = updatedSubject.toJSON();
+  const transformedSubject = {
+    ...subjData,
+    name: subjData.subject_name,
+    code: subjData.subject_code
+  };
+
   res.status(200).json({
     success: true,
     message: 'Subject updated successfully',
-    data: updatedSubject
+    data: transformedSubject
   });
 });
 
@@ -286,16 +328,24 @@ export const assignFacultyToSubject = asyncHandler(async (req, res, next) => {
       {
         model: Faculty,
         as: 'assignedFaculty',
-        attributes: ['faculty_id', 'Name', 'email', 'designation'],
-        through: { attributes: ['academic_year', 'status', 'assigned_at'] }
+        attributes: ['faculty_id', 'Name', 'email', 'designation', 'department_id'],
+        through: { attributes: ['academic_year', 'status', 'assigned_at', 'semester', 'total_hours', 'no_of_periods'] }
       }
     ]
   });
 
+  // Transform response
+  const subjData = updatedSubject.toJSON();
+  const transformedSubject = {
+    ...subjData,
+    name: subjData.subject_name,
+    code: subjData.subject_code
+  };
+
   res.status(200).json({
     success: true,
-    message: `Faculty ${faculty.Name} assigned to ${subject.name} successfully`,
-    data: updatedSubject
+    message: `Faculty ${faculty.Name} assigned to ${subject.subject_name} successfully`,
+    data: transformedSubject
   });
 });
 

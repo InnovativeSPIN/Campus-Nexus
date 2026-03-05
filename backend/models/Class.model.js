@@ -61,6 +61,11 @@ const ClassModel = (sequelize) => {
       otherKey: 'faculty_id',
       as: 'assignedFaculty',
     });
+    // Class has class incharges (faculty incharges)
+    Class.hasMany(models.ClassIncharge, {
+      foreignKey: 'class_id',
+      as: 'incharges',
+    });
   };
 
   return Class;

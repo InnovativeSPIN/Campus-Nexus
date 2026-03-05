@@ -17,19 +17,23 @@ const router = express.Router();
 router.use(protect);
 router.use(authorize('department-admin'));
 
+// IMPORTANT: Specific routes MUST come BEFORE generic /:id routes
+// Get available faculty for assignment
+router.get('/available-faculty', getAvailableFaculty);
+
 // Subject CRUD routes
 router.route('/')
   .get(getDepartmentSubjects)
   .post(createSubject);
 
+// Faculty assignment routes - MUST come before /:id routes
+router.post('/:id/assign-faculty', assignFacultyToSubject);
+router.delete('/:id/assignments/:assignment_id', removeFacultyAssignment);
+
+// Generic routes with :id LAST (will match everything else)
 router.route('/:id')
   .get(getSubjectDetails)
   .put(updateSubject)
   .delete(deleteSubject);
-
-// Faculty assignment routes
-router.get('/available-faculty', getAvailableFaculty);
-router.post('/:id/assign-faculty', assignFacultyToSubject);
-router.delete('/:id/assignments/:assignment_id', removeFacultyAssignment);
 
 export default router;

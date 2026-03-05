@@ -126,7 +126,7 @@ export const createFaculty = asyncHandler(async (req, res, next) => {
     faculty_college_code: req.body.faculty_college_code || req.body.facultyCollegeCode,
     Name: req.body.Name || req.body.name || req.body.firstName,
     email: req.body.email,
-    password: req.body.password || 'default123',  // Default password
+    password: req.body.password || 'ns9210',  // Default password
     phone_number: req.body.phone_number || req.body.phoneNumber,
     role_id: req.body.role_id || req.body.roleId || 5,  // Default to faculty role
     department_id: req.body.department_id || req.body.departmentId || req.body.department,

@@ -39,6 +39,7 @@ import coordinatorRoutes from './routes/department-admin/coordinator.routes.js';
 import subjectRoutes from './routes/department-admin/subject.routes.js';
 import roomRoutes from './routes/department-admin/room.routes.js';
 import labRoutes from './routes/department-admin/lab.routes.js';
+import classInchargeRoutes from './routes/department-admin/class-incharge.routes.js';
 import generalSubjectRoutes from './routes/subject.routes.js';
 import classRoutes from './routes/class.routes.js';
 import studentMarksRoutes from './routes/student/studentMarks.routes.js';
@@ -173,6 +174,7 @@ const startServer = () => {
   app.use('/api/v1/department-admin/subjects', subjectRoutes);
   app.use('/api/v1/department-admin/rooms', roomRoutes);
   app.use('/api/v1/department-admin/labs', labRoutes);
+  app.use('/api/v1/department-admin/class-incharges', classInchargeRoutes);
   app.use('/api/v1/faculty/notifications', timetableNotificationRoutes);
   app.use('/api/v1/faculty/timetable/alterations', timetableAlterationRoutes);
   app.use('/api/v1/student/marks', studentMarksRoutes);

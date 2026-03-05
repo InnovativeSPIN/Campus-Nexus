@@ -46,6 +46,7 @@ import TimetableSimple from './TimetableSimple.model.js';
 import Room from './Room.model.js';
 import Lab from './Lab.model.js';
 import TimetablePeriod from './TimetablePeriod.model.js';
+import ClassIncharge from './ClassIncharge.model.js';
 
 // Initialize models
 const models = {
@@ -93,6 +94,7 @@ const models = {
   Room: Room(sequelize),
   Lab: Lab(sequelize),
   TimetablePeriod: TimetablePeriod(sequelize),
+  ClassIncharge: ClassIncharge(sequelize),
 };
 
 // Define associations
