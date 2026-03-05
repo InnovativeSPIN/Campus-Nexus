@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Mar 05, 2026 at 10:29 AM
+-- Generation Time: Mar 05, 2026 at 12:46 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -379,8 +379,8 @@ INSERT INTO `faculty_profiles` (`faculty_id`, `faculty_college_code`, `coe_id`, 
 (403, 'NS20T37', NULL, NULL, NULL, 'GEERTHIGA G', 'ns20t37@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 6, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-02-23 20:37:47', NULL, 0, 0),
 (404, 'NS20T32', NULL, NULL, NULL, 'VINOTH KUMAR J', 'ns20t32@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 6, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-02-20 06:43:32', NULL, 0, 0),
 (405, 'NS70T02', NULL, NULL, NULL, 'KANIMOLI J', 'ns70t02@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 6, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-02-23 20:26:34', NULL, 0, 0),
-(406, 'NS80T01', NULL, NULL, NULL, 'NAGAJOTHI P', 'ns80t01@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 6, NULL, NULL, 'Pursuing', NULL, NULL, NULL, '/uploads/faculty/nagajothi_p.jpeg', 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-03-02 06:23:56', 'https://www.linkedin.com/in/prathap/', 1, 0),
-(408, 'NS2207T15', NULL, NULL, NULL, 'PRATHAP. C', 'ns2207t15@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 6, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-02-23 20:38:00', NULL, 0, 1),
+(406, 'NS80T01', NULL, NULL, NULL, 'NAGAJOTHI P', 'ns80t01@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 6, NULL, NULL, 'Pursuing', NULL, NULL, NULL, '/uploads/faculty/nagajothi_p.jpg', 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-03-05 11:08:33', 'https://www.linkedin.com/in/prathap/', 1, 0),
+(408, 'NS2207T15', NULL, NULL, NULL, 'PRATHAP. C', 'ns2207t15@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 6, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-03-05 11:07:19', NULL, 0, 0),
 (409, 'NS30T03', NULL, NULL, NULL, 'GANESH.K', 'ns30t03@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 4, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-02-20 06:43:32', NULL, 0, 0),
 (410, 'NS40T16', NULL, NULL, NULL, 'Dr.R.ATHILINGAM', 'ns40t16@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 4, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-02-20 06:43:32', NULL, 0, 0),
 (411, 'NS30T19', NULL, NULL, NULL, 'RAJA KARTHICK R', 'ns30t19@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 4, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-02-20 06:43:32', NULL, 0, 0),
@@ -402,7 +402,8 @@ INSERT INTO `faculty_profiles` (`faculty_id`, `faculty_college_code`, `coe_id`, 
 (427, 'EC13', NULL, NULL, NULL, 'PRATHAP S', 'ec13@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 3, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-02-20 06:43:32', NULL, 0, 0),
 (428, 'EC14', NULL, NULL, NULL, 'BHARATHI KANNAN K', 'ec14@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 3, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-02-20 06:43:32', NULL, 0, 0),
 (429, 'NS40T27', NULL, NULL, NULL, 'RAJESHSHREE S', 'ns40t27@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 3, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-02-20 06:43:32', NULL, 0, 0),
-(430, 'NS20NT23', NULL, NULL, NULL, 'MUTHURAJ', 'ns20nt23@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 2, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-02-20 06:43:32', NULL, 0, 0);
+(430, 'NS20NT23', NULL, NULL, NULL, 'MUTHURAJ', 'ns20nt23@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 2, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 16:39:11', '2026-02-20 06:43:32', NULL, 0, 0),
+(432, 'NS60T15', NULL, NULL, NULL, 'Dr. B. Mallaiyasamy', 'mallaiyasamy@nscet.org', NULL, '$2a$10$3E7vMD/EpOPn9bEp8IKm/ugd4ssunRZLbzi6fxKyunIYWw.V0zAAe', 5, NULL, 'Assistant Professor', NULL, 'No', 'Male', NULL, NULL, NULL, 'active', 'B+', NULL, NULL, NULL, NULL, '2026-03-05 11:00:07', '2026-03-05 11:00:07', NULL, 0, 0);
 
 -- --------------------------------------------------------
 
@@ -2044,7 +2045,35 @@ INSERT INTO `timetable` (`id`, `facultyId`, `facultyName`, `department`, `year`,
 (141, 'NS20T33', 'DEEPIGA K', 'CSE', '2', 'B', 'Friday', 1, 'Computer Networks', '2026-2027', '2026-03-04 09:39:21', '2026-03-04 09:39:21'),
 (142, 'NS20T40', 'VENKATALAKSHMI M', 'CSE', '1', 'A', 'Monday', 3, 'Mathematics I', '2026-2027', '2026-03-04 09:39:21', '2026-03-04 09:39:21'),
 (143, 'NS20T29', 'ARCHANA R', 'CSE', '3', 'A', 'Tuesday', 4, 'Software Engineering', '2026-2027', '2026-03-04 09:39:21', '2026-03-04 09:39:21'),
-(144, 'NS70T01', 'DR.M SATHYA', 'CSE', '4', 'B', 'Thursday', 2, 'Artificial Intelligence', '2026-2027', '2026-03-04 09:39:21', '2026-03-04 09:39:21');
+(144, 'NS70T01', 'DR.M SATHYA', 'CSE', '4', 'B', 'Thursday', 2, 'Artificial Intelligence', '2026-2027', '2026-03-04 09:39:21', '2026-03-04 09:39:21'),
+(145, 'NS40T23', 'GOWTHAMI P', 'ECE', '3', 'A', 'Monday', 2, 'Embedded Systems and IoT', '2025-2026', '2026-03-05 11:04:39', '2026-03-05 11:04:39'),
+(146, 'NS80T01', 'NAGAJOTHI P', 'AI&DS', '3', 'A', 'Monday', 3, 'Digital Marketing', '2025-2026', '2026-03-05 11:04:39', '2026-03-05 11:04:39'),
+(147, 'NS60T15', 'MALLIKARJUN B', 'AI&DS', '3', 'A', 'Monday', 4, 'Graph Theory', '2025-2026', '2026-03-05 11:04:39', '2026-03-05 11:04:39'),
+(148, 'NS20T32', 'VINOTH KUMAR J J', 'AI&DS', '3', 'A', 'Monday', 5, 'App Development', '2025-2026', '2026-03-05 11:04:39', '2026-03-05 11:04:39'),
+(149, 'NS80T01', 'NAGAJOTHI P', 'AI&DS', '3', 'A', 'Monday', 6, 'Digital Marketing', '2025-2026', '2026-03-05 11:04:39', '2026-03-05 11:04:39'),
+(150, 'NS20T32', 'VINOTH KUMAR J J', 'AI&DS', '3', 'A', 'Monday', 7, 'App Development', '2025-2026', '2026-03-05 11:04:39', '2026-03-05 11:04:39'),
+(151, 'NS20T32', 'VINOTH KUMAR J J', 'AI&DS', '3', 'A', 'Tuesday', 1, 'App Development Laboratory', '2025-2026', '2026-03-05 11:04:39', '2026-03-05 11:04:39'),
+(152, 'NS20T32', 'VINOTH KUMAR J J', 'AI&DS', '3', 'A', 'Tuesday', 2, 'App Development Laboratory', '2025-2026', '2026-03-05 11:04:39', '2026-03-05 11:04:39'),
+(153, 'NS60T15', 'MALLIKARJUN B', 'AI&DS', '3', 'A', 'Tuesday', 3, 'Graph Theory', '2025-2026', '2026-03-05 11:04:39', '2026-03-05 11:04:39'),
+(154, 'NS40T23', 'GOWTHAMI P', 'ECE', '3', 'A', 'Tuesday', 4, 'Embedded Systems and IoT Laboratory', '2025-2026', '2026-03-05 11:04:39', '2026-03-05 11:04:39'),
+(155, 'NS40T23', 'GOWTHAMI P', 'ECE', '3', 'A', 'Tuesday', 5, 'Embedded Systems and IoT Laboratory', '2025-2026', '2026-03-05 11:04:39', '2026-03-05 11:04:39'),
+(156, 'CS10', 'VIGNESH.L.S', 'AI&DS', '3', 'A', 'Tuesday', 6, 'Principles of Programming Languages', '2025-2026', '2026-03-05 11:04:39', '2026-03-05 11:04:39'),
+(157, 'NS40T23', 'GOWTHAMI P', 'ECE', '3', 'A', 'Wednesday', 1, 'Embedded Systems and IoT', '2025-2026', '2026-03-05 11:04:39', '2026-03-05 11:04:39'),
+(158, 'NS20T32', 'VINOTH KUMAR J J', 'AI&DS', '3', 'A', 'Wednesday', 2, 'App Development', '2025-2026', '2026-03-05 11:04:39', '2026-03-05 11:04:39'),
+(159, 'NS60T15', 'MALLIKARJUN B', 'AI&DS', '3', 'A', 'Wednesday', 3, 'Graph Theory', '2025-2026', '2026-03-05 11:04:39', '2026-03-05 11:04:39'),
+(160, 'CS10', 'VIGNESH.L.S', 'AI&DS', '3', 'A', 'Wednesday', 4, 'Principles of Programming Languages', '2025-2026', '2026-03-05 11:04:39', '2026-03-05 11:04:39'),
+(161, 'NS80T01', 'NAGAJOTHI P', 'AI&DS', '3', 'A', 'Thursday', 1, 'Digital Marketing', '2025-2026', '2026-03-05 11:04:39', '2026-03-05 11:04:39'),
+(162, 'CS10', 'VIGNESH.L.S', 'AI&DS', '3', 'A', 'Thursday', 2, 'Principles of Programming Languages', '2025-2026', '2026-03-05 11:04:39', '2026-03-05 11:04:39'),
+(163, 'NS40T23', 'GOWTHAMI P', 'ECE', '3', 'A', 'Thursday', 3, 'Embedded Systems and IoT', '2025-2026', '2026-03-05 11:04:39', '2026-03-05 11:04:39'),
+(164, 'NS20T32', 'VINOTH KUMAR J J', 'AI&DS', '3', 'A', 'Thursday', 4, 'App Development', '2025-2026', '2026-03-05 11:04:39', '2026-03-05 11:04:39'),
+(165, 'NS60T15', 'MALLIKARJUN B', 'AI&DS', '3', 'A', 'Thursday', 5, 'Graph Theory', '2025-2026', '2026-03-05 11:04:39', '2026-03-05 11:04:39'),
+(166, 'NS80T01', 'NAGAJOTHI P', 'AI&DS', '3', 'A', 'Thursday', 6, 'Digital Marketing Laboratory', '2025-2026', '2026-03-05 11:04:39', '2026-03-05 11:04:39'),
+(167, 'NS80T01', 'NAGAJOTHI P', 'AI&DS', '3', 'A', 'Thursday', 7, 'Digital Marketing Laboratory', '2025-2026', '2026-03-05 11:04:39', '2026-03-05 11:04:39'),
+(168, 'NS60T15', 'MALLIKARJUN B', 'AI&DS', '3', 'A', 'Saturday', 1, 'Graph Theory', '2025-2026', '2026-03-05 11:04:39', '2026-03-05 11:04:39'),
+(169, 'CS10', 'VIGNESH.L.S', 'AI&DS', '3', 'A', 'Saturday', 2, 'Principles of Programming Languages', '2025-2026', '2026-03-05 11:04:39', '2026-03-05 11:04:39'),
+(170, 'NS40T23', 'GOWTHAMI P', 'ECE', '3', 'A', 'Saturday', 3, 'Embedded Systems and IoT', '2025-2026', '2026-03-05 11:04:39', '2026-03-05 11:04:39'),
+(171, 'NS20T32', 'VINOTH KUMAR J J', 'AI&DS', '3', 'A', 'Saturday', 4, 'App Development', '2025-2026', '2026-03-05 11:04:39', '2026-03-05 11:04:39'),
+(172, 'NS80T01', 'NAGAJOTHI P', 'AI&DS', '3', 'A', 'Saturday', 5, 'Digital Marketing', '2025-2026', '2026-03-05 11:04:39', '2026-03-05 11:04:39');
 
 -- --------------------------------------------------------
 
@@ -2706,7 +2735,7 @@ ALTER TABLE `faculty_phd`
 -- AUTO_INCREMENT for table `faculty_profiles`
 --
 ALTER TABLE `faculty_profiles`
-  MODIFY `faculty_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=432;
+  MODIFY `faculty_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=433;
 
 --
 -- AUTO_INCREMENT for table `faculty_research`
@@ -2718,7 +2747,7 @@ ALTER TABLE `faculty_research`
 -- AUTO_INCREMENT for table `faculty_subject_assignments`
 --
 ALTER TABLE `faculty_subject_assignments`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `faculty_substitutes`
@@ -2862,7 +2891,7 @@ ALTER TABLE `subject_class_mappings`
 -- AUTO_INCREMENT for table `timetable`
 --
 ALTER TABLE `timetable`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=145;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=173;
 
 --
 -- AUTO_INCREMENT for table `timetable_master`
