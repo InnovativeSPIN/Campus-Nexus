@@ -12,7 +12,8 @@ import {
   uploadFaculty,
   getMyProfile,
   updateFacultyProfile,
-  getMyTimetable
+  getMyTimetable,
+  getMyClassIncharge
 } from '../../controllers/faculty/faculty.controller.js';
 import {
   getMyEducation,
@@ -56,6 +57,8 @@ router.use(protect);
 
 // Faculty and department-admins can access their own profile
 router.get('/me/profile', authorize('faculty', 'department-admin'), getMyProfile);
+// Faculty class incharge - get assigned class and students
+router.get('/me/class-incharge', authorize('faculty', 'department-admin'), getMyClassIncharge);
 // Faculty can get their timetable
 router.get('/my-timetable', authorize('faculty', 'department-admin'), getMyTimetable);
 // Faculty and department-admins can update their own profile

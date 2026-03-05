@@ -68,6 +68,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           rollNo: result.user.rollNo,
           is_timetable_incharge: result.user.is_timetable_incharge || false,
           is_placement_coordinator: result.user.is_placement_coordinator || false,
+          is_class_incharge: result.user.is_class_incharge || false,
+          class_incharge_class_id: result.user.class_incharge_class_id || null,
           token: result.token
         };
         console.log('Login successful:', userObj.name, userObj.role);
@@ -104,6 +106,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 }
                 userObj.is_timetable_incharge = prof.is_timetable_incharge || userObj.is_timetable_incharge;
                 userObj.is_placement_coordinator = prof.is_placement_coordinator || userObj.is_placement_coordinator;
+                userObj.is_class_incharge = prof.is_class_incharge || userObj.is_class_incharge;
+                userObj.class_incharge_class_id = prof.class_incharge_class_id ?? userObj.class_incharge_class_id;
               }
             }
           } catch (err) {
@@ -192,7 +196,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               designation: freshData.designation || prev.designation,
               avatar: freshData.avatar || freshData.profile_image_url || prev.avatar,
               is_timetable_incharge: freshData.is_timetable_incharge || false,
-              is_placement_coordinator: freshData.is_placement_coordinator || false
+              is_placement_coordinator: freshData.is_placement_coordinator || false,
+              is_class_incharge: freshData.is_class_incharge || false,
+              class_incharge_class_id: freshData.class_incharge_class_id ?? prev.class_incharge_class_id ?? null,
             };
             localStorage.setItem('eduvertex_user', JSON.stringify(updatedUser));
             return updatedUser;

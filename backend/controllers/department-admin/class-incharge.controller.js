@@ -40,13 +40,26 @@ export const assignClassIncharge = asyncHandler(async (req, res, next) => {
   });
 
   if (existingIncharge) {
-    // Update existing incharge
+    // Clear old faculty's incharge flag if changing faculty
+    if (existingIncharge.faculty_id !== faculty_id) {
+      await Faculty.update(
+        { is_class_incharge: false, class_incharge_class_id: null },
+        { where: { faculty_id: existingIncharge.faculty_id } }
+      );
+    }
+
     await existingIncharge.update({
       faculty_id,
       assigned_by: req.user.id,
       assigned_at: new Date(),
       status: 'active'
     });
+
+    // Set new faculty's incharge flag
+    await Faculty.update(
+      { is_class_incharge: true, class_incharge_class_id: class_id },
+      { where: { faculty_id } }
+    );
 
     const updatedIncharge = await ClassIncharge.findByPk(existingIncharge.id, {
       include: [
@@ -70,6 +83,12 @@ export const assignClassIncharge = asyncHandler(async (req, res, next) => {
     assigned_by: req.user.id,
     status: 'active'
   });
+
+  // Set faculty's incharge flag
+  await Faculty.update(
+    { is_class_incharge: true, class_incharge_class_id: class_id },
+    { where: { faculty_id } }
+  );
 
   // Reload with associations
   const createdIncharge = await ClassIncharge.findByPk(incharge.id, {
@@ -114,17 +133,22 @@ export const getClassIncharges = asyncHandler(async (req, res, next) => {
   }
 
   where.class_id = { [Op.in]: classIds };
-  if (semester) {
-    where['$class.semester$'] = parseInt(semester);
-  }
-
+  
   const incharges = await ClassIncharge.findAll({
     where,
     include: [
-      { model: ClassModel, as: 'class', attributes: ['id', 'name', 'section', 'semester', 'batch', 'capacity'] },
+      { 
+        model: ClassModel, 
+        as: 'class', 
+        attributes: ['id', 'name', 'section', 'semester', 'batch', 'capacity'],
+        where: semester ? { semester: parseInt(semester) } : {}
+      },
       { model: Faculty, as: 'faculty', attributes: ['faculty_id', 'Name', 'email', 'designation'] }
     ],
-    order: [['academic_year', 'DESC'], ['$class.semester$', 'ASC']]
+    order: [
+      ['academic_year', 'DESC'],
+      [{ model: ClassModel, as: 'class' }, 'semester', 'ASC']
+    ]
   });
 
   res.status(200).json({
@@ -256,10 +280,32 @@ export const updateClassIncharge = asyncHandler(async (req, res, next) => {
     }
   }
 
+  const oldFacultyId = incharge.faculty_id;
+  const newFacultyId = faculty_id || incharge.faculty_id;
+  const newStatus = status || incharge.status;
+
   await incharge.update({
-    faculty_id: faculty_id || incharge.faculty_id,
-    status: status || incharge.status
+    faculty_id: newFacultyId,
+    status: newStatus
   });
+
+  // Sync faculty flags based on status and faculty change
+  if (newStatus === 'inactive') {
+    await Faculty.update(
+      { is_class_incharge: false, class_incharge_class_id: null },
+      { where: { faculty_id: newFacultyId } }
+    );
+  } else if (faculty_id && faculty_id !== oldFacultyId) {
+    // Incharge changed - clear old, set new
+    await Faculty.update(
+      { is_class_incharge: false, class_incharge_class_id: null },
+      { where: { faculty_id: oldFacultyId } }
+    );
+    await Faculty.update(
+      { is_class_incharge: true, class_incharge_class_id: incharge.class_id },
+      { where: { faculty_id: newFacultyId } }
+    );
+  }
 
   // Reload with associations
   const updatedIncharge = await ClassIncharge.findByPk(id, {
@@ -300,6 +346,12 @@ export const deleteClassIncharge = asyncHandler(async (req, res, next) => {
 
   // Soft delete by marking as inactive
   await incharge.update({ status: 'inactive' });
+
+  // Clear faculty's incharge flag
+  await Faculty.update(
+    { is_class_incharge: false, class_incharge_class_id: null },
+    { where: { faculty_id: incharge.faculty_id } }
+  );
 
   res.status(200).json({
     success: true,

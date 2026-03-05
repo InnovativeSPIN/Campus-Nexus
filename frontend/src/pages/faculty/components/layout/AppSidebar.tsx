@@ -19,6 +19,7 @@ import {
   Briefcase,
   Clock,
   Lock,
+  GraduationCap,
 } from "lucide-react";
 import { cn } from "@/pages/faculty/lib/utils";
 
@@ -44,6 +45,7 @@ export function AppSidebar() {
   const refreshedRef = useRef(false);
   const [isTimetableIncharge, setIsTimetableIncharge] = useState(user?.is_timetable_incharge || false);
   const [isPlacementCoordinator, setIsPlacementCoordinator] = useState(user?.is_placement_coordinator || false);
+  const [isClassIncharge, setIsClassIncharge] = useState(user?.is_class_incharge || false);
 
   useEffect(() => {
     // Refresh user data once when sidebar mounts to get latest coordinator status
@@ -57,6 +59,7 @@ export function AppSidebar() {
   useEffect(() => {
     setIsTimetableIncharge(user?.is_timetable_incharge || false);
     setIsPlacementCoordinator(user?.is_placement_coordinator || false);
+    setIsClassIncharge(user?.is_class_incharge || false);
   }, [user]);
 
   const handleLogout = () => {
@@ -164,6 +167,47 @@ export function AppSidebar() {
               </motion.li>
             );
           })}
+
+          {/* Conditional: Class Incharge - shows only if faculty is class incharge */}
+          {isClassIncharge && (
+            <motion.li
+              key="class-incharge"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.52 }}
+            >
+              <NavLink
+                to="/faculty/class-incharge"
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group",
+                  location.pathname.startsWith("/faculty/class-incharge")
+                    ? "bg-sidebar-accent text-white"
+                    : "text-white/70 hover:bg-sidebar-accent/50 hover:text-white"
+                )}
+              >
+                <GraduationCap
+                  className={cn(
+                    "w-5 h-5 flex-shrink-0 transition-colors",
+                    location.pathname.startsWith("/faculty/class-incharge")
+                      ? "text-secondary"
+                      : "text-white/70 group-hover:text-secondary"
+                  )}
+                />
+                <AnimatePresence>
+                  {!collapsed && (
+                    <motion.span
+                      initial={{ opacity: 0, width: 0 }}
+                      animate={{ opacity: 1, width: "auto" }}
+                      exit={{ opacity: 0, width: 0 }}
+                      className="font-medium text-sm whitespace-nowrap overflow-hidden"
+                    >
+                      Class Incharge
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+              </NavLink>
+            </motion.li>
+          )}
 
           {/* Conditional: Timetable Alteration - shows only if faculty is timetable incharge */}
           {isTimetableIncharge && (

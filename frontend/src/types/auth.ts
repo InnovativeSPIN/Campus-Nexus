@@ -32,6 +32,8 @@ export interface User {
 	// additional flags for faculty
 	is_timetable_incharge?: boolean;
 	is_placement_coordinator?: boolean;
+	is_class_incharge?: boolean;
+	class_incharge_class_id?: number | null;
 }
 
 export interface Student {

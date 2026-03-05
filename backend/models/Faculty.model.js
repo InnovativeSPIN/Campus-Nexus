@@ -115,6 +115,14 @@ const Faculty = (sequelize) => {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
     },
+    is_class_incharge: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
+    class_incharge_class_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
   }, {
     tableName: 'faculty_profiles',
     timestamps: true,

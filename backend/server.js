@@ -169,7 +169,7 @@ const startServer = () => {
   app.use('/api/v1/announcements', announcementRoutes);
   app.use('/api/v1/department-admin/timetable', timetableManagementRoutes);
   app.use('/api/v1/department-admin/break-timings', breakTimingRoutes);
-  app.use('/api/v1/department-admin/faculty-allocations', facultyAllocationRoutes);
+  app.use('/api/v1/department-admin/allocation-faculty', facultyAllocationRoutes);
   app.use('/api/v1/department-admin/coordinators', coordinatorRoutes);
   app.use('/api/v1/department-admin/subjects', subjectRoutes);
   app.use('/api/v1/department-admin/rooms', roomRoutes);

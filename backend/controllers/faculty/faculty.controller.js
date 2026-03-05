@@ -711,3 +711,58 @@ export const getFacultyPhoto = asyncHandler(async (req, res, next) => {
     return next(new ErrorResponse('Failed to fetch photo', 500));
   }
 });
+
+// @desc      Get my class incharge details and students
+// @route     GET /api/v1/faculty/me/class-incharge
+// @access    Private/Faculty
+export const getMyClassIncharge = asyncHandler(async (req, res, next) => {
+  const { ClassIncharge, Student } = models;
+  const facultyId = req.user.faculty_id;
+
+  if (!facultyId) {
+    return next(new ErrorResponse('Faculty ID not found', 400));
+  }
+
+  // Find active class incharge record for this faculty
+  const incharge = await ClassIncharge.findOne({
+    where: { faculty_id: facultyId, status: 'active' },
+    include: [
+      {
+        model: ClassModel,
+        as: 'class',
+        attributes: ['id', 'name', 'section', 'semester', 'batch', 'capacity', 'department_id'],
+        include: [
+          { model: Department, as: 'department', attributes: ['short_name', 'full_name'] }
+        ]
+      }
+    ]
+  });
+
+  if (!incharge) {
+    return res.status(200).json({
+      success: true,
+      data: null,
+      message: 'No active class incharge assignment found'
+    });
+  }
+
+  // Fetch students in the assigned class
+  const students = await Student.findAll({
+    where: { classId: incharge.class_id },
+    attributes: ['id', 'studentId', 'firstName', 'lastName', 'email', 'phone', 'status', 'sector', 'semester'],
+    order: [['studentId', 'ASC']]
+  });
+
+  res.status(200).json({
+    success: true,
+    data: {
+      incharge: {
+        id: incharge.id,
+        academic_year: incharge.academic_year,
+        class: incharge.class
+      },
+      students,
+      totalStudents: students.length
+    }
+  });
+});

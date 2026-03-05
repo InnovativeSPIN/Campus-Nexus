@@ -253,13 +253,13 @@ export default function SubjectManagement() {
         {/* Filters */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 p-6 bg-muted/40 rounded-lg border border-border">
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Semester
             </label>
             <select
               value={filters.semester}
               onChange={(e) => setFilters(prev => ({ ...prev, semester: e.target.value }))}
-              className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-primary"
+              className="w-full bg-background border border-border rounded-lg px-4 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="">All Semesters</option>
               {[1, 2, 3, 4, 5, 6, 7, 8].map(sem => (
@@ -269,13 +269,13 @@ export default function SubjectManagement() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Type
             </label>
             <select
               value={filters.type}
               onChange={(e) => setFilters(prev => ({ ...prev, type: e.target.value }))}
-              className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-primary"
+              className="w-full bg-background border border-border rounded-lg px-4 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="">All Types</option>
               <option value="Theory">Theory</option>
@@ -285,13 +285,13 @@ export default function SubjectManagement() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Status
             </label>
             <select
               value={filters.status}
               onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
-              className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-primary"
+              className="w-full bg-background border border-border rounded-lg px-4 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
@@ -326,19 +326,19 @@ export default function SubjectManagement() {
               <tbody className="bg-background divide-y divide-border">
               {loading ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-4 text-center text-slate-400">
+                  <td colSpan={5} className="px-6 py-4 text-center text-muted-foreground">
                     Loading subjects...
                   </td>
                 </tr>
               ) : filteredSubjects.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-4 text-center text-slate-400">
+                  <td colSpan={5} className="px-6 py-4 text-center text-muted-foreground">
                     No subjects found
                   </td>
                 </tr>
               ) : (
                 filteredSubjects.map((subject) => (
-                  <tr key={subject.id} className="hover:bg-slate-700/50 transition-colors">
+                  <tr key={subject.id} className="hover:bg-muted/30 transition-colors">
                     <td className="px-6 py-4">
                       {editingSubject?.id === subject.id ? (
                         <div className="space-y-2">
@@ -346,21 +346,21 @@ export default function SubjectManagement() {
                             type="text"
                             value={editingSubject.name}
                             onChange={(e) => setEditingSubject(prev => prev ? { ...prev, name: e.target.value } : null)}
-                            className="w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-primary"
+                            className="w-full bg-background border border-border rounded px-3 py-2 text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                             placeholder="Subject Name"
                           />
                           <input
                             type="text"
                             value={editingSubject.code}
                             onChange={(e) => setEditingSubject(prev => prev ? { ...prev, code: e.target.value } : null)}
-                            className="w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-primary"
+                            className="w-full bg-background border border-border rounded px-3 py-2 text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                             placeholder="Subject Code"
                           />
                         </div>
                       ) : (
                         <div>
-                          <div className="text-sm font-medium text-white">{subject.name}</div>
-                          <div className="text-sm text-slate-400">{subject.code}</div>
+                          <div className="text-sm font-medium text-foreground">{subject.name}</div>
+                          <div className="text-sm text-muted-foreground">{subject.code}</div>
                           {subject.is_elective && (
                             <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-900/30 text-orange-400 border border-orange-600/30">
                               Elective
@@ -374,14 +374,14 @@ export default function SubjectManagement() {
                         <select
                           value={editingSubject.semester}
                           onChange={(e) => setEditingSubject(prev => prev ? { ...prev, semester: parseInt(e.target.value) } : null)}
-                          className="w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-primary"
+                          className="w-full bg-background border border-border rounded px-3 py-2 text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                         >
                           {[1, 2, 3, 4, 5, 6, 7, 8].map(sem => (
                             <option key={sem} value={sem}>{sem}</option>
                           ))}
                         </select>
                       ) : (
-                        <span className="text-sm text-white">Semester {subject.semester}</span>
+                        <span className="text-sm text-foreground">Semester {subject.semester}</span>
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -390,7 +390,7 @@ export default function SubjectManagement() {
                           <select
                             value={editingSubject.type}
                             onChange={(e) => setEditingSubject(prev => prev ? { ...prev, type: e.target.value as any } : null)}
-                            className="w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-primary"
+                            className="w-full bg-background border border-border rounded px-3 py-2 text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                           >
                             <option value="Theory">Theory</option>
                             <option value="Practical">Practical</option>
@@ -402,14 +402,14 @@ export default function SubjectManagement() {
                             max="10"
                             value={editingSubject.credits}
                             onChange={(e) => setEditingSubject(prev => prev ? { ...prev, credits: parseInt(e.target.value) } : null)}
-                            className="w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-primary"
+                            className="w-full bg-background border border-border rounded px-3 py-2 text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                             placeholder="Credits"
                           />
                         </div>
                       ) : (
                         <div>
-                          <div className="text-sm text-white">{subject.type}</div>
-                          <div className="text-sm text-slate-400">{subject.credits} Credits</div>
+                          <div className="text-sm text-foreground">{subject.type}</div>
+                          <div className="text-sm text-muted-foreground">{subject.credits} Credits</div>
                         </div>
                       )}
                     </td>
@@ -417,15 +417,15 @@ export default function SubjectManagement() {
                       <div className="space-y-1">
                         {subject.assignedFaculty && subject.assignedFaculty.length > 0 ? (
                           subject.assignedFaculty.map((fac) => (
-                            <div key={fac.faculty_id} className="text-sm text-white">
+                            <div key={fac.faculty_id} className="text-sm text-foreground">
                               {fac.Name}
-                              <span className="text-xs text-slate-400 ml-1">
+                              <span className="text-xs text-muted-foreground ml-1">
                                 ({fac.FacultySubjectAssignment?.academic_year})
                               </span>
                             </div>
                           ))
                         ) : (
-                          <span className="text-sm text-slate-400 italic">No faculty assigned</span>
+                          <span className="text-sm text-muted-foreground italic">No faculty assigned</span>
                         )}
                         {assigningFaculty === subject.id ? (
                           <div className="mt-2">
@@ -435,7 +435,7 @@ export default function SubjectManagement() {
                                   handleAssignFaculty(subject.id, parseInt(e.target.value));
                                 }
                               }}
-                              className="w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-primary"
+                              className="w-full bg-background border border-border rounded px-3 py-2 text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                               defaultValue=""
                             >
                               <option value="">Select Faculty</option>
@@ -447,7 +447,7 @@ export default function SubjectManagement() {
                             </select>
                             <button
                               onClick={() => setAssigningFaculty(null)}
-                              className="mt-1 text-xs text-slate-400 hover:text-slate-300 transition-colors"
+                              className="mt-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
                             >
                               Cancel
                             </button>
@@ -474,7 +474,7 @@ export default function SubjectManagement() {
                           </button>
                           <button
                             onClick={() => setEditingSubject(null)}
-                            className="text-slate-400 hover:text-slate-300 transition-colors"
+                            className="text-muted-foreground hover:text-foreground transition-colors"
                           >
                             <X className="h-4 w-4" />
                           </button>
@@ -506,15 +506,19 @@ export default function SubjectManagement() {
 
         {/* Create Subject Modal */}
         {showCreateModal && (
-          <div className="fixed inset-0 bg-black/50 overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
-            <div className="bg-slate-800 border border-slate-700 p-6 rounded-lg shadow-xl w-full max-w-md mx-auto">
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-card border border-border p-6 rounded-xl shadow-xl w-full max-w-md mx-auto"
+            >
               <div className="mb-6">
-                <h3 className="text-xl font-bold text-white mb-2">Create New Subject</h3>
-                <p className="text-slate-400 text-sm">Add a new subject to your department</p>
+                <h3 className="text-xl font-bold text-foreground mb-1">Create New Subject</h3>
+                <p className="text-muted-foreground text-sm">Add a new subject to your department</p>
               </div>
               <form onSubmit={handleCreateSubject} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                  <label className="block text-sm font-medium text-foreground mb-2">
                     Subject Name *
                   </label>
                   <input
@@ -522,13 +526,13 @@ export default function SubjectManagement() {
                     required
                     value={subjectForm.name}
                     onChange={(e) => setSubjectForm(prev => ({ ...prev, name: e.target.value }))}
-                    className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-primary"
+                    className="w-full bg-background border border-border rounded-lg px-4 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                     placeholder="e.g., Data Structures and Algorithms"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                  <label className="block text-sm font-medium text-foreground mb-2">
                     Subject Code *
                   </label>
                   <input
@@ -536,21 +540,21 @@ export default function SubjectManagement() {
                     required
                     value={subjectForm.code}
                     onChange={(e) => setSubjectForm(prev => ({ ...prev, code: e.target.value.toUpperCase() }))}
-                    className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-primary"
+                    className="w-full bg-background border border-border rounded-lg px-4 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                     placeholder="e.g., CSE301"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                    <label className="block text-sm font-medium text-foreground mb-2">
                       Semester *
                     </label>
                     <select
                       required
                       value={subjectForm.semester}
                       onChange={(e) => setSubjectForm(prev => ({ ...prev, semester: parseInt(e.target.value) }))}
-                      className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-primary"
+                      className="w-full bg-background border border-border rounded-lg px-4 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                     >
                       {[1, 2, 3, 4, 5, 6, 7, 8].map(sem => (
                         <option key={sem} value={sem}>{sem}</option>
@@ -559,7 +563,7 @@ export default function SubjectManagement() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                    <label className="block text-sm font-medium text-foreground mb-2">
                       Credits *
                     </label>
                     <input
@@ -569,20 +573,20 @@ export default function SubjectManagement() {
                       max="10"
                       value={subjectForm.credits}
                       onChange={(e) => setSubjectForm(prev => ({ ...prev, credits: parseInt(e.target.value) }))}
-                      className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-primary"
+                      className="w-full bg-background border border-border rounded-lg px-4 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                  <label className="block text-sm font-medium text-foreground mb-2">
                     Type *
                   </label>
                   <select
                     required
                     value={subjectForm.type}
                     onChange={(e) => setSubjectForm(prev => ({ ...prev, type: e.target.value as any }))}
-                    className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-primary"
+                    className="w-full bg-background border border-border rounded-lg px-4 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                   >
                     <option value="Theory">Theory</option>
                     <option value="Practical">Practical</option>
@@ -591,25 +595,25 @@ export default function SubjectManagement() {
                 </div>
 
                 <div>
-                  <label className="flex items-center">
+                  <label className="flex items-center gap-2">
                     <input
                       type="checkbox"
                       checked={subjectForm.is_elective}
                       onChange={(e) => setSubjectForm(prev => ({ ...prev, is_elective: e.target.checked }))}
-                      className="mr-2 text-primary bg-slate-700 border-slate-600 rounded focus:ring-primary"
+                      className="rounded border-border text-primary focus:ring-primary"
                     />
-                    <span className="text-sm text-slate-300">Elective Subject</span>
+                    <span className="text-sm text-foreground">Elective Subject</span>
                   </label>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                  <label className="block text-sm font-medium text-foreground mb-2">
                     Description
                   </label>
                   <textarea
                     value={subjectForm.description}
                     onChange={(e) => setSubjectForm(prev => ({ ...prev, description: e.target.value }))}
-                    className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-primary resize-none"
+                    className="w-full bg-background border border-border rounded-lg px-4 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-none"
                     rows={3}
                     placeholder="Optional description of the subject"
                   />
@@ -618,20 +622,20 @@ export default function SubjectManagement() {
                 <div className="flex items-center gap-3 pt-4">
                   <button
                     type="submit"
-                    className="flex-1 bg-primary hover:bg-primary/90 text-white py-2 px-4 rounded-lg font-medium transition-colors"
+                    className="flex-1 bg-primary hover:bg-primary/90 text-white py-2.5 px-4 rounded-lg font-medium transition-colors"
                   >
                     Create Subject
                   </button>
                   <button
                     type="button"
                     onClick={() => setShowCreateModal(false)}
-                    className="flex-1 bg-slate-600 hover:bg-slate-500 text-white py-2 px-4 rounded-lg font-medium transition-colors"
+                    className="flex-1 bg-muted hover:bg-muted/80 text-foreground border border-border py-2.5 px-4 rounded-lg font-medium transition-colors"
                   >
                     Cancel
                   </button>
                 </div>
               </form>
-            </div>
+            </motion.div>
           </div>
         )}
     </MainLayout>

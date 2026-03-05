@@ -239,15 +239,15 @@ export default function ClassInchargeManagement() {
       </motion.div>
 
       {/* Filters */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 p-6 bg-muted/40 rounded-lg border border-border">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 p-6 bg-muted/40 rounded-xl border border-border">
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">
+          <label className="block text-sm font-medium text-foreground mb-2">
             Academic Year
           </label>
           <select
             value={academicYear}
             onChange={(e) => setAcademicYear(e.target.value)}
-            className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-primary"
+            className="w-full bg-background border border-border rounded-lg px-4 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
           >
             <option value="2024-25">2024-25</option>
             <option value="2023-24">2023-24</option>
@@ -257,13 +257,13 @@ export default function ClassInchargeManagement() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">
+          <label className="block text-sm font-medium text-foreground mb-2">
             Semester (Optional)
           </label>
           <select
             value={semester}
             onChange={(e) => setSemester(e.target.value)}
-            className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-primary"
+            className="w-full bg-background border border-border rounded-lg px-4 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
           >
             <option value="">All Semesters</option>
             {[1, 2, 3, 4, 5, 6, 7, 8].map(sem => (
@@ -276,51 +276,73 @@ export default function ClassInchargeManagement() {
       {/* Incharges List */}
       <div className="widget-card space-y-4">
         {loading ? (
-          <div className="text-center py-8 text-slate-400">Loading incharges...</div>
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+          </div>
         ) : incharges.length === 0 ? (
-          <div className="text-center py-8 text-slate-400">No class incharges assigned yet</div>
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <Users className="h-14 w-14 text-muted-foreground/40 mb-4" />
+            <p className="text-muted-foreground text-lg">No class incharges assigned yet</p>
+            <p className="text-muted-foreground/70 text-sm mt-1">Click "Assign Incharge" to get started</p>
+          </div>
         ) : (
           incharges.map((incharge) => (
-            <div key={incharge.id} className="border border-slate-700 rounded-lg p-4 hover:bg-slate-700/30 transition-colors">
+            <motion.div
+              key={incharge.id}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="border border-border rounded-xl p-5 hover:shadow-md hover:border-primary/30 transition-all bg-card"
+            >
               {/* Incharge Header */}
-              <div className="flex items-center justify-between">
+              <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <Users className="w-5 h-5 text-primary" />
+                    </div>
                     <div>
-                      <h3 className="font-medium text-white">
-                        {incharge.class.name} - {incharge.class.section}
+                      <h3 className="font-semibold text-foreground text-base">
+                        {incharge.class.name} — {incharge.class.section}
                       </h3>
-                      <p className="text-sm text-slate-400">
+                      <p className="text-sm text-muted-foreground">
                         Semester {incharge.class.semester} • Batch {incharge.class.batch}
                       </p>
                     </div>
                   </div>
 
-                  <div className="mt-3 space-y-1">
-                    <p className="text-sm text-slate-300">
-                      <span className="font-medium">Incharge:</span> {incharge.faculty.Name} ({incharge.faculty.designation})
-                    </p>
-                    <p className="text-xs text-slate-400">{incharge.faculty.email}</p>
-                    <p className="text-xs text-slate-400">Academic Year: {incharge.academic_year}</p>
+                  <div className="ml-13 grid grid-cols-1 sm:grid-cols-2 gap-2 ml-0 pl-13">
+                    <div className="bg-muted/40 rounded-lg px-4 py-2 border border-border">
+                      <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium mb-0.5">Incharge Faculty</p>
+                      <p className="text-sm font-semibold text-foreground">{incharge.faculty.Name}</p>
+                      <p className="text-xs text-muted-foreground">{incharge.faculty.designation}</p>
+                    </div>
+                    <div className="bg-muted/40 rounded-lg px-4 py-2 border border-border">
+                      <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium mb-0.5">Contact</p>
+                      <p className="text-sm text-foreground">{incharge.faculty.email}</p>
+                      <p className="text-xs text-muted-foreground">Academic Year: {incharge.academic_year}</p>
+                    </div>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 ml-4">
                   <button
                     onClick={() => toggleClassStudents(incharge.id)}
-                    className="text-blue-400 hover:text-blue-300 transition-colors p-2"
+                    className="text-primary hover:text-primary/80 transition-colors p-2 rounded-lg hover:bg-primary/10"
+                    title="View students"
                   >
                     <ChevronDown className={`h-5 w-5 transition-transform ${expandedIncharge === incharge.id ? 'rotate-180' : ''}`} />
                   </button>
                   <button
                     onClick={() => handleEditStart(incharge)}
-                    className="text-blue-400 hover:text-blue-300 transition-colors p-2"
+                    className="text-blue-600 hover:text-blue-700 transition-colors p-2 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                    title="Edit"
                   >
                     <Edit className="h-4 w-4" />
                   </button>
                   <button
                     onClick={() => handleDeleteIncharge(incharge.id)}
-                    className="text-red-400 hover:text-red-300 transition-colors p-2"
+                    className="text-red-500 hover:text-red-600 transition-colors p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
+                    title="Remove"
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
@@ -329,41 +351,45 @@ export default function ClassInchargeManagement() {
 
               {/* Students List - Expanded */}
               {expandedIncharge === incharge.id && (
-                <div className="mt-4 pt-4 border-t border-slate-700">
+                <div className="mt-5 pt-4 border-t border-border">
                   {loadingStudents ? (
-                    <div className="text-center py-4 text-slate-400">Loading students...</div>
+                    <div className="flex items-center justify-center py-6">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
+                    </div>
                   ) : classStudents.length === 0 ? (
-                    <div className="text-center py-4 text-slate-400">No students in this class</div>
+                    <p className="text-center py-6 text-muted-foreground text-sm">No students in this class</p>
                   ) : (
-                    <div className="space-y-2">
-                      <h4 className="font-medium text-slate-300 mb-3">
-                        Total Students: {classStudents.length}
-                      </h4>
-                      <div className="overflow-x-auto">
+                    <div>
+                      <div className="flex items-center justify-between mb-3">
+                        <h4 className="font-semibold text-foreground text-sm">
+                          Students ({classStudents.length})
+                        </h4>
+                      </div>
+                      <div className="overflow-x-auto rounded-lg border border-border">
                         <table className="min-w-full text-sm">
-                          <thead>
-                            <tr className="border-b border-slate-600">
-                              <th className="text-left px-3 py-2 text-slate-400">Student ID</th>
-                              <th className="text-left px-3 py-2 text-slate-400">Name</th>
-                              <th className="text-left px-3 py-2 text-slate-400">Email</th>
-                              <th className="text-left px-3 py-2 text-slate-400">Phone</th>
-                              <th className="text-left px-3 py-2 text-slate-400">Status</th>
+                          <thead className="bg-muted/40">
+                            <tr>
+                              <th className="text-left px-4 py-2.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Student ID</th>
+                              <th className="text-left px-4 py-2.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Name</th>
+                              <th className="text-left px-4 py-2.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Email</th>
+                              <th className="text-left px-4 py-2.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Phone</th>
+                              <th className="text-left px-4 py-2.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Status</th>
                             </tr>
                           </thead>
-                          <tbody>
+                          <tbody className="divide-y divide-border">
                             {classStudents.map((student) => (
-                              <tr key={student.id} className="border-b border-slate-700 hover:bg-slate-700/20">
-                                <td className="px-3 py-2 text-slate-300">{student.studentId}</td>
-                                <td className="px-3 py-2 text-slate-300">
+                              <tr key={student.id} className="hover:bg-muted/30 transition-colors">
+                                <td className="px-4 py-2.5 font-mono text-sm text-foreground">{student.studentId}</td>
+                                <td className="px-4 py-2.5 text-foreground font-medium">
                                   {student.firstName} {student.lastName}
                                 </td>
-                                <td className="px-3 py-2 text-slate-400">{student.email}</td>
-                                <td className="px-3 py-2 text-slate-400">{student.phone || '-'}</td>
-                                <td className="px-3 py-2">
-                                  <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${
+                                <td className="px-4 py-2.5 text-muted-foreground">{student.email}</td>
+                                <td className="px-4 py-2.5 text-muted-foreground">{student.phone || '—'}</td>
+                                <td className="px-4 py-2.5">
+                                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                                     student.status === 'active'
-                                      ? 'bg-green-900/30 text-green-400'
-                                      : 'bg-gray-900/30 text-gray-400'
+                                      ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                      : 'bg-muted text-muted-foreground'
                                   }`}>
                                     {student.status}
                                   </span>
@@ -377,31 +403,35 @@ export default function ClassInchargeManagement() {
                   )}
                 </div>
               )}
-            </div>
+            </motion.div>
           ))
         )}
       </div>
 
       {/* Assign Modal */}
       {showAssignModal && (
-        <div className="fixed inset-0 bg-black/50 overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
-          <div className="bg-slate-800 border border-slate-700 p-6 rounded-lg shadow-xl w-full max-w-md mx-auto">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-card border border-border p-6 rounded-xl shadow-xl w-full max-w-md mx-auto"
+          >
             <div className="mb-6">
-              <h3 className="text-xl font-bold text-white mb-2">
+              <h3 className="text-xl font-bold text-foreground mb-1">
                 {editingIncharge ? 'Update Class Incharge' : 'Assign Class Incharge'}
               </h3>
-              <p className="text-slate-400 text-sm">Select class and faculty for incharge assignment</p>
+              <p className="text-muted-foreground text-sm">Select class and faculty for incharge assignment</p>
             </div>
 
             <form onSubmit={(e) => { e.preventDefault(); handleAssignIncharge(); }} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   Academic Year *
                 </label>
                 <select
                   value={newAssignment.academic_year}
                   onChange={(e) => setNewAssignment(prev => ({ ...prev, academic_year: e.target.value }))}
-                  className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-primary"
+                  className="w-full bg-background border border-border rounded-lg px-4 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                   disabled={!!editingIncharge}
                 >
                   <option value="2024-25">2024-25</option>
@@ -412,7 +442,7 @@ export default function ClassInchargeManagement() {
 
               {!editingIncharge && (
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                  <label className="block text-sm font-medium text-foreground mb-2">
                     Class *
                   </label>
                   <input
@@ -420,19 +450,19 @@ export default function ClassInchargeManagement() {
                     disabled
                     placeholder="Select class from assignment page"
                     value={newAssignment.class_id}
-                    className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-slate-500 focus:outline-none"
+                    className="w-full bg-muted border border-border rounded-lg px-4 py-2 text-muted-foreground focus:outline-none cursor-not-allowed"
                   />
                 </div>
               )}
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   Faculty Incharge *
                 </label>
                 <select
                   value={newAssignment.faculty_id}
                   onChange={(e) => setNewAssignment(prev => ({ ...prev, faculty_id: e.target.value }))}
-                  className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-primary"
+                  className="w-full bg-background border border-border rounded-lg px-4 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                   required
                 >
                   <option value="">Select Faculty</option>
@@ -447,7 +477,7 @@ export default function ClassInchargeManagement() {
               <div className="flex items-center gap-3 pt-4">
                 <button
                   type="submit"
-                  className="flex-1 bg-primary hover:bg-primary/90 text-white py-2 px-4 rounded-lg font-medium transition-colors"
+                  className="flex-1 bg-primary hover:bg-primary/90 text-white py-2.5 px-4 rounded-lg font-medium transition-colors"
                 >
                   {editingIncharge ? 'Update' : 'Assign'}
                 </button>
@@ -457,13 +487,13 @@ export default function ClassInchargeManagement() {
                     setShowAssignModal(false);
                     setEditingIncharge(null);
                   }}
-                  className="flex-1 bg-slate-600 hover:bg-slate-500 text-white py-2 px-4 rounded-lg font-medium transition-colors"
+                  className="flex-1 bg-muted hover:bg-muted/80 text-foreground border border-border py-2.5 px-4 rounded-lg font-medium transition-colors"
                 >
                   Cancel
                 </button>
               </div>
             </form>
-          </div>
+          </motion.div>
         </div>
       )}
     </MainLayout>

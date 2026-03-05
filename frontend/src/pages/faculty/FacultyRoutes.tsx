@@ -26,6 +26,7 @@ import Announcements from "./pages/Announcements";import NotificationCenter from
 import { InternalMarksEntry } from './pages/InternalMarksEntry';
 import CreateTimetable from './pages/CreateTimetable';
 import { Substitutions } from './pages/Substitutions';
+import ClassInchargeView from './pages/ClassInchargeView';
 import './faculty.css';
 
 const queryClient = new QueryClient();
@@ -62,6 +63,7 @@ const FacultyRoutes = () => (
               <Route path="mentor" element={<MentorDashboard />} />
               <Route path="mentor/:year" element={<MenteesList />} />
               <Route path="mentor/student/:studentId" element={<StudentProfileView />} />
+              <Route path="class-incharge" element={<ClassInchargeView />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </div>
