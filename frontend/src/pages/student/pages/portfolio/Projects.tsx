@@ -177,14 +177,16 @@ export default function Projects({ onPendingChange }: ProjectsProps) {
             <div key={project.id} className="section-card p-6 group animate-slide-in" style={{ animationDelay: `${index * 60}ms` }}>
               <div className="flex items-start justify-between mb-3">
                 <h3 className="font-semibold text-lg">{project.title}</h3>
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button onClick={() => handleEdit(project)} className="p-2 rounded-lg hover:bg-muted transition-colors">
-                    <Edit2 className="w-4 h-4" />
-                  </button>
-                  <button onClick={() => handleDelete(project.id)} className="p-2 rounded-lg hover:bg-destructive/10 text-destructive transition-colors">
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
+                {project.approvalStatus !== 'pending' && (
+                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button onClick={() => handleEdit(project)} className="p-2 rounded-lg hover:bg-muted transition-colors">
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                    <button onClick={() => handleDelete(project.id)} className="p-2 rounded-lg hover:bg-destructive/10 text-destructive transition-colors">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
               </div>
 
               <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{project.description}</p>

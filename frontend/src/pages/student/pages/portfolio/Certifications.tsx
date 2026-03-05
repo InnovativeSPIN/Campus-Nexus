@@ -184,14 +184,16 @@ export default function Certifications({ onPendingChange }: CertificationsProps)
                       <h3 className="font-semibold text-lg">{cert.name}</h3>
                       <p className="text-muted-foreground">{cert.issuer}</p>
                     </div>
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button onClick={() => handleEdit(cert)} className="p-2 rounded-lg hover:bg-muted transition-colors">
-                        <Edit2 className="w-4 h-4" />
-                      </button>
-                      <button onClick={() => handleDelete(cert.id)} className="p-2 rounded-lg hover:bg-destructive/10 text-destructive transition-colors">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
+                    {cert.approvalStatus !== 'pending' && (
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onClick={() => handleEdit(cert)} className="p-2 rounded-lg hover:bg-muted transition-colors">
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                        <button onClick={() => handleDelete(cert.id)} className="p-2 rounded-lg hover:bg-destructive/10 text-destructive transition-colors">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex flex-wrap items-center gap-4 mt-3 text-sm">

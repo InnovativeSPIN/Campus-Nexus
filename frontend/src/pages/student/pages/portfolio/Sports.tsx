@@ -138,14 +138,16 @@ export default function Sports({ onPendingChange }: SportsProps) {
                             key={sport.id}
                             title={sport.name}
                             actions={
-                                <div className="flex gap-2">
-                                    <button onClick={() => handleEdit(sport)} className="p-2 rounded-lg hover:bg-muted transition-colors" title="Edit">
-                                        <Edit className="w-4 h-4" />
-                                    </button>
-                                    <button onClick={() => handleDelete(sport.id)} className="p-2 rounded-lg hover:bg-destructive/10 hover:text-destructive transition-colors" title="Delete">
-                                        <Trash2 className="w-4 h-4" />
-                                    </button>
-                                </div>
+                                sport.approvalStatus !== 'pending' && (
+                                    <div className="flex gap-2">
+                                        <button onClick={() => handleEdit(sport)} className="p-2 rounded-lg hover:bg-muted transition-colors" title="Edit">
+                                            <Edit className="w-4 h-4" />
+                                        </button>
+                                        <button onClick={() => handleDelete(sport.id)} className="p-2 rounded-lg hover:bg-destructive/10 hover:text-destructive transition-colors" title="Delete">
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                )
                             }
                         >
                             <div className="flex items-center justify-between">
