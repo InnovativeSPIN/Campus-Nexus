@@ -157,7 +157,7 @@ const statusConfig = {
 };
 
 export default function Leave() {
-  const [activeTab, setActiveTab] = useState("apply");
+  const [activeTab, setActiveTab] = useState("approvals");
   const [leaveType, setLeaveType] = useState("");
   const [selectedRequest, setSelectedRequest] = useState<LeaveRequest | null>(null);
   const [showForwardDialog, setShowForwardDialog] = useState(false);

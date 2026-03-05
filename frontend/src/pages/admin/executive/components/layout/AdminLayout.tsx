@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { ExecutiveAdminSidebar } from './ExecutiveAdminSidebar';
 import { IntegratedNotificationBell } from '@/components/common/IntegratedNotificationBell';
+import { LeaveNotificationBell } from '@/components/common/LeaveNotificationBell';
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -29,7 +30,10 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             <h1 className="text-xl font-bold text-foreground">
               Principal Dashboard
             </h1>
-            <IntegratedNotificationBell />
+            <div className="flex items-center gap-2">
+              <LeaveNotificationBell />
+              <IntegratedNotificationBell />
+            </div>
           </div>
         </header>
 

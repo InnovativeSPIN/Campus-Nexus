@@ -4,8 +4,11 @@ import { NextClassCard } from "@/pages/admin/department-admin/components/dashboa
 import { PendingTasksList } from "@/pages/admin/department-admin/components/dashboard/PendingTasksList";
 import { LeaveSnapshot } from "@/pages/admin/department-admin/components/dashboard/LeaveSnapshot";
 import { IntegratedNotificationBell } from "@/components/common/IntegratedNotificationBell";
+import { LeaveNotificationBell } from "@/components/common/LeaveNotificationBell";
 import { useAnnouncementNotification } from "@/hooks/useAnnouncementNotification";
+import { useLeaveNotification } from "@/hooks/useLeaveNotification";
 import { AnnouncementNotificationModal } from "@/components/common/AnnouncementNotificationModal";
+import { LeaveRequestPopup } from "@/components/common/LeaveRequestPopup";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import {
@@ -49,6 +52,7 @@ const leaveBalance = [
 
 export default function Dashboard() {
   const { announcement, showNotification, setShowNotification } = useAnnouncementNotification();
+  const { pendingLeaves, showLeavePopup, setShowLeavePopup } = useLeaveNotification();
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
@@ -77,6 +81,11 @@ export default function Dashboard() {
           updatedAt={announcement.updatedAt}
         />
       )}
+      <LeaveRequestPopup
+        isOpen={showLeavePopup}
+        onClose={() => setShowLeavePopup(false)}
+        pendingLeaves={pendingLeaves}
+      />
       {/* Page Header */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
@@ -100,7 +109,10 @@ export default function Dashboard() {
               {formatTime(currentTime)}
             </p>
           </div>
-          <IntegratedNotificationBell />
+          <div className="flex items-center gap-2">
+            <LeaveNotificationBell />
+            <IntegratedNotificationBell />
+          </div>
         </div>
       </motion.div>
 

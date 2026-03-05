@@ -1,32 +1,17 @@
 import { useState, useEffect } from "react";
 import { IntegratedNotificationBell } from "@/components/common/IntegratedNotificationBell";
+import { LeaveNotificationBell } from "@/components/common/LeaveNotificationBell";
 import { MainLayout } from "@/pages/faculty/components/layout/MainLayout";
 import { motion } from "framer-motion";
 import { Button } from "@/pages/faculty/components/ui/button";
 import { Input } from "@/pages/faculty/components/ui/input";
 import { Label } from "@/pages/faculty/components/ui/label";
 import { Textarea } from "@/pages/faculty/components/ui/textarea";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/pages/faculty/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/pages/faculty/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/pages/faculty/components/ui/tabs";
-import {
-    CalendarDays,
-    PlusCircle,
-    Clock,
-    CheckCircle2,
-    XCircle,
-    AlertCircle,
-    User,
-    FileText,
-    ArrowRight,
-    Calendar,
-} from "lucide-react";
+import { CalendarDays, PlusCircle, Clock, CheckCircle2, XCircle, AlertCircle, FileText, ArrowRight, Calendar, User, Trash2 } from "lucide-react";
 import { cn } from "@/pages/faculty/lib/utils";
+import { toast } from "sonner";
 
 interface LeaveRequest {
     id: number;
@@ -38,6 +23,14 @@ interface LeaveRequest {
     status: "pending" | "approved" | "rejected" | "cancelled";
     createdAt: string;
     approvalDate?: string;
+    approvalRemarks?: string;
+    reassign_faculty_id?: number;
+}
+
+interface Colleague {
+    faculty_id: number;
+    Name: string;
+    designation: string;
 }
 
 const statusConfig = {
@@ -74,11 +67,19 @@ const statusConfig = {
 export default function Leave() {
     const [currentTime, setCurrentTime] = useState(new Date());
     const [myLeaves, setMyLeaves] = useState<LeaveRequest[]>([]);
-    const [leaveBalance, setLeaveBalance] = useState<any>(null);
+    const [colleagues, setColleagues] = useState<Colleague[]>([]);
     const [loading, setLoading] = useState(false);
-    const [loadingBalance, setLoadingBalance] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
     const [activeTab, setActiveTab] = useState("apply");
-    const [leaveType, setLeaveType] = useState("");
+
+    const [form, setForm] = useState({
+        leaveType: "",
+        startDate: "",
+        endDate: "",
+        reason: "",
+        loadAssign: "",
+        reassignFacultyId: "",
+    });
 
     useEffect(() => {
         const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -87,26 +88,8 @@ export default function Leave() {
 
     useEffect(() => {
         fetchMyLeaves();
-        fetchLeaveBalance();
+        fetchColleagues();
     }, []);
-
-    const fetchLeaveBalance = async () => {
-        try {
-            setLoadingBalance(true);
-            const token = localStorage.getItem("authToken");
-            const response = await fetch("/api/v1/leave/balance", {
-                headers: token ? { Authorization: `Bearer ${token}` } : {},
-            });
-            const result = await response.json();
-            if (result.success) {
-                setLeaveBalance(result.data);
-            }
-        } catch (error) {
-            console.error("Error fetching leave balance:", error);
-        } finally {
-            setLoadingBalance(false);
-        }
-    };
 
     const fetchMyLeaves = async () => {
         try {
@@ -116,9 +99,7 @@ export default function Leave() {
                 headers: token ? { Authorization: `Bearer ${token}` } : {},
             });
             const result = await response.json();
-            if (result.success) {
-                setMyLeaves(result.data || []);
-            }
+            if (result.success) setMyLeaves(result.data || []);
         } catch (error) {
             console.error("Error fetching leaves:", error);
         } finally {
@@ -126,17 +107,89 @@ export default function Leave() {
         }
     };
 
-    const formatDate = (date: Date) => {
-        return date.toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
+    const fetchColleagues = async () => {
+        try {
+            const token = localStorage.getItem("authToken");
+            const res = await fetch("/api/v1/faculty/me/department-colleagues", {
+                headers: token ? { Authorization: `Bearer ${token}` } : {},
+            });
+            const result = await res.json();
+            if (result.success) setColleagues(result.data || []);
+        } catch {}
     };
 
-    const formatTime = (date: Date) => {
-        return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const handleDelete = async (id: number) => {
+        if (!confirm("Are you sure you want to delete this leave application? This cannot be undone.")) return;
+        try {
+            const token = localStorage.getItem("authToken");
+            const response = await fetch(`/api/v1/leave/${id}`, {
+                method: "DELETE",
+                headers: token ? { Authorization: `Bearer ${token}` } : {},
+            });
+            const result = await response.json();
+            if (result.success) {
+                toast.success("Leave application deleted.");
+                fetchMyLeaves();
+            } else {
+                toast.error(result.error || "Failed to delete leave application");
+            }
+        } catch {
+            toast.error("Failed to delete leave application");
+        }
     };
 
-    const formatApiDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!form.leaveType || !form.startDate || !form.endDate || !form.reason) {
+            toast.error("Please fill in all required fields");
+            return;
+        }
+        if (new Date(form.endDate) < new Date(form.startDate)) {
+            toast.error("End date cannot be before start date");
+            return;
+        }
+        try {
+            setSubmitting(true);
+            const token = localStorage.getItem("authToken");
+            const response = await fetch("/api/v1/leave", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
+                body: JSON.stringify({
+                    leaveType: form.leaveType,
+                    startDate: form.startDate,
+                    endDate: form.endDate,
+                    reason: form.reason,
+                    loadAssign: form.loadAssign,
+                    reassignFacultyId: form.reassignFacultyId || null,
+                }),
+            });
+            const result = await response.json();
+            if (result.success) {
+                toast.success("Leave application submitted! Your HOD has been notified.");
+                setForm({ leaveType: "", startDate: "", endDate: "", reason: "", loadAssign: "", reassignFacultyId: "" });
+                setActiveTab("status");
+                fetchMyLeaves();
+            } else {
+                toast.error(result.error || "Failed to submit leave application");
+            }
+        } catch {
+            toast.error("Failed to submit leave application");
+        } finally {
+            setSubmitting(false);
+        }
     };
+
+    const formatDate = (date: Date) =>
+        date.toLocaleDateString("en-US", { weekday: "short", year: "numeric", month: "short", day: "numeric" });
+
+    const formatTime = (date: Date) =>
+        date.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+
+    const formatApiDate = (dateString: string) =>
+        new Date(dateString).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
 
     return (
         <MainLayout hideHeader={true}>
@@ -147,11 +200,9 @@ export default function Leave() {
             >
                 <div>
                     <h1 className="page-header font-serif">Leave Management</h1>
-                    <p className="text-muted-foreground -mt-4">
-                        Apply for leave and track your requests
-                    </p>
+                    <p className="text-muted-foreground -mt-4">Apply for leave and track your requests</p>
                 </div>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
                     <div className="text-right">
                         <p className="text-sm font-medium text-foreground flex items-center gap-2">
                             <Calendar className="w-4 h-4 text-primary" />
@@ -162,46 +213,9 @@ export default function Leave() {
                             {formatTime(currentTime)}
                         </p>
                     </div>
+                    <LeaveNotificationBell />
                     <IntegratedNotificationBell />
                 </div>
-            </motion.div>
-
-            {/* Leave Balance Summary */}
-            <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6"
-            >
-                {loadingBalance ? (
-                    <div className="col-span-2 md:col-span-4 text-center text-muted-foreground py-8">
-                        Loading leave balance...
-                    </div>
-                ) : leaveBalance ? (
-                    Object.entries(leaveBalance)
-                        .filter(([key]) => !['id', 'userId', 'userType', 'academicYear', 'createdAt', 'updatedAt'].includes(key))
-                        .map(([leaveType, balance]: any, index) => {
-                            const parsed = typeof balance === 'string' ? JSON.parse(balance) : balance;
-                            const remaining = parsed.balance - parsed.used;
-                            
-                            return (
-                                <motion.div
-                                    key={leaveType}
-                                    initial={{ opacity: 0, scale: 0.95 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    transition={{ delay: index * 0.1 }}
-                                    className="widget-card text-center"
-                                >
-                                    <p className="text-xs text-muted-foreground mb-2">{leaveType}</p>
-                                    <p className="text-3xl font-bold text-primary">
-                                        {remaining}
-                                    </p>
-                                    <p className="text-xs text-muted-foreground">
-                                        of {parsed.balance} remaining
-                                    </p>
-                                </motion.div>
-                            );
-                        })
-                ) : null}
             </motion.div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -227,21 +241,53 @@ export default function Leave() {
                             Leave Application Form
                         </h3>
 
-                        <form className="space-y-6">
+                        <form onSubmit={handleSubmit} className="space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <Label>Leave Type</Label>
-                                    <Select value={leaveType} onValueChange={setLeaveType}>
+                                    <Label>Leave Type *</Label>
+                                    <Select
+                                        value={form.leaveType}
+                                        onValueChange={(v) => setForm((f) => ({ ...f, leaveType: v }))}
+                                    >
                                         <SelectTrigger>
                                             <SelectValue placeholder="Select leave type" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="casual">Casual Leave</SelectItem>
-                                            <SelectItem value="medical">Medical Leave</SelectItem>
-                                            <SelectItem value="onduty">On Duty Leave</SelectItem>
-                                            <SelectItem value="vacation">Vacation Leave</SelectItem>
-                                            <SelectItem value="special">Special Leave</SelectItem>
-                                            <SelectItem value="lop">Leave Loss of Pay (LOP)</SelectItem>
+                                            <SelectItem value="Casual">Casual Leave</SelectItem>
+                                            <SelectItem value="Medical">Medical Leave</SelectItem>
+                                            <SelectItem value="On-Duty">On Duty Leave</SelectItem>
+                                            <SelectItem value="Earned">Earned Leave</SelectItem>
+                                            <SelectItem value="Personal">Personal Leave</SelectItem>
+                                            <SelectItem value="Maternity">Maternity Leave</SelectItem>
+                                            <SelectItem value="Comp-Off">Comp-Off</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label className="flex items-center gap-1">
+                                        <User className="w-3.5 h-3.5 text-primary" />
+                                        Reassign Faculty
+                                    </Label>
+                                    <Select
+                                        value={form.reassignFacultyId}
+                                        onValueChange={(v) => setForm((f) => ({ ...f, reassignFacultyId: v }))}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select faculty to cover classes" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {colleagues.length === 0 ? (
+                                                <SelectItem value="none" disabled>
+                                                    No colleagues found
+                                                </SelectItem>
+                                            ) : (
+                                                colleagues.map((c) => (
+                                                    <SelectItem key={c.faculty_id} value={String(c.faculty_id)}>
+                                                        {c.Name} — {c.designation}
+                                                    </SelectItem>
+                                                ))
+                                            )}
                                         </SelectContent>
                                     </Select>
                                 </div>
@@ -249,32 +295,48 @@ export default function Leave() {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <Label>From Date</Label>
-                                    <Input type="date" />
+                                    <Label>From Date *</Label>
+                                    <Input
+                                        type="date"
+                                        value={form.startDate}
+                                        onChange={(e) => setForm((f) => ({ ...f, startDate: e.target.value }))}
+                                        required
+                                    />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label>To Date</Label>
-                                    <Input type="date" />
+                                    <Label>To Date *</Label>
+                                    <Input
+                                        type="date"
+                                        value={form.endDate}
+                                        min={form.startDate}
+                                        onChange={(e) => setForm((f) => ({ ...f, endDate: e.target.value }))}
+                                        required
+                                    />
                                 </div>
                             </div>
 
                             <div className="space-y-2">
-                                <Label>Reason for Leave</Label>
+                                <Label>Reason for Leave *</Label>
                                 <Textarea
+                                    value={form.reason}
+                                    onChange={(e) => setForm((f) => ({ ...f, reason: e.target.value }))}
                                     placeholder="Please provide a detailed reason for your leave request..."
                                     rows={4}
+                                    required
                                 />
                             </div>
 
                             <div className="space-y-2">
                                 <Label>Load Assign</Label>
                                 <Textarea
-                                    placeholder="Describe your workload details (e.g., classes to handle, syllabus portion, lab sessions, evaluation work, etc.)..."
-                                    rows={4}
+                                    value={form.loadAssign}
+                                    onChange={(e) => setForm((f) => ({ ...f, loadAssign: e.target.value }))}
+                                    placeholder="Describe workload details (e.g., classes to handle, syllabus portion, lab sessions, evaluation work)..."
+                                    rows={3}
                                 />
                             </div>
 
-                            {(leaveType === "medical" || leaveType === "onduty") && (
+                            {(form.leaveType === "Medical" || form.leaveType === "On-Duty") && (
                                 <div className="space-y-2">
                                     <Label>Supporting Documents (Optional)</Label>
                                     <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary/50 transition-colors cursor-pointer">
@@ -286,11 +348,17 @@ export default function Leave() {
                             )}
 
                             <div className="flex gap-3 pt-4">
-                                <Button type="submit" className="flex-1">
-                                    Submit Application
+                                <Button type="submit" className="flex-1" disabled={submitting}>
+                                    {submitting ? "Submitting..." : "Submit Application"}
                                 </Button>
-                                <Button type="button" variant="outline">
-                                    Save as Draft
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() =>
+                                        setForm({ leaveType: "", startDate: "", endDate: "", reason: "", loadAssign: "", reassignFacultyId: "" })
+                                    }
+                                >
+                                    Clear
                                 </Button>
                             </div>
                         </form>
@@ -325,63 +393,84 @@ export default function Leave() {
                                         initial={{ opacity: 0, x: -10 }}
                                         animate={{ opacity: 1, x: 0 }}
                                         transition={{ delay: index * 0.1 }}
-                                        className={cn(
-                                            "widget-card border-l-4",
-                                            config.border
-                                        )}
+                                        className={cn("widget-card border-l-4", config.border)}
                                     >
                                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                                             <div className="flex-1">
                                                 <div className="flex items-center gap-3 mb-2">
                                                     <h4 className="font-semibold text-foreground">{request.leaveType}</h4>
-                                                    <span className={cn(
-                                                        "px-2 py-0.5 rounded-full text-xs font-medium flex items-center gap-1",
-                                                        config.bg,
-                                                        config.color
-                                                    )}>
+                                                    <span
+                                                        className={cn(
+                                                            "px-2 py-0.5 rounded-full text-xs font-medium flex items-center gap-1",
+                                                            config.bg,
+                                                            config.color
+                                                        )}
+                                                    >
                                                         <StatusIcon className="w-3 h-3" />
                                                         {config.label}
                                                     </span>
                                                 </div>
-                                                <p className="text-sm text-muted-foreground mb-2">
-                                                    {request.reason}
-                                                </p>
+                                                <p className="text-sm text-muted-foreground mb-2">{request.reason}</p>
                                                 <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
                                                     <span className="flex items-center gap-1">
                                                         <CalendarDays className="w-3 h-3" />
-                                                        {formatApiDate(request.startDate)} {formatApiDate(request.endDate)} ({Math.ceil(request.totalDays)} days)
+                                                        {formatApiDate(request.startDate)} → {formatApiDate(request.endDate)} ({Math.ceil(request.totalDays)} days)
                                                     </span>
                                                 </div>
+                                                {request.approvalRemarks && (
+                                                    <p className="text-xs text-muted-foreground mt-2 p-2 bg-muted/40 rounded border border-border">
+                                                        <span className="font-medium text-foreground">Remarks: </span>
+                                                        {request.approvalRemarks}
+                                                    </p>
+                                                )}
                                             </div>
 
-                                            {/* Status Timeline */}
                                             <div className="flex items-center gap-2">
-                                                <div className={cn(
-                                                    "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold",
-                                                    request.status !== "rejected" ? "bg-success/20 text-success" : "bg-destructive/20 text-destructive"
-                                                )}>
+                                                {request.status === "pending" && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8"
+                                                        onClick={() => handleDelete(request.id)}
+                                                        title="Delete application"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </Button>
+                                                )}
+                                                <div
+                                                    className={cn(
+                                                        "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold",
+                                                        request.status !== "rejected"
+                                                            ? "bg-success/20 text-success"
+                                                            : "bg-destructive/20 text-destructive"
+                                                    )}
+                                                >
                                                     1
                                                 </div>
                                                 <ArrowRight className="w-4 h-4 text-muted-foreground" />
-                                                <div className={cn(
-                                                    "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold",
-                                                    request.status === "approved"
-                                                        ? "bg-success/20 text-success"
-                                                        : request.status === "rejected"
+                                                <div
+                                                    className={cn(
+                                                        "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold",
+                                                        request.status === "approved"
+                                                            ? "bg-success/20 text-success"
+                                                            : request.status === "rejected"
                                                             ? "bg-destructive/20 text-destructive"
                                                             : "bg-muted text-muted-foreground"
-                                                )}>
+                                                    )}
+                                                >
                                                     2
                                                 </div>
                                                 <ArrowRight className="w-4 h-4 text-muted-foreground" />
-                                                <div className={cn(
-                                                    "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold",
-                                                    request.status === "approved"
-                                                        ? "bg-success/20 text-success"
-                                                        : request.status === "rejected"
+                                                <div
+                                                    className={cn(
+                                                        "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold",
+                                                        request.status === "approved"
+                                                            ? "bg-success/20 text-success"
+                                                            : request.status === "rejected"
                                                             ? "bg-destructive/20 text-destructive"
                                                             : "bg-muted text-muted-foreground"
-                                                )}>
+                                                    )}
+                                                >
                                                     3
                                                 </div>
                                             </div>
@@ -396,5 +485,3 @@ export default function Leave() {
         </MainLayout>
     );
 }
-
-
