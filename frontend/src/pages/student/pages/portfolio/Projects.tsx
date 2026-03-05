@@ -16,13 +16,31 @@ interface Project {
   id: string;
   title: string;
   description: string;
-  techStack?: string[];
+  techStack?: string[] | string;
   repoUrl?: string;
   demoUrl?: string;
   status: 'completed' | 'in-progress' | 'planned' | 'paused';
   createdAt: string;
   approvalStatus?: ApprovalStatus;
 }
+
+const ensureArray = (val: any): string[] => {
+  if (!val) return [];
+  if (Array.isArray(val)) return val;
+  if (typeof val === 'string') {
+    if (val.startsWith('[') && val.endsWith(']')) {
+      try {
+        const parsed = JSON.parse(val);
+        if (Array.isArray(parsed)) return parsed.map(String).filter(Boolean);
+      } catch (e) {
+        // Fallback to split if JSON parse fails
+      }
+    }
+    return val.split(',').map((s) => s.trim()).filter(Boolean);
+  }
+  return [];
+};
+
 
 interface ProjectsProps {
   onPendingChange?: (hasPending: boolean) => void;
@@ -65,7 +83,7 @@ export default function Projects({ onPendingChange }: ProjectsProps) {
     setFormData({
       title: project.title,
       description: project.description,
-      technologies: (project.techStack || []).join(', '),
+      technologies: ensureArray(project.techStack).join(', '),
       githubUrl: project.repoUrl || '',
       demoUrl: project.demoUrl || '',
       status: project.status,
@@ -172,7 +190,7 @@ export default function Projects({ onPendingChange }: ProjectsProps) {
               <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{project.description}</p>
 
               <div className="flex flex-wrap gap-1 mb-3">
-                {(project.techStack || []).map((tech) => (
+                {ensureArray(project.techStack).map((tech) => (
                   <span key={tech} className="px-2 py-0.5 bg-muted rounded text-xs font-medium">{tech}</span>
                 ))}
               </div>

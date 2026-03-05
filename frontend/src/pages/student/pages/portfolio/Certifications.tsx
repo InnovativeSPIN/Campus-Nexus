@@ -21,9 +21,27 @@ interface Certification {
   expiryDate?: string;
   credentialId?: string;
   credentialUrl?: string;
-  skills: string[];
+  skills: string[] | string;
   approvalStatus?: ApprovalStatus;
 }
+
+const ensureArray = (val: any): string[] => {
+  if (!val) return [];
+  if (Array.isArray(val)) return val;
+  if (typeof val === 'string') {
+    if (val.startsWith('[') && val.endsWith(']')) {
+      try {
+        const parsed = JSON.parse(val);
+        if (Array.isArray(parsed)) return parsed.map(String).filter(Boolean);
+      } catch (e) {
+        // Fallback to split if JSON parse fails
+      }
+    }
+    return val.split(',').map((s) => s.trim()).filter(Boolean);
+  }
+  return [];
+};
+
 
 interface CertificationsProps {
   onPendingChange?: (hasPending: boolean) => void;
@@ -71,7 +89,7 @@ export default function Certifications({ onPendingChange }: CertificationsProps)
       expiryDate: cert.expiryDate || '',
       credentialId: cert.credentialId || '',
       credentialUrl: cert.credentialUrl || '',
-      skills: (cert.skills || []).join(', '),
+      skills: ensureArray(cert.skills).join(', '),
     });
     setIsModalOpen(true);
     if (onPendingChange) onPendingChange(true);
@@ -200,7 +218,7 @@ export default function Certifications({ onPendingChange }: CertificationsProps)
                   )}
 
                   <div className="flex flex-wrap gap-1 mt-3">
-                    {(cert.skills || []).map((skill) => (
+                    {ensureArray(cert.skills).map((skill) => (
                       <span key={skill} className="px-2 py-1 bg-muted rounded text-xs font-medium">{skill}</span>
                     ))}
                   </div>
