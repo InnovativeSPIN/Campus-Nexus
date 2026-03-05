@@ -7,7 +7,7 @@ import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
 import ChangePassword from "./pages/ChangePassword";
 import CoordinatorManagement from "./pages/CoordinatorManagement";
-import FacultyAllocation from "./pages/FacultyAllocation";
+import ClassInchargeManagement from "./pages/ClassInchargeManagement";
 import Attendance from "./pages/Attendance";
 import Academics from "./pages/Academics";
 import Leave from "./pages/Leave";
@@ -45,7 +45,7 @@ const DepartmentAdminRoutes = () => (
               <Route path="profile" element={<Profile />} />
               <Route path="change-password" element={<ChangePassword />} />
               <Route path="coordinators" element={<CoordinatorManagement />} />
-              <Route path="faculty-allocations" element={<FacultyAllocation />} />
+              <Route path="class-incharges" element={<ClassInchargeManagement />} />
               <Route path="timetable" element={<TimetableEditor />} />
               <Route path="create-timetable" element={<CreateTimetable />} />
               <Route path="timetable/alterations" element={<TimetableAlteration />} />

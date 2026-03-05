@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { toast } from '@/components/ui/sonner';
+import { toast } from '@/pages/admin/department-admin/components/ui/sonner';
 import { BookOpen, Plus, Edit, Trash2, Users, Save, X } from 'lucide-react';
 import { MainLayout } from '@/pages/admin/department-admin/components/layout/MainLayout';
 import { motion } from 'framer-motion';
