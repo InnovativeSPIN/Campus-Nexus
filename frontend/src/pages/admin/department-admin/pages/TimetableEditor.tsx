@@ -193,15 +193,14 @@ export default function TimetableEditor() {
   // Fetch all timetables for a given department-year (used by slots/breaks tabs)
   const fetchTimetables = async (year?: string) => {
     try {
-      const token = authToken || localStorage.getItem('authToken');
       // the backend no longer filters by year, so any value is fine
       const endpoint = year
         ? `/api/v1/department-admin/timetable/department/${year}`
         : '/api/v1/department-admin/timetable/department/1';
       const response = await fetch(endpoint, {
         headers: {
-          'Content-Type': 'application/json',
-          ...(token && { 'Authorization': `Bearer ${token}` })
+          Authorization: `Bearer ${authToken}`,
+          'Content-Type': 'application/json'
         }
       });
       if (!response.ok) {
@@ -228,11 +227,10 @@ export default function TimetableEditor() {
     // attach them to selectedTimetable.TimetableSlots. If dept-admin
     // no longer needs this functionality, we can leave it as a no-op.
     try {
-      const token = authToken || localStorage.getItem('authToken');
       const response = await fetch(`/api/v1/department-admin/timetable/${timetableId}/slots`, {
         headers: {
-          'Content-Type': 'application/json',
-          ...(token && { 'Authorization': `Bearer ${token}` })
+          Authorization: `Bearer ${authToken}`,
+          'Content-Type': 'application/json'
         }
       });
       if (!response.ok) return;
@@ -248,14 +246,13 @@ export default function TimetableEditor() {
   // Fetch faculty by year for department admin
   const fetchFacultyByYear = async (year: string) => {
     try {
-      const token = authToken || localStorage.getItem('authToken');
       // convert to simple number if year is like '1st' or '2nd'
       const yearMap: any = { '1st': '1', '2nd': '2', '3rd': '3', '4th': '4' };
       const yearParam = yearMap[year] || year;
       const response = await fetch(`/api/v1/timetable/admin/faculty-by-year/${yearParam}`, {
         headers: {
-          'Content-Type': 'application/json',
-          ...(token && { 'Authorization': `Bearer ${token}` })
+          Authorization: `Bearer ${authToken}`,
+          'Content-Type': 'application/json'
         }
       });
 
@@ -280,11 +277,10 @@ export default function TimetableEditor() {
   const fetchFacultyTimetable = async (facultyId: string) => {
     setLoadingFacultyTimetable(true);
     try {
-      const token = authToken || localStorage.getItem('authToken');
       const response = await fetch(`/api/v1/timetable/admin/faculty-timetable/${facultyId}`, {
         headers: {
-          'Content-Type': 'application/json',
-          ...(token && { 'Authorization': `Bearer ${token}` })
+          Authorization: `Bearer ${authToken}`,
+          'Content-Type': 'application/json'
         }
       });
 

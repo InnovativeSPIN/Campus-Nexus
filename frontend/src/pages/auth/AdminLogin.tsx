@@ -28,7 +28,7 @@ import {
 
 const adminRoles = [
     { value: 'superadmin', label: 'Super Admin' },
-    { value: 'executiveadmin', label: 'Executive Admin' },
+    { value: 'executiveadmin', label: 'Executive Panel' },
     { value: 'academicadmin', label: 'Academic Admin' },
     { value: 'exam_cell_admin', label: 'Exam Cell Admin' },
     { value: 'placement_cell_admin', label: 'Placement Cell Admin' },
@@ -71,8 +71,8 @@ export default function AdminLogin() {
             try {
                 // Real API call if backend is running
                 // role values now correspond directly to backend role names (no special
-        // mapping required)
-        const response = await fetch(`/api/v1/auth/admins/${role}`);
+                // mapping required)
+                const response = await fetch(`/api/v1/auth/admins/${role}`);
                 const result = await response.json();
                 if (result.success && result.data.length > 0) {
                     setAvailableAdmins(result.data);
@@ -131,7 +131,7 @@ export default function AdminLogin() {
                         </div>
                     </div>
                     <h1 className="text-4xl font-bold text-primary-foreground mb-4">
-                        NSCET ADMIN PORTAL
+                        Campus Nexus Admin Portal
                     </h1>
                     <p className="text-lg text-primary-foreground/80">
                         Exclusive access for authorized administrative personnel.

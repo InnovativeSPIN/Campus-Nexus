@@ -92,7 +92,7 @@ const models = {
   StudentEvent: StudentEvent(sequelize),
   StudentNotification: StudentNotification(sequelize),
   StudentBio: StudentBio(sequelize),
-  TimetableSimple: TimetableSimple(sequelize),
+  TimetableSimple: TimetableSimple,
   Room: Room(sequelize),
   Lab: Lab(sequelize),
   TimetablePeriod: TimetablePeriod(sequelize),
@@ -111,4 +111,4 @@ Object.keys(models).forEach((modelName) => {
 const initModels = () => ({ ...models, sequelize });
 
 export default initModels;
-export { models, sequelize };
+export { models, sequelize, TimetableSimple };

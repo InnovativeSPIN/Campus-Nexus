@@ -91,8 +91,8 @@ export function ExecutiveAdminSidebar() {
                     <Home className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <h1 className="font-bold text-white text-sm leading-tight">NSCET</h1>
-                    <p className="text-[10px] text-white/70 uppercase tracking-widest">Principal</p>
+                    <h1 className="font-bold text-white text-sm leading-tight uppercase tracking-tight">Campus Nexus</h1>
+                    <p className="text-[10px] text-white/70 uppercase tracking-widest">Executive Panel</p>
                   </div>
                 </div>
               </motion.div>

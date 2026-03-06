@@ -150,7 +150,7 @@ export default function Login() {
             </div>
           </div>
           <h1 className="text-4xl font-bold text-primary-foreground mb-4">
-            NSCET PORTAL
+            Campus Nexus
           </h1>
           <p className="text-lg text-primary-foreground/80">
             Education management system for students and faculty.
@@ -165,7 +165,10 @@ export default function Login() {
             <div className="inline-flex h-16 w-16 items-center justify-center rounded-xl bg-primary">
               <GraduationCap className="h-8 w-8 text-primary-foreground" />
             </div>
-            <h1 className="mt-4 text-2xl font-bold text-foreground">NSCET ERP PORTAL </h1>
+            <div>
+              <h1 className="font-bold text-white text-sm leading-tight uppercase tracking-tight">Campus Nexus</h1>
+              <p className="text-[10px] text-white/70 uppercase tracking-widest">Executive Panel</p>
+            </div>
           </div>
 
           <div>

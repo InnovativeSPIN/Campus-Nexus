@@ -28,7 +28,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         <header className="sticky top-0 z-40 h-16 border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
           <div className="flex h-full items-center justify-between px-6">
             <h1 className="text-xl font-bold text-foreground">
-              Principal Dashboard
+              Executive Panel Dashboard
             </h1>
             <div className="flex items-center gap-2">
               <LeaveNotificationBell />

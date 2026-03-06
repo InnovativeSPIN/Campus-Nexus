@@ -10,7 +10,6 @@ import {
   Building2,
   Calendar,
   GraduationCap,
-  Users,
   BookOpen,
   Target,
   TrendingUp,
@@ -29,7 +28,14 @@ import {
   Tooltip as ChartTooltip,
 } from 'recharts';
 import Badge from '@/pages/student/components/common/Badge';
-import { getMarksSummary, getMyMarks } from '@/pages/student/services/studentApi';
+import {
+  getMarksSummary,
+  getMyMarks,
+  getMyProjects,
+  getMyCertifications,
+  getMySports,
+  getMyEvents
+} from '@/pages/student/services/studentApi';
 
 interface SemesterSummary {
   semester: number;
@@ -54,6 +60,13 @@ export default function StudentDashboard() {
   const [recentMarks, setRecentMarks] = useState<Mark[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const [portfolioStats, setPortfolioStats] = useState({
+    projects: 0,
+    certifications: 0,
+    sports: 0,
+    events: 0
+  });
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -76,6 +89,22 @@ export default function StudentDashboard() {
         if (marksRes.status === 'fulfilled' && marksRes.value?.data) {
           setRecentMarks((marksRes.value.data as Mark[]).slice(0, 5));
         }
+
+        // Fetch portfolio counts
+        const portfolioPromises = [
+          getMyProjects(),
+          getMyCertifications(),
+          getMySports(),
+          getMyEvents()
+        ];
+
+        const results = await Promise.allSettled(portfolioPromises);
+        setPortfolioStats({
+          projects: results[0].status === 'fulfilled' ? (results[0].value as any).data?.length || 0 : 0,
+          certifications: results[1].status === 'fulfilled' ? (results[1].value as any).data?.length || 0 : 0,
+          sports: results[2].status === 'fulfilled' ? (results[2].value as any).data?.length || 0 : 0,
+          events: results[3].status === 'fulfilled' ? (results[3].value as any).data?.length || 0 : 0,
+        });
       } catch (_) {
         // silently ignore errors — empty state will show
       } finally {
@@ -234,27 +263,30 @@ export default function StudentDashboard() {
           )}
         </SectionCard>
 
-        {/* Quick Stats */}
-        <SectionCard title="Quick Stats" subtitle="Overview of your classroom">
+        {/* Portfolio Overview */}
+        <SectionCard title="Portfolio Overview" subtitle="Achievements and activities summary">
           <div className="grid grid-cols-2 gap-4 h-full">
             {[
-              { label: 'Classmates', value: 42, icon: Users, color: 'text-info', bg: 'bg-info/10' },
-              { label: 'Subjects', value: 6, icon: BookOpen, color: 'text-success', bg: 'bg-success/10' },
-            ].map((stat, index) => {
-              const Icon = stat.icon;
+              { label: 'Projects', value: portfolioStats.projects, desc: 'Technical & Academic', icon: BookOpen, color: 'text-primary', bg: 'bg-primary/10' },
+              { label: 'Certifications', value: portfolioStats.certifications, desc: 'Skills & Achievements', icon: TrendingUp, color: 'text-success', bg: 'bg-success/10' },
+              { label: 'Sports', value: portfolioStats.sports, desc: 'Extra-curricular Activities', icon: Target, color: 'text-info', bg: 'bg-info/10' },
+              { label: 'Events', value: portfolioStats.events, desc: 'Participation & Honors', icon: Calendar, color: 'text-warning', bg: 'bg-warning/10' },
+            ].map((item, index) => {
+              const Icon = item.icon;
               return (
                 <div
                   key={index}
-                  className="flex flex-col items-center justify-center p-4 rounded-xl border border-border bg-card/50 hover:bg-card transition-colors animate-scale-in"
+                  className="flex flex-col p-4 rounded-xl border border-border bg-card/50 hover:bg-card transition-all hover:shadow-md animate-scale-in"
                   style={{ animationDelay: `${index * 100}ms` }}
                 >
-                  <div className={`p-3 rounded-full ${stat.bg} ${stat.color} mb-3`}>
-                    <Icon className="w-6 h-6" />
+                  <div className={`p-2.5 rounded-lg ${item.bg} ${item.color} w-fit mb-3`}>
+                    <Icon className="w-5 h-5" />
                   </div>
-                  <span className="text-2xl font-bold mb-1">{stat.value}</span>
-                  <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
-                    {stat.label}
-                  </span>
+                  <div className="flex flex-col">
+                    <span className="text-2xl font-bold text-foreground">{item.value}</span>
+                    <h4 className="text-sm font-semibold text-foreground mt-1">{item.label}</h4>
+                    <p className="text-[10px] text-muted-foreground leading-tight mt-0.5 uppercase tracking-wider font-medium">{item.desc}</p>
+                  </div>
                 </div>
               );
             })}

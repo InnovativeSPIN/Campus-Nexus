@@ -15,6 +15,27 @@ const TimetableAlteration = (sequelize) => {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
+    // details about the slot being altered
+    day: {
+      type: DataTypes.ENUM('Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'),
+      allowNull: true,
+    },
+    hour: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+    section: {
+      type: DataTypes.STRING(10),
+      allowNull: true,
+    },
+    subject: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+    },
+    year: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
     slot_id: {
       type: DataTypes.INTEGER,
       allowNull: false,

@@ -1,14 +1,20 @@
 import { MainLayout } from "@/pages/admin/department-admin/components/layout/MainLayout";
 import { motion } from "framer-motion";
 import { Button } from "@/pages/admin/department-admin/components/ui/button";
-import { Download, Calendar as CalendarIcon, Clock, Settings, Loader } from "lucide-react";
+import { Download, Calendar as CalendarIcon, Clock, Settings } from "lucide-react";
 import { cn } from "@/pages/admin/department-admin/lib/utils";
 import { useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
-import { toast } from "@/components/ui/sonner";
-import { useAuth } from "@/contexts/AuthContext";
 
 const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const timeSlots = [
+  "9:00 AM",
+  "10:00 AM",
+  "11:00 AM",
+  "12:00 PM",
+  "2:00 PM",
+  "3:00 PM",
+  "4:00 PM",
+];
 
 interface ClassSlot {
   subject: string;
@@ -19,8 +25,65 @@ interface ClassSlot {
 
 type TimetableData = {
   [key: string]: {
-    [key: number]: ClassSlot | null;
+    [key: string]: ClassSlot | null;
   };
+};
+
+const timetableData: TimetableData = {
+  Monday: {
+    "9:00 AM": { subject: "Data Structures", section: "CSE-A", room: "Room 101", type: "lecture" },
+    "10:00 AM": { subject: "Data Structures", section: "CSE-B", room: "Room 102", type: "lecture" },
+    "11:00 AM": null,
+    "12:00 PM": { subject: "OOP Lab", section: "CSE-A", room: "Lab 1", type: "lab" },
+    "2:00 PM": { subject: "OOP Lab", section: "CSE-A", room: "Lab 1", type: "lab" },
+    "3:00 PM": null,
+    "4:00 PM": { subject: "Tutorial", section: "CSE-A", room: "Room 101", type: "tutorial" },
+  },
+  Tuesday: {
+    "9:00 AM": null,
+    "10:00 AM": { subject: "Algorithms", section: "CSE-C", room: "Room 201", type: "lecture" },
+    "11:00 AM": { subject: "Algorithms", section: "CSE-C", room: "Room 201", type: "lecture" },
+    "12:00 PM": null,
+    "2:00 PM": { subject: "Data Structures", section: "CSE-A", room: "Room 101", type: "lecture" },
+    "3:00 PM": { subject: "Data Structures Lab", section: "CSE-B", room: "Lab 2", type: "lab" },
+    "4:00 PM": { subject: "Data Structures Lab", section: "CSE-B", room: "Lab 2", type: "lab" },
+  },
+  Wednesday: {
+    "9:00 AM": { subject: "OOP", section: "CSE-A", room: "Room 103", type: "lecture" },
+    "10:00 AM": { subject: "OOP", section: "CSE-B", room: "Room 103", type: "lecture" },
+    "11:00 AM": { subject: "Data Structures", section: "CSE-C", room: "Room 201", type: "lecture" },
+    "12:00 PM": null,
+    "2:00 PM": null,
+    "3:00 PM": { subject: "Tutorial", section: "CSE-B", room: "Room 102", type: "tutorial" },
+    "4:00 PM": null,
+  },
+  Thursday: {
+    "9:00 AM": { subject: "Algorithms Lab", section: "CSE-A", room: "Lab 3", type: "lab" },
+    "10:00 AM": { subject: "Algorithms Lab", section: "CSE-A", room: "Lab 3", type: "lab" },
+    "11:00 AM": null,
+    "12:00 PM": { subject: "Data Structures", section: "CSE-B", room: "Room 102", type: "lecture" },
+    "2:00 PM": { subject: "OOP", section: "CSE-C", room: "Room 201", type: "lecture" },
+    "3:00 PM": { subject: "OOP", section: "CSE-C", room: "Room 201", type: "lecture" },
+    "4:00 PM": null,
+  },
+  Friday: {
+    "9:00 AM": { subject: "Data Structures", section: "CSE-A", room: "Room 101", type: "lecture" },
+    "10:00 AM": null,
+    "11:00 AM": { subject: "Algorithms", section: "CSE-B", room: "Room 102", type: "lecture" },
+    "12:00 PM": { subject: "Algorithms", section: "CSE-B", room: "Room 102", type: "lecture" },
+    "2:00 PM": { subject: "OOP Lab", section: "CSE-C", room: "Lab 1", type: "lab" },
+    "3:00 PM": { subject: "OOP Lab", section: "CSE-C", room: "Lab 1", type: "lab" },
+    "4:00 PM": { subject: "Tutorial", section: "CSE-C", room: "Room 201", type: "tutorial" },
+  },
+  Saturday: {
+    "9:00 AM": { subject: "Extra Class", section: "CSE-A", room: "Room 101", type: "lecture" },
+    "10:00 AM": { subject: "Extra Class", section: "CSE-A", room: "Room 101", type: "lecture" },
+    "11:00 AM": null,
+    "12:00 PM": null,
+    "2:00 PM": null,
+    "3:00 PM": null,
+    "4:00 PM": null,
+  },
 };
 
 const typeStyles = {
@@ -36,86 +99,8 @@ const typeColors = {
 };
 
 export default function Timetable() {
-  const { authToken } = useAuth();
-  const [timetableData, setTimetableData] = useState<TimetableData>({});
-  const [timeSlots, setTimeSlots] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [periods, setPeriods] = useState<number[]>([]);
   const currentDay = new Date().toLocaleDateString("en-US", { weekday: "long" });
   const navigate = useNavigate();
-
-  useEffect(() => {
-    fetchDepartmentTimetable();
-  }, []);
-
-  const fetchDepartmentTimetable = async () => {
-    try {
-      setLoading(true);
-      const token = authToken || localStorage.getItem('authToken');
-      
-      if (!token) {
-        toast.error('Authentication token not found. Please log in again.');
-        return;
-      }
-
-      // Fetch department timetable
-      const response = await fetch('/api/v1/department-admin/timetable/department/1', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `Failed to fetch timetable: ${response.status}`);
-      }
-
-      const result = await response.json();
-      
-      if (result.success && result.data) {
-        // Group timetable by day and period
-        const groupedData: TimetableData = {};
-        const periodsSet = new Set<number>();
-        
-        // If we have timetable data from TimetableSimple (bulk upload)
-        if (Array.isArray(result.data)) {
-          result.data.forEach((slot: any) => {
-            const day = slot.day || slot.day_of_week;
-            const period = slot.hour || slot.period_number;
-            
-            if (!groupedData[day]) {
-              groupedData[day] = {};
-            }
-            
-            periodsSet.add(period);
-            groupedData[day][period] = {
-              subject: slot.subject || slot.subject_name || 'N/A',
-              section: slot.section || slot.class || 'N/A',
-              room: slot.roomNumber || slot.room_number || 'TBD',
-              type: (slot.sessionType || 'lecture').toLowerCase() as "lecture" | "lab" | "tutorial"
-            };
-          });
-        }
-        
-        setTimetableData(groupedData);
-        const sortedPeriods = Array.from(periodsSet).sort((a, b) => a - b);
-        setPeriods(sortedPeriods);
-        
-        // Generate time slots from periods (assuming each period is 1 hour starting at 9 AM)
-        const generatedSlots = sortedPeriods.map(p => {
-          const hour = 9 + p - 1;
-          return `${hour > 12 ? hour - 12 : hour}:00 ${hour >= 12 ? 'PM' : 'AM'}`;
-        });
-        setTimeSlots(generatedSlots || ['9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '2:00 PM', '3:00 PM', '4:00 PM']);
-      }
-    } catch (error) {
-      console.error('Error fetching timetable:', error);
-      toast.error('Failed to load timetable');
-    } finally {
-      setLoading(false);
-    }
-  }
 
   // Break timings for different years
   const breakTimings = {
@@ -221,16 +206,6 @@ export default function Timetable() {
         transition={{ delay: 0.2 }}
         className="widget-card overflow-x-auto"
       >
-        {loading ? (
-          <div className="flex items-center justify-center p-8">
-            <Loader className="w-6 h-6 animate-spin mr-2" />
-            <p>Loading timetable...</p>
-          </div>
-        ) : Object.keys(timetableData).length === 0 ? (
-          <div className="flex items-center justify-center p-8 text-muted-foreground">
-            <p>No timetable data available. Upload timetable CSV to get started.</p>
-          </div>
-        ) : (
         <table className="w-full min-w-[900px]">
           <thead>
             <tr>
@@ -264,11 +239,11 @@ export default function Timetable() {
                 )}>
                   {day}
                 </td>
-                {(periods.length > 0 ? periods : [1, 2, 3, 4, 5, 6, 7]).map((period) => {
-                  const slot = timetableData[day]?.[period];
+                {timeSlots.map((time) => {
+                  const slot = timetableData[day]?.[time];
                   return (
                     <td
-                      key={`${day}-${period}`}
+                      key={`${day}-${time}`}
                       className="p-2 border-b"
                     >
                       {slot ? (
@@ -298,7 +273,6 @@ export default function Timetable() {
             ))}
           </tbody>
         </table>
-        )}
       </motion.div>
     </MainLayout>
   );

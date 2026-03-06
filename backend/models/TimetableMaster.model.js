@@ -61,10 +61,6 @@ const TimetableMaster = (sequelize) => {
       foreignKey: 'timetable_id',
       as: 'details'
     });
-    TimetableMasterModel.hasMany(models.TimetablePeriod, {
-      foreignKey: 'timetable_master_id',
-      as: 'periods'
-    });
   };
 
   return TimetableMasterModel;

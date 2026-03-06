@@ -339,7 +339,7 @@ export default function TimetableManagement() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Department *</label>
-                  <Select value={formData.department_id || ''} onValueChange={(value) => setFormData({ ...formData, department_id: value })}>
+                  <Select value={formData.department_id} onValueChange={(value) => setFormData({ ...formData, department_id: value })}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select Department" />
                     </SelectTrigger>
@@ -366,7 +366,7 @@ export default function TimetableManagement() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">Semester *</label>
                   <Select value={formData.semester} onValueChange={(value) => setFormData({ ...formData, semester: value as 'odd' | 'even' })}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select Semester" />
+                      <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="odd">Odd</SelectItem>
@@ -377,12 +377,11 @@ export default function TimetableManagement() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Year (Optional)</label>
-                  <Select value={formData.year || ''} onValueChange={(value) => setFormData({ ...formData, year: value })}>
+                  <Select value={formData.year} onValueChange={(value) => setFormData({ ...formData, year: value })}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select Year" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">None</SelectItem>
                       <SelectItem value="1st">1st Year</SelectItem>
                       <SelectItem value="2nd">2nd Year</SelectItem>
                       <SelectItem value="3rd">3rd Year</SelectItem>
@@ -415,9 +414,7 @@ export default function TimetableManagement() {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Select Timetable *</label>
-                  <Select value={bulkUploadData.timetable_id?.toString() || ''} onValueChange={(value) => {
-                    if (value) setBulkUploadData({ ...bulkUploadData, timetable_id: parseInt(value) });
-                  }}>
+                  <Select value={bulkUploadData.timetable_id?.toString() || ''} onValueChange={(value) => setBulkUploadData({ ...bulkUploadData, timetable_id: parseInt(value) })}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select Timetable" />
                     </SelectTrigger>

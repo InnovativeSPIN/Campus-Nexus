@@ -47,7 +47,6 @@ const parentData = {
 
 export default function ParentInfo() {
   const { toast } = useToast();
-  const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showDialog, setShowDialog] = useState(false);
   const [pendingRequest, setPendingRequest] = useState(false);
@@ -202,36 +201,7 @@ export default function ParentInfo() {
     });
   };
 
-  const handleSave = async () => {
-    setIsSaving(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    setIsSaving(false);
-    setIsEditing(false);
-    toast({
-      title: 'Success',
-      description: 'Parent information updated successfully.',
-    });
-  };
 
-  const handleCancel = () => {
-    setFormData({
-      father: { ...parentData.father },
-      mother: { ...parentData.mother },
-      guardian: { ...parentData.guardian },
-    });
-    setIsEditing(false);
-  };
-
-  const handleInputChange = (parent: 'father' | 'mother' | 'guardian', field: string, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [parent]: {
-        ...prev[parent],
-        [field]: value,
-      },
-    }));
-  };
 
   return (
     <div className="animate-fade-in w-full">
@@ -284,14 +254,16 @@ export default function ParentInfo() {
                       </div>
                     </div>
                   </div>
-                  <button
-                    onClick={() => handleEditClick('father')}
-                    disabled={pendingRequest}
-                    className="p-2 rounded-lg hover:bg-background transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
-                    title="Edit father's information"
-                  >
-                    <Edit className="w-4 h-4" />
-                  </button>
+                  {formData.father.name && formData.father.name !== 'Rajesh Sharma' && (
+                    <button
+                      onClick={() => handleEditClick('father')}
+                      disabled={pendingRequest}
+                      className="p-2 rounded-lg hover:bg-background transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+                      title="Edit father's information"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
 
                 <div className="space-y-2 text-sm">
@@ -337,14 +309,16 @@ export default function ParentInfo() {
                       </div>
                     </div>
                   </div>
-                  <button
-                    onClick={() => handleEditClick('mother')}
-                    disabled={pendingRequest}
-                    className="p-2 rounded-lg hover:bg-background transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
-                    title="Edit mother's information"
-                  >
-                    <Edit className="w-4 h-4" />
-                  </button>
+                  {formData.mother.name && formData.mother.name !== 'Sunita Sharma' && (
+                    <button
+                      onClick={() => handleEditClick('mother')}
+                      disabled={pendingRequest}
+                      className="p-2 rounded-lg hover:bg-background transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+                      title="Edit mother's information"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
 
                 <div className="space-y-2 text-sm">
@@ -379,14 +353,16 @@ export default function ParentInfo() {
                 <p className="text-xs uppercase tracking-wide text-muted-foreground">
                   Local Guardian (if any)
                 </p>
-                <button
-                  onClick={() => handleEditClick('guardian')}
-                  disabled={pendingRequest}
-                  className="p-2 rounded-lg hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  title="Edit guardian's information"
-                >
-                  <Edit className="w-4 h-4" />
-                </button>
+                {formData.guardian.name && formData.guardian.name !== 'Vikram Sharma' && (
+                  <button
+                    onClick={() => handleEditClick('guardian')}
+                    disabled={pendingRequest}
+                    className="p-2 rounded-lg hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Edit guardian's information"
+                  >
+                    <Edit className="w-4 h-4" />
+                  </button>
+                )}
               </div>
               <div className="grid gap-4 sm:grid-cols-2 text-sm">
                 <div>

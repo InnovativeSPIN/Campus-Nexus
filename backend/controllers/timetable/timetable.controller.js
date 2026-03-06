@@ -1,7 +1,8 @@
 import ErrorResponse from '../../utils/errorResponse.js';
 import asyncHandler from '../../middleware/async.js';
 import { models, sequelize } from '../../models/index.js';
-const { Timetable, PeriodConfig, Faculty, Student, TimetableSlot, Department, Class: ClassModel, Subject, User, TimetableSimple } = models;
+const { Timetable, PeriodConfig, Faculty, Student, TimetableSlot, Department, Class: ClassModel, Subject, User, TimetableAlteration } = models;
+import TimetableSimple from '../../models/TimetableSimple.model.js';
 import { Op, QueryTypes } from 'sequelize';
 
 // @desc      Get all timetables
@@ -455,6 +456,47 @@ export const getTodaySchedule = asyncHandler(async (req, res, next) => {
           ]
         });
         schedule = slots.map(slot => slot.toJSON());
+
+        // apply substitutions for students
+        try {
+          const now = new Date();
+          const cutoff = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+          const altRecords = await TimetableAlteration.findAll({
+            where: {
+              created_at: { [Op.gte]: cutoff },
+              [Op.or]: schedule.map(s => ({
+                day: s.day,
+                hour: s.hour,
+                section: s.section,
+                year: s.year
+              }))
+            }
+          });
+          const alts = altRecords.map(a => a.toJSON ? a.toJSON() : a);
+          schedule = schedule.map(slot => {
+            const matching = alts.find(alt =>
+              alt.day === slot.day &&
+              alt.hour === slot.hour &&
+              alt.section === slot.section &&
+              (alt.year === slot.year || alt.semester === slot.year)
+            );
+            if (matching) {
+              return {
+                ...slot,
+                faculty: {
+                  firstName: matching.newFacultyName || slot.faculty?.firstName,
+                  lastName: ''
+                },
+                isAltered: true,
+                alteredAt: matching.created_at,
+                originalFacultyId: matching.old_faculty_id
+              };
+            }
+            return slot;
+          });
+        } catch (err) {
+          console.error('[TIMETABLE] error applying alterations to student schedule', err);
+        }
       }
     }
   }
@@ -597,5 +639,173 @@ export const getFacultyTimetable = asyncHandler(async (req, res, next) => {
   } catch (err) {
     console.error('[TIMETABLE] getFacultyTimetable error:', err && err.stack ? err.stack : err);
     return next(new ErrorResponse('Failed to fetch faculty timetable', 500));
+  }
+});
+
+// @desc      Get timetable by department and year (for timetable alteration)
+// @route     GET /api/v1/timetable/department/:year
+// @access    Private/Faculty (timetable incharge)
+export const getTimetableByDepartmentAndYear = asyncHandler(async (req, res, next) => {
+  const { year } = req.params;
+  const { section, academicYear } = req.query;
+  
+  // Get user's department from token
+  const deptCandidates = [];
+  if (req.user.department) {
+    if (typeof req.user.department === 'string') deptCandidates.push(req.user.department);
+    else if (typeof req.user.department === 'object') {
+      if (req.user.department.short_name) deptCandidates.push(req.user.department.short_name);
+      if (req.user.department.full_name) deptCandidates.push(req.user.department.full_name);
+    }
+  }
+  if (req.user.departmentCode && typeof req.user.departmentCode === 'string') deptCandidates.push(req.user.departmentCode);
+  
+  const uniqueDepts = Array.from(new Set(deptCandidates.filter(Boolean).map(String)));
+  
+  if (uniqueDepts.length === 0) {
+    return next(new ErrorResponse('No department associated with your account', 400));
+  }
+
+  // Build query
+  const whereClause = {
+    year: parseInt(year, 10)
+  };
+  
+  if (section) {
+    whereClause.section = section;
+  }
+  
+  if (academicYear) {
+    whereClause.academicYear = academicYear;
+  }
+
+  try {
+    // Use raw query to handle the department IN clause
+    const placeholders = uniqueDepts.map(() => '?').join(',');
+    const replacements = [...uniqueDepts, parseInt(year, 10)];
+    
+    let sql = `SELECT * FROM timetable WHERE department IN (${placeholders}) AND year = ?`;
+    
+    if (section) {
+      sql += ` AND section = ?`;
+      replacements.push(section);
+    }
+    
+    if (academicYear) {
+      sql += ` AND academicYear = ?`;
+      replacements.push(academicYear);
+    }
+    
+    sql += ` ORDER BY CASE day WHEN 'Monday' THEN 1 WHEN 'Tuesday' THEN 2 WHEN 'Wednesday' THEN 3 WHEN 'Thursday' THEN 4 WHEN 'Friday' THEN 5 WHEN 'Saturday' THEN 6 WHEN 'Sunday' THEN 7 END ASC, hour ASC`;
+
+    const timetable = await sequelize.query(sql, { replacements, type: QueryTypes.SELECT });
+
+    res.status(200).json({
+      success: true,
+      count: timetable.length,
+      timetable: timetable
+    });
+  } catch (err) {
+    console.error('[TIMETABLE] getTimetableByDepartmentAndYear error:', err);
+    return next(new ErrorResponse('Failed to fetch timetable', 500));
+  }
+});
+
+// @desc      Apply timetable alteration (replace faculty)
+// @route     POST /api/v1/timetable/alteration
+// @access    Private/Faculty (timetable incharge)
+export const applyTimetableAlteration = asyncHandler(async (req, res, next) => {
+  const { department, year, section, day, hour, subject, originalFacultyId, replacementFacultyId, replacementFacultyName } = req.body;
+
+  if (!department || !year || !section || !day || !hour || !subject || !originalFacultyId || !replacementFacultyId) {
+    return res.status(400).json({
+      success: false,
+      error: 'Please provide all required fields: department, year, section, day, hour, subject, originalFacultyId, replacementFacultyId'
+    });
+  }
+
+  try {
+    // Find the department ID from the department name
+    const deptRecord = await Department.findOne({
+      where: {
+        [Op.or]: [
+          { short_name: department },
+          { full_name: department }
+        ]
+      }
+    });
+
+    if (!deptRecord) {
+      return next(new ErrorResponse('Department not found', 404));
+    }
+
+    // Find the actual timetable slot to verify it exists
+    const timetableSlot = await TimetableSimple.findOne({
+      where: {
+        department: department,
+        year: parseInt(year, 10),
+        section: section,
+        day: day,
+        hour: parseInt(hour, 10),
+        subject: subject,
+        facultyId: originalFacultyId
+      }
+    });
+
+    // Look up faculty IDs by their college codes
+    const originalFaculty = await Faculty.findOne({
+      where: { faculty_college_code: originalFacultyId }
+    });
+
+    const replacementFaculty = await Faculty.findOne({
+      where: { faculty_college_code: replacementFacultyId }
+    });
+
+    if (!originalFaculty || !replacementFaculty) {
+      return next(new ErrorResponse('One or both faculty members not found', 404));
+    }
+
+    // Create a temporary alteration record (24-hour validity)
+    const alteration = await TimetableAlteration.create({
+      department_id: deptRecord.id,
+      semester: parseInt(year, 10),
+      // slot info saved separately for easy querying later
+      day: day,
+      hour: parseInt(hour, 10),
+      section: section,
+      subject: subject,
+      year: parseInt(year, 10),
+      slot_id: 0, // Not using slot_id for simple timetable
+      old_faculty_id: originalFaculty.faculty_id,
+      new_faculty_id: replacementFaculty.faculty_id,
+      reason: `Temporary substitution for ${day} Hour ${hour} - ${subject}`,
+      requested_by: req.user.faculty_id || req.user.id,
+      status: 'approved', // Auto-approve for direct substitutions
+      proposed_date: new Date(),
+      approved_by: req.user.faculty_id || req.user.id,
+      approval_date: new Date()
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Timetable altered successfully! This is a temporary change valid for 24 hours.',
+      data: {
+        id: alteration.id,
+        department: department,
+        year: year,
+        section: section,
+        day: day,
+        hour: hour,
+        subject: subject,
+        originalFacultyId: originalFacultyId,
+        originalFacultyName: timetableSlot?.facultyName || 'TBA',
+        replacementFacultyId: replacementFacultyId,
+        replacementFacultyName: replacementFacultyName,
+        createdAt: alteration.createdAt
+      }
+    });
+  } catch (err) {
+    console.error('[TIMETABLE] applyTimetableAlteration error:', err);
+    return next(new ErrorResponse('Failed to apply timetable alteration', 500));
   }
 });

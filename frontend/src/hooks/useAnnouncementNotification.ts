@@ -33,14 +33,20 @@ export function useAnnouncementNotification(): UseAnnouncementNotificationResult
                 if (result.success && result.data && result.data.length > 0) {
                     const latestAnnouncement = result.data[0];
                     setAnnouncement(latestAnnouncement);
-                    
+
                     // Only show notification if announcement was created in last 24 hours
                     const createdAt = new Date(latestAnnouncement.createdAt).getTime();
                     const now = Date.now();
                     const oneDayInMs = 24 * 60 * 60 * 1000;
-                    
+
                     if (now - createdAt < oneDayInMs) {
-                        setShowNotification(true);
+                        // NEW: Check if this announcement ID has already been seen via localStorage
+                        const seenIds = JSON.parse(localStorage.getItem('seen_announcement_ids') || '[]');
+                        if (!seenIds.includes(latestAnnouncement.id)) {
+                            setShowNotification(true);
+                            // Mark as seen
+                            localStorage.setItem('seen_announcement_ids', JSON.stringify([...seenIds, latestAnnouncement.id]));
+                        }
                     }
                 }
             } catch (error) {

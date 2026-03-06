@@ -1,29 +1,20 @@
 import ErrorResponse from '../../utils/errorResponse.js';
 import asyncHandler from '../../middleware/async.js';
 import { sequelize, models } from '../../models/index.js';
-// we'll need faculty model to validate department
-const { Faculty } = models;
+import { TimetableSimple } from '../../models/index.js';
 import { Op } from 'sequelize';
+
+// extract frequently used models
+const { TimetableAlteration, Faculty } = models;
 import csvParser from 'csv-parser';
 import fs from 'fs';
-
-const { TimetableSimple } = models;
 
 // @desc      Bulk upload timetable from CSV
 // @route     POST /api/v1/timetable/bulk-upload
 // @access    Private
 export const bulkUploadTimetable = asyncHandler(async (req, res, next) => {
-  // Debug logging
-  console.log('=== Bulk Upload Request ===');
-  console.log('req.file:', req.file);
-  console.log('req.body:', req.body);
-  console.log('Content-Type:', req.headers['content-type']);
-  console.log('Authorization:', req.headers.authorization ? 'Present' : 'Missing');
-  console.log('User:', req.user);
-  
   // Check if file was uploaded
   if (!req.file) {
-    console.log('ERROR: No file uploaded');
     return next(new ErrorResponse('Please upload a CSV file', 400));
   }
 
@@ -33,87 +24,54 @@ export const bulkUploadTimetable = asyncHandler(async (req, res, next) => {
   // Parse CSV file - use let for results since we need to reassign
   let results = [];
   const errors = [];
-  let csvHeaders = [];
-  
+
   try {
     await new Promise((resolve, reject) => {
       fs.createReadStream(req.file.path)
         .pipe(csvParser())
         .on('data', (data) => {
-          // Log headers on first row
-          if (csvHeaders.length === 0) {
-            csvHeaders = Object.keys(data);
-            console.log('[DEBUG] CSV Headers detected:', csvHeaders);
-          }
           // Validate required fields
-          // section, roomNumber, labName are optional
-          // Accept multiple column name variations for flexibility
-          const facultyIdValue = data.facultyId || data.faculty_id || data.faculty_college_code;
-          const facultyNameValue = data.facultyName || data.faculty_name;
-          const departmentValue = data.department || data.dept;
-          const yearValue = data.year || data.academic_year;
-          const dayValue = data.day || data.day_of_week;
-          const subjectValue = data.subject || data.subject_code;
-          const academicYearCSV = data.academicYear || data.academic_year || data.year_sem;
-          const hourValue = data.hour || data.period;
-          
-          const requiredFields = [];
-          if (!facultyIdValue || (typeof facultyIdValue === 'string' && facultyIdValue.trim() === '')) requiredFields.push('facultyId/faculty_id/faculty_college_code');
-          if (!facultyNameValue || (typeof facultyNameValue === 'string' && facultyNameValue.trim() === '')) requiredFields.push('facultyName/faculty_name');
-          if (!departmentValue || (typeof departmentValue === 'string' && departmentValue.trim() === '')) requiredFields.push('department/dept');
-          if (!yearValue || (typeof yearValue === 'string' && yearValue.trim() === '')) requiredFields.push('year');
-          if (!dayValue || (typeof dayValue === 'string' && dayValue.trim() === '')) requiredFields.push('day/day_of_week');
-          if (!subjectValue || (typeof subjectValue === 'string' && subjectValue.trim() === '')) requiredFields.push('subject/subject_code');
-          if (!academicYearCSV || (typeof academicYearCSV === 'string' && academicYearCSV.trim() === '')) requiredFields.push('academicYear/academic_year');
-          if (!hourValue || hourValue.toString().trim() === '') requiredFields.push('hour/period');
-          
-          if (requiredFields.length > 0) {
+          const requiredFields = ['facultyId', 'facultyName', 'department', 'year', 'section', 'day', 'hour', 'subject'];
+          const missingFields = requiredFields.filter(field => !data[field] || (typeof data[field] === 'string' && data[field].trim() === ''));
+
+          if (missingFields.length > 0) {
             errors.push({
               row: results.length + 1,
-              error: `Missing required fields: ${requiredFields.join(', ')}`,
+              error: `Missing required fields: ${missingFields.join(', ')}`,
               data
             });
           } else {
-            // Accept both 'hour' and 'period' column names
-            const periodStr = (hourValue)?.toString().trim();
-            const period = periodStr ? parseInt(periodStr, 10) : null;
-            
-            if (!period || isNaN(period)) {
+            // Validate required fields
+            const hourStr = data.hour?.toString().trim();
+            const hour = hourStr ? parseInt(hourStr, 10) : null;
+
+            if (!hour || isNaN(hour)) {
               errors.push({
                 row: results.length + 1,
-                error: `Invalid hour value: ${hourValue}`,
+                error: `Invalid hour value: ${data.hour}`,
                 data
               });
               return; // Skip this row
             }
-            
+
             // Normalize and validate data
             // Use academicYear from CSV or from request body; treat blank as null
-            let academicYearValue = academicYearCSV ? academicYearCSV.toString().trim() : '';
+            let academicYearValue = data.academicYear ? data.academicYear.trim() : '';
             if (!academicYearValue) {
               academicYearValue = bodyAcademicYear ? bodyAcademicYear.trim() : null;
             }
             if (academicYearValue === '') academicYearValue = null;
-            
-            // Parse boolean fields
-            const isLabSession = data.isLabSession ? data.isLabSession?.toString().trim().toUpperCase() === 'TRUE' : (data.is_lab_session?.toString().trim().toUpperCase() === 'TRUE');
-            const sessionType = (data.sessionType || data.session_type)?.trim() || 'theory';
-            
+
             results.push({
-              facultyId: facultyIdValue.toString().trim(),
-              facultyName: facultyNameValue.toString().trim(),
-              department: departmentValue.toString().trim(),
-              year: yearValue.toString().trim(),
-              section: (data.section || data.class_section) ? (data.section || data.class_section).toString().trim() : '',
-              day: dayValue.toString().trim(),
-              hour: period, // Keep as 'hour' for backward compatibility with TimetableSimple model
-              period: period,
-              subject: subjectValue.toString().trim(),
-              academicYear: academicYearValue,
-              roomNumber: (data.roomNumber || data.room_number) ? (data.roomNumber || data.room_number).toString().trim() : null,
-              labName: (data.labName || data.lab_name) ? (data.labName || data.lab_name).toString().trim() : null,
-              isLabSession: isLabSession,
-              sessionType: sessionType.toLowerCase()
+              facultyId: data.facultyId.trim(),
+              facultyName: data.facultyName.trim(),
+              department: data.department.trim(),
+              year: data.year.trim(),
+              section: data.section ? data.section.trim() : '',
+              day: data.day.trim(),
+              hour: hour,
+              subject: data.subject.trim(),
+              academicYear: academicYearValue
             });
           }
         })
@@ -133,103 +91,10 @@ export const bulkUploadTimetable = asyncHandler(async (req, res, next) => {
     return next(new ErrorResponse('No valid rows found in CSV file', 400));
   }
 
-  // verify faculty IDs and enforce department consistency
-  const facultyIds = [...new Set(results.map(r => r.facultyId))];
-  console.log('[DEBUG] Looking up', facultyIds.length, 'unique faculty IDs:', facultyIds);
-  
-  let faculties = [];
-  if (facultyIds.length > 0) {
-    try {
-      // Get faculty records with LEFT JOIN to department (not INNER JOIN)
-      faculties = await Faculty.findAll({
-        where: { faculty_college_code: { [Op.in]: facultyIds } },
-        include: [{ 
-          model: models.Department, 
-          as: 'department', 
-          attributes: ['short_name', 'full_name', 'id'],
-          required: false  // Use LEFT JOIN instead of INNER JOIN
-        }],
-        attributes: ['faculty_id', 'faculty_college_code', 'Name', 'department_id'],
-        subQuery: false,
-        limit: 1000
-      });
-      console.log('[DEBUG] Query returned', faculties.length, 'faculties from DB out of', facultyIds.length, 'requested');
-      
-      // Log the actual codes returned
-      const returnedCodes = faculties.map(f => f.faculty_college_code);
-      const missingCodes = facultyIds.filter(id => !returnedCodes.includes(id));
-      if (missingCodes.length > 0) {
-        console.log('[DEBUG] Missing faculty codes:', missingCodes);
-      }
-    } catch (dbError) {
-      console.error('[ERROR] Faculty lookup failed:', dbError.message);
-      console.error('[ERROR] Stack:', dbError.stack);
-      if (req.file.path) fs.unlinkSync(req.file.path);
-      return next(new ErrorResponse(`Database error while verifying faculty IDs: ${dbError.message}`, 500));
-    }
-  }
-
-  const deptMap = {};
-  const deptIdMap = {};
-  const foundFacultyMap = {};
-  
-  faculties.forEach(f => {
-    const code = f.faculty_college_code;
-    foundFacultyMap[code] = f;
-    
-    // Try to get department name from association
-    let deptName = '';
-    if (f.department) {
-      deptName = f.department.short_name || f.department.full_name || '';
-    }
-    
-    // If no department from association, note it
-    if (!deptName && f.department_id) {
-      console.warn(`[WARN] Faculty ${code} has department_id ${f.department_id} but no department association`);
-    }
-    
-    deptMap[code] = deptName;
-    deptIdMap[code] = f.department_id;
-  });
-
-  console.log('[DEBUG] Found', Object.keys(deptMap).length, 'faculties in database');
-  if (Object.keys(deptMap).length > 0) {
-    console.log('[DEBUG] Sample faculty codes:', Object.keys(deptMap).slice(0, 10).join(', '));
-  }
-
-  const facultyErrors = [];
-  const notFoundFaculties = [];
-  results.forEach((r, idx) => {
-    if (foundFacultyMap[r.facultyId]) {
-      // Faculty found in database
-      // NOTE: Removed department-admin restriction to allow uploading timetables
-      // for faculty from other departments (common when subjects are cross-departmental)
-      
-      // Override department from faculty record if mismatch
-      const dbDeptName = deptMap[r.facultyId];
-      if (dbDeptName && r.department !== dbDeptName) {
-        console.warn(`[WARN] Row ${idx + 2}: department mismatch for faculty ${r.facultyId}, using database value "${dbDeptName}"`);
-        r.department = dbDeptName;
-      }
-    } else {
-      notFoundFaculties.push(r.facultyId);
-      facultyErrors.push(`Row ${idx + 2}: facultyId "${r.facultyId}" not found in faculty_profiles table. Available codes: ${Object.keys(deptMap).slice(0, 10).join(', ')}${Object.keys(deptMap).length > 10 ? ', ...' : ''}`);
-    }
-  });
-  
-  if (facultyErrors.length > 0) {
-    console.error('[ERROR] Faculty validation failed');
-    console.error('[ERROR] Requested faculty IDs:', facultyIds.join(', '));
-    console.error('[ERROR] Found in DB:', Object.keys(deptMap).length > 0 ? Object.keys(deptMap).join(', ') : 'NONE');
-    console.error('[ERROR] Not found:', notFoundFaculties.join(', '));
-    if (req.file.path) fs.unlinkSync(req.file.path);
-    return next(new ErrorResponse(`Faculty validation errors:\n${facultyErrors.slice(0, 5).join('\n')}${facultyErrors.length > 5 ? '\n... and ' + (facultyErrors.length - 5) + ' more errors' : ''}`, 400));
-  }
-
   // Check for duplicates within the CSV itself (same faculty, day, hour)
   const seen = new Set();
   const csvDuplicates = [];
-  
+
   results.forEach((row, index) => {
     const key = `${row.facultyId}|${row.day}|${row.hour}`;
     if (seen.has(key)) {
@@ -243,7 +108,7 @@ export const bulkUploadTimetable = asyncHandler(async (req, res, next) => {
     }
     seen.add(key);
   });
-  
+
   if (csvDuplicates.length > 0) {
     // Clean up uploaded file
     if (req.file.path) {
@@ -254,7 +119,7 @@ export const bulkUploadTimetable = asyncHandler(async (req, res, next) => {
 
   // Get unique department names from the uploaded data
   // Note: We use department name (string) directly, not departmentId
-  
+
   console.log('[DEBUG] Processing', results.length, 'rows from CSV');
 
   // Add departmentId to each result - using map creates new array, no reassignment needed
@@ -264,7 +129,7 @@ export const bulkUploadTimetable = asyncHandler(async (req, res, next) => {
     'I': 1, 'II': 2, 'III': 3, 'IV': 4,
     'i': 1, 'ii': 2, 'iii': 3, 'iv': 4
   };
-  
+
   results = results.map(row => {
     // Validate and parse hour
     const hourValue = row.hour;
@@ -272,20 +137,20 @@ export const bulkUploadTimetable = asyncHandler(async (req, res, next) => {
       console.error('[ERROR] Invalid hour value:', row.hour, 'Row:', row);
       throw new Error(`Invalid hour value: ${row.hour} at faculty ${row.facultyId}`);
     }
-    
+
     // Convert Roman year to numeric
     let yearValue = row.year?.toString().trim();
     if (romanToNumber[yearValue]) {
       yearValue = romanToNumber[yearValue];
     }
     yearValue = parseInt(yearValue, 10);
-    
+
     // Validate year
-    if (yearValue === undefined || yearValue === null || isNaN(yearValue) || ![1,2,3,4].includes(yearValue)) {
+    if (yearValue === undefined || yearValue === null || isNaN(yearValue) || ![1, 2, 3, 4].includes(yearValue)) {
       console.error('[ERROR] Invalid year value:', row.year, 'Row:', row);
       throw new Error(`Invalid year value: ${row.year} at faculty ${row.facultyId}`);
     }
-    
+
     return {
       facultyId: row.facultyId,
       facultyName: row.facultyName,
@@ -294,13 +159,8 @@ export const bulkUploadTimetable = asyncHandler(async (req, res, next) => {
       section: row.section || null,
       day: row.day,
       hour: hourValue,
-      period: hourValue,
       subject: row.subject,
-      academicYear: row.academicYear || null,
-      roomNumber: row.roomNumber || null,
-      labName: row.labName || null,
-      isLabSession: row.isLabSession || false,
-      sessionType: row.sessionType || 'theory'
+      academicYear: row.academicYear || null
     };
   });
 
@@ -309,123 +169,11 @@ export const bulkUploadTimetable = asyncHandler(async (req, res, next) => {
   // ignore null/undefined academic years when computing unique list
   const uniqueAcademicYears = [...new Set(results.map(row => row.academicYear).filter(v => v != null))];
 
-  // Extract unique subjects and auto-create them in Subject table
-  console.log('[DEBUG] Processing subjects from uploaded data...');
-  
-  // Map each subject to its department_id from faculty records
-  const subjectsByDept = {}; // { department_id: Set<subject_name> }
-  results.forEach(row => {
-    const faculty = foundFacultyMap[row.facultyId];
-    if (faculty && faculty.department_id) {
-      const deptId = faculty.department_id;
-      if (!subjectsByDept[deptId]) {
-        subjectsByDept[deptId] = new Set();
-      }
-      subjectsByDept[deptId].add(row.subject);
-    }
-  });
-
-  console.log('[DEBUG] Found subjects in', Object.keys(subjectsByDept).length, 'departments');
-
-  // Helper function to generate subject_code from subject_name
-  const generateSubjectCode = (subjectName, existingCodes) => {
-    // Try using first few words' first letters (e.g., "Data Structures" -> "DS")
-    const words = subjectName.trim().split(/\s+/);
-    let code = words.map(w => w.charAt(0).toUpperCase()).join('');
-    
-    // If too short, append random number
-    if (code.length < 2) {
-      code = subjectName.substring(0, 3).toUpperCase();
-    }
-    
-    // Make sure it's unique
-    let uniqueCode = code;
-    let suffix = 1;
-    while (existingCodes.has(uniqueCode)) {
-      uniqueCode = code + suffix;
-      suffix++;
-    }
-    
-    existingCodes.add(uniqueCode);
-    return uniqueCode;
-  };
-
-  // For each department, find or create subjects
-  const subjectIdMap = {}; // { subject_name: subject_id } - used for FacultySubjectAssignment
-  
-  try {
-    const { Subject } = models;
-    
-    for (const [deptIdStr, subjectNames] of Object.entries(subjectsByDept)) {
-      const deptId = parseInt(deptIdStr);
-      const subjectsArray = Array.from(subjectNames);
-      
-      console.log(`[DEBUG] Processing ${subjectsArray.length} subjects for department ${deptId}: ${subjectsArray.join(', ')}`);
-      
-      // Find existing subjects for this department
-      const existingSubjects = await Subject.findAll({
-        where: {
-          department_id: deptId,
-          subject_name: { [Op.in]: subjectsArray }
-        },
-        attributes: ['id', 'subject_name', 'subject_code']
-      });
-      
-      const existingSubjectMap = {}; // { subject_name: { id, subject_code } }
-      const existingCodes = new Set();
-      existingSubjects.forEach(s => {
-        existingSubjectMap[s.subject_name] = { id: s.id, code: s.subject_code };
-        existingCodes.add(s.subject_code);
-        subjectIdMap[`${deptId}|${s.subject_name}`] = s.id;
-      });
-      
-      console.log(`[DEBUG] Found ${existingSubjects.length} existing subjects for department ${deptId}`);
-      
-      // Create missing subjects
-      const subjectsToCreate = [];
-      for (const subjectName of subjectsArray) {
-        if (!existingSubjectMap[subjectName]) {
-          const generatedCode = generateSubjectCode(subjectName, existingCodes);
-          subjectsToCreate.push({
-            subject_name: subjectName,
-            subject_code: generatedCode,
-            department_id: deptId,
-            semester: 1, // Default to 1st semester
-            type: subjectName.toLowerCase().includes('lab') ? 'Practical' : 'Theory', // Auto-detect lab subjects
-            is_laboratory: subjectName.toLowerCase().includes('lab') || false
-          });
-        }
-      }
-      
-      if (subjectsToCreate.length > 0) {
-        console.log(`[DEBUG] Creating ${subjectsToCreate.length} new subjects for department ${deptId}`);
-        const createdSubjects = await Subject.bulkCreate(subjectsToCreate, {
-          validate: true,
-          ignoreDuplicates: true
-        });
-        
-        // Map the created subjects
-        createdSubjects.forEach(s => {
-          subjectIdMap[`${deptId}|${s.subject_name}`] = s.id;
-        });
-        
-        console.log(`[DEBUG] Created ${createdSubjects.length} subjects: ${createdSubjects.map(s => s.subject_name).join(', ')}`);
-      }
-    }
-  } catch (error) {
-    console.error('[ERROR] Failed to create subjects:', error.message);
-    console.error('[ERROR] Stack:', error.stack);
-    if (req.file.path) fs.unlinkSync(req.file.path);
-    // Continue with timetable upload even if subject creation fails
-    // This maintains backward compatibility
-    console.warn('[WARN] Continuing with timetable upload despite subject creation issue');
-  }
-
   // Start transaction
   let transaction;
   try {
     transaction = await sequelize.transaction();
-    
+
     // Delete existing records for uploaded faculty and academic years
     // This allows re-uploading without duplicate errors
     let deletedCount = 0;
@@ -452,52 +200,6 @@ export const bulkUploadTimetable = asyncHandler(async (req, res, next) => {
       transaction
     });
 
-    // Create FacultySubjectAssignment records for auto-mapped subjects
-    console.log('[DEBUG] Creating FacultySubjectAssignment records...');
-    
-    const { FacultySubjectAssignment } = models;
-    const assignmentsToCreate = [];
-    const processedAssignments = new Set(); // Track to avoid duplicates
-    
-    results.forEach(row => {
-      const faculty = foundFacultyMap[row.facultyId];
-      if (!faculty) return; // Skip if faculty not found (shouldn't happen after validation)
-      
-      const deptId = faculty.department_id;
-      const subjectKey = `${deptId}|${row.subject}`;
-      const subjectId = subjectIdMap[subjectKey];
-      
-      if (subjectId) {
-        // Create unique key to prevent duplicate assignments
-        const assignmentKey = `${faculty.faculty_id}|${subjectId}|${row.academicYear}`;
-        
-        if (!processedAssignments.has(assignmentKey)) {
-          assignmentsToCreate.push({
-            faculty_id: faculty.faculty_id,
-            subject_id: subjectId,
-            academic_year: row.academicYear || new Date().getFullYear().toString(),
-            semester: row.year, // Use year from timetable as semester
-            status: 'active'
-          });
-          processedAssignments.add(assignmentKey);
-        }
-      }
-    });
-
-    if (assignmentsToCreate.length > 0) {
-      try {
-        const createdAssignments = await FacultySubjectAssignment.bulkCreate(assignmentsToCreate, {
-          validate: true,
-          ignoreDuplicates: true,
-          transaction
-        });
-        console.log(`[DEBUG] Created ${createdAssignments.length} FacultySubjectAssignment records`);
-      } catch (assignmentError) {
-        console.error('[WARN] Failed to create some FacultySubjectAssignment records:', assignmentError.message);
-        // Continue despite assignment errors - don't let this break the whole transaction
-      }
-    }
-
     // Commit transaction
     await transaction.commit();
 
@@ -516,13 +218,8 @@ export const bulkUploadTimetable = asyncHandler(async (req, res, next) => {
       section: record.section,
       day: record.day,
       hour: record.hour,
-      period: record.hour,
       subject: record.subject,
-      academicYear: record.academicYear,
-      roomNumber: record.roomNumber,
-      labName: record.labName,
-      isLabSession: record.isLabSession,
-      sessionType: record.sessionType
+      academicYear: record.academicYear
     }));
 
     console.log('[DEBUG] Bulk upload successful - Inserted:', insertedRecords.length, 'records, Deleted:', deletedCount, 'old records');
@@ -540,7 +237,7 @@ export const bulkUploadTimetable = asyncHandler(async (req, res, next) => {
     // Rollback transaction on error if it exists
     console.error('[ERROR] Bulk upload failed:', error.message);
     console.error('[ERROR] Stack:', error.stack);
-    
+
     if (transaction) {
       await transaction.rollback();
     }
@@ -571,62 +268,155 @@ export const bulkUploadTimetable = asyncHandler(async (req, res, next) => {
 // @route     GET /api/v1/timetable/faculty/me
 // @access    Private (Faculty only)
 export const getMyTimetable = asyncHandler(async (req, res, next) => {
-  // Get facultyId from logged-in user (JWT token)
-  // The auth middleware normalizes faculty_id/facultyId
-  const facultyId = req.user.facultyId || req.user.faculty_id || req.user.id;
-  
-  console.log('[DEBUG] getMyTimetable - req.user:', JSON.stringify(req.user));
-  console.log('[DEBUG] getMyTimetable - extracted facultyId:', facultyId);
-  
-  if (!facultyId) {
-    console.log('[DEBUG] getMyTimetable - Faculty ID not found in token');
-    return next(new ErrorResponse('Faculty ID not found in token', 400));
-  }
+  try {
+    // Get facultyId/code from logged-in user (JWT token). Depending on how the token was issued
+    // this may contain the college code (string) or the numeric PK. We'll handle both safely.
+    const facultyCode = req.user.facultyId || req.user.faculty_id || req.user.id;
 
-  const timetable = await TimetableSimple.findAll({
-    where: { facultyId: String(facultyId) },
-    attributes: ['id', 'facultyId', 'day', 'hour', 'subject', 'section', 'department', 'year', 'academicYear'],
-    order: [
-      // Use literal query for FIELD function to order by day of week
-      [sequelize.literal("FIELD(day, 'Monday','Tuesday','Wednesday','Thursday','Friday','Saturday')"), 'ASC'],
-      ['hour', 'ASC']
-    ]
-  });
+    console.log('[DEBUG] getMyTimetable - facultyCode from token:', facultyCode);
 
-  console.log('[DEBUG] getMyTimetable - Query result count:', timetable.length);
-  console.log('[DEBUG] getMyTimetable - Query facultyId used:', String(facultyId));
+    if (!facultyCode) {
+      console.log('[DEBUG] getMyTimetable - Faculty ID not found in token');
+      return next(new ErrorResponse('Faculty ID not found in token', 400));
+    }
 
-  if (!timetable || timetable.length === 0) {
-    // Check if any data exists at all
-    const totalCount = await TimetableSimple.count();
-    console.log('[DEBUG] getMyTimetable - Total timetable records in DB:', totalCount);
-    
-    return res.status(200).json({
-      success: true,
-      timetable: [],
-      message: totalCount === 0 ? 'No timetable data in system' : 'No timetable found for this faculty'
+    // Build an array of OR conditions, avoiding NaN values which can blow up the SQL query
+    const orConditions = [{ faculty_college_code: String(facultyCode) }];
+    const parsedId = parseInt(facultyCode, 10);
+    if (!isNaN(parsedId)) {
+      orConditions.push({ faculty_id: parsedId });
+    }
+
+    // Look up the actual faculty record to get integer faculty_id
+    const faculty = await Faculty.findOne({
+      where: {
+        [Op.or]: orConditions
+      }
     });
+
+    if (!faculty) {
+      return res.status(200).json({
+        success: true,
+        timetable: [],
+        message: 'Faculty record not found'
+      });
+    }
+
+    const facultyId = faculty.faculty_id; // Use integer ID for alterations
+
+    // Determine string value to query timetable rows. Prefer the college code if present,
+    // otherwise fall back to the numeric id (converted to string since TimetableSimple stores it as text).
+    const timetableFacultyKey = faculty.faculty_college_code
+      ? String(faculty.faculty_college_code)
+      : String(facultyId);
+
+    const timetable = await TimetableSimple.findAll({
+      where: { facultyId: timetableFacultyKey },
+      attributes: ['id', 'facultyId', 'day', 'hour', 'subject', 'section', 'department', 'year', 'academicYear'],
+      order: [
+        [sequelize.literal("FIELD(day, 'Monday','Tuesday','Wednesday','Thursday','Friday','Saturday')"), 'ASC'],
+        ['hour', 'ASC']
+      ]
+    });
+
+    console.log('[DEBUG] getMyTimetable - Query result count:', timetable.length);
+    console.log('[DEBUG] getMyTimetable - Faculty ID used:', facultyId);
+
+    // Format response
+    let formattedTimetable = timetable.map(record => ({
+      id: record.id,
+      facultyId: record.facultyId,
+      day: record.day,
+      hour: record.hour,
+      subject: record.subject,
+      section: record.section,
+      department: record.department,
+      year: record.year,
+      academicYear: record.academicYear,
+      isAltered: false,
+      alteredAt: null,
+      originalFacultyId: null,
+      originalFacultyName: null
+    }));
+
+    // Apply any temporary alterations within last 24 hours
+    try {
+      const now = new Date();
+      const cutoff = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+      const altRecords = await TimetableAlteration.findAll({
+        where: {
+          [Op.or]: [
+            { old_faculty_id: facultyId },  // Faculty being substituted
+            { new_faculty_id: facultyId }   // Faculty substituting
+          ],
+          created_at: { [Op.gte]: cutoff }
+        }
+      });
+
+      const alts = altRecords.map(a => a.toJSON ? a.toJSON() : a);
+
+      alts.forEach(alt => {
+        const { day, hour, section, subject, year } = alt;
+
+        // If this faculty is the replacement (new_faculty_id)
+        if (alt.new_faculty_id === facultyId) {
+          // Add the substituted class to their timetable
+          const exists = formattedTimetable.some(s => s.day === day && s.hour === hour && s.section === section);
+          if (!exists) {
+            formattedTimetable.push({
+              id: `alt-${alt.id}`,
+              facultyId: faculty.faculty_college_code,
+              day,
+              hour,
+              subject,
+              section,
+              department: null,
+              year: year,
+              academicYear: null,
+              isAltered: true,
+              alteredAt: alt.created_at,
+              originalFacultyId: alt.old_faculty_id,
+              originalFacultyName: null
+            });
+          }
+        }
+
+        // If this faculty is being substituted (old_faculty_id)
+        if (alt.old_faculty_id === facultyId) {
+          // Mark the slot as altered
+          formattedTimetable = formattedTimetable.map(slot => {
+            if (slot.day === day && slot.hour === hour && slot.section === section) {
+              return {
+                ...slot,
+                isAltered: true,
+                alteredAt: alt.created_at,
+                originalFacultyId: slot.facultyId,
+                originalFacultyName: slot.facultyId
+              };
+            }
+            return slot;
+          });
+        }
+      });
+    } catch (err) {
+      console.error('[TIMETABLE] error applying alterations to personal timetable', err);
+    }
+
+    // Sort altered entries to the end
+    formattedTimetable.sort((a, b) => (a.isAltered ? 1 : 0) - (b.isAltered ? 1 : 0));
+
+    console.log('[DEBUG] getMyTimetable - Returning timetable records:', formattedTimetable.length);
+
+    res.status(200).json({
+      success: true,
+      timetable: formattedTimetable
+    });
+  } catch (err) {
+    console.error('[TIMETABLE] getMyTimetable caught error:', err);
+    // rethrow to be handled by asyncHandler
+    throw err;
   }
-
-  // Format response
-  const formattedTimetable = timetable.map(record => ({
-    id: record.id,
-    facultyId: record.facultyId,
-    day: record.day,
-    hour: record.hour,
-    subject: record.subject,
-    section: record.section,
-    department: record.department,
-    year: record.year,
-    academicYear: record.academicYear
-  }));
-
-  console.log('[DEBUG] getMyTimetable - Returning timetable records:', formattedTimetable.length);
-
-  res.status(200).json({
-    success: true,
-    timetable: formattedTimetable
-  });
 });
 
 // @desc      Get personal timetable for logged-in student
@@ -649,8 +439,21 @@ export const getMyStudentTimetable = asyncHandler(async (req, res, next) => {
 
   // Use department from JWT token directly (already contains department short_name)
   // The JWT token includes department info from login time
-  const departmentName = req.user.department;
-  const yearValue = req.user.year || student.year;
+  // Normalize department name to string
+  const departmentName = req.user.department?.short_name ||
+    (typeof req.user.department === 'string' ? req.user.department : null);
+
+  // Normalize year to integer
+  let yearValue = req.user.year || student.year;
+  if (typeof yearValue === 'string') {
+    const yearMatch = yearValue.match(/(\d+)/);
+    if (yearMatch) yearValue = parseInt(yearMatch[1], 10);
+    else if (yearValue.toLowerCase().includes('first')) yearValue = 1;
+    else if (yearValue.toLowerCase().includes('second')) yearValue = 2;
+    else if (yearValue.toLowerCase().includes('third')) yearValue = 3;
+    else if (yearValue.toLowerCase().includes('fourth')) yearValue = 4;
+  }
+
   const sectionValue = req.user.section || student.section || 'A';
 
   console.log('[DEBUG] getMyStudentTimetable - Using from JWT:', {
@@ -678,12 +481,12 @@ export const getMyStudentTimetable = asyncHandler(async (req, res, next) => {
     department: departmentName,
     year: yearValue
   };
-  
+
   // Add section to query if available
   if (sectionValue) {
     timetableQuery.section = sectionValue;
   }
-  
+
   const timetable = await TimetableSimple.findAll({
     where: timetableQuery,
     order: [
@@ -698,7 +501,7 @@ export const getMyStudentTimetable = asyncHandler(async (req, res, next) => {
     // Check if any data exists at all
     const totalCount = await TimetableSimple.count();
     console.log('[DEBUG] getMyStudentTimetable - Total timetable records in DB:', totalCount);
-    
+
     return res.status(200).json({
       success: true,
       timetable: [],
@@ -707,14 +510,87 @@ export const getMyStudentTimetable = asyncHandler(async (req, res, next) => {
   }
 
   // Format response
-  const formattedTimetable = timetable.map(record => ({
+  let formattedTimetable = timetable.map(record => ({
     day: record.day,
     hour: record.hour,
     subject: record.subject,
-    facultyName: record.facultyName
+    section: record.section,
+    facultyName: record.facultyName,
+    department: record.department,
+    year: record.year,
+    academicYear: record.academicYear,
+    isAltered: false,
+    alteredAt: null,
+    originalFacultyName: null
   }));
 
+  // Apply any temporary alterations within last 24 hours
+  try {
+    const now = new Date();
+    const cutoff = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+    // We used to restrict the query by year and section, but these values
+    // can sometimes be missing from the JWT or student record which caused
+    // legitimate alterations to be ignored.  Instead fetch all recent
+    // alterations that fall on the same day/hour and then filter in JS.
+    // fetch any recent alterations for these day/hour combinations
+    const altRecords = await TimetableAlteration.findAll({
+      where: {
+        day: { [Op.in]: formattedTimetable.map(s => s.day) },
+        hour: { [Op.in]: formattedTimetable.map(s => s.hour) },
+        created_at: { [Op.gte]: cutoff }
+      },
+      include: [
+        { model: Faculty, as: 'newFaculty', attributes: ['Name'] },
+        { model: Faculty, as: 'oldFaculty', attributes: ['Name'] }
+      ]
+    });
+
+    const alts = altRecords.map(a => a.toJSON ? a.toJSON() : a);
+
+    console.log('[DEBUG] getMyStudentTimetable - raw alterations fetched', alts.length, 'entries', alts);
+
+    // Apply alterations to student timetable, checking section/year explicitly
+    formattedTimetable = formattedTimetable.map(slot => {
+      const matching = alts.find(alt => {
+        // normalize strings for robust matching
+        const altDay = alt.day?.toLowerCase().trim();
+        const slotDay = slot.day?.toLowerCase().trim();
+        const altSection = alt.section ? alt.section.trim() : '';
+        const slotSection = slot.section ? slot.section.trim() : '';
+        const sameDay = altDay === slotDay;
+        const sameHour = alt.hour === slot.hour;
+        const sameSection = !slotSection || altSection === slotSection;
+        const altYear = Number(alt.year || alt.semester);
+        const slotYear = Number(slot.year);
+        // if altYear is not available, ignore year when matching
+        const sameYear = !altYear || (slotYear && altYear === slotYear);
+        return sameDay && sameHour && sameSection && sameYear;
+      });
+
+      if (matching) {
+        const replacementName = matching.newFaculty?.Name || matching.replacementFacultyName;
+        if (replacementName && replacementName === slot.facultyName) {
+          console.warn('[TIMETABLE] alteration matched but replacement equals original', matching, slot);
+        }
+        return {
+          ...slot,
+          facultyName: replacementName || slot.facultyName,
+          isAltered: true,
+          alteredAt: matching.created_at,
+          originalFacultyName: slot.facultyName
+        };
+      }
+      return slot;
+    });
+  } catch (err) {
+    console.error('[TIMETABLE] error applying alterations to student timetable', err);
+  }
+
   console.log('[DEBUG] getMyStudentTimetable - Returning timetable records:', formattedTimetable.length);
+  // log if any replacements actually changed the faculty name
+  const changed = formattedTimetable.filter(s => s.isAltered);
+  console.log('[DEBUG] getMyStudentTimetable - slots marked altered after filter:', changed.length, changed);
 
   res.status(200).json({
     success: true,

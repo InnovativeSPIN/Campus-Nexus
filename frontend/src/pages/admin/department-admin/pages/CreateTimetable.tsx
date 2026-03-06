@@ -1,13 +1,13 @@
 import React, { useState, useRef } from "react";
 import { MainLayout } from "../components/layout/MainLayout";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../components/ui/card";
-import { Label } from "../components/ui/label";
-import { Button } from "../components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
-import { Upload, CheckCircle2, FileText, Loader2, X, Download } from "lucide-react";
-import { toast } from "../components/ui/sonner";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Upload, CheckCircle2, FileText, Loader2, X } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from '@/contexts/AuthContext';
-import { cn } from "../lib/utils";
+import { cn } from "@/lib/utils";
 
 interface TimetablePreview {
   facultyId: string;
@@ -21,9 +21,8 @@ interface TimetablePreview {
   academicYear: string;
 }
 
-export default function CreateTimetable() {
+export const CreateTimetable = () => {
   const [academicYear, setAcademicYear] = useState("2025-2026");
-  const [yearOptions, setYearOptions] = useState<string[]>([]);
   const [semester, setSemester] = useState("odd");
   const [file, setFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -31,24 +30,8 @@ export default function CreateTimetable() {
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [previewData, setPreviewData] = useState<TimetablePreview[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
   const { authToken } = useAuth();
-
-  // load academic years from backend (derived from student_profile.batch)
-  React.useEffect(() => {
-    fetch('/api/v1/students/academic-years')
-      .then(res => res.json())
-      .then(data => {
-        if (data.success && Array.isArray(data.data)) {
-          setYearOptions(data.data);
-          if (data.data.length > 0) {
-            setAcademicYear(data.data[0]);
-          }
-        }
-      })
-      .catch(err => {
-        console.error('Failed to load academic years', err);
-      });
-  }, []);
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -60,82 +43,33 @@ export default function CreateTimetable() {
     setIsDragging(false);
   };
 
-  const handleDrop = async (e: React.DragEvent) => {
+  const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
     
     const droppedFile = e.dataTransfer.files[0];
     if (droppedFile && (droppedFile.type === 'text/csv' || droppedFile.name.endsWith('.csv'))) {
-      const validationError = await validateCsvFile(droppedFile);
-      if (validationError) {
-        toast.error(validationError);
-        return;
-      }
       setFile(droppedFile);
       setUploadSuccess(false);
       setPreviewData([]);
     } else {
-      toast.error('Please select a valid CSV file.');
+      toast({
+        title: "Invalid file",
+        description: "Please select a valid CSV file.",
+        variant: "destructive",
+      });
     }
   };
 
-  const validateCsvFile = async (file: File): Promise<string | null> => {
-    // read first few KB to check header and content
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const text = reader.result as string;
-        const firstLine = text.split(/\r?\n/)[0] || '';
-        // basic sanity: reject HTML pages
-        if (firstLine.trim().startsWith('<')) {
-          resolve('File does not appear to be a CSV (received HTML/React code)');
-          return;
-        }
-        // Accept both camelCase and snake_case column names
-        const requiredFieldMappings = [
-          ['facultyId', 'faculty_id', 'faculty_college_code'],
-          ['facultyName', 'faculty_name'],
-          ['department', 'dept'],
-          ['year', 'academic_year'],
-          ['section', 'class_section'],
-          ['day', 'day_of_week'],
-          ['hour', 'period'],
-          ['subject', 'subject_code'],
-          ['academicYear', 'academic_year', 'year_sem']
-        ];
-        
-        const headers = firstLine.split(',').map(h=>h.trim());
-        const missingFields = [];
-        
-        for (const fieldOptions of requiredFieldMappings) {
-          const found = fieldOptions.some(option => headers.includes(option));
-          if (!found) {
-            missingFields.push(fieldOptions.join('/'));
-          }
-        }
-        
-        if (missingFields.length > 0) {
-          resolve(`Missing required columns: ${missingFields.join(', ')}`);
-          return;
-        }
-        resolve(null);
-      };
-      reader.onerror = () => resolve('Unable to read file for validation');
-      reader.readAsText(file.slice(0, 1024));
-    });
-  };
-
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const selectedFile = e.target.files[0];
       if (selectedFile.type !== 'text/csv' && !selectedFile.name.endsWith('.csv')) {
-        toast.error('Please select a valid CSV file.');
-        setFile(null);
-        return;
-      }
-      const validationError = await validateCsvFile(selectedFile);
-      if (validationError) {
-        toast.error(validationError);
+        toast({
+          title: "Invalid file",
+          description: "Please select a valid CSV file.",
+          variant: "destructive",
+        });
         setFile(null);
         return;
       }
@@ -156,7 +90,11 @@ export default function CreateTimetable() {
 
   const handleUpload = async () => {
     if (!file) {
-      toast.error('Please select a CSV file to upload.');
+      toast({ 
+        title: "Validation Error", 
+        description: "Please select a CSV file to upload.", 
+        variant: "destructive" 
+      });
       return;
     }
 
@@ -168,33 +106,34 @@ export default function CreateTimetable() {
     formData.append('semester', semester);
 
     try {
-      // Only set Authorization header if token exists
+      // Only set Authorization header, NOT Content-Type
       const token = authToken || localStorage.getItem('authToken');
-      const headers: HeadersInit = {};
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
       
       const response = await fetch(
         "/api/v1/timetable/bulk-upload",
         {
           method: "POST",
           body: formData,
-          headers
+          headers: {
+            Authorization: token ? `Bearer ${token}` : ""
+          }
         }
       );
 
       const data = await response.json();
 
       if (response.ok && data.success) {
-        toast.success(`Bulk timetable uploaded successfully! ${data.insertedCount} records inserted and ${data.deletedCount || 0} old records replaced.`);
+        toast({
+          title: "Success",
+          description: `Bulk timetable uploaded successfully! ${data.insertedCount} records inserted and ${data.deletedCount || 0} old records replaced.`,
+        });
         
         setUploadSuccess(true);
         
         // Set preview data from response
         if (data.preview && data.preview.length > 0) {
           // Use preview data directly from the response
-          const preview: TimetablePreview[] = data.preview.map((item: any) => ({
+          const preview: TimetablePreview[] = data.preview.map((item: any, index: number) => ({
             facultyId: item.facultyId || "",
             facultyName: item.facultyName || "",
             department: item.department || "",
@@ -212,24 +151,22 @@ export default function CreateTimetable() {
         clearFile();
       } else {
         const errorMsg = data.error || data.message || "Failed to upload timetable.";
-        toast.error(errorMsg);
+        toast({
+          title: "Upload Failed",
+          description: errorMsg,
+          variant: "destructive",
+        });
       }
     } catch (error: any) {
       console.error("Error uploading timetable:", error);
-      toast.error(error.message || "An unexpected error occurred.");
+      toast({
+        title: "Upload Failed",
+        description: error.message || "An unexpected error occurred.",
+        variant: "destructive",
+      });
     } finally {
       setIsUploading(false);
     }
-  };
-
-  const downloadFormat = () => {
-    // use backend route to avoid dev server returning index.html
-    const link = document.createElement('a');
-    link.href = '/api/v1/timetable/format';
-    link.download = 'Timetable_Format.csv';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
   };
 
   return (
@@ -261,18 +198,9 @@ export default function CreateTimetable() {
                       <SelectValue placeholder="Select academic year" />
                     </SelectTrigger>
                     <SelectContent>
-                      {yearOptions.length > 0 ? (
-                        yearOptions.map((yr) => (
-                          <SelectItem key={yr} value={yr}>{yr}</SelectItem>
-                        ))
-                      ) : (
-                        // fallback options while loading
-                        <>
-                          <SelectItem value="2024-2025">2024-2025</SelectItem>
-                          <SelectItem value="2025-2026">2025-2026</SelectItem>
-                          <SelectItem value="2026-2027">2026-2027</SelectItem>
-                        </>
-                      )}
+                      <SelectItem value="2024-2025">2024-2025</SelectItem>
+                      <SelectItem value="2025-2026">2025-2026</SelectItem>
+                      <SelectItem value="2026-2027">2026-2027</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -429,22 +357,14 @@ export default function CreateTimetable() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="mb-4">
-                  <Button 
-                    onClick={downloadFormat}
-                    variant="outline"
-                    className="w-full"
-                    size="sm"
-                  >
-                    <Download className="mr-2 h-4 w-4" />
-                    Download Timetable Format
-                  </Button>
-                </div>
                 <div className="bg-muted/50 rounded-lg p-4">
                   <p className="text-sm text-muted-foreground mb-4">
                     Required Columns (Header Row Mandatory):
                   </p>
                   <div className="space-y-2 font-mono text-sm">
+                    <div className="bg-background p-2 rounded border">
+                      <span className="text-primary font-semibold">id</span>
+                    </div>
                     <div className="bg-background p-2 rounded border">
                       <span className="text-primary font-semibold">facultyId</span>
                     </div>
@@ -458,7 +378,7 @@ export default function CreateTimetable() {
                       <span className="text-primary font-semibold">year</span>
                     </div>
                     <div className="bg-background p-2 rounded border">
-                      <span className="text-primary font-semibold">section</span> <span className="text-xs italic">(optional)</span>
+                      <span className="text-primary font-semibold">section</span>
                     </div>
                     <div className="bg-background p-2 rounded border">
                       <span className="text-primary font-semibold">day</span>
@@ -472,9 +392,15 @@ export default function CreateTimetable() {
                     <div className="bg-background p-2 rounded border">
                       <span className="text-primary font-semibold">academicYear</span>
                     </div>
+                    <div className="bg-background p-2 rounded border">
+                      <span className="text-primary font-semibold">createdAt</span>
+                    </div>
+                    <div className="bg-background p-2 rounded border">
+                      <span className="text-primary font-semibold">updatedAt</span>
+                    </div>
                   </div>
                   <p className="text-xs text-muted-foreground mt-4 italic">
-                    Note: Column names must match exactly as shown above.
+                    Note: Column names must match exactly. The id, createdAt, and updatedAt fields are auto-generated if not provided.
                   </p>
                 </div>
 
@@ -483,14 +409,10 @@ export default function CreateTimetable() {
                   <p className="text-sm font-medium mb-2">Example CSV Content:</p>
                   <div className="bg-muted/50 rounded-lg p-4 overflow-x-auto">
                     <pre className="text-xs font-mono whitespace-pre">
-{`# header: section column is optional (you may leave it blank or omit entirely)
-facultyId,facultyName,department,year,day,hour,subject,academicYear
-FAC001,John Smith,CSE,1,Monday,1,Math,2025-2026
-FAC002,Jane Doe,CSE,2,Tuesday,1,Chemistry,2025-2026
-
-# with section supplied
-facultyId,facultyName,department,year,section,day,hour,subject,academicYear
-FAC003,Alice Brown,CSE,3,A,Wednesday,2,Physics,2025-2026`}
+{`facultyId,facultyName,department,year,section,day,hour,subject,academicYear
+FAC001,John Smith,CSE,1st,A,Monday,1,Math,2025-2026
+FAC001,John Smith,CSE,1st,A,Monday,2,Physics,2025-2026
+FAC002,Jane Doe,CSE,2nd,B,Tuesday,1,Chemistry,2025-2026`}
                     </pre>
                   </div>
                 </div>
@@ -501,4 +423,6 @@ FAC003,Alice Brown,CSE,3,A,Wednesday,2,Physics,2025-2026`}
       </div>
     </MainLayout>
   );
-}
+};
+
+export default CreateTimetable;
