@@ -224,7 +224,7 @@ const startServer = () => {
 
   // Health check
   app.get('/api/v1/health', (req, res) => {
-    res.status(200).json({ success: true, message: 'Eduvertex ERP API is running' });
+    res.status(200).json({ success: true, message: 'Campus Nexus ERP API is running' });
   });
 
 

@@ -36,7 +36,7 @@ const Leave = (sequelize) => {
       allowNull: false,
     },
     status: {
-      type: DataTypes.ENUM('pending', 'approved', 'rejected', 'cancelled'),
+      type: DataTypes.ENUM('pending', 'hod_approved', 'approved', 'rejected', 'cancelled'),
       defaultValue: 'pending',
     },
     approvedById: {

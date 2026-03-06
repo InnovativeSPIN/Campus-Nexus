@@ -1,6 +1,6 @@
 import ErrorResponse from '../../utils/errorResponse.js';
 import asyncHandler from '../../middleware/async.js';
-import { models } from '../../models/index.js';
+import { models, sequelize } from '../../models/index.js';
 const { Leave, LeaveBalance, User, Department, Faculty, LeaveNotification } = models;
 import { Op } from 'sequelize';
 
@@ -87,7 +87,7 @@ export const getLeave = asyncHandler(async (req, res, next) => {
 
     // Check if user is authorized to view this leave
     if (
-      !['superadmin', 'executiveadmin', 'academicadmin'].includes(req.user.role) &&
+      !['superadmin', 'executiveadmin', 'academicadmin', 'department-admin'].includes(req.user.role) &&
       leave.applicantId !== Number(req.user.id)
     ) {
       return next(new ErrorResponse('Not authorized to view this leave application', 403));
@@ -108,7 +108,7 @@ export const getLeave = asyncHandler(async (req, res, next) => {
 // @access    Private
 export const createLeave = asyncHandler(async (req, res, next) => {
   req.body.applicantId = req.user.id;
-  req.body.applicantType = req.user.role === 'faculty' ? 'faculty' : 'student';
+  req.body.applicantType = ['faculty', 'department-admin'].includes(req.user.role) ? 'faculty' : 'student';
 
   // Set department ID if user has department (faculty or student with department)
   if (req.user.departmentId) {
@@ -168,27 +168,52 @@ export const createLeave = asyncHandler(async (req, res, next) => {
       await leave.save();
     } else if (leave.departmentId) {
       // Step 1 (Direct): Notify HOD if no reassign faculty
-      const deptAdmin = await Faculty.findOne({
-        where: { department_id: leave.departmentId, role_id: 7, status: 'active' },
-        attributes: ['faculty_id'],
-      });
+      // But if user is the HOD themselves, notify executive admin
+      const normalizedRole = req.user.role.trim().toLowerCase().replace(/-/g, '');
+      const isDeptAdmin = normalizedRole === 'departmentadmin';
 
-      await LeaveNotification.create({
-        recipientId: deptAdmin?.faculty_id || null,
-        recipientType: 'department-admin',
-        departmentId: leave.departmentId,
-        senderId: req.user.id,
-        senderName,
-        leaveId: leave.id,
-        facultyName: senderName,
-        leaveType: req.body.leaveType,
-        startDate: req.body.startDate,
-        endDate: req.body.endDate,
-        type: 'leave_submitted',
-        title: `Leave Request from ${senderName}`,
-        message: `${senderName} has applied for ${req.body.leaveType} leave from ${startStr} to ${endStr}`,
-        isRead: false,
-      });
+      if (isDeptAdmin) {
+        // Notify Executive Admin
+        await LeaveNotification.create({
+          recipientId: null, // Broadcast to all executive admins
+          recipientType: 'executiveadmin',
+          departmentId: leave.departmentId,
+          senderId: req.user.id,
+          senderName,
+          leaveId: leave.id,
+          facultyName: senderName,
+          leaveType: req.body.leaveType,
+          startDate: req.body.startDate,
+          endDate: req.body.endDate,
+          type: 'leave_submitted',
+          title: `HOD Leave Request: ${senderName}`,
+          message: `${senderName} (HOD) has applied for ${req.body.leaveType} leave from ${startStr} to ${endStr}`,
+          isRead: false,
+        });
+      } else {
+        // Usual flow: Notify HOD
+        const deptAdmin = await Faculty.findOne({
+          where: { department_id: leave.departmentId, role_id: 7, status: 'active' },
+          attributes: ['faculty_id'],
+        });
+
+        await LeaveNotification.create({
+          recipientId: deptAdmin?.faculty_id || null,
+          recipientType: 'department-admin',
+          departmentId: leave.departmentId,
+          senderId: req.user.id,
+          senderName,
+          leaveId: leave.id,
+          facultyName: senderName,
+          leaveType: req.body.leaveType,
+          startDate: req.body.startDate,
+          endDate: req.body.endDate,
+          type: 'leave_submitted',
+          title: `Leave Request from ${senderName}`,
+          message: `${senderName} has applied for ${req.body.leaveType} leave from ${startStr} to ${endStr}`,
+          isRead: false,
+        });
+      }
     }
   } catch (notifErr) {
 
@@ -239,39 +264,68 @@ export const updateLeaveStatus = asyncHandler(async (req, res, next) => {
     return next(new ErrorResponse(`Leave application not found with id of ${req.params.id}`, 404));
   }
 
-  if (leave.status !== 'pending') {
-    return next(new ErrorResponse('Leave application has already been processed', 400));
+  // Allow processed statuses only for higher admins or if the leave is still in the workflow
+  const currentStatus = leave.status;
+  const normalizedRole = req.user.role.trim().toLowerCase().replace(/-/g, '');
+  const isHigherAdmin = ['superadmin', 'executiveadmin', 'academicadmin'].includes(normalizedRole);
+  const isDeptAdmin = normalizedRole === 'departmentadmin';
+
+  if (currentStatus === 'approved' || currentStatus === 'rejected' || currentStatus === 'cancelled') {
+    return next(new ErrorResponse('Leave application has already been final-processed', 400));
   }
 
-  // Check authorization - department admin can only approve leaves from their department
-  const superRoles = ['superadmin', 'super-admin', 'executiveadmin', 'academicadmin'];
-  if (req.user.role === 'department-admin' && leave.departmentId !== Number(req.user.departmentId)) {
-    return next(new ErrorResponse('Not authorized to approve leave applications from other departments', 403));
+  // Check authorization - department admin can only approve leaves from their department and not their own
+  if (isDeptAdmin) {
+    if (leave.departmentId !== Number(req.user.departmentId)) {
+      return next(new ErrorResponse('Not authorized to approve leave applications from other departments', 403));
+    }
+    if (leave.applicantId === req.user.id) {
+      return next(new ErrorResponse('Not authorized to approve your own leave application', 403));
+    }
   }
 
-  leave.status = req.body.status;
+  // Flow Logic:
+  // 1. If Dept Admin approves a Faculty request: status becomes 'hod_approved', notify Exec Admin.
+  // 2. If Exec Admin approves any request (HOD 'pending' or Faculty 'hod_approved'): status becomes 'approved', update balance.
+
+  let nextStatus = req.body.status;
+
+  if (isDeptAdmin && req.body.status === 'approved') {
+    // Dept Admin's approval is just an intermediate step
+    nextStatus = 'hod_approved';
+  }
+
+  leave.status = nextStatus;
   leave.approvedById = req.user.id;
   leave.approvalDate = Date.now();
   leave.approvalRemarks = req.body.remarks;
 
   await leave.save();
 
-  // Update leave balance if approved (only for faculty which is the main record type for this table)
-  if (req.body.status === 'approved' && leave.applicantType === 'faculty') {
+  // Update leave balance if finally approved by higher admin or if HOD's own leave is approved
+  if (nextStatus === 'approved' && leave.applicantType === 'faculty') {
     try {
-      const leaveBalance = await LeaveBalance.findOne({
-        where: {
-          staff_id: leave.applicantId,
-          leave_type: leave.leaveType
-        }
-      });
+      const currentYear = new Date().getFullYear().toString();
+      const [rows] = await sequelize.query(
+        'SELECT * FROM `leave_balance` WHERE userId = ? AND academicYear = ? LIMIT 1',
+        { replacements: [leave.applicantId, currentYear] }
+      );
 
-      if (leaveBalance) {
-        // Increment used_leaves
-        const currentUsed = parseFloat(leaveBalance.used_leaves) || 0;
-        const leaveDays = parseFloat(leave.totalDays) || 0;
-        leaveBalance.used_leaves = currentUsed + leaveDays;
-        await leaveBalance.save();
+      const balRow = rows && rows[0] ? rows[0] : null;
+      if (balRow && balRow[leave.leaveType]) {
+        let parsed = typeof balRow[leave.leaveType] === 'string'
+          ? JSON.parse(balRow[leave.leaveType])
+          : balRow[leave.leaveType];
+
+        const days = parseFloat(leave.totalDays) || 0;
+        parsed.balance = (parseFloat(parsed.balance) || 0) - days;
+        parsed.used = (parseFloat(parsed.used) || 0) + days;
+
+        await sequelize.query(
+          `UPDATE \`leave_balance\` SET \`${leave.leaveType}\` = ? WHERE id = ?`,
+          { replacements: [JSON.stringify(parsed), balRow.id] }
+        );
+        console.log(`[LeaveStatus] Updated balance for user ${leave.applicantId}, type ${leave.leaveType}`);
       }
     } catch (balErr) {
       console.error('[LeaveStatus] Balance update error (non-fatal):', balErr.message);
@@ -281,34 +335,17 @@ export const updateLeaveStatus = asyncHandler(async (req, res, next) => {
 
   // Create notifications (non-fatal)
   try {
-    const approverName = req.user.Name || req.user.name || 'Department Admin';
-    const isApproved = req.body.status === 'approved';
-    const statusLabel = isApproved ? 'Approved' : 'Rejected';
+    const approverName = req.user.Name || req.user.name || (isDeptAdmin ? 'Department Admin' : 'Executive Admin');
+    const isApproved = nextStatus === 'approved';
+    const isHODApproved = nextStatus === 'hod_approved';
+    const isRejected = nextStatus === 'rejected';
 
     // Find the faculty applicant for their name
     const applicantFaculty = await Faculty.findByPk(leave.applicantId, { attributes: ['faculty_id', 'Name', 'department_id'] });
     const applicantName = applicantFaculty?.Name || 'Faculty';
 
-    // 1. Notify the faculty who applied
-    await LeaveNotification.create({
-      recipientId: leave.applicantId,
-      recipientType: 'faculty',
-      departmentId: leave.departmentId,
-      senderId: req.user.id,
-      senderName: approverName,
-      leaveId: leave.id,
-      facultyName: applicantName,
-      leaveType: leave.leaveType,
-      startDate: leave.startDate,
-      endDate: leave.endDate,
-      type: isApproved ? 'leave_approved' : 'leave_rejected',
-      title: `Leave ${statusLabel}`,
-      message: `Your ${leave.leaveType} leave request has been ${req.body.status} by the Department Admin.${req.body.remarks ? ` Remarks: ${req.body.remarks}` : ''}`,
-      isRead: false,
-    });
-
-    // 2. If approved, notify all executive admins
-    if (isApproved) {
+    if (isHODApproved) {
+      // 1. Notify Executive Admin that HOD approved it
       await LeaveNotification.create({
         recipientId: null,
         recipientType: 'executiveadmin',
@@ -320,9 +357,47 @@ export const updateLeaveStatus = asyncHandler(async (req, res, next) => {
         leaveType: leave.leaveType,
         startDate: leave.startDate,
         endDate: leave.endDate,
+        type: 'leave_submitted', // Standard type so they see it in requests
+        title: `HOD Approved Request: ${applicantName}`,
+        message: `${approverName} has approved ${applicantName}'s leave. Waiting for your final sign-off.`,
+        isRead: false,
+      });
+
+      // 2. Notify Faculty that HOD approved (intermediate)
+      await LeaveNotification.create({
+        recipientId: leave.applicantId,
+        recipientType: 'faculty',
+        departmentId: leave.departmentId,
+        senderId: req.user.id,
+        senderName: approverName,
+        leaveId: leave.id,
+        facultyName: applicantName,
+        leaveType: leave.leaveType,
+        startDate: leave.startDate,
+        endDate: leave.endDate,
         type: 'leave_approved',
-        title: `Leave Approved: ${applicantName}`,
-        message: `${applicantName}'s ${leave.leaveType} leave has been approved by ${approverName}.`,
+        title: `HOD Step Completed`,
+        message: `Your leave has been approved by your HOD. It's now with the Executive Admin for final approval.`,
+        isRead: false,
+      });
+    } else if (isApproved || isRejected) {
+      const statusLabel = isApproved ? 'Approved' : 'Rejected';
+
+      // Notify the faculty who applied
+      await LeaveNotification.create({
+        recipientId: leave.applicantId,
+        recipientType: 'faculty',
+        departmentId: leave.departmentId,
+        senderId: req.user.id,
+        senderName: approverName,
+        leaveId: leave.id,
+        facultyName: applicantName,
+        leaveType: leave.leaveType,
+        startDate: leave.startDate,
+        endDate: leave.endDate,
+        type: isApproved ? 'leave_approved' : 'leave_rejected',
+        title: `Leave ${statusLabel}`,
+        message: `Your ${leave.leaveType} leave request has been ${statusLabel} by the ${isDeptAdmin ? 'Department Admin' : 'Executive Admin'}.${req.body.remarks ? ` Remarks: ${req.body.remarks}` : ''}`,
         isRead: false,
       });
     }
@@ -352,22 +427,32 @@ export const cancelLeave = asyncHandler(async (req, res, next) => {
 
   // If leave was approved, restore balance
   if (leave.status === 'approved') {
-    const currentYear = new Date().getFullYear().toString();
-    const leaveBalance = await LeaveBalance.findOne({
-      where: {
-        userId: leave.applicantId,
-        academicYear: currentYear
-      }
-    });
+    try {
+      const currentYear = new Date().getFullYear().toString();
+      const [rows] = await sequelize.query(
+        'SELECT * FROM `leave_balance` WHERE userId = ? AND academicYear = ? LIMIT 1',
+        { replacements: [leave.applicantId, currentYear] }
+      );
 
-    if (leaveBalance && leaveBalance[leave.leaveType]) {
-      const updatedBalance = {
-        ...leaveBalance[leave.leaveType],
-        used: leaveBalance[leave.leaveType].used - leave.totalDays,
-        balance: leaveBalance[leave.leaveType].balance + leave.totalDays
-      };
-      leaveBalance.set(leave.leaveType, updatedBalance);
-      await leaveBalance.save();
+      const balRow = rows && rows[0] ? rows[0] : null;
+      if (balRow && balRow[leave.leaveType]) {
+        let parsed = typeof balRow[leave.leaveType] === 'string'
+          ? JSON.parse(balRow[leave.leaveType])
+          : balRow[leave.leaveType];
+
+        const days = parseFloat(leave.totalDays) || 0;
+        // Restore balance
+        parsed.balance = (parseFloat(parsed.balance) || 0) + days;
+        parsed.used = (parseFloat(parsed.used) || 0) - days;
+
+        await sequelize.query(
+          `UPDATE \`leave_balance\` SET \`${leave.leaveType}\` = ? WHERE id = ?`,
+          { replacements: [JSON.stringify(parsed), balRow.id] }
+        );
+        console.log(`[CancelLeave] Restored balance for user ${leave.applicantId}, type ${leave.leaveType}`);
+      }
+    } catch (balErr) {
+      console.error('[CancelLeave] Balance restoration error (non-fatal):', balErr.message);
     }
   }
 
@@ -467,43 +552,98 @@ export const getMyLeaves = asyncHandler(async (req, res, next) => {
   }
 });
 
-// @desc      Get leave balance
+// @desc      Get leave balance for the logged-in faculty
 // @route     GET /api/v1/leave/balance
-// @access    Private
+// @access    Private (Faculty)
 export const getLeaveBalance = asyncHandler(async (req, res, next) => {
-  const currentYear = new Date().getFullYear().toString();
+  try {
+    const userId = req.user.id; // leave_balance uses userId (the user's login id)
+    const currentYear = new Date().getFullYear().toString();
 
-  let leaveBalance = await LeaveBalance.findOne({
-    where: {
-      userId: req.user.id,
-      academicYear: currentYear
-    }
-  });
+    // The real data lives in `leave_balance` table with JSON columns per type:
+    // Medical, Casual, Earned, On-Duty, Personal, Maternity, Comp-Off
+    // Each column is a JSON string: {"balance": N, "used": N}
+    const [results] = await sequelize.query(
+      'SELECT * FROM `leave_balance` WHERE userId = ? AND academicYear = ? LIMIT 1',
+      { replacements: [userId, currentYear] }
+    );
 
-  // Create default balance if not exists
-  if (!leaveBalance) {
-    leaveBalance = await LeaveBalance.create({
-      userId: req.user.id,
-      userType: req.user.role === 'faculty' ? 'faculty' : 'student',
-      academicYear: currentYear
+    const leaveTypes = ['Medical', 'Casual', 'Earned', 'On-Duty', 'Personal', 'Maternity', 'Comp-Off'];
+    const balanceMap = {};
+
+    const row = results && results[0] ? results[0] : null;
+
+    leaveTypes.forEach((type) => {
+      if (row && row[type]) {
+        try {
+          const parsed = typeof row[type] === 'string' ? JSON.parse(row[type]) : row[type];
+          const allowed = parseFloat(parsed.balance) || 0;
+          const used = parseFloat(parsed.used) || 0;
+          balanceMap[type] = {
+            total_allowed: allowed,
+            used_leaves: used,
+            remaining_leaves: Math.max(0, allowed - used),
+          };
+        } catch {
+          balanceMap[type] = { total_allowed: 0, used_leaves: 0, remaining_leaves: 0 };
+        }
+      } else {
+        balanceMap[type] = { total_allowed: 0, used_leaves: 0, remaining_leaves: 0 };
+      }
     });
-  }
 
-  res.status(200).json({
-    success: true,
-    data: leaveBalance
-  });
+    res.status(200).json({
+      success: true,
+      data: balanceMap,
+    });
+  } catch (error) {
+    console.error('[getLeaveBalance] Error:', error.message);
+    return next(new ErrorResponse(`Error fetching leave balance: ${error.message}`, 500));
+  }
 });
 
 // @desc      Get pending leave count (for admin dashboard)
 // @route     GET /api/v1/leave/pending-count
 // @access    Private/Admin
 export const getPendingCount = asyncHandler(async (req, res, next) => {
-  let where = { status: 'pending' };
+  const normalizedRole = req.user.role.trim().toLowerCase().replace(/-/g, '');
+  const isHigherAdmin = ['superadmin', 'executiveadmin', 'academicadmin'].includes(normalizedRole);
+  const isDeptAdmin = normalizedRole === 'departmentadmin';
 
-  // Department admin sees only their department's pending leaves
-  if (req.user.role === 'department-admin' && req.user.departmentId) {
+  let where = {};
+  let include = [];
+
+  if (isDeptAdmin) {
+    // HOD sees pending leaves in their department, excluding their own
+    where.status = 'pending';
     where.departmentId = req.user.departmentId;
+    where.applicantId = { [Op.ne]: req.user.id }; // Exclude self-leaves
+    // Check if reassign faculty has already accepted (if any)
+    where[Op.and] = [
+      {
+        [Op.or]: [
+          { reassign_faculty_id: null },
+          { substitute_status: 'accepted' }
+        ]
+      }
+    ];
+  } else if (isHigherAdmin) {
+    // Higher Admin sees:
+    // 1. Faculty leaves that are 'hod_approved'
+    // 2. HOD leaves that are 'pending'
+    where[Op.or] = [
+      { status: 'hod_approved' },
+      {
+        [Op.and]: [
+          { status: 'pending' },
+          // Filter by applicant role = 7 (HOD)
+          sequelize.literal(`EXISTS (SELECT 1 FROM faculty_profiles WHERE faculty_profiles.faculty_id = Leave.applicantId AND faculty_profiles.role_id = 7)`)
+        ]
+      }
+    ];
+  } else {
+    // Regular faculty or others - arguably shouldn't even call this, but safety first:
+    return res.status(200).json({ success: true, data: { pendingCount: 0 } });
   }
 
   const count = await Leave.count({ where });
@@ -523,23 +663,34 @@ export const getPendingLeaves = asyncHandler(async (req, res, next) => {
     const limit = parseInt(req.query.limit, 10) || 25;
     const startIndex = (page - 1) * limit;
 
-    let where = { status: 'pending' };
+    const normalizedRole = req.user.role.trim().toLowerCase().replace(/-/g, '');
+    const isHigherAdmin = ['superadmin', 'executiveadmin', 'academicadmin'].includes(normalizedRole);
+    const isDeptAdmin = normalizedRole === 'departmentadmin';
 
-    // HOD should only see leaves that have either:
-    // 1. No reassignment faculty
-    // 2. Reassignment faculty has already accepted
-    where[Op.and] = [
-      {
-        [Op.or]: [
-          { reassign_faculty_id: null },
-          { substitute_status: 'accepted' }
-        ]
-      }
-    ];
+    let where = {};
 
-    // Department admin sees only their department's pending leaves
-    if (req.user.role === 'department-admin' && req.user.departmentId) {
+    if (isDeptAdmin) {
+      where.status = 'pending';
       where.departmentId = req.user.departmentId;
+      where.applicantId = { [Op.ne]: req.user.id }; // Don't allow HOD to approve their own
+      where[Op.and] = [
+        {
+          [Op.or]: [
+            { reassign_faculty_id: null },
+            { substitute_status: 'accepted' }
+          ]
+        }
+      ];
+    } else if (isHigherAdmin) {
+      where[Op.or] = [
+        { status: 'hod_approved' },
+        {
+          [Op.and]: [
+            { status: 'pending' },
+            sequelize.literal(`EXISTS (SELECT 1 FROM faculty_profiles WHERE faculty_profiles.faculty_id = Leave.applicantId AND faculty_profiles.role_id = 7)`)
+          ]
+        }
+      ];
     }
 
 
@@ -559,10 +710,11 @@ export const getPendingLeaves = asyncHandler(async (req, res, next) => {
       raw: true
     });
 
-    // Enrich with applicant name from faculty table
+    // Enrich with names from faculty table
     const applicantIds = [...new Set(rawLeaves.map(l => l.applicantId))];
     const reassignFacultyIds = [...new Set(rawLeaves.map(l => l.reassign_faculty_id).filter(Boolean))];
-    const allFacultyIds = [...new Set([...applicantIds, ...reassignFacultyIds])];
+    const approverIds = [...new Set(rawLeaves.map(l => l.approvedById).filter(Boolean))];
+    const allFacultyIds = [...new Set([...applicantIds, ...reassignFacultyIds, ...approverIds])];
 
     const facultyList = allFacultyIds.length
       ? await Faculty.findAll({
@@ -584,6 +736,9 @@ export const getPendingLeaves = asyncHandler(async (req, res, next) => {
         : { name: 'Unknown', email: '', role: 'Faculty' },
       reassignFacultyName: l.reassign_faculty_id && facultyMap[l.reassign_faculty_id]
         ? facultyMap[l.reassign_faculty_id].Name
+        : null,
+      approverName: l.approvedById && facultyMap[l.approvedById]
+        ? facultyMap[l.approvedById].Name
         : null,
     }));
 
@@ -781,35 +936,56 @@ export const processReassignmentResponse = asyncHandler(async (req, res, next) =
     const respondentName = req.user.Name || req.user.name || 'Faculty';
 
     // Find applicant
-    const applicantFaculty = await Faculty.findByPk(leave.applicantId, { attributes: ['faculty_id', 'Name', 'department_id'] });
+    const applicantFaculty = await Faculty.findByPk(leave.applicantId, { attributes: ['faculty_id', 'Name', 'department_id', 'role_id'] });
     const applicantName = applicantFaculty?.Name || 'Faculty';
+    const isApplicantHOD = applicantFaculty?.role_id === 7;
 
     if (status === 'accepted') {
       // 1. Notify HOD that leave is ready for approval
-      const deptAdmin = await Faculty.findOne({
-        where: { department_id: leave.departmentId, role_id: 7, status: 'active' },
-        attributes: ['faculty_id'],
-      });
+      // If applicant is HOD themselves, notify Executive Admin
+      if (isApplicantHOD) {
+        await LeaveNotification.create({
+          recipientId: null,
+          recipientType: 'executiveadmin',
+          departmentId: leave.departmentId,
+          senderId: req.user.id,
+          senderName: respondentName,
+          leaveId: leave.id,
+          facultyName: applicantName,
+          leaveType: leave.leaveType,
+          startDate: leave.startDate,
+          endDate: leave.endDate,
+          type: 'leave_submitted',
+          title: `HOD Leave Request ready: ${applicantName}`,
+          message: `${respondentName} has accepted load reassignment for HOD ${applicantName}. The request is now ready for your approval.`,
+          isRead: false,
+        });
+      } else {
+        const deptAdmin = await Faculty.findOne({
+          where: { department_id: leave.departmentId, role_id: 7, status: 'active' },
+          attributes: ['faculty_id'],
+        });
 
-      const startStr = new Date(leave.startDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
-      const endStr = new Date(leave.endDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+        const startStr = new Date(leave.startDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+        const endStr = new Date(leave.endDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 
-      await LeaveNotification.create({
-        recipientId: deptAdmin?.faculty_id || null,
-        recipientType: 'department-admin',
-        departmentId: leave.departmentId,
-        senderId: req.user.id,
-        senderName: respondentName,
-        leaveId: leave.id,
-        facultyName: applicantName,
-        leaveType: leave.leaveType,
-        startDate: leave.startDate,
-        endDate: leave.endDate,
-        type: 'leave_submitted', // Standard type so HOD sees it as a new request
-        title: `Leave Request: ${applicantName} (Load Accepted)`,
-        message: `${respondentName} has accepted to cover ${applicantName}'s classes. Leave request from ${startStr} to ${endStr} is now pending your approval.`,
-        isRead: false,
-      });
+        await LeaveNotification.create({
+          recipientId: deptAdmin?.faculty_id || null,
+          recipientType: 'department-admin',
+          departmentId: leave.departmentId,
+          senderId: req.user.id,
+          senderName: respondentName,
+          leaveId: leave.id,
+          facultyName: applicantName,
+          leaveType: leave.leaveType,
+          startDate: leave.startDate,
+          endDate: leave.endDate,
+          type: 'leave_submitted', // Standard type so HOD sees it as a new request
+          title: `Leave Request ready: ${applicantName}`,
+          message: `${respondentName} has accepted load reassignment for ${applicantName}. The request is now ready for your approval.`,
+          isRead: false,
+        });
+      }
 
       // 2. Notify Applicant that their load was accepted
       await LeaveNotification.create({

@@ -9,7 +9,7 @@ import { Label } from "@/pages/faculty/components/ui/label";
 import { Textarea } from "@/pages/faculty/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/pages/faculty/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/pages/faculty/components/ui/tabs";
-import { CalendarDays, PlusCircle, Clock, CheckCircle2, XCircle, AlertCircle, FileText, ArrowRight, Calendar, User, Trash2 } from "lucide-react";
+import { CalendarDays, PlusCircle, Clock, CheckCircle2, XCircle, AlertCircle, FileText, ArrowRight, Calendar, User, Trash2, Wallet, UserCheck } from "lucide-react";
 import { cn } from "@/pages/faculty/lib/utils";
 import { toast } from "sonner";
 
@@ -34,6 +34,16 @@ interface Colleague {
     designation: string;
 }
 
+interface LeaveBalance {
+    total_allowed: number;
+    used_leaves: number;
+    remaining_leaves: number;
+}
+
+interface LeaveBalanceMap {
+    [leaveType: string]: LeaveBalance;
+}
+
 const statusConfig = {
     pending: {
         label: "Pending",
@@ -41,6 +51,13 @@ const statusConfig = {
         color: "text-warning",
         bg: "bg-warning/10",
         border: "border-warning/30",
+    },
+    hod_approved: {
+        label: "HOD Approved",
+        icon: UserCheck,
+        color: "text-info",
+        bg: "bg-info/10",
+        border: "border-info/30",
     },
     approved: {
         label: "Approved",
@@ -74,6 +91,7 @@ export default function Leave() {
     const [activeTab, setActiveTab] = useState("apply");
     const [reassignmentRequests, setReassignmentRequests] = useState<any[]>([]);
     const [fetchingReassignments, setFetchingReassignments] = useState(false);
+    const [leaveBalances, setLeaveBalances] = useState<LeaveBalanceMap>({});
 
 
     const [form, setForm] = useState({
@@ -96,6 +114,7 @@ export default function Leave() {
         fetchMyLeaves();
         fetchColleagues();
         fetchReassignmentRequests();
+        fetchLeaveBalances();
     }, []);
 
     const fetchReassignmentRequests = async () => {
@@ -111,6 +130,21 @@ export default function Leave() {
             console.error("Error fetching reassignment requests:", error);
         } finally {
             setFetchingReassignments(false);
+        }
+    };
+
+    const fetchLeaveBalances = async () => {
+        try {
+            const token = localStorage.getItem("authToken");
+            const res = await fetch("/api/v1/leave/balance", {
+                headers: token ? { Authorization: `Bearer ${token}` } : {},
+            });
+            const result = await res.json();
+            if (result.success && result.data) {
+                setLeaveBalances(result.data);
+            }
+        } catch (error) {
+            console.error("Error fetching leave balances:", error);
         }
     };
 
@@ -328,6 +362,36 @@ export default function Leave() {
                                             <SelectItem value="Comp-Off">Comp-Off</SelectItem>
                                         </SelectContent>
                                     </Select>
+
+                                    {/* Leave Balance Badge */}
+                                    {form.leaveType && leaveBalances[form.leaveType] !== undefined && (
+                                        <div className="flex items-center gap-2 mt-2 p-3 rounded-lg bg-primary/5 border border-primary/15">
+                                            <Wallet className="w-4 h-4 text-primary shrink-0" />
+                                            <div className="flex flex-wrap gap-3 text-xs w-full">
+                                                <span className="flex flex-col items-center">
+                                                    <span className="text-muted-foreground">Allowed</span>
+                                                    <span className="font-bold text-foreground text-sm">{leaveBalances[form.leaveType].total_allowed}</span>
+                                                </span>
+                                                <span className="w-px bg-border" />
+                                                <span className="flex flex-col items-center">
+                                                    <span className="text-muted-foreground">Used</span>
+                                                    <span className="font-bold text-warning text-sm">{leaveBalances[form.leaveType].used_leaves}</span>
+                                                </span>
+                                                <span className="w-px bg-border" />
+                                                <span className="flex flex-col items-center">
+                                                    <span className="text-muted-foreground">Remaining</span>
+                                                    <span className={cn(
+                                                        "font-bold text-sm",
+                                                        leaveBalances[form.leaveType].remaining_leaves > 0
+                                                            ? "text-success"
+                                                            : "text-destructive"
+                                                    )}>
+                                                        {leaveBalances[form.leaveType].remaining_leaves}
+                                                    </span>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="space-y-2">

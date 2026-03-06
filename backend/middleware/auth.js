@@ -180,13 +180,12 @@ export const authorize = (...roles) => {
       userRoleRaw = String(userRoleRaw);
     }
 
-    const userRole = userRoleRaw.trim().toLowerCase();
-    const normalizedUserRole = userRole === 'super-admin' ? 'superadmin' : userRole;
+    const userRole = userRoleRaw.trim().toLowerCase().replace(/-/g, '');
+    const normalizedUserRole = userRole;
 
     // Normalize allowed roles similarly
     const normalizedRoles = roles.map(role => {
-      const r = role.trim().toLowerCase();
-      return r === 'super-admin' ? 'superadmin' : r;
+      return role.trim().toLowerCase().replace(/-/g, '');
     });
 
     if (!normalizedRoles.includes(normalizedUserRole)) {
