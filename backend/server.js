@@ -195,10 +195,36 @@ const startServer = () => {
   app.use('/api/v1/student/disciplinary', studentDisciplinaryRoutes);
   app.use('/api/v1/student-leaves', studentLeaveRoutes);
 
+  // Dashboard stats - real counts from DB
+  app.get('/api/v1/dashboard/stats', async (req, res) => {
+    try {
+      const { models } = await import('./models/index.js');
+      const { Student, Faculty } = models;
+
+      const [totalStudents, totalFaculty] = await Promise.all([
+        Student.count(),
+        Faculty.count()
+      ]);
+
+      res.status(200).json({
+        success: true,
+        data: {
+          totalStudents,
+          totalFaculty,
+          totalDepartments: 9
+        }
+      });
+    } catch (err) {
+      console.error('[DASHBOARD STATS] Error:', err.message);
+      res.status(500).json({ success: false, error: 'Failed to fetch dashboard stats' });
+    }
+  });
+
   // Health check
   app.get('/api/v1/health', (req, res) => {
     res.status(200).json({ success: true, message: 'Eduvertex ERP API is running' });
   });
+
 
   app.use(errorHandler);
 

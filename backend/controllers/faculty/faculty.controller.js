@@ -746,13 +746,31 @@ export const getMyClassIncharge = asyncHandler(async (req, res, next) => {
     });
   }
 
-  // Fetch students in the assigned class
+  // Fetch students using the class record's semester + department_id.
+  // Logic:
+  //   class_incharges.class_id  →  classes(semester, department_id)
+  //   → student_profile WHERE departmentId = classes.department_id
+  //                       AND semester     = classes.semester
+  const assignedClass = incharge.class;
+
+  if (!assignedClass) {
+    return next(new ErrorResponse('Assigned class not found', 404));
+  }
+
+  const { semester: classSemester, department_id: classDeptId } = assignedClass;
+
+  console.log(`[ClassIncharge] class_id=${incharge.class_id} → semester=${classSemester}, department_id=${classDeptId}`);
 
   const students = await Student.findAll({
-    where: { classId: incharge.class_id },
+    where: {
+      departmentId: classDeptId,
+      semester: classSemester
+    },
     attributes: ['id', 'studentId', 'firstName', 'lastName', 'email', 'phone', 'status', 'section', 'semester'],
     order: [['studentId', 'ASC']]
   });
+
+  console.log(`[ClassIncharge] Found ${students.length} students for dept=${classDeptId}, semester=${classSemester}`);
 
   res.status(200).json({
     success: true,
@@ -760,7 +778,7 @@ export const getMyClassIncharge = asyncHandler(async (req, res, next) => {
       incharge: {
         id: incharge.id,
         academic_year: incharge.academic_year,
-        class: incharge.class
+        class: assignedClass
       },
       students,
       totalStudents: students.length
