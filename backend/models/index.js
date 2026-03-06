@@ -49,6 +49,7 @@ import TimetablePeriod from './TimetablePeriod.model.js';
 import StudentLeave from './StudentLeave.model.js';
 import ClassIncharge from './ClassIncharge.model.js';
 import LeaveNotification from './LeaveNotification.model.js';
+import PortfolioNotification from './PortfolioNotification.model.js';
 
 // Initialize models
 const models = {
@@ -99,6 +100,7 @@ const models = {
   StudentLeave: StudentLeave(sequelize),
   ClassIncharge: ClassIncharge(sequelize),
   LeaveNotification: LeaveNotification(sequelize),
+  PortfolioNotification: PortfolioNotification(sequelize),
 };
 
 // Define associations

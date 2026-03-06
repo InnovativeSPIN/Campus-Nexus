@@ -132,10 +132,11 @@ export default function StudentDashboard() {
           updatedAt={announcement.updatedAt}
         />
       )}
-      <PageHeader
-        title={`Welcome back, ${user?.name?.split(' ')[0]}!`}
-        subtitle="Here's an overview of your academic progress"
-      />
+      <div className="section-card bg-gradient-to-r from-primary via-primary/80 to-secondary p-8 rounded-2xl border-0 shadow-lg mb-8 text-primary-foreground">
+        <PageHeader
+          title={`Welcome back, ${user?.name?.split(' ')[0]}!`}
+        />
+      </div>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">

@@ -20,6 +20,7 @@ const StudentProject = (sequelize) => {
             type: DataTypes.ENUM('pending', 'approved', 'rejected'),
             defaultValue: 'pending',
         },
+        classId: { type: DataTypes.INTEGER, allowNull: true },
         approvedById: { type: DataTypes.INTEGER, allowNull: true },
         approvalRemarks: { type: DataTypes.STRING(500), allowNull: true },
         approvalDate: { type: DataTypes.DATE, allowNull: true },
@@ -30,7 +31,8 @@ const StudentProject = (sequelize) => {
 
     StudentProjectModel.associate = (models) => {
         StudentProjectModel.belongsTo(models.Student, { foreignKey: 'studentId', as: 'student' });
-        StudentProjectModel.belongsTo(models.User, { foreignKey: 'approvedById', as: 'approvedBy' });
+        StudentProjectModel.belongsTo(models.Faculty, { foreignKey: 'approvedById', as: 'approvedBy' });
+        StudentProjectModel.belongsTo(models.Class, { foreignKey: 'classId', as: 'class' });
     };
 
     return StudentProjectModel;

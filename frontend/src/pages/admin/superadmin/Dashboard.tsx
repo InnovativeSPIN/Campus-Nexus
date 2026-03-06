@@ -13,6 +13,9 @@ import {
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/pages/admin/superadmin/components/ui/card';
 import { Badge } from '@/pages/admin/superadmin/components/ui/badge';
+import { useAnnouncementNotification } from '@/hooks/useAnnouncementNotification';
+import { AnnouncementNotificationModal } from '@/components/common/AnnouncementNotificationModal';
+
 
 // Hook: animate a number counting up from 0 to target
 function useCountUp(target: number, duration = 1200, enabled = true) {
@@ -50,6 +53,7 @@ interface DashboardStats {
 }
 
 export default function SuperAdminDashboard() {
+  const { announcement, showNotification, setShowNotification } = useAnnouncementNotification();
   const [stats, setStats] = useState<DashboardStats>({
     totalStudents: 0,
     totalFaculty: 0,
@@ -114,6 +118,17 @@ export default function SuperAdminDashboard() {
 
   return (
     <AdminLayout>
+      {announcement && (
+        <AnnouncementNotificationModal
+          isOpen={showNotification}
+          onClose={() => setShowNotification(false)}
+          title={announcement.title}
+          message={announcement.message}
+          creatorRole={announcement.creatorRole}
+          createdAt={announcement.createdAt}
+          updatedAt={announcement.updatedAt}
+        />
+      )}
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">

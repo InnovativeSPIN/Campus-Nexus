@@ -94,7 +94,6 @@ export default function Certifications({ onPendingChange }: CertificationsProps)
       document: null,
     });
     setIsModalOpen(true);
-    if (onPendingChange) onPendingChange(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

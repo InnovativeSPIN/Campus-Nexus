@@ -32,13 +32,15 @@ export default function StudentPortfolio() {
 
     return (
         <div className="space-y-6 animate-fade-in">
-            <PageHeader
-                title="Student Portfolio"
-                subtitle="Manage your activities, achievements, and projects"
-                breadcrumbs={[
-                    { label: 'Portfolio', path: '/student/portfolio/sports' },
-                ]}
-            />
+            <div className="section-card bg-gradient-to-r from-primary/10 via-background to-secondary/10 p-8 rounded-2xl border-0 shadow-lg mb-8">
+                <PageHeader
+                    title="Student Portfolio"
+                    subtitle="Manage your activities, achievements, and projects"
+                    breadcrumbs={[
+                        { label: 'Portfolio', path: '/student/portfolio/sports' },
+                    ]}
+                />
+            </div>
 
             <PortfolioNavBar />
 

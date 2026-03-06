@@ -68,14 +68,12 @@ export default function Events({ onPendingChange }: EventsProps) {
     setEditingId(event.id);
     setFormData({ ...event, document: null });
     setShowDialog(true);
-    if (onPendingChange) onPendingChange(true);
   };
 
   const handleAdd = () => {
     setEditingId(null);
     setFormData(emptyForm);
     setShowDialog(true);
-    if (onPendingChange) onPendingChange(true);
   };
 
   const handleDelete = async (id: string) => {
@@ -118,6 +116,7 @@ export default function Events({ onPendingChange }: EventsProps) {
         setEvents((prev) => [res.data, ...prev]);
         toast({ title: 'Request Submitted', description: 'Event submitted for faculty approval.' });
       }
+      if (onPendingChange) onPendingChange(true);
       setShowDialog(false);
     } catch (err: any) {
       toast({ title: 'Error', description: err.message || 'Failed to save.', variant: 'destructive' });

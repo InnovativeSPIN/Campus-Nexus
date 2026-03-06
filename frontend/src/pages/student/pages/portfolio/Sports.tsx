@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
-import SectionCard from '@/pages/student/components/common/SectionCard';
 import Badge from '@/pages/student/components/common/Badge';
 import { Edit, Trash2, Plus, Save, Loader2 } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from '@/pages/student/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from '@/pages/student/components/ui/dialog';
 import { useToast } from '@/pages/student/hooks/use-toast';
 import {
     getMySports,
@@ -73,14 +72,12 @@ export default function Sports({ onPendingChange }: SportsProps) {
             document: null
         });
         setShowDialog(true);
-        if (onPendingChange) onPendingChange(true);
     };
 
     const handleAdd = () => {
         setEditingId(null);
         setFormData(emptyForm);
         setShowDialog(true);
-        if (onPendingChange) onPendingChange(true);
     };
 
     const handleDelete = async (id: string) => {
@@ -121,6 +118,7 @@ export default function Sports({ onPendingChange }: SportsProps) {
                 setSports((prev) => [res.data, ...prev]);
                 toast({ title: 'Request Submitted', description: 'Sport submitted for faculty approval.' });
             }
+            if (onPendingChange) onPendingChange(true);
             setShowDialog(false);
         } catch (err: any) {
             toast({ title: 'Error', description: err.message || 'Failed to save.', variant: 'destructive' });
@@ -159,36 +157,53 @@ export default function Sports({ onPendingChange }: SportsProps) {
             ) : sports.length === 0 ? (
                 <div className="text-center py-16 text-muted-foreground text-sm">No sports added yet.</div>
             ) : (
-                <div className="grid gap-4">
+                <div className="grid gap-6 md:grid-cols-2">
                     {sports.map((sport) => (
-                        <SectionCard
-                            key={sport.id}
-                            title={sport.name}
-                            actions={
-                                sport.approvalStatus !== 'pending' && (
-                                    <div className="flex gap-2">
-                                        <button onClick={() => handleEdit(sport)} className="p-2 rounded-lg hover:bg-muted transition-colors" title="Edit">
-                                            <Edit className="w-4 h-4" />
-                                        </button>
-                                        <button onClick={() => handleDelete(sport.id)} className="p-2 rounded-lg hover:bg-destructive/10 hover:text-destructive transition-colors" title="Delete">
-                                            <Trash2 className="w-4 h-4" />
-                                        </button>
+                        <div key={sport.id} className="section-card group hover:shadow-xl transition-all duration-300 border-t-4 border-t-primary">
+                            <div className="p-6">
+                                <div className="flex items-start justify-between mb-4">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                                            <Edit className="w-6 h-6" />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-xl font-bold text-foreground">{sport.name}</h3>
+                                            <p className="text-sm text-primary font-medium">{sport.category}</p>
+                                        </div>
                                     </div>
-                                )
-                            }
-                        >
-                            <div className="flex items-center justify-between">
-                                <div className="space-y-2">
-                                    <p className="text-sm text-muted-foreground">Category: {sport.category}</p>
-                                    <p className="text-sm text-muted-foreground">Joined: {sport.joinedDate}</p>
-                                    <p className="text-sm text-muted-foreground">Achievements: {sport.achievements}</p>
+                                    <div className="flex gap-1">
+                                        {sport.approvalStatus !== 'pending' && (
+                                            <>
+                                                <button onClick={() => handleEdit(sport)} className="p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-primary">
+                                                    <Edit className="w-4 h-4" />
+                                                </button>
+                                                <button onClick={() => handleDelete(sport.id)} className="p-2 rounded-lg hover:bg-destructive/10 hover:text-destructive transition-colors text-muted-foreground">
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </>
+                                        )}
+                                    </div>
                                 </div>
-                                <div className="flex flex-col gap-2">
-                                    <Badge variant={sport.status === 'active' ? 'success' : 'info'}>Status: {sport.status}</Badge>
-                                    <Badge variant={getApprovalBadgeVariant(sport.approvalStatus)}>{sport.approvalStatus || 'pending'}</Badge>
+                                <div className="space-y-3 mb-6">
+                                    <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/30 p-2 rounded-lg">
+                                        <span className="font-bold text-foreground min-w-[100px]">Joined Date:</span>
+                                        {sport.joinedDate}
+                                    </div>
+                                    <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/30 p-2 rounded-lg">
+                                        <span className="font-bold text-foreground min-w-[100px]">Achievements:</span>
+                                        {sport.achievements}
+                                    </div>
+                                </div>
+                                <div className="flex items-center justify-between pt-4 border-t border-border">
+                                    <Badge variant={sport.status === 'active' ? 'success' : 'info'} className="px-4 py-1 uppercase tracking-tighter text-[10px] font-bold">
+                                        {sport.status}
+                                    </Badge>
+                                    <Badge variant={getApprovalBadgeVariant(sport.approvalStatus)} className="px-4 py-1 shadow-sm">
+                                        {sport.approvalStatus || 'pending'}
+                                    </Badge>
                                 </div>
                             </div>
-                        </SectionCard>
+                        </div>
                     ))}
                 </div>
             )}
@@ -197,6 +212,9 @@ export default function Sports({ onPendingChange }: SportsProps) {
                 <DialogContent className="max-w-md">
                     <DialogHeader>
                         <DialogTitle>{editingId ? 'Edit Sport' : 'Add New Sport'}</DialogTitle>
+                        <DialogDescription>
+                            Fill in the details about your sports participation and achievements.
+                        </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4">
                         <div>

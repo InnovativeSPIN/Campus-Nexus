@@ -11,7 +11,9 @@ import {
     createEvent,
     updateEvent,
     deleteEvent,
-    updateEventApproval
+    updateEventApproval,
+    getClassInchargeSports,
+    getClassInchargeEvents
 } from '../../controllers/student/studentExtracurricular.controller.js';
 import { protect, authorize } from '../../middleware/auth.js';
 import studentUpload from '../../middleware/studentUpload.js';
@@ -22,6 +24,7 @@ router.use(protect);
 
 // ── Sports ────────────────────────────────────────────────
 router.get('/sports', authorize('student'), getMySports);
+router.get('/sports/class-incharge', authorize('faculty', 'admin'), getClassInchargeSports);
 router.get('/sports/:id', authorize('student'), getSport);
 router.post('/sports', authorize('student'), studentUpload.single('documentUrl'), createSport);
 router.put('/sports/:id', authorize('student'), studentUpload.single('documentUrl'), updateSport);
@@ -30,6 +33,7 @@ router.put('/sports/:id/approval', authorize('admin', 'faculty'), updateSportApp
 
 // ── Events ────────────────────────────────────────────────
 router.get('/events', authorize('student'), getMyEvents);
+router.get('/events/class-incharge', authorize('faculty', 'admin'), getClassInchargeEvents);
 router.get('/events/:id', authorize('student'), getEvent);
 router.post('/events', authorize('student'), studentUpload.single('certificateUrl'), createEvent);
 router.put('/events/:id', authorize('student'), studentUpload.single('certificateUrl'), updateEvent);

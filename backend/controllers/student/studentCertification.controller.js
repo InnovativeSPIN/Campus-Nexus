@@ -1,7 +1,8 @@
 import asyncHandler from '../../middleware/async.js';
 import ErrorResponse from '../../utils/errorResponse.js';
 import { models } from '../../models/index.js';
-const { StudentCertification, Student, User } = models;
+import { notifyClassIncharge } from '../../utils/portfolioNotification.js';
+const { StudentCertification, Student, User, Faculty } = models;
 
 const getStudentId = async (userOrId, next) => {
     // if already a student instance (has studentId), return its id
@@ -25,7 +26,7 @@ export const getMyCertifications = asyncHandler(async (req, res, next) => {
 
     const certifications = await StudentCertification.findAll({
         where,
-        include: [{ model: User, as: 'approvedBy', attributes: ['name'] }],
+        include: [{ model: Faculty, as: 'approvedBy', attributes: [['Name', 'name']] }],
         order: [['issueDate', 'DESC']]
     });
 
@@ -41,7 +42,7 @@ export const getCertification = asyncHandler(async (req, res, next) => {
 
     const cert = await StudentCertification.findOne({
         where: { id: req.params.id, studentId },
-        include: [{ model: User, as: 'approvedBy', attributes: ['name'] }]
+        include: [{ model: Faculty, as: 'approvedBy', attributes: [['Name', 'name']] }]
     });
 
     if (!cert) return next(new ErrorResponse('Certification not found', 404));
@@ -55,11 +56,22 @@ export const createCertification = asyncHandler(async (req, res, next) => {
     const studentId = await getStudentId(req.user, next);
     if (!studentId) return;
 
+    const student = await Student.findByPk(studentId);
+    if (!student) return next(new ErrorResponse('Student not found', 404));
+
     const cert = await StudentCertification.create({
         ...req.body,
         studentId,
+        classId: student.classId,
         approvalStatus: 'pending',
         documentUrl: req.file ? req.file.filename : req.body.documentUrl
+    });
+
+    // Notification to class incharge (non-blocking)
+    notifyClassIncharge(studentId, {
+        referenceId: cert.id,
+        referenceType: 'certification',
+        itemTitle: cert.name
     });
 
     res.status(201).json({ success: true, data: cert });
@@ -121,4 +133,34 @@ export const updateApprovalStatus = asyncHandler(async (req, res, next) => {
     });
 
     res.status(200).json({ success: true, data: cert });
+});
+
+// @desc   Get certifications for class in-charge
+// @route  GET /api/student/certifications/class-incharge
+// @access Private/Faculty
+export const getClassInchargeCertifications = asyncHandler(async (req, res, next) => {
+    const faculty = await models.Faculty.findOne({ where: { faculty_id: req.user.id } });
+    if (!faculty || !faculty.is_class_incharge || !faculty.class_incharge_class_id) {
+        return next(new ErrorResponse('User is not assigned as a class in-charge', 403));
+    }
+
+    const classId = faculty.class_incharge_class_id;
+    const { approvalStatus } = req.query;
+
+    const where = { classId };
+    if (approvalStatus) where.approvalStatus = approvalStatus;
+
+    const certifications = await StudentCertification.findAll({
+        where,
+        include: [
+            {
+                model: Student,
+                as: 'student',
+                attributes: ['id', 'studentId', 'firstName', 'lastName', 'rollNumber']
+            }
+        ],
+        order: [['createdAt', 'DESC']]
+    });
+
+    res.status(200).json({ success: true, count: certifications.length, data: certifications });
 });

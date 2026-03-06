@@ -67,6 +67,11 @@
     --shadow-card: 0 4px 20px -2px hsl(0 82% 26% / 0.08);
   }
 
+  .student-portal {
+    background: linear-gradient(135deg, #790c0c 0%, #01898d 50%, #790c0c 100%);
+    background-attachment: fixed;
+  }
+
   .dark {
     --background: 222 47% 8%;
     --foreground: 210 40% 98%;
@@ -158,7 +163,16 @@
   }
 
   .section-header {
-    @apply px-6 py-4 border-b border-border/50 bg-muted/30;
+    @apply px-6 py-4 border-b border-border/50 bg-gradient-to-r from-primary/5 to-secondary/5;
+  }
+
+  .section-header-colorful {
+    background: var(--gradient-primary);
+    @apply text-primary-foreground border-0;
+  }
+
+  .section-header-colorful p {
+    @apply text-primary-foreground/80;
   }
 
   .table-container {

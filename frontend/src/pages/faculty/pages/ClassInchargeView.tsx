@@ -17,6 +17,10 @@ import {
   CheckCircle2,
   XCircle,
   Clock,
+  Trophy,
+  Award,
+  Star,
+  Flag,
 } from 'lucide-react';
 import { cn } from '@/pages/faculty/lib/utils';
 
@@ -55,6 +59,25 @@ interface StudentLeave {
   student: Student;
 }
 
+interface PortfolioItem {
+  id: number;
+  studentId: number;
+  approvalStatus: 'pending' | 'approved' | 'rejected';
+  student: Student;
+  createdAt: string;
+  // Type specific fields
+  name?: string; // Sport/Certification name
+  eventName?: string; // Event name
+  title?: string; // Project title
+  type?: string; // Event type
+  category?: string; // Sport category
+  level?: string; // Sport/Event level
+  issuer?: string; // Certification issuer
+  joinedDate?: string;
+  eventDate?: string;
+  issueDate?: string;
+}
+
 interface ClassInchargeData {
   incharge: { id: number; academic_year: string; class: ClassInfo };
   students: Student[];
@@ -68,9 +91,17 @@ export default function ClassInchargeView() {
   const [leaves, setLeaves] = useState<StudentLeave[]>([]);
   const [loading, setLoading] = useState(true);
   const [leavesLoading, setLeavesLoading] = useState(false);
+  const [portfolioLoading, setPortfolioLoading] = useState(false);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [activeTab, setActiveTab] = useState<'students' | 'leaves'>('students');
+  const [activeTab, setActiveTab] = useState<'students' | 'leaves' | 'portfolio'>('students');
+  const [portfolioData, setPortfolioData] = useState<{
+    sports: PortfolioItem[];
+    events: PortfolioItem[];
+    certs: PortfolioItem[];
+    projects: PortfolioItem[];
+  }>({ sports: [], events: [], certs: [], projects: [] });
+  const [activePortfolioCategory, setActivePortfolioCategory] = useState<'sports' | 'events' | 'certs' | 'projects'>('sports');
 
   useEffect(() => {
     if (!refreshedRef.current) {
@@ -82,6 +113,7 @@ export default function ClassInchargeView() {
   useEffect(() => {
     fetchClassIncharge();
     fetchLeaveRequests();
+    fetchPortfolioVerification();
   }, []);
 
   const fetchClassIncharge = async () => {
@@ -144,6 +176,73 @@ export default function ClassInchargeView() {
 
     } catch (err) {
       console.error('Error updating leave status:', err);
+    }
+  };
+
+  const fetchPortfolioVerification = async () => {
+    setPortfolioLoading(true);
+    try {
+      const token = localStorage.getItem('authToken');
+      const fetchOpts = { headers: { 'Authorization': `Bearer ${token}` } };
+
+      const [sportsRes, eventsRes, certsRes, projectsRes] = await Promise.all([
+        fetch('/api/v1/student/extracurricular/sports/class-incharge?approvalStatus=pending', fetchOpts),
+        fetch('/api/v1/student/extracurricular/events/class-incharge?approvalStatus=pending', fetchOpts),
+        fetch('/api/v1/student/certifications/class-incharge?approvalStatus=pending', fetchOpts),
+        fetch('/api/v1/student/projects/class-incharge?approvalStatus=pending', fetchOpts),
+      ]);
+
+      const [sportsData, eventsData, certsData, projectsData] = await Promise.all([
+        sportsRes.ok ? sportsRes.json() : { data: [] },
+        eventsRes.ok ? eventsRes.json() : { data: [] },
+        certsRes.ok ? certsRes.json() : { data: [] },
+        projectsRes.ok ? projectsRes.json() : { data: [] },
+      ]);
+
+      setPortfolioData({
+        sports: sportsData.data || [],
+        events: eventsData.data || [],
+        certs: certsData.data || [],
+        projects: projectsData.data || []
+      });
+    } catch (err) {
+      console.error('Failed to fetch portfolio verification data:', err);
+    } finally {
+      setPortfolioLoading(false);
+    }
+  };
+
+  const handlePortfolioApproval = async (id: number, category: string, status: 'approved' | 'rejected') => {
+    const remarks = prompt(`Enter ${status} remarks (optional):`);
+    if (remarks === null) return;
+
+    let endpoint = '';
+    switch (category) {
+      case 'sports': endpoint = `/api/v1/student/extracurricular/sports/${id}/approval`; break;
+      case 'events': endpoint = `/api/v1/student/extracurricular/events/${id}/approval`; break;
+      case 'certs': endpoint = `/api/v1/student/certifications/${id}/approval`; break;
+      case 'projects': endpoint = `/api/v1/student/projects/${id}/approval`; break;
+    }
+
+    try {
+      const token = localStorage.getItem('authToken');
+      const res = await fetch(endpoint, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ approvalStatus: status, approvalRemarks: remarks }),
+      });
+
+      if (res.ok) {
+        fetchPortfolioVerification();
+      } else {
+        const err = await res.json();
+        alert(`Error: ${err.error || err.message || 'Failed to update status'}`);
+      }
+    } catch (err) {
+      console.error('Error updating portfolio status:', err);
     }
   };
 
@@ -275,6 +374,23 @@ export default function ClassInchargeView() {
                 <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
               )}
             </button>
+            <button
+              onClick={() => setActiveTab('portfolio')}
+              className={cn(
+                "px-6 py-3 font-medium text-sm transition-colors relative flex items-center gap-2",
+                activeTab === 'portfolio' ? "text-primary" : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              Portfolio Verification
+              {(portfolioData.sports.length + portfolioData.events.length + portfolioData.certs.length + portfolioData.projects.length) > 0 && (
+                <span className="bg-orange-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">
+                  {portfolioData.sports.length + portfolioData.events.length + portfolioData.certs.length + portfolioData.projects.length}
+                </span>
+              )}
+              {activeTab === 'portfolio' && (
+                <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
+              )}
+            </button>
           </div>
 
           {activeTab === 'students' ? (
@@ -384,13 +500,14 @@ export default function ClassInchargeView() {
                 </p>
               )}
             </motion.div>
-          ) : (
+          ) : activeTab === 'leaves' ? (
             /* Leave Requests Table */
             <motion.div
               initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
               className="bg-card rounded-xl border p-6"
             >
+              {/* Existing Leave Requests Content */}
               <div className="flex items-center justify-between mb-5">
                 <h2 className="font-semibold text-lg flex items-center gap-2">
                   <CalendarDays className="w-5 h-5 text-primary" />
@@ -510,9 +627,163 @@ export default function ClassInchargeView() {
                 </div>
               )}
             </motion.div>
+          ) : (
+            /* Portfolio Verification Table */
+            <motion.div
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-card rounded-xl border p-6"
+            >
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-5">
+                <div>
+                  <h2 className="font-semibold text-lg flex items-center gap-2">
+                    <Trophy className="w-5 h-5 text-orange-500" />
+                    Portfolio Verification
+                  </h2>
+                  <p className="text-sm text-muted-foreground">Approve or reject student portfolio updates</p>
+                </div>
+                <button
+                  onClick={fetchPortfolioVerification}
+                  className="text-xs text-primary hover:underline"
+                >
+                  Refresh
+                </button>
+              </div>
+
+              {/* Category Toggles */}
+              <div className="flex flex-wrap gap-2 mb-6">
+                <button
+                  onClick={() => setActivePortfolioCategory('sports')}
+                  className={cn(
+                    "flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-all",
+                    activePortfolioCategory === 'sports' ? "bg-orange-600 text-white shadow-md" : "bg-muted border hover:bg-muted/80"
+                  )}
+                >
+                  <Trophy className="w-3.5 h-3.5" />
+                  Sports ({portfolioData.sports.length})
+                </button>
+                <button
+                  onClick={() => setActivePortfolioCategory('events')}
+                  className={cn(
+                    "flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-all",
+                    activePortfolioCategory === 'events' ? "bg-blue-600 text-white shadow-md" : "bg-muted border hover:bg-muted/80"
+                  )}
+                >
+                  <Flag className="w-3.5 h-3.5" />
+                  Events ({portfolioData.events.length})
+                </button>
+                <button
+                  onClick={() => setActivePortfolioCategory('certs')}
+                  className={cn(
+                    "flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-all",
+                    activePortfolioCategory === 'certs' ? "bg-purple-600 text-white shadow-md" : "bg-muted border hover:bg-muted/80"
+                  )}
+                >
+                  <Award className="w-3.5 h-3.5" />
+                  Certifications ({portfolioData.certs.length})
+                </button>
+                <button
+                  onClick={() => setActivePortfolioCategory('projects')}
+                  className={cn(
+                    "flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-all",
+                    activePortfolioCategory === 'projects' ? "bg-green-600 text-white shadow-md" : "bg-muted border hover:bg-muted/80"
+                  )}
+                >
+                  <Star className="w-3.5 h-3.5" />
+                  Projects ({portfolioData.projects.length})
+                </button>
+              </div>
+
+              {portfolioLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b bg-muted/40">
+                        <th className="text-left py-3 px-4 font-medium text-muted-foreground">Student</th>
+                        <th className="text-left py-3 px-4 font-medium text-muted-foreground">Item Details</th>
+                        <th className="text-left py-3 px-4 font-medium text-muted-foreground">Date</th>
+                        <th className="text-left py-3 px-4 font-medium text-muted-foreground">Additional Info</th>
+                        <th className="text-center py-3 px-4 font-medium text-muted-foreground">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {portfolioData[activePortfolioCategory].length === 0 ? (
+                        <tr>
+                          <td colSpan={5} className="py-12 text-center text-muted-foreground">
+                            No pending {activePortfolioCategory} found.
+                          </td>
+                        </tr>
+                      ) : (
+                        portfolioData[activePortfolioCategory].map((item, idx) => (
+                          <tr
+                            key={item.id}
+                            className={cn(
+                              'border-b transition-colors hover:bg-muted/30',
+                              idx % 2 === 0 ? '' : 'bg-muted/10'
+                            )}
+                          >
+                            <td className="py-3 px-4">
+                              <div className="flex flex-col">
+                                <span className="font-medium">
+                                  {item.student ? `${item.student.firstName} ${item.student.lastName}` : 'Unknown Student'}
+                                </span>
+                                <span className="text-xs text-muted-foreground font-mono">
+                                  {item.student?.studentId}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="py-3 px-4">
+                              <span className="font-medium text-primary">
+                                {item.name || item.eventName || item.title}
+                              </span>
+                              <p className="text-[10px] text-muted-foreground">
+                                {item.category || item.type || item.issuer || 'Verification Request'}
+                              </p>
+                            </td>
+                            <td className="py-3 px-4">
+                              <div className="flex items-center gap-1.5 text-xs">
+                                <Clock className="w-3.5 h-3.5 text-muted-foreground" />
+                                <span>{new Date(item.joinedDate || item.eventDate || item.issueDate || item.createdAt).toLocaleDateString()}</span>
+                              </div>
+                            </td>
+                            <td className="py-3 px-4 text-xs">
+                              {item.level && <span className="block italic text-muted-foreground">Level: {item.level}</span>}
+                              {item.type && <span className="block italic text-muted-foreground">Type: {item.type}</span>}
+                            </td>
+                            <td className="py-3 px-4 text-center">
+                              <div className="flex items-center justify-center gap-2">
+                                <button
+                                  onClick={() => handlePortfolioApproval(item.id, activePortfolioCategory, 'approved')}
+                                  className="p-1.5 rounded-lg bg-green-100 text-green-600 hover:bg-green-600 hover:text-white transition-all shadow-sm"
+                                  title="Approve"
+                                >
+                                  <Check className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={() => handlePortfolioApproval(item.id, activePortfolioCategory, 'rejected')}
+                                  className="p-1.5 rounded-lg bg-red-100 text-red-600 hover:bg-red-600 hover:text-white transition-all shadow-sm"
+                                  title="Reject"
+                                >
+                                  <X className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </motion.div>
           )}
         </div>
-      )}
-    </MainLayout>
+      )
+      }
+    </MainLayout >
   );
 }

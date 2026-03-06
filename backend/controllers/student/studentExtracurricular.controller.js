@@ -1,7 +1,8 @@
 import asyncHandler from '../../middleware/async.js';
 import ErrorResponse from '../../utils/errorResponse.js';
 import { models } from '../../models/index.js';
-const { StudentSport, StudentEvent, Student, User } = models;
+import { notifyClassIncharge } from '../../utils/portfolioNotification.js';
+const { StudentSport, StudentEvent, Student, User, Faculty } = models;
 
 const getStudentId = async (userOrId, next) => {
     if (userOrId && typeof userOrId === 'object' && userOrId.studentId) {
@@ -26,7 +27,7 @@ export const getMySports = asyncHandler(async (req, res, next) => {
 
     const sports = await StudentSport.findAll({
         where,
-        include: [{ model: User, as: 'approvedBy', attributes: ['name'] }],
+        include: [{ model: Faculty, as: 'approvedBy', attributes: [['Name', 'name']] }],
         order: [['joinedDate', 'DESC']]
     });
 
@@ -52,9 +53,20 @@ export const createSport = asyncHandler(async (req, res, next) => {
     const studentId = await getStudentId(req.user, next);
     if (!studentId) return;
 
-    const data = { ...req.body, studentId, approvalStatus: 'pending' };
+    const student = await Student.findByPk(studentId);
+    if (!student) return next(new ErrorResponse('Student not found', 404));
+
+    const data = { ...req.body, studentId, classId: student.classId, approvalStatus: 'pending' };
     if (req.file) data.documentUrl = req.file.filename;
     const sport = await StudentSport.create(data);
+
+    // Notification to class incharge (non-blocking)
+    notifyClassIncharge(studentId, {
+        referenceId: sport.id,
+        referenceType: 'sport',
+        itemTitle: sport.name
+    });
+
     res.status(201).json({ success: true, data: sport });
 });
 
@@ -105,6 +117,36 @@ export const updateSportApproval = asyncHandler(async (req, res, next) => {
     res.status(200).json({ success: true, data: sport });
 });
 
+// @desc   Get sports for class in-charge
+// @route  GET /api/student/sports/class-incharge
+// @access Private/Faculty
+export const getClassInchargeSports = asyncHandler(async (req, res, next) => {
+    const faculty = await models.Faculty.findOne({ where: { faculty_id: req.user.id } });
+    if (!faculty || !faculty.is_class_incharge || !faculty.class_incharge_class_id) {
+        return next(new ErrorResponse('User is not assigned as a class in-charge', 403));
+    }
+
+    const classId = faculty.class_incharge_class_id;
+    const { approvalStatus } = req.query;
+
+    const where = { classId };
+    if (approvalStatus) where.approvalStatus = approvalStatus;
+
+    const sports = await StudentSport.findAll({
+        where,
+        include: [
+            {
+                model: Student,
+                as: 'student',
+                attributes: ['id', 'studentId', 'firstName', 'lastName', 'rollNumber']
+            }
+        ],
+        order: [['createdAt', 'DESC']]
+    });
+
+    res.status(200).json({ success: true, count: sports.length, data: sports });
+});
+
 // ──────────────────────────────── EVENTS ──────────────────────────────────
 
 // @desc   Get all events for logged-in student
@@ -120,7 +162,7 @@ export const getMyEvents = asyncHandler(async (req, res, next) => {
 
     const events = await StudentEvent.findAll({
         where,
-        include: [{ model: User, as: 'approvedBy', attributes: ['name'] }],
+        include: [{ model: Faculty, as: 'approvedBy', attributes: [['Name', 'name']] }],
         order: [['eventDate', 'DESC']]
     });
 
@@ -146,9 +188,20 @@ export const createEvent = asyncHandler(async (req, res, next) => {
     const studentId = await getStudentId(req.user, next);
     if (!studentId) return;
 
-    const data = { ...req.body, studentId, approvalStatus: 'pending' };
+    const student = await Student.findByPk(studentId);
+    if (!student) return next(new ErrorResponse('Student not found', 404));
+
+    const data = { ...req.body, studentId, classId: student.classId, approvalStatus: 'pending' };
     if (req.file) data.certificateUrl = req.file.filename;
     const event = await StudentEvent.create(data);
+
+    // Notification to class incharge (non-blocking)
+    notifyClassIncharge(studentId, {
+        referenceId: event.id,
+        referenceType: 'event',
+        itemTitle: event.eventName
+    });
+
     res.status(201).json({ success: true, data: event });
 });
 
@@ -197,4 +250,34 @@ export const updateEventApproval = asyncHandler(async (req, res, next) => {
 
     await event.update({ approvalStatus, approvalRemarks: approvalRemarks || null, approvedById: req.user.id, approvalDate: new Date() });
     res.status(200).json({ success: true, data: event });
+});
+
+// @desc   Get events for class in-charge
+// @route  GET /api/student/events/class-incharge
+// @access Private/Faculty
+export const getClassInchargeEvents = asyncHandler(async (req, res, next) => {
+    const faculty = await models.Faculty.findOne({ where: { faculty_id: req.user.id } });
+    if (!faculty || !faculty.is_class_incharge || !faculty.class_incharge_class_id) {
+        return next(new ErrorResponse('User is not assigned as a class in-charge', 403));
+    }
+
+    const classId = faculty.class_incharge_class_id;
+    const { approvalStatus } = req.query;
+
+    const where = { classId };
+    if (approvalStatus) where.approvalStatus = approvalStatus;
+
+    const events = await StudentEvent.findAll({
+        where,
+        include: [
+            {
+                model: Student,
+                as: 'student',
+                attributes: ['id', 'studentId', 'firstName', 'lastName', 'rollNumber']
+            }
+        ],
+        order: [['createdAt', 'DESC']]
+    });
+
+    res.status(200).json({ success: true, count: events.length, data: events });
 });

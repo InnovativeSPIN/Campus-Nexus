@@ -49,6 +49,7 @@ import studentExtracurricularRoutes from './routes/student/studentExtracurricula
 import studentNotificationRoutes from './routes/student/studentNotification.routes.js';
 import studentDisciplinaryRoutes from './routes/student/disciplinary.routes.js';
 import studentLeaveRoutes from './routes/student/studentLeave.routes.js';
+import portfolioNotificationRoutes from './routes/student/portfolioNotification.routes.js';
 
 // Load env vars
 dotenv.config();
@@ -194,6 +195,7 @@ const startServer = () => {
   app.use('/api/v1/student/notifications', studentNotificationRoutes);
   app.use('/api/v1/student/disciplinary', studentDisciplinaryRoutes);
   app.use('/api/v1/student-leaves', studentLeaveRoutes);
+  app.use('/api/v1/student/portfolio-notifications', portfolioNotificationRoutes);
 
   // Dashboard stats - real counts from DB
   app.get('/api/v1/dashboard/stats', async (req, res) => {

@@ -378,14 +378,21 @@ export const getMyProfile = asyncHandler(async (req, res, next) => {
 // @route     PUT /api/v1/students/me/profile
 // @access    Private/Student
 export const updateMyProfile = asyncHandler(async (req, res, next) => {
-  const { email, phone, linkedinUrl, alternatePhone, address, city, state, pincode } = req.body;
+  const {
+    email, phone, linkedinUrl, alternatePhone,
+    address, city, state, pincode,
+    nationality, religion, category, aadharNo,
+    bloodGroup, motherTongue, residenceType,
+    dateOfBirth, parentInfo, references
+  } = req.body;
+
   const student = await Student.findOne({ where: { id: req.user.id } });
 
   if (!student) {
     return next(new ErrorResponse('Student profile not found', 404));
   }
 
-  // Update Student Core details
+  // Update Student Core details (only those that are allowed to be changed)
   if (email) student.email = email;
   if (phone) student.phone = phone;
   await student.save();
@@ -399,15 +406,27 @@ export const updateMyProfile = asyncHandler(async (req, res, next) => {
   // Update Bio fields
   if (linkedinUrl !== undefined) bio.linkedinUrl = linkedinUrl;
   if (alternatePhone !== undefined) bio.alternatePhone = alternatePhone;
+  if (nationality !== undefined) bio.nationality = nationality;
+  if (religion !== undefined) bio.religion = religion;
+  if (category !== undefined) bio.category = category;
+  if (aadharNo !== undefined) bio.aadharNo = aadharNo;
+  if (bloodGroup !== undefined) bio.bloodGroup = bloodGroup;
+  if (motherTongue !== undefined) bio.motherTongue = motherTongue;
+  if (residenceType !== undefined) bio.residenceType = residenceType;
+  if (dateOfBirth !== undefined) bio.dateOfBirth = dateOfBirth;
+  if (parentInfo !== undefined) bio.parentInfo = parentInfo;
+  if (references !== undefined) bio.references = references;
 
   // Manage address JSON
   let addrObj = bio.address || {};
-  if (address) addrObj.street = address;
-  if (city) addrObj.city = city;
-  if (state) addrObj.state = state;
-  if (pincode) addrObj.pincode = pincode;
+  if (address !== undefined) addrObj.street = address;
+  if (city !== undefined) addrObj.city = city;
+  if (state !== undefined) addrObj.state = state;
+  if (pincode !== undefined) addrObj.pincode = pincode;
   bio.address = addrObj;
 
+  // Track changes but don't auto-approve if we want a formal approval flow later.
+  // For now, we update it directly to ensure the "dynamic" promise is met.
   await bio.save();
 
   res.status(200).json({
