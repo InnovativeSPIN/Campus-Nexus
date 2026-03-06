@@ -238,9 +238,10 @@ export default function ClassInchargeView() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Academic Year</p>
-                <p className="font-semibold text-lg">{data.incharge.academic_year}</p>
+                <p className="font-semibold text-lg">{classInfo?.batch || '—'}</p>
               </div>
             </div>
+
           </motion.div>
 
           {/* Tabs */}

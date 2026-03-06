@@ -11,16 +11,15 @@ import { protect, authorize } from '../../middleware/auth.js';
 
 const router = express.Router();
 
-// All routes require authentication and admin roles
+// All routes require authentication
 router.use(protect);
-router.use(authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin'));
 
 router.route('/')
-    .get(getDepartments)
+    .get(authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin', 'faculty', 'department-admin'), getDepartments)
     .post(authorize('superadmin', 'super-admin'), createDepartment);
 
 router.route('/:id')
-    .get(getDepartment)
+    .get(authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin', 'faculty', 'department-admin'), getDepartment)
     .put(authorize('superadmin', 'super-admin'), updateDepartment)
     .delete(authorize('superadmin', 'super-admin'), deleteDepartment);
 
