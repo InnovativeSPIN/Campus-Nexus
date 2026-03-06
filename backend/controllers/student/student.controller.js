@@ -170,6 +170,11 @@ export const createStudent = asyncHandler(async (req, res, next) => {
     req.body.role_id = 3;
   }
 
+  // Set default password — students use 'student123' unless admin provides one
+  if (!req.body.password) {
+    req.body.password = 'student123';
+  }
+
   // Set default semester if missing
   if (!req.body.semester) {
     req.body.semester = 1;
