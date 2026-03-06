@@ -5,7 +5,8 @@ import {
     applyLeave,
     updateLeave,
     cancelLeave,
-    processLeaveApproval
+    processLeaveApproval,
+    getClassInchargeLeaves
 } from '../../controllers/student/studentLeave.controller.js';
 
 import { protect, authorize } from '../../middleware/auth.js';
@@ -15,6 +16,11 @@ const router = express.Router();
 
 // All routes are protected
 router.use(protect);
+
+// Class in-charge route must come before /:id to avoid conflict
+router
+    .route('/class-incharge')
+    .get(authorize('faculty', 'department-admin'), getClassInchargeLeaves);
 
 router
     .route('/')

@@ -45,9 +45,9 @@ export const getAllFaculty = asyncHandler(async (req, res, next) => {
   const faculty = await Faculty.findAll({
     where,
     include: [
-      { 
-        model: Department, 
-        as: 'department', 
+      {
+        model: Department,
+        as: 'department',
         attributes: ['short_name', 'full_name'],
         required: false  // Use LEFT JOIN instead of INNER JOIN
       }
@@ -88,9 +88,9 @@ export const getAllFaculty = asyncHandler(async (req, res, next) => {
 export const getFaculty = asyncHandler(async (req, res, next) => {
   let faculty = await Faculty.findByPk(req.params.id, {
     include: [
-      { 
-        model: Department, 
-        as: 'department', 
+      {
+        model: Department,
+        as: 'department',
         attributes: ['short_name', 'full_name'],
         required: false  // Use LEFT JOIN
       },
@@ -120,7 +120,7 @@ export const getFaculty = asyncHandler(async (req, res, next) => {
 // @access    Private/Admin
 export const createFaculty = asyncHandler(async (req, res, next) => {
   console.log('[DEBUG] createFaculty - received body:', req.body);
-  
+
   // Prepare fields for database
   const facultyData = {
     faculty_college_code: req.body.faculty_college_code || req.body.facultyCollegeCode,
@@ -178,7 +178,7 @@ export const createFaculty = asyncHandler(async (req, res, next) => {
 // @access    Private/Admin
 export const updateFaculty = asyncHandler(async (req, res, next) => {
   console.log('[DEBUG] updateFaculty - faculty ID:', req.params.id, 'body:', req.body);
-  
+
   let faculty = await Faculty.findByPk(req.params.id);
 
   if (!faculty) {
@@ -229,13 +229,13 @@ export const updateFaculty = asyncHandler(async (req, res, next) => {
   try {
     // Update the faculty instance directly
     await faculty.update(updateData);
-    
+
     // Reload with department association
     await faculty.reload({
       include: [
-        { 
-          model: Department, 
-          as: 'department', 
+        {
+          model: Department,
+          as: 'department',
           attributes: ['short_name', 'full_name'],
           required: false
         }
@@ -284,9 +284,9 @@ export const getFacultyByDepartment = asyncHandler(async (req, res, next) => {
       status: 'active'
     },
     include: [
-      { 
-        model: Department, 
-        as: 'department', 
+      {
+        model: Department,
+        as: 'department',
         attributes: ['short_name', 'full_name'],
         required: false  // Use LEFT JOIN
       }
@@ -509,7 +509,7 @@ export const updateFacultyProfile = asyncHandler(async (req, res, next) => {
   // Only allow updating specific fields
   const allowedFields = ['email', 'phone', 'linkedin_url', 'phd_status'];
   const fieldsToUpdate = {};
-  
+
   allowedFields.forEach(field => {
     if (req.body[field] !== undefined && req.body[field] !== null) {
       fieldsToUpdate[field] = req.body[field];
@@ -567,9 +567,9 @@ export const updateFacultyProfile = asyncHandler(async (req, res, next) => {
 
     const updatedFaculty = await Faculty.findByPk(req.user.faculty_id, {
       include: [
-        { 
-          model: Department, 
-          as: 'department', 
+        {
+          model: Department,
+          as: 'department',
           attributes: ['short_name', 'full_name'],
           required: false  // Use LEFT JOIN
         }
@@ -593,7 +593,7 @@ export const getMyTimetable = asyncHandler(async (req, res, next) => {
   try {
     const { TimetableSimple } = models;
     const facultyId = req.user.faculty_id;
-    
+
     if (!facultyId) {
       return next(new ErrorResponse('Faculty ID not found', 400));
     }
@@ -747,9 +747,10 @@ export const getMyClassIncharge = asyncHandler(async (req, res, next) => {
   }
 
   // Fetch students in the assigned class
+
   const students = await Student.findAll({
     where: { classId: incharge.class_id },
-    attributes: ['id', 'studentId', 'firstName', 'lastName', 'email', 'phone', 'status', 'sector', 'semester'],
+    attributes: ['id', 'studentId', 'firstName', 'lastName', 'email', 'phone', 'status', 'section', 'semester'],
     order: [['studentId', 'ASC']]
   });
 

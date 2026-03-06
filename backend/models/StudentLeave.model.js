@@ -4,6 +4,7 @@ const StudentLeave = (sequelize) => {
     const StudentLeaveModel = sequelize.define('StudentLeave', {
         id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
         studentId: { type: DataTypes.INTEGER, allowNull: false },
+        classId: { type: DataTypes.INTEGER, allowNull: true },
         leaveType: {
             type: DataTypes.ENUM('Leave', 'On-Duty'),
             defaultValue: 'Leave',
@@ -39,7 +40,8 @@ const StudentLeave = (sequelize) => {
 
     StudentLeaveModel.associate = (models) => {
         StudentLeaveModel.belongsTo(models.Student, { foreignKey: 'studentId', as: 'student' });
-        StudentLeaveModel.belongsTo(models.User, { foreignKey: 'approvedById', as: 'approvedBy' });
+        StudentLeaveModel.belongsTo(models.Class, { foreignKey: 'classId', as: 'class' });
+        StudentLeaveModel.belongsTo(models.Faculty, { foreignKey: 'approvedById', as: 'approvedBy' });
     };
 
     return StudentLeaveModel;

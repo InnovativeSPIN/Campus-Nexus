@@ -202,12 +202,27 @@ const startServer = () => {
 
   const PORT = process.env.PORT || 5000;
 
-  const server = app.listen(
-    PORT,
-    console.log(
-      `Server running in ${process.env.NODE_ENV} mode on port ${PORT}`.yellow.bold
-    )
-  );
+  const server = app.listen(PORT)
+    .on('listening', () => {
+      console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`.yellow.bold);
+    })
+    .on('error', (err) => {
+      if (err.code === 'EADDRINUSE') {
+        console.error(`\n[ERROR] Port ${PORT} is already in use.`.red.bold);
+        console.error(`This usually happens when a previous server instance is still running.`.yellow);
+        console.error(`Attempting to fix this for you...`.cyan);
+
+        // On Windows, attempts to kill the process on that port
+        import('child_process').then(cp => {
+          cp.exec(`taskkill /F /IM node.exe /FI "WINDOWTITLE eq nodemon"`, (error) => {
+            process.exit(1);
+          });
+        });
+      } else {
+        console.error(err);
+        process.exit(1);
+      }
+    });
 
   // Handle unhandled promise rejections
   process.on('unhandledRejection', (err, promise) => {

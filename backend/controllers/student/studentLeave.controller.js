@@ -2,7 +2,7 @@ import asyncHandler from '../../middleware/async.js';
 import ErrorResponse from '../../utils/errorResponse.js';
 import { models } from '../../models/index.js';
 
-const { StudentLeave, Student, User } = models;
+const { StudentLeave, Student, User, Faculty } = models;
 
 // @desc   Get all leave applications for logged-in student
 // @route  GET /api/v1/student-leaves
@@ -15,7 +15,7 @@ export const getMyLeaves = asyncHandler(async (req, res, next) => {
 
     const leaves = await StudentLeave.findAll({
         where,
-        include: [{ model: User, as: 'approvedBy', attributes: ['name'] }],
+        include: [{ model: Faculty, as: 'approvedBy', attributes: [['Name', 'name']] }],
         order: [['startDate', 'DESC']]
     });
 
@@ -30,7 +30,7 @@ export const getLeave = asyncHandler(async (req, res, next) => {
 
     const leave = await StudentLeave.findOne({
         where: { id: req.params.id, studentId },
-        include: [{ model: User, as: 'approvedBy', attributes: ['name'] }]
+        include: [{ model: Faculty, as: 'approvedBy', attributes: [['Name', 'name']] }]
     });
 
     if (!leave) return next(new ErrorResponse('Leave application not found', 404));
@@ -43,15 +43,57 @@ export const getLeave = asyncHandler(async (req, res, next) => {
 export const applyLeave = asyncHandler(async (req, res, next) => {
     const studentId = req.user.id;
 
+    // Fetch student's classId if not provided
+    const student = await Student.findByPk(studentId);
+    if (!student) return next(new ErrorResponse('Student not found', 404));
+
     const leave = await StudentLeave.create({
         ...req.body,
         studentId,
+        classId: student.classId,
         status: 'pending',
         attachment: req.file ? req.file.filename : req.body.attachment
     });
 
     res.status(201).json({ success: true, data: leave });
 });
+
+// @desc   Get leaves for class in-charge
+// @route  GET /api/v1/student-leaves/class-incharge
+// @access Private/Faculty
+export const getClassInchargeLeaves = asyncHandler(async (req, res, next) => {
+    // Current user must be a faculty and a class in-charge
+    const faculty = await Faculty.findOne({ where: { faculty_id: req.user.id } });
+
+    if (!faculty || !faculty.is_class_incharge || !faculty.class_incharge_class_id) {
+        return next(new ErrorResponse('User is not assigned as a class in-charge', 403));
+    }
+
+    const classId = faculty.class_incharge_class_id;
+    const { status } = req.query;
+
+    const where = { classId };
+    if (status) where.status = status;
+
+    const leaves = await StudentLeave.findAll({
+        where,
+        include: [
+            {
+                model: Student,
+                as: 'student',
+                attributes: ['id', 'studentId', 'firstName', 'lastName', 'rollNumber']
+            }
+        ],
+        order: [['createdAt', 'DESC']]
+    });
+
+    res.status(200).json({
+        success: true,
+        count: leaves.length,
+        data: leaves
+    });
+});
+
 
 // @desc   Update leave application
 // @route  PUT /api/v1/student-leaves/:id
@@ -104,6 +146,22 @@ export const processLeaveApproval = asyncHandler(async (req, res, next) => {
     const leave = await StudentLeave.findByPk(req.params.id);
     if (!leave) return next(new ErrorResponse('Leave application not found', 404));
 
+    // Verify if the current faculty is the class incharge for this student
+    // Skip check for superadmin/executive-admin
+    if (['faculty', 'department-admin'].includes(req.user.role)) {
+        const isClassIncharge = await Faculty.findOne({
+            where: {
+                faculty_id: req.user.id,
+                is_class_incharge: true,
+                class_incharge_class_id: leave.classId
+            }
+        });
+
+        if (!isClassIncharge) {
+            return next(new ErrorResponse('You are not authorized to process this leave. Only the assigned Class In-charge can approve/reject it.', 403));
+        }
+    }
+
     await leave.update({
         status,
         approvalRemarks: approvalRemarks || null,
@@ -113,3 +171,4 @@ export const processLeaveApproval = asyncHandler(async (req, res, next) => {
 
     res.status(200).json({ success: true, data: leave });
 });
+

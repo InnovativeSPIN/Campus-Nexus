@@ -46,12 +46,9 @@ import TimetableSimple from './TimetableSimple.model.js';
 import Room from './Room.model.js';
 import Lab from './Lab.model.js';
 import TimetablePeriod from './TimetablePeriod.model.js';
-<<<<<<< HEAD
 import StudentLeave from './StudentLeave.model.js';
-=======
 import ClassIncharge from './ClassIncharge.model.js';
 import LeaveNotification from './LeaveNotification.model.js';
->>>>>>> 16823d13a869b38f738a032c8d99cb22ab4e8f1d
 
 // Initialize models
 const models = {
@@ -99,12 +96,9 @@ const models = {
   Room: Room(sequelize),
   Lab: Lab(sequelize),
   TimetablePeriod: TimetablePeriod(sequelize),
-<<<<<<< HEAD
   StudentLeave: StudentLeave(sequelize),
-=======
   ClassIncharge: ClassIncharge(sequelize),
   LeaveNotification: LeaveNotification(sequelize),
->>>>>>> 16823d13a869b38f738a032c8d99cb22ab4e8f1d
 };
 
 // Define associations

@@ -104,9 +104,10 @@ export const protect = asyncHandler(async (req, res, next) => {
       req.user.departmentId = req.user.department_id;
       req.user.faculty_id = req.user.faculty_id || req.user.facultyId || req.user.id || null;
       req.user.id = req.user.faculty_id;
-      
+
       console.log('[AUTH OK] Faculty logged in - ID:', req.user.id);
       return next();
+
     }
 
     // Handle department-admin tokens (issued for faculty with role_id = 7)
