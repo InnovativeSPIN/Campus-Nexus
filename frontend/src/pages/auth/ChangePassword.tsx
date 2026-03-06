@@ -35,7 +35,7 @@ export default function ChangePassword() {
                     'Content-Type': 'application/json',
                     // Assuming token is in localStorage and handled by global fetch or interceptor
                     // If not, we'd need to add Authorization header here
-                    'Authorization': `Bearer ${JSON.parse(localStorage.getItem('eduvertex_user') || '{}').token || ''}`
+                    'Authorization': `Bearer ${JSON.parse(localStorage.getItem('campus_nexus_user') || '{}').token || ''}`
                 },
                 body: JSON.stringify({ currentPassword, newPassword }),
             });

@@ -19,7 +19,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined); // Ke
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<AuthContextType['user']>(() => {
     try {
-      const savedUser = localStorage.getItem('eduvertex_user');
+      const savedUser = localStorage.getItem('campus_nexus_user');
       return savedUser ? JSON.parse(savedUser) : null;
     } catch (error) {
       console.error('Error parsing user from localStorage:', error);
@@ -116,7 +116,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
 
         setUser(userObj);
-        localStorage.setItem('eduvertex_user', JSON.stringify(userObj));
+        localStorage.setItem('campus_nexus_user', JSON.stringify(userObj));
         localStorage.setItem('authToken', result.token);
         return true;
       }
@@ -134,13 +134,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem('eduvertex_user');
+    localStorage.removeItem('campus_nexus_user');
     localStorage.removeItem('authToken');
   };
 
   const refreshUserData = useCallback(async () => {
     // Get current user from localStorage to avoid dependency issues
-    const userDataStr = localStorage.getItem('eduvertex_user');
+    const userDataStr = localStorage.getItem('campus_nexus_user');
     if (!userDataStr) return;
 
     try {
@@ -207,7 +207,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               is_class_incharge: freshData.is_class_incharge || false,
               class_incharge_class_id: freshData.class_incharge_class_id ?? prev.class_incharge_class_id ?? null,
             };
-            localStorage.setItem('eduvertex_user', JSON.stringify(updatedUser));
+            localStorage.setItem('campus_nexus_user', JSON.stringify(updatedUser));
             return updatedUser;
           });
         }
@@ -225,7 +225,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         : (newData as any).department;
       const merged = { ...prev, ...newData, ...(normDept ? { department: normDept } : {}) };
       const updated = merged;
-      localStorage.setItem('eduvertex_user', JSON.stringify(updated));
+      localStorage.setItem('campus_nexus_user', JSON.stringify(updated));
       return updated;
     });
   };
