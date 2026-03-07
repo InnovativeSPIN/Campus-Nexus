@@ -37,7 +37,7 @@ import AcademicDepartments from './pages/admin/academic/Departments';
 import AcademicReports from './pages/admin/academic/Reports';
 import AcademicAnnouncements from './pages/admin/academic/Announcements';
 import AcademicAnnouncementDetail from './pages/admin/academic/AnnouncementDetail';
- // authentications   
+// authentications   
 import Login from './pages/auth/Login';
 import AdminLogin from './pages/auth/AdminLogin';
 import ChangePassword from './pages/auth/ChangePassword';

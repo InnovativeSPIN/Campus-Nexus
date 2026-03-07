@@ -46,7 +46,7 @@ export const CreateTimetable = () => {
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
-    
+
     const droppedFile = e.dataTransfer.files[0];
     if (droppedFile && (droppedFile.type === 'text/csv' || droppedFile.name.endsWith('.csv'))) {
       setFile(droppedFile);
@@ -90,10 +90,10 @@ export const CreateTimetable = () => {
 
   const handleUpload = async () => {
     if (!file) {
-      toast({ 
-        title: "Validation Error", 
-        description: "Please select a CSV file to upload.", 
-        variant: "destructive" 
+      toast({
+        title: "Validation Error",
+        description: "Please select a CSV file to upload.",
+        variant: "destructive"
       });
       return;
     }
@@ -108,7 +108,7 @@ export const CreateTimetable = () => {
     try {
       // Only set Authorization header, NOT Content-Type
       const token = authToken || localStorage.getItem('authToken');
-      
+
       const response = await fetch(
         "/api/v1/timetable/bulk-upload",
         {
@@ -127,9 +127,9 @@ export const CreateTimetable = () => {
           title: "Success",
           description: `Bulk timetable uploaded successfully! ${data.insertedCount} records inserted and ${data.deletedCount || 0} old records replaced.`,
         });
-        
+
         setUploadSuccess(true);
-        
+
         // Set preview data from response
         if (data.preview && data.preview.length > 0) {
           // Use preview data directly from the response
@@ -146,7 +146,7 @@ export const CreateTimetable = () => {
           }));
           setPreviewData(preview);
         }
-        
+
         // Clear file input after success
         clearFile();
       } else {
@@ -228,10 +228,10 @@ export const CreateTimetable = () => {
                     onDrop={handleDrop}
                     className={cn(
                       "border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-all",
-                      isDragging 
-                        ? "border-primary bg-primary/5" 
-                        : file 
-                          ? "border-green-500 bg-green-50" 
+                      isDragging
+                        ? "border-primary bg-primary/5"
+                        : file
+                          ? "border-green-500 bg-green-50"
                           : "border-muted-foreground/25 hover:border-muted-foreground/50",
                       "relative"
                     )}
@@ -244,7 +244,7 @@ export const CreateTimetable = () => {
                       onChange={handleFileSelect}
                       className="hidden"
                     />
-                    
+
                     {file ? (
                       <div className="flex flex-col items-center gap-2">
                         <FileText className="h-12 w-12 text-green-500" />
@@ -409,7 +409,7 @@ export const CreateTimetable = () => {
                   <p className="text-sm font-medium mb-2">Example CSV Content:</p>
                   <div className="bg-muted/50 rounded-lg p-4 overflow-x-auto">
                     <pre className="text-xs font-mono whitespace-pre">
-{`facultyId,facultyName,department,year,section,day,hour,subject,academicYear
+                      {`facultyId,facultyName,department,year,section,day,hour,subject,academicYear
 FAC001,John Smith,CSE,1st,A,Monday,1,Math,2025-2026
 FAC001,John Smith,CSE,1st,A,Monday,2,Physics,2025-2026
 FAC002,Jane Doe,CSE,2nd,B,Tuesday,1,Chemistry,2025-2026`}

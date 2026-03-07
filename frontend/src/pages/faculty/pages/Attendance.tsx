@@ -19,9 +19,7 @@ import { IntegratedNotificationBell } from "@/components/common/IntegratedNotifi
 import {
   ClipboardCheck,
   Search,
-  Users,
   CheckCircle2,
-  XCircle,
   Clock,
   Calendar,
   Save,
@@ -30,76 +28,39 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/pages/faculty/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Student {
   id: string;
-  rollNo: string;
-  name: string;
-  photo: string;
+  studentId: string;
+  firstName: string;
+  lastName: string;
+  rollNumber: string;
+  photo?: string;
   attendance?: "present" | "absent" | "leave" | "od";
 }
 
-const students: Student[] = [
-  { id: "1", rollNo: "CSE001", name: "Aditya Kumar", photo: "AK" },
-  { id: "2", rollNo: "CSE002", name: "Priya Sharma", photo: "PS" },
-  { id: "3", rollNo: "CSE003", name: "Rahul Verma", photo: "RV" },
-  { id: "4", rollNo: "CSE004", name: "Sneha Patel", photo: "SP" },
-  { id: "5", rollNo: "CSE005", name: "Vikram Singh", photo: "VS" },
-  { id: "6", rollNo: "CSE006", name: "Ananya Gupta", photo: "AG" },
-  { id: "7", rollNo: "CSE007", name: "Arjun Reddy", photo: "AR" },
-  { id: "8", rollNo: "CSE008", name: "Kavya Nair", photo: "KN" },
-  { id: "9", rollNo: "CSE009", name: "Rohit Joshi", photo: "RJ" },
-  { id: "10", rollNo: "CSE010", name: "Meera Krishnan", photo: "MK" },
-  { id: "11", rollNo: "CSE011", name: "Sanjay Rao", photo: "SR" },
-  { id: "12", rollNo: "CSE012", name: "Divya Menon", photo: "DM" },
-  { id: "13", rollNo: "CSE013", name: "Karan Malhotra", photo: "KM" },
-  { id: "14", rollNo: "CSE014", name: "Neha Sharma", photo: "NS" },
-  { id: "15", rollNo: "CSE015", name: "Amit Patel", photo: "AP" },
-  { id: "16", rollNo: "CSE016", name: "Zara Khan", photo: "ZK" },
-  { id: "17", rollNo: "CSE017", name: "Varun Singhal", photo: "VS" },
-  { id: "18", rollNo: "CSE018", name: "Ishita Desai", photo: "ID" },
-  { id: "19", rollNo: "CSE019", name: "Ravi Shankar", photo: "RS" },
-  { id: "20", rollNo: "CSE020", name: "Pooja Mehta", photo: "PM" },
-  { id: "21", rollNo: "CSE021", name: "Nikhil Yadav", photo: "NY" },
-  { id: "22", rollNo: "CSE022", name: "Shreya Mishra", photo: "SM" },
-  { id: "23", rollNo: "CSE023", name: "Siddharth Kumar", photo: "SK" },
-  { id: "24", rollNo: "CSE024", name: "Anushka Sinha", photo: "AS" },
-  { id: "25", rollNo: "CSE025", name: "Aryan Gupta", photo: "AG" },
-  { id: "26", rollNo: "CSE026", name: "Diya Singh", photo: "DS" },
-  { id: "27", rollNo: "CSE027", name: "Harshit Verma", photo: "HV" },
-  { id: "28", rollNo: "CSE028", name: "Isha Pandey", photo: "IP" },
-  { id: "29", rollNo: "CSE029", name: "Jatin Kapoor", photo: "JK" },
-  { id: "30", rollNo: "CSE030", name: "Kriti Nair", photo: "KN" },
-  { id: "31", rollNo: "CSE031", name: "Lakshay Sharma", photo: "LS" },
-  { id: "32", rollNo: "CSE032", name: "Manya Chopra", photo: "MC" },
-  { id: "33", rollNo: "CSE033", name: "Nakul Dwivedi", photo: "ND" },
-  { id: "34", rollNo: "CSE034", name: "Olivia Desai", photo: "OD" },
-  { id: "35", rollNo: "CSE035", name: "Pranav Rao", photo: "PR" },
-  { id: "36", rollNo: "CSE036", name: "Radhika Iyer", photo: "RI" },
-  { id: "37", rollNo: "CSE037", name: "Sahil Bhat", photo: "SB" },
-  { id: "38", rollNo: "CSE038", name: "Tanvi Sharma", photo: "TS" },
-  { id: "39", rollNo: "CSE039", name: "Udaan Patel", photo: "UP" },
-  { id: "40", rollNo: "CSE040", name: "Vedant Kumar", photo: "VK" },
-  { id: "41", rollNo: "CSE041", name: "Wanda Singh", photo: "WS" },
-  { id: "42", rollNo: "CSE042", name: "Xavier Menon", photo: "XM" },
-  { id: "43", rollNo: "CSE043", name: "Yasmin Khan", photo: "YK" },
-  { id: "44", rollNo: "CSE044", name: "Zainab Mirza", photo: "ZM" },
-  { id: "45", rollNo: "CSE045", name: "Aarav Saxena", photo: "AS" },
-  { id: "46", rollNo: "CSE046", name: "Bhavna Trivedi", photo: "BT" },
-  { id: "47", rollNo: "CSE047", name: "Chirag Verma", photo: "CV" },
-  { id: "48", rollNo: "CSE048", name: "Deepika Nair", photo: "DN" },
-  { id: "49", rollNo: "CSE049", name: "Esha Gupta", photo: "EG" },
-  { id: "50", rollNo: "CSE050", name: "Fahad Rahman", photo: "FR" },
-];
+interface Department {
+  id: number;
+  short_name: string;
+  full_name: string;
+}
+
+interface Subject {
+  id: number;
+  code: string;
+  name: string;
+}
 
 const attendanceHistory = [
-  { date: "2024-01-15", subject: "Data Structures", section: "CSE-A", present: 58, absent: 4, leave: 2 },
-  { date: "2024-01-14", subject: "Data Structures", section: "CSE-A", present: 60, absent: 2, leave: 2 },
+  { id: "1", date: "2024-01-15", subject: "Data Structures", section: "CSE-A", present: 58, absent: 4, leave: 2 },
+  { id: "2", date: "2024-01-14", subject: "Data Structures", section: "CSE-A", present: 60, absent: 2, leave: 2 },
   { id: "3", date: "2024-01-13", subject: "OOP", section: "CSE-B", present: 55, absent: 3, leave: 0 },
   { id: "4", date: "2024-01-12", subject: "Algorithms", section: "CSE-C", present: 52, absent: 6, leave: 2 },
 ];
 
 export default function Attendance() {
+  const { authToken } = useAuth();
   const [attendanceData, setAttendanceData] = useState<Record<string, string>>({});
   const [markAllPresent, setMarkAllPresent] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -107,9 +68,18 @@ export default function Attendance() {
   const [bulkStatus, setBulkStatus] = useState("");
   const [bulkError, setBulkError] = useState("");
   const [bulkSuccess, setBulkSuccess] = useState("");
-  const [selectedYear, setSelectedYear] = useState("2");
-  const [selectedDepartment, setSelectedDepartment] = useState("cse");
+  const [selectedYear, setSelectedYear] = useState("");
+  const [selectedDepartment, setSelectedDepartment] = useState("");
+  const [selectedSemester, setSelectedSemester] = useState("");
+  const [selectedSection, setSelectedSection] = useState("a");
+  const [selectedSubject, setSelectedSubject] = useState("");
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split("T")[0]);
+
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [students, setStudents] = useState<Student[]>([]);
+  const [loading, setLoading] = useState(false);
+
   const [locked, setLocked] = useState(false);
   const [digitSearch, setDigitSearch] = useState("");
   const [showAttendanceSummary, setShowAttendanceSummary] = useState(false);
@@ -129,8 +99,83 @@ export default function Attendance() {
     return () => clearInterval(timer);
   }, []);
 
+  // Fetch Departments
   useEffect(() => {
-    const key = `attendance_${selectedDate}`;
+    const fetchDepts = async () => {
+      try {
+        const res = await fetch('/api/v1/departments', {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        const result = await res.json();
+        if (result.success) {
+          setDepartments(result.data);
+          if (result.data.length > 0 && !selectedDepartment) {
+            setSelectedDepartment(result.data[0].id.toString());
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch departments', err);
+      }
+    };
+    if (authToken) fetchDepts();
+  }, [authToken]);
+
+  // Fetch Subjects
+  useEffect(() => {
+    const fetchSubjs = async () => {
+      if (!selectedDepartment || !selectedSemester) return;
+      try {
+        const res = await fetch(`/api/v1/admin/subjects/dept/${selectedDepartment}/sem/${selectedSemester}`, {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        const result = await res.json();
+        if (result.success) {
+          setSubjects(result.data);
+          if (result.data.length > 0) {
+            setSelectedSubject(result.data[0].id.toString());
+          } else {
+            setSelectedSubject("");
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch subjects', err);
+      }
+    };
+    if (authToken && selectedDepartment && selectedSemester) fetchSubjs();
+  }, [authToken, selectedDepartment, selectedSemester]);
+
+  // Fetch Students
+  useEffect(() => {
+    const fetchStuds = async () => {
+      if (!selectedDepartment || !selectedSemester) return;
+      try {
+        setLoading(true);
+        const params = new URLSearchParams({
+          department: selectedDepartment,
+          semester: selectedSemester,
+          section: selectedSection,
+          limit: '0' // Get all
+        });
+        const res = await fetch(`/api/v1/students?${params}`, {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        const result = await res.json();
+        if (result.success) {
+          setStudents(result.data);
+          // Reset attendance data when student list changes
+          setAttendanceData({});
+        }
+      } catch (err) {
+        console.error('Failed to fetch students', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    if (authToken && selectedDepartment && selectedSemester && selectedSection) fetchStuds();
+  }, [authToken, selectedDepartment, selectedSemester, selectedSection]);
+
+  useEffect(() => {
+    const key = `attendance_${selectedDate}_${selectedDepartment}_${selectedSemester}_${selectedSection}_${selectedSubject}`;
     const raw = localStorage.getItem(key);
     if (raw) {
       try {
@@ -167,7 +212,7 @@ export default function Attendance() {
     }
     setMarkAllPresent(false);
     setDigitSearch("");
-  }, [selectedDate, isToday]);
+  }, [selectedDate, isToday, selectedDepartment, selectedSemester, selectedSection, selectedSubject]);
 
   const formatDate = (date: Date) => {
     return date.toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
@@ -179,13 +224,13 @@ export default function Attendance() {
 
   const handleSave = (showSummary = false) => {
     if (!isToday) return;
-    const key = `attendance_${selectedDate}`;
+    const key = `attendance_${selectedDate}_${selectedDepartment}_${selectedSemester}_${selectedSection}_${selectedSubject}`;
     const dataToSave = {
       attendance: attendanceData,
       topicDetails: {
-        semester: topicSemester,
-        year: topicYear,
-        department: topicDept,
+        semester: topicSemester || selectedSemester,
+        year: topicYear || selectedYear,
+        department: topicDept || selectedDepartment,
         topic: topicCovered
       }
     };
@@ -248,12 +293,14 @@ export default function Attendance() {
     let matchedCount = 0;
 
     students.forEach((student) => {
-      const lastTwoDigits = student.rollNo.slice(-2);
+      const lastTwoDigits = student.rollNumber.slice(-2);
       if (validDigits.includes(lastTwoDigits)) {
         newAttendance[student.id] = bulkStatus;
         matchedCount++;
       } else {
-        newAttendance[student.id] = "present";
+        if (!newAttendance[student.id]) {
+          newAttendance[student.id] = "present";
+        }
       }
     });
 
@@ -272,11 +319,12 @@ export default function Attendance() {
   const filteredStudents = students.filter(
     (s) => {
       if (digitSearch && (digitSearch.length === 2 || digitSearch.length === 3)) {
-        return s.rollNo.slice(-3).endsWith(digitSearch);
+        return s.rollNumber.slice(-3).endsWith(digitSearch);
       }
       return (
-        s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        s.rollNo.toLowerCase().includes(searchQuery.toLowerCase())
+        s.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        s.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        s.rollNumber.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
   );
@@ -289,7 +337,7 @@ export default function Attendance() {
   const getRollNumbersByStatus = (status: string) => {
     return Object.entries(attendanceData)
       .filter(([, v]) => v === status)
-      .map(([sid]) => students.find((s) => s.id === sid)?.rollNo)
+      .map(([sid]) => students.find((s) => s.id.toString() === sid.toString())?.rollNumber)
       .filter(Boolean)
       .join(", ") || "-";
   };
@@ -364,30 +412,32 @@ export default function Attendance() {
                     <SelectValue placeholder="Select Department" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="cse">Computer Science and Engineering</SelectItem>
-                    <SelectItem value="aids">Artificial Intelligence and Data Science</SelectItem>
-                    <SelectItem value="eee">Electrical and Electronics Engineering</SelectItem>
-                    <SelectItem value="mech">Mechanical Engineering</SelectItem>
-                    <SelectItem value="it">Information Technology</SelectItem>
+                    {departments.map((dept) => (
+                      <SelectItem key={dept.id} value={dept.id.toString()}>
+                        {dept.short_name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
                 <Label>Semester</Label>
-                <Select defaultValue="5">
+                <Select value={selectedSemester} onValueChange={setSelectedSemester}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select Semester" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="3">Semester 3</SelectItem>
-                    <SelectItem value="5">Semester 5</SelectItem>
-                    <SelectItem value="7">Semester 7</SelectItem>
+                    {[1, 2, 3, 4, 5, 6, 7, 8].map((s) => (
+                      <SelectItem key={s} value={s.toString()}>
+                        Semester {s}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
                 <Label>Section</Label>
-                <Select defaultValue="a">
+                <Select value={selectedSection} onValueChange={setSelectedSection}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select Section" />
                   </SelectTrigger>
@@ -400,14 +450,20 @@ export default function Attendance() {
               </div>
               <div className="space-y-2">
                 <Label>Subject</Label>
-                <Select defaultValue="ds">
+                <Select value={selectedSubject} onValueChange={setSelectedSubject}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select Subject" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="ds">Data Structures</SelectItem>
-                    <SelectItem value="oop">Object Oriented Programming</SelectItem>
-                    <SelectItem value="algo">Algorithms</SelectItem>
+                    {subjects.length > 0 ? (
+                      subjects.map((sub) => (
+                        <SelectItem key={sub.id} value={sub.id.toString()}>
+                          {sub.name}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem value="none" disabled>No subjects available</SelectItem>
+                    )}
                   </SelectContent>
                 </Select>
               </div>
@@ -613,13 +669,13 @@ export default function Attendance() {
 
                       {/* Name and Roll (Mobile shows name only) */}
                       <div className="col-span-3 md:col-span-5">
-                        <p className="font-semibold text-sm text-foreground">{student.name}</p>
-                        <p className="text-xs text-muted-foreground md:hidden">{student.rollNo}</p>
+                        <p className="font-semibold text-sm text-foreground">{student.firstName} {student.lastName}</p>
+                        <p className="text-xs text-muted-foreground md:hidden">{student.rollNumber}</p>
                       </div>
 
                       {/* Roll Number (Desktop only) */}
                       <div className="hidden md:block col-span-3">
-                        <p className="text-sm text-muted-foreground">{student.rollNo}</p>
+                        <p className="text-sm text-muted-foreground">{student.rollNumber}</p>
                       </div>
 
                       {/* Attendance Buttons */}
@@ -814,11 +870,11 @@ export default function Attendance() {
                 >
                   <SelectTrigger><SelectValue placeholder="Select Department" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="cse">CSE</SelectItem>
-                    <SelectItem value="aids">AI & DS</SelectItem>
-                    <SelectItem value="eee">EEE</SelectItem>
-                    <SelectItem value="mech">MECH</SelectItem>
-                    <SelectItem value="it">IT</SelectItem>
+                    {departments.map((dept) => (
+                      <SelectItem key={dept.id} value={dept.id.toString()}>
+                        {dept.short_name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

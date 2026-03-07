@@ -48,8 +48,9 @@ export default function Marks() {
     }).finally(() => setLoading(false));
   }, [selectedSemester]);
 
-  const totalMarks = subjects.reduce((sum: number, s: any) => sum + (s.totalMarks || 0), 0);
-  const totalCredits = subjects.reduce((sum: number, s: any) => sum + (s.credits || 4), 0);
+  const totalMarks = subjects.reduce((sum: number, s: any) => sum + parseFloat(s.totalMarks || 0), 0);
+  const displaySubjects = subjects.length > 0 ? subjects : (internal1.length > 0 ? internal1 : []);
+  const totalCredits = displaySubjects.reduce((sum: number, s: any) => sum + parseFloat(s.subject?.credits || s.credits || 4), 0);
 
   const EmptyState = () => (
     <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
