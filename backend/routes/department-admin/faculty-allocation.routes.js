@@ -10,7 +10,8 @@ import {
   getAllocationClasses,
   getFacultyAllocationsBySemester,
   getTimetableAllocations,
-  updateTimetableAllocation
+  updateTimetableAllocation,
+  getAllDepartments
 } from '../../controllers/department-admin/faculty-allocation.controller.js';
 import { protect, authorize } from '../../middleware/auth.js';
 
@@ -24,6 +25,7 @@ router.use(protect, authorize('department-admin'));
 router.get('/subjects', getAllocationSubjects);
 router.get('/faculty', getAllocationFaculty);
 router.get('/classes', getAllocationClasses);
+router.get('/departments', getAllDepartments);
 router.get('/timetable-list', getTimetableAllocations);
 router.get('/year/:academic_year/sem/:semester', getFacultyAllocationsBySemester);
 

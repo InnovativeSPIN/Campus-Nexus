@@ -38,6 +38,9 @@ export const getSubjects = asyncHandler(async (req, res, next) => {
         department: subject.department,
         semester: subject.semester,
         sem_type: subject.sem_type,
+        academic_year: subject.academic_year,
+        year: subject.year,
+        lab_name: subject.lab_name,
         credits: subject.credits,
         type: subject.type,
         is_elective: subject.is_elective,
@@ -117,6 +120,9 @@ export const createSubject = asyncHandler(async (req, res, next) => {
     department_id,
     semester,
     sem_type,
+    academic_year,
+    year,
+    lab_name,
     credits,
     type,
     is_elective,
@@ -154,7 +160,10 @@ export const createSubject = asyncHandler(async (req, res, next) => {
     description,
     department_id: parseInt(department_id),
     semester: parseInt(semester),
-    sem_type: sem_type || 'odd',
+    sem_type: sem_type || (parseInt(semester) % 2 === 1 ? 'odd' : 'even'),
+    academic_year: academic_year || null,
+    year: year ? parseInt(year) : Math.ceil(parseInt(semester) / 2),
+    lab_name: is_laboratory ? (lab_name || null) : null,
     credits: credits ? parseFloat(credits) : 4.0,
     type: type || 'Theory',
     is_elective: is_elective || false,
@@ -186,6 +195,9 @@ export const createSubject = asyncHandler(async (req, res, next) => {
       department: formatted.department,
       semester: formatted.semester,
       sem_type: formatted.sem_type,
+      academic_year: formatted.academic_year,
+      year: formatted.year,
+      lab_name: formatted.lab_name,
       credits: formatted.credits,
       type: formatted.type,
       is_elective: formatted.is_elective,
@@ -213,6 +225,9 @@ export const updateSubject = asyncHandler(async (req, res, next) => {
     description,
     semester,
     sem_type,
+    academic_year,
+    year,
+    lab_name,
     credits,
     type,
     is_elective,
@@ -248,6 +263,11 @@ export const updateSubject = asyncHandler(async (req, res, next) => {
     description: description !== undefined ? description : subject.description,
     semester: semester || subject.semester,
     sem_type: sem_type || subject.sem_type,
+    academic_year: academic_year !== undefined ? academic_year : subject.academic_year,
+    year: year !== undefined ? parseInt(year) : subject.year,
+    lab_name: is_laboratory !== undefined
+      ? (is_laboratory ? (lab_name || subject.lab_name) : null)
+      : (subject.is_laboratory ? (lab_name !== undefined ? lab_name : subject.lab_name) : null),
     credits: credits !== undefined ? parseFloat(credits) : subject.credits,
     type: type || subject.type,
     is_elective: is_elective !== undefined ? is_elective : subject.is_elective,
@@ -276,6 +296,9 @@ export const updateSubject = asyncHandler(async (req, res, next) => {
     department: subjectData.department,
     semester: subjectData.semester,
     sem_type: subjectData.sem_type,
+    academic_year: subjectData.academic_year,
+    year: subjectData.year,
+    lab_name: subjectData.lab_name,
     credits: subjectData.credits,
     type: subjectData.type,
     is_elective: subjectData.is_elective,
@@ -384,7 +407,7 @@ export const bulkUploadSubjects = asyncHandler(async (req, res, next) => {
 
       try {
         // Validate required fields
-        const { code, name, description, department_id, semester, sem_type, credits, type, is_elective, is_laboratory, status } = subjectData;
+        const { code, name, description, department_id, semester, sem_type, academic_year, year, lab_name, credits, type, is_elective, is_laboratory, status } = subjectData;
 
         if (!code || !name || !department_id || !semester) {
           throw new Error('Missing required fields: code, name, department_id, semester');
@@ -414,7 +437,10 @@ export const bulkUploadSubjects = asyncHandler(async (req, res, next) => {
           description: description || null,
           department_id: parseInt(department_id),
           semester: semesterNum,
-          sem_type: String(sem_type || 'odd').toLowerCase(),
+          sem_type: String(sem_type || (semesterNum % 2 === 1 ? 'odd' : 'even')).toLowerCase(),
+          academic_year: academic_year || null,
+          year: year ? parseInt(year) : Math.ceil(semesterNum / 2),
+          lab_name: is_laboratory ? (lab_name || null) : null,
           credits: credits ? parseFloat(credits) : 4.0,
           type: type || 'Theory',
           is_elective: is_elective ? true : false,

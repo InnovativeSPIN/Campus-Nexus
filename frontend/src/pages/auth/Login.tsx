@@ -146,7 +146,7 @@ export default function Login() {
         <div className="max-w-md text-center">
           <div className="mb-8 flex justify-center">
             <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-white/10 backdrop-blur">
-              <GraduationCap className="h-10 w-10 text-primary-foreground" />
+              <img src="./dist/assets/campusnexus.png" alt="" />
             </div>
           </div>
           <h1 className="text-4xl font-bold text-primary-foreground mb-4">

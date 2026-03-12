@@ -206,7 +206,7 @@ export default function Profile() {
           setFacultyData(prev => ({
             ...prev,
             aicteId: p.aicte_id ?? p.aicteId ?? prev.aicteId,
-            coeId: p.coe_id ?? p.coeId ?? prev.coeId,
+            coeId: p.Anna_University_ID ?? p.coeId ?? prev.coeId,
             orcidId: p.orcid_id ?? p.orcidId ?? prev.orcidId,
             dateOfBirth: p.date_of_birth ?? p.dob ?? prev.dateOfBirth,
             dateOfJoining: p.date_of_joining ?? p.dateOfJoining ?? prev.dateOfJoining,
@@ -2575,7 +2575,7 @@ export default function Profile() {
               <p className="font-mono font-semibold text-foreground">{facultyData.aicteId}</p>
             </div> */}
             {/* <div className="mt-2 p-3 bg-muted rounded-lg">
-              <p className="text-xs text-muted-foreground">COE ID</p>
+              <p className="text-xs text-muted-foreground">Anna University ID Code</p>
               <p className="font-mono font-semibold text-foreground">{facultyData.coeId}</p>
             </div> */}
           </div>
@@ -2588,11 +2588,11 @@ export default function Profile() {
                 <span className="text-muted-foreground line-clamp-2">AICTE ID: {facultyData.aicteId}</span>
               </div>
             ) : null}
-            {/* COE ID */}
+            {/* Anna University ID Code */}
             {facultyData.coeId ? (
               <div className="flex items-center gap-3 text-sm">
                 <Building className="w-4 h-4 text-primary flex-shrink-0" />
-                <span className="text-muted-foreground line-clamp-2">COE ID: {facultyData.coeId}</span>
+                <span className="text-muted-foreground line-clamp-2">Anna University ID Code: {facultyData.coeId}</span>
               </div>
             ) : null}
 

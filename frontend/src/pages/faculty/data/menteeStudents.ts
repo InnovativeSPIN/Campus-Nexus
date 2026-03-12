@@ -7,7 +7,6 @@ export interface StudentBasicInfo {
   department: string;
   year: "2nd" | "3rd" | "Final";
   semester: string;
-  section: string;
   batch: string;
   admissionDate: string;
   natureOfResidence: string;
@@ -124,7 +123,6 @@ function generateStudents(year: "2nd" | "3rd" | "Final", startIndex: number): St
         department: dept,
         year,
         semester: String(yearNum * 2 - (Math.random() > 0.5 ? 1 : 0)),
-        section: String.fromCharCode(65 + (i % 3)),
         batch: `20${21 - yearNum}`,
         admissionDate: `${20 + Math.floor(Math.random() * 4)}-08-15`,
         natureOfResidence: Math.random() > 0.5 ? "Day Scholar" : "Hosteller",

@@ -454,7 +454,7 @@ export const getMyStudentTimetable = asyncHandler(async (req, res, next) => {
     else if (yearValue.toLowerCase().includes('fourth')) yearValue = 4;
   }
 
-  const sectionValue = req.user.section || student.section || 'A';
+  const sectionValue = 'A';
 
   console.log('[DEBUG] getMyStudentTimetable - Using from JWT:', {
     studentId: student.id,

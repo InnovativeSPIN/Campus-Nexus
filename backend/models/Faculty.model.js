@@ -13,10 +13,6 @@ const Faculty = (sequelize) => {
       type: DataTypes.STRING(50),
       allowNull: false,
     },
-    coe_id: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-    },
     AICTE_ID: {
       type: DataTypes.INTEGER,
       allowNull: true,

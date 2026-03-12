@@ -268,14 +268,6 @@ export default function SuperAdminFacultyProfile() {
                                         <p className="text-lg font-semibold">{faculty.orcid_id || '-'}</p>
                                     </div>
 
-                                    {/* COE ID */}
-                                    <div className="bg-muted/30 rounded-lg p-4 border border-border">
-                                        <div className="flex items-center gap-3 mb-2">
-                                            <Briefcase className="h-5 w-5 text-primary" />
-                                            <span className="text-sm font-semibold text-muted-foreground uppercase">COE ID</span>
-                                        </div>
-                                        <p className="text-lg font-semibold">{faculty.coe_id || '-'}</p>
-                                    </div>
                                 </div>
                             </TabsContent>
 
@@ -341,11 +333,6 @@ export default function SuperAdminFacultyProfile() {
                                         <p className="text-lg font-semibold">{faculty.orcid_id || '-'}</p>
                                     </div>
 
-                                    {/* COE ID */}
-                                    <div className="bg-muted/30 rounded-lg p-4 border border-border">
-                                        <h3 className="text-sm font-semibold uppercase text-muted-foreground mb-2">COE ID</h3>
-                                        <p className="text-lg font-semibold">{faculty.coe_id || '-'}</p>
-                                    </div>
                                 </div>
                             </TabsContent>
 

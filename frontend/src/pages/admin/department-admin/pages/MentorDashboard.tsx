@@ -64,7 +64,6 @@ export function MentorDashboard() {
               <p className="text-sm text-gray-600 text-center mb-4">{student.id} | {student.basicInfo?.rollNumber}</p>
               <div className="space-y-2 text-sm text-gray-700 mb-4">
                 <div className="flex justify-between"><span className="font-semibold">Department:</span><span>{student.basicInfo?.department}</span></div>
-                <div className="flex justify-between"><span className="font-semibold">Section:</span><span>{student.basicInfo?.section}</span></div>
                 <div className="flex justify-between"><span className="font-semibold">Semester:</span><span>{student.basicInfo?.semester}</span></div>
               </div>
               <button onClick={() => { setSelectedYear('2nd'); navigate(`/admin/department-admin/mentor/2nd`); }} className="w-full bg-gradient-to-r from-[#790c0c] to-[#01898d] text-white font-semibold py-2 rounded-lg">View Profile</button>

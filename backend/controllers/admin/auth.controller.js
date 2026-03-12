@@ -27,10 +27,11 @@ export const uploadAvatar = asyncHandler(async (req, res, next) => {
   }
 
   // Check filesize
-  if (file.size > process.env.MAX_FILE_UPLOAD) {
+  const maxFileSize = parseInt(process.env.MAX_FILE_UPLOAD || '5000000', 10);
+  if (file.size > maxFileSize) {
     return next(
       new ErrorResponse(
-        `Please upload an image less than ${process.env.MAX_FILE_UPLOAD}`,
+        `Please upload an image less than ${Math.round(maxFileSize / (1024 * 1024))}MB`,
         400
       )
     );
@@ -136,10 +137,11 @@ export const uploadStudentAvatar = asyncHandler(async (req, res, next) => {
   }
 
   // Check filesize
-  if (file.size > process.env.MAX_FILE_UPLOAD) {
+  const maxFileSizeStudent = parseInt(process.env.MAX_FILE_UPLOAD || '5000000', 10);
+  if (file.size > maxFileSizeStudent) {
     return next(
       new ErrorResponse(
-        `Please upload an image less than ${process.env.MAX_FILE_UPLOAD}`,
+        `Please upload an image less than ${Math.round(maxFileSizeStudent / (1024 * 1024))}MB`,
         400
       )
     );
@@ -405,7 +407,7 @@ export const getStudentDetails = asyncHandler(async (req, res, next) => {
         { email: identifier }
       ]
     },
-    attributes: { exclude: ['userId'] },
+    attributes: ['firstName', 'lastName', 'studentId', 'year', 'semester', 'departmentId'],
     include: [
       {
         model: models.Department,

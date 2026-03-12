@@ -213,13 +213,27 @@ export const createUser = asyncHandler(async (req, res, next) => {
     }
 
     const facultyPayload = {
-      faculty_college_code: req.body.departmentCode || req.body.faculty_college_code || null,
+      faculty_college_code: req.body.faculty_college_code || req.body.departmentCode || req.body.employee_code || null,
       Name: req.body.name || req.body.admin_name || req.body.Name || '',
       email: req.body.email,
       password: req.body.password || req.body.pwd || '123',
       role_id: 7,
       department_id,
-      status: req.body.isActive === false ? 'inactive' : 'active'
+      status: req.body.isActive === false ? 'inactive' : 'active',
+      Anna_University_ID: req.body.Anna_University_ID || req.body.anna_university_id || null,
+      AICTE_ID: req.body.AICTE_ID || req.body.aicte_id || null,
+      employee_id: req.body.employee_id || null,
+      orcid_id: req.body.orcid_id || null,
+      designation: req.body.designation || null,
+      phone_number: req.body.phone_number || req.body.phone || null,
+      date_of_birth: req.body.date_of_birth || null,
+      date_of_joining: req.body.date_of_joining || null,
+      gender: req.body.gender || null,
+      blood_group: req.body.blood_group || null,
+      aadhar_number: req.body.aadhar_number || null,
+      pan_number: req.body.pan_number || null,
+      perm_address: req.body.perm_address || null,
+      curr_address: req.body.curr_address || null,
     };
 
     const faculty = await Faculty.create(facultyPayload);
@@ -296,8 +310,20 @@ export const updateUser = asyncHandler(async (req, res, next) => {
     const facultyUpdate = {
       Name: req.body.name || req.body.Name || faculty.Name,
       email: req.body.email || faculty.email,
-      status: req.body.isActive === false ? 'inactive' : 'active'
+      status: req.body.isActive === false ? 'inactive' : 'active',
     };
+
+    const optionalFields = [
+      'faculty_college_code', 'Anna_University_ID', 'AICTE_ID', 'employee_id',
+      'orcid_id', 'designation', 'phone_number', 'date_of_birth', 'date_of_joining',
+      'gender', 'blood_group', 'aadhar_number', 'pan_number', 'perm_address', 'curr_address'
+    ];
+    for (const f of optionalFields) {
+      if (req.body[f] !== undefined) facultyUpdate[f] = req.body[f] || null;
+    }
+    // also accept phone as alias for phone_number
+    if (req.body.phone && !req.body.phone_number) facultyUpdate.phone_number = req.body.phone;
+    if (req.body.employee_code && !req.body.faculty_college_code) facultyUpdate.faculty_college_code = req.body.employee_code;
 
     if (req.body.department) {
       const dep = !isNaN(parseInt(req.body.department, 10))

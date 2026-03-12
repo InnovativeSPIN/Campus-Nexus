@@ -68,10 +68,6 @@ const Student = (sequelize) => {
       allowNull: false,
     },
     year: {
-      type: DataTypes.TINYINT,
-      allowNull: true,
-    },
-    section: {
       type: DataTypes.STRING(10),
       allowNull: true,
     },
@@ -93,8 +89,8 @@ const Student = (sequelize) => {
       defaultValue: 'pending',
     },
     status: {
-      // only three values now: active, completed, inactive
-      type: DataTypes.ENUM('active', 'completed', 'inactive'),
+      // active, inactive, graduated, dropped, suspended
+      type: DataTypes.ENUM('active', 'inactive', 'graduated', 'dropped', 'suspended'),
       defaultValue: 'active',
     },
     password: {

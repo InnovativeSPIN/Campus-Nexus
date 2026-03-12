@@ -25,6 +25,9 @@ interface Subject {
   department?: { short_name: string; full_name: string };
   semester: number;
   sem_type: 'odd' | 'even';
+  academic_year?: string;
+  year?: number;
+  lab_name?: string;
   credits: number;
   type: string;
   is_elective: boolean;
@@ -91,6 +94,9 @@ export default function SuperAdminSubjectManagement() {
     department_id: '',
     semester: '',
     sem_type: 'odd',
+    academic_year: '',
+    year: '',
+    lab_name: '',
     credits: 4,
     type: 'Theory',
     is_elective: false,
@@ -151,6 +157,9 @@ export default function SuperAdminSubjectManagement() {
       department_id: '',
       semester: '',
       sem_type: 'odd',
+      academic_year: '',
+      year: '',
+      lab_name: '',
       credits: 4,
       type: 'Theory',
       is_elective: false,
@@ -168,6 +177,9 @@ export default function SuperAdminSubjectManagement() {
       department_id: subject.department_id.toString(),
       semester: subject.semester.toString(),
       sem_type: subject.sem_type,
+      academic_year: subject.academic_year || '',
+      year: subject.year?.toString() || '',
+      lab_name: subject.lab_name || '',
       credits: subject.credits,
       type: subject.type,
       is_elective: subject.is_elective,
@@ -189,7 +201,10 @@ export default function SuperAdminSubjectManagement() {
         ...formData,
         department_id: parseInt(formData.department_id),
         semester: parseInt(formData.semester),
+        year: formData.year ? parseInt(formData.year) : Math.ceil(parseInt(formData.semester) / 2),
         credits: parseInt(formData.credits.toString()),
+        academic_year: formData.academic_year || undefined,
+        lab_name: formData.is_laboratory ? (formData.lab_name || undefined) : undefined,
       };
 
       const url = formModal.mode === 'add' 
@@ -324,10 +339,10 @@ export default function SuperAdminSubjectManagement() {
   };
 
   const downloadTemplate = () => {
-    const template = `code,name,description,department_id,semester,sem_type,credits,type,is_elective,is_laboratory,status
-CS101,Programming Fundamentals,Introduction to programming,1,1,odd,4,Theory,false,false,active
-CS102,Data Structures,Basic data structures,1,2,even,4,Theory,false,false,active
-CS201,Database Management,Database concepts,1,3,odd,4,Theory,false,true,active`;
+    const template = `code,name,description,department_id,semester,sem_type,academic_year,year,lab_name,credits,type,is_elective,is_laboratory,status
+CS101,Programming Fundamentals,Introduction to programming,1,1,odd,2025-2026,1,,4,Theory,false,false,active
+CS102,Data Structures,Basic data structures,1,2,even,2025-2026,1,,4,Theory,false,false,active
+CS201,Database Management Lab,Database concepts,1,3,odd,2025-2026,2,Computer Lab A,4,Practical,false,true,active`;
 
     const blob = new Blob([template], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
@@ -474,8 +489,10 @@ CS201,Database Management,Database concepts,1,3,odd,4,Theory,false,true,active`;
                       <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Code</th>
                       <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Name</th>
                       <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Department</th>
-                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Sem</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Sem / Year</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Acad. Year</th>
                       <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Type</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Lab Name</th>
                       <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Credits</th>
                       <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Status</th>
                       <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Actions</th>
@@ -487,8 +504,10 @@ CS201,Database Management,Database concepts,1,3,odd,4,Theory,false,true,active`;
                         <td className="px-6 py-3 text-sm font-medium text-gray-900">{subject.code}</td>
                         <td className="px-6 py-3 text-sm text-gray-600">{subject.name}</td>
                         <td className="px-6 py-3 text-sm text-gray-600">{subject.department?.short_name}</td>
-                        <td className="px-6 py-3 text-sm text-gray-600">{subject.semester} ({subject.sem_type})</td>
+                        <td className="px-6 py-3 text-sm text-gray-600">S{subject.semester} / Yr{subject.year ?? Math.ceil(subject.semester/2)} <span className="text-xs text-gray-400">({subject.sem_type})</span></td>
+                        <td className="px-6 py-3 text-sm text-gray-600">{subject.academic_year || '—'}</td>
                         <td className="px-6 py-3 text-sm text-gray-600">{subject.type}</td>
+                        <td className="px-6 py-3 text-sm text-gray-600">{subject.is_laboratory ? (subject.lab_name || '—') : '—'}</td>
                         <td className="px-6 py-3 text-sm text-gray-600">{subject.credits}</td>
                         <td className="px-6 py-3 text-sm">
                           <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
@@ -639,11 +658,31 @@ CS201,Database Management,Database concepts,1,3,odd,4,Theory,false,true,active`;
                     <input
                       type="checkbox"
                       checked={formData.is_laboratory}
-                      onChange={(e) => setFormData({ ...formData, is_laboratory: e.target.checked })}
+                      onChange={(e) => setFormData({ ...formData, is_laboratory: e.target.checked, lab_name: e.target.checked ? formData.lab_name : '' })}
                       className="w-4 h-4"
                     />
                     <span>Lab</span>
                   </label>
+                </div>
+
+                {formData.is_laboratory && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Lab Name *</label>
+                    <Input
+                      value={formData.lab_name}
+                      onChange={(e) => setFormData({ ...formData, lab_name: e.target.value })}
+                      placeholder="e.g., Computer Lab A, Electronics Lab"
+                    />
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Academic Year</label>
+                  <Input
+                    value={formData.academic_year}
+                    onChange={(e) => setFormData({ ...formData, academic_year: e.target.value })}
+                    placeholder="e.g., 2025-2026"
+                  />
                 </div>
               </div>
 
@@ -786,7 +825,7 @@ CS201,Database Management,Database concepts,1,3,odd,4,Theory,false,true,active`;
                       <li><span className="font-semibold">department_id</span> - Department ID</li>
                       <li><span className="font-semibold">semester</span> - Semester number (1-8)</li>
                     </ul>
-                    <p className="text-xs text-yellow-800 mt-2">Optional: description, sem_type (odd/even), credits, type, is_elective, is_laboratory, status</p>
+                    <p className="text-xs text-yellow-800 mt-2">Optional: description, sem_type (odd/even), academic_year (e.g. 2025-2026), year (1-4), lab_name (if lab), credits, type, is_elective, is_laboratory, status</p>
                   </div>
 
                   <div className="mt-6 flex gap-3 justify-end">

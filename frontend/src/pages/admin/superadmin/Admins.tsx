@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { AdminLayout } from '@/pages/admin/superadmin/components/layout/AdminLayout';
 import { DataTable } from '@/pages/admin/superadmin/components/dashboard/DataTable';
-import { UserFormModal } from '@/pages/admin/superadmin/components/modals/UserFormModal';
+import { AdminFormModal } from '@/pages/admin/superadmin/components/modals/AdminFormModal';
 import { Admin } from '@/types/auth';
 import { Badge } from '@/pages/admin/superadmin/components/ui/badge';
 import { toast } from '@/components/ui/sonner';
@@ -246,13 +246,12 @@ export default function SuperAdminAdmins() {
                     />
                 )}
 
-                <UserFormModal
+                <AdminFormModal
                     open={formModal.open}
-                    onClose={() => setFormModal({ open: false, mode: 'add' })}
-                    onSave={handleSave}
-                    type="admin"
-                    initialData={formModal.data}
+                    onOpenChange={(open) => !open && setFormModal({ open: false, mode: 'add' })}
                     mode={formModal.mode}
+                    adminData={formModal.data}
+                    onSuccess={fetchAdmins}
                 />
 
                 <AlertDialog open={deleteDialog.open} onOpenChange={(open) => setDeleteDialog({ open, data: null })}>

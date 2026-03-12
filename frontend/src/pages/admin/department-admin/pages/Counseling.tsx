@@ -40,7 +40,6 @@ interface Student {
   name: string;
   photo: string;
   semester: number;
-  section: string;
   cgpa: number;
   attendance: number;
   status: "good" | "at-risk" | "critical";
@@ -69,7 +68,6 @@ const assignedStudents: Student[] = [
     name: "Aditya Kumar",
     photo: "AK",
     semester: 5,
-    section: "A",
     cgpa: 8.5,
     attendance: 92,
     status: "good",
@@ -84,7 +82,6 @@ const assignedStudents: Student[] = [
     name: "Priya Sharma",
     photo: "PS",
     semester: 5,
-    section: "A",
     cgpa: 6.2,
     attendance: 68,
     status: "at-risk",
@@ -99,7 +96,6 @@ const assignedStudents: Student[] = [
     name: "Rahul Verma",
     photo: "RV",
     semester: 5,
-    section: "A",
     cgpa: 4.8,
     attendance: 55,
     status: "critical",
@@ -114,7 +110,6 @@ const assignedStudents: Student[] = [
     name: "Sneha Patel",
     photo: "SP",
     semester: 5,
-    section: "A",
     cgpa: 9.1,
     attendance: 95,
     status: "good",
@@ -128,7 +123,6 @@ const assignedStudents: Student[] = [
     name: "Vikram Singh",
     photo: "VS",
     semester: 5,
-    section: "A",
     cgpa: 5.5,
     attendance: 72,
     status: "at-risk",
@@ -143,7 +137,6 @@ const assignedStudents: Student[] = [
     name: "Ananya Gupta",
     photo: "AG",
     semester: 5,
-    section: "A",
     cgpa: 7.8,
     attendance: 88,
     status: "good",
@@ -437,7 +430,7 @@ export default function Counseling() {
                           </span>
                         </div>
                         <p className="text-sm text-muted-foreground mb-2">
-                          {student.rollNo} Sem {student.semester} Section {student.section}
+                          {student.rollNo} Sem {student.semester}
                         </p>
                         <div className="flex gap-4 text-xs">
                           <span className="flex items-center gap-1">

@@ -25,6 +25,7 @@ import TimetableEditor from "./pages/TimetableEditor";
 import CreateTimetable from "./pages/CreateTimetable";
 import { Substitutions } from "./pages/Substitutions";import BreakTimingManager from './pages/BreakTimingManager';
 import SubjectManagement from './pages/SubjectManagement';
+import SubjectAllocation from './pages/SubjectAllocation';
 import TimetableAlteration from './pages/TimetableAlteration';
 import './department-admin.css';
 
@@ -51,6 +52,7 @@ const DepartmentAdminRoutes = () => (
               <Route path="timetable/alterations" element={<TimetableAlteration />} />
               <Route path="break-timings" element={<BreakTimingManager />} />
               <Route path="subjects" element={<SubjectManagement />} />
+              <Route path="subject-allocation" element={<SubjectAllocation />} />
               <Route path="substitutions" element={<Substitutions />} />
               <Route path="attendance" element={<Attendance />} />
               <Route path="academics" element={<Academics />} />

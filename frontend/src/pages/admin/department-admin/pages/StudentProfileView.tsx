@@ -83,7 +83,7 @@ export function StudentProfileView() {
                       {student.basicInfo.name}
                     </h1>
                     <p className="text-gray-600">
-                      {student.basicInfo.department} | {student.basicInfo.year} Year | Section {student.basicInfo.section}
+                      {student.basicInfo.department} | {student.basicInfo.year} Year
                     </p>
                     <p className="text-sm text-gray-500 mt-1">
                       {student.id} Roll: {student.basicInfo.rollNumber}
@@ -149,7 +149,6 @@ export function StudentProfileView() {
                             { key: "department", label: "Department", value: student.basicInfo.department },
                             { key: "year", label: "Year", value: student.basicInfo.year },
                             { key: "semester", label: "Semester", value: student.basicInfo.semester },
-                            { key: "section", label: "Section", value: student.basicInfo.section },
                             { key: "batch", label: "Batch", value: student.basicInfo.batch },
                             { key: "admissionDate", label: "Admission Date", value: student.basicInfo.admissionDate },
                             { key: "natureOfResidence", label: "Nature of Residence", value: student.basicInfo.natureOfResidence },

@@ -29,7 +29,7 @@ export function FacultyUploadModal({ open, onOpenChange, onSuccess }: FacultyUpl
   const downloadSample = () => {
     // simple CSV sample, user can open in Excel
     const sample =
-      'Name,faculty_college_code,email,department_id,department,designation,coe_id,AICTE_ID,Anna_University_ID,phone_number,gender,date_of_birth,date_of_joining,blood_group,aadhar_number,pan_number,perm_address,curr_address,linkedin_url\n' +
+      'Name,faculty_college_code,email,department_id,department,designation,AICTE_ID,Anna_University_ID,phone_number,gender,date_of_birth,date_of_joining,blood_group,aadhar_number,pan_number,perm_address,curr_address,linkedin_url\n' +
       'John Doe,CS001,john.doe@example.com,1,Computer Science,Assistant Professor,,123,456,9876543210,Male,1980-01-01,2010-06-01,O+,123456789012,ABCDE1234F,123 Main St,456 College Rd,\n';
     const blob = new Blob([sample], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);

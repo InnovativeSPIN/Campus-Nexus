@@ -41,7 +41,9 @@ const ClassModel = (sequelize) => {
     },
   }, {
     tableName: 'classes',
-    timestamps: false, // The table doesn't have createdAt/updatedAt
+    timestamps: true,
+    createdAt: 'created_at',
+    updatedAt: 'updated_at',
   });
 
   Class.associate = (models) => {

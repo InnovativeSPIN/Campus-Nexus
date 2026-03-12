@@ -416,7 +416,6 @@ export const uploadFaculty = asyncHandler(async (req, res, next) => {
       // copy over any field present in row that matches model column names
       const allowed = [
         'faculty_college_code',
-        'coe_id',
         'AICTE_ID',
         'Anna_University_ID',
         'Name',
@@ -766,7 +765,7 @@ export const getMyClassIncharge = asyncHandler(async (req, res, next) => {
       departmentId: classDeptId,
       semester: classSemester
     },
-    attributes: ['id', 'studentId', 'firstName', 'lastName', 'email', 'phone', 'status', 'section', 'semester'],
+    attributes: ['id', 'studentId', 'firstName', 'lastName', 'email', 'phone', 'status', 'semester'],
     order: [['studentId', 'ASC']]
   });
 

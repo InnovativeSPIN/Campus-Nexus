@@ -51,7 +51,6 @@ export interface Student {
 	classId?: number;
 	batch: string;
 	semester: number;
-	section?: string;
 	admissionDate?: string;
 	admissionType?: 'regular' | 'lateral' | 'management';
 	feeStatus?: 'paid' | 'pending' | 'partial';
@@ -73,7 +72,6 @@ export interface Faculty {
 	id: string;
 	faculty_id?: number;
 	faculty_college_code: string;
-	coe_id?: number;
 	AICTE_ID?: number;
 	Anna_University_ID?: number;
 	Name?: string;

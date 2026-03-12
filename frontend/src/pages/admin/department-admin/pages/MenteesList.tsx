@@ -84,10 +84,6 @@ export function MenteesList() {
                     <span>{student.basicInfo.department}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="font-semibold">Section:</span>
-                    <span>{student.basicInfo.section}</span>
-                  </div>
-                  <div className="flex justify-between">
                     <span className="font-semibold">Semester:</span>
                     <span>{student.basicInfo.semester}</span>
                   </div>

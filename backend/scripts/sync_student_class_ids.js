@@ -22,16 +22,14 @@ const syncClassIds = async () => {
             let bestClass = classes.find(c =>
                 c.department_id === student.departmentId &&
                 c.batch === student.batch &&
-                c.semester === student.semester &&
-                (c.section === student.section || (!c.section && !student.section))
+                c.semester === student.semester
             );
 
             if (!bestClass) {
                 // Secondary match: ignore batch
                 bestClass = classes.find(c =>
                     c.department_id === student.departmentId &&
-                    c.semester === student.semester &&
-                    (c.section === student.section || (!c.section && !student.section))
+                    c.semester === student.semester
                 );
             }
 

@@ -27,7 +27,6 @@ interface FacultyFormData {
   Anna_University_ID: string;
   AICTE_ID: string;
   employee_id: string;
-  coe_id: string;
   orcid_id: string;
   designation: string;
   email: string;
@@ -69,7 +68,6 @@ export function FacultyFormModal({
     Anna_University_ID: '',
     AICTE_ID: '',
     employee_id: '',
-    coe_id: '',
     orcid_id: '',
     designation: '',
     email: '',
@@ -95,7 +93,6 @@ export function FacultyFormModal({
         Anna_University_ID: facultyData.Anna_University_ID || '',
         AICTE_ID: facultyData.AICTE_ID || '',
         employee_id: facultyData.employee_id || '',
-        coe_id: facultyData.coe_id?.toString() || '',
         orcid_id: facultyData.orcid_id || '',
         designation: facultyData.designation || '',
         email: facultyData.email || '',
@@ -124,7 +121,6 @@ export function FacultyFormModal({
       Anna_University_ID: '',
       AICTE_ID: '',
       employee_id: '',
-      coe_id: '',
       orcid_id: '',
       designation: '',
       email: '',
@@ -367,15 +363,6 @@ export function FacultyFormModal({
 
             {/* Academic IDs */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label>COE ID</Label>
-                <Input
-                  value={formData.coe_id}
-                  onChange={(e) => handleInputChange('coe_id', e.target.value)}
-                  placeholder="COE ID"
-                  disabled={loading}
-                />
-              </div>
               <div className="space-y-2">
                 <Label>ORCID ID</Label>
                 <Input

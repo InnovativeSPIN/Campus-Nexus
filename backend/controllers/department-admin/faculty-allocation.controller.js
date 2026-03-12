@@ -35,13 +35,11 @@ export const allocateSubjectToFaculty = asyncHandler(async (req, res, next) => {
     return next(new ErrorResponse('Subject not found in your department', 404));
   }
 
-  // Verify faculty belongs to department
-  const faculty = await Faculty.findOne({
-    where: { faculty_id, department_id: departmentId }
-  });
+  // Verify faculty exists (can be from any department - cross-dept teaching allowed)
+  const faculty = await Faculty.findByPk(faculty_id);
 
   if (!faculty) {
-    return next(new ErrorResponse('Faculty not found in your department', 404));
+    return next(new ErrorResponse('Faculty not found', 404));
   }
 
   // If class_id provided, verify it belongs to department
@@ -365,26 +363,58 @@ export const getAllocationSubjects = asyncHandler(async (req, res, next) => {
   }
 });
 
-// @desc      Get available faculty for allocation
-// @route     GET /api/v1/department-admin/allocation-faculty
+// @desc      Get all departments (for cross-dept faculty filter in allocation form)
+// @route     GET /api/v1/department-admin/allocation-departments
+// @access    Private/DepartmentAdmin
+export const getAllDepartments = asyncHandler(async (req, res, next) => {
+  try {
+    const departments = await Department.findAll({
+      attributes: ['id', 'short_name', 'full_name'],
+      order: [['short_name', 'ASC']]
+    });
+    res.status(200).json({ success: true, count: departments.length, data: departments });
+  } catch (error) {
+    return next(error);
+  }
+});
+
+// @desc      Get available faculty for allocation (supports cross-department with optional filter)
+// @route     GET /api/v1/department-admin/allocation-faculty?department_id=&all=true
 // @access    Private/DepartmentAdmin
 export const getAllocationFaculty = asyncHandler(async (req, res, next) => {
   try {
-    const departmentId = req.user?.department_id;
+    const myDepartmentId = req.user?.department_id;
+    const { department_id, all } = req.query;
 
-    console.log('[GET FACULTY] departmentId:', departmentId);
-
-    if (!departmentId) {
+    if (!myDepartmentId) {
       return next(new ErrorResponse('Department ID not found in user', 400));
     }
 
+    // Build where clause:
+    // - If all=true (no dept filter), return all faculty across all departments
+    // - If department_id is specified, filter by that specific department
+    // - Default: return own department faculty only
+    const where = { status: 'active' };
+    if (department_id && department_id !== 'all') {
+      where.department_id = parseInt(department_id);
+    } else if (!all || all !== 'true') {
+      where.department_id = myDepartmentId;
+    }
+
     const faculty = await Faculty.findAll({
-      where: { department_id: departmentId, status: 'active' },
-      attributes: ['faculty_id', 'Name', 'email', 'designation', 'educational_qualification'],
-      order: [['Name', 'ASC']]
+      where,
+      attributes: ['faculty_id', 'Name', 'email', 'designation', 'educational_qualification', 'department_id'],
+      include: [
+        {
+          model: Department,
+          as: 'department',
+          attributes: ['id', 'short_name', 'full_name'],
+        }
+      ],
+      order: [['department_id', 'ASC'], ['Name', 'ASC']]
     });
 
-    console.log('[GET FACULTY] Found faculty:', faculty.length);
+    console.log('[GET FACULTY] Found faculty:', faculty.length, 'filter:', where);
 
     res.status(200).json({
       success: true,

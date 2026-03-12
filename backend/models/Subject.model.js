@@ -36,6 +36,22 @@ const Subject = (sequelize) => {
       defaultValue: 'odd',
       comment: 'Odd or Even semester type',
     },
+    academic_year: {
+      type: DataTypes.STRING(9),
+      allowNull: true,
+      comment: 'Academic year e.g. 2025-2026',
+    },
+    year: {
+      type: DataTypes.TINYINT,
+      allowNull: true,
+      validate: { min: 1, max: 4 },
+      comment: 'Academic year 1-4 (derived from semester)',
+    },
+    lab_name: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+      comment: 'Lab name - only for laboratory subjects',
+    },
     credits: {
       type: DataTypes.DECIMAL(4, 2),
       allowNull: true,
