@@ -24,6 +24,7 @@ interface Subject {
   semester: number;
   sem_type: 'odd' | 'even';
   academic_year?: string;
+  batch?: string;
   year?: number;
   lab_name?: string;
   credits: number;
@@ -73,10 +74,12 @@ interface AllocationFormState {
   subject_id: string;
   faculty_id: string;
   class_id: string;
-  academic_year: string;
+  year: string;            // year of study (1,2,3...)
+  academic_year: string;   // academic year range
   semester: string;
   total_hours: string;
   no_of_periods: string;
+  batch: string;           // batch year
 }
 
 // ─────────────────────── Component ───────────────────────────────────────────
@@ -104,10 +107,12 @@ export default function SubjectAllocation() {
     subject_id: '',
     faculty_id: '',
     class_id: '',
+    year: '',
     academic_year: new Date().getFullYear() + '-' + (new Date().getFullYear() + 1),
     semester: '',
     total_hours: '45',
     no_of_periods: '3',
+    batch: new Date().getFullYear().toString(),
   });
   const [facultyDeptFilter, setFacultyDeptFilter] = useState('all');
   const [saving, setSaving] = useState(false);
@@ -135,9 +140,14 @@ export default function SubjectAllocation() {
       if (subjectFilters.semester) params.append('semester', subjectFilters.semester);
       if (subjectFilters.status) params.append('status', subjectFilters.status);
       const data = await apiFetch(`/api/v1/department-admin/subjects?${params}`);
-      if (data.success) setSubjects(data.data);
-      else toast.error('Failed to fetch subjects');
-    } catch { toast.error('Error fetching subjects'); }
+      if (data.success) {
+        setSubjects(data.data);
+      } else {
+        console.error('Failed to fetch subjects', data);
+      }
+    } catch (error) {
+      console.error('Error fetching subjects:', error);
+    }
     finally { setLoading(false); }
   };
 
@@ -148,9 +158,14 @@ export default function SubjectAllocation() {
       if (allocFilters.semester) params.append('semester', allocFilters.semester);
       if (allocFilters.academic_year) params.append('academic_year', allocFilters.academic_year);
       const data = await apiFetch(`/api/v1/department-admin/faculty-allocations?${params}`);
-      if (data.success) setAllocations(data.data);
-      else toast.error('Failed to fetch allocations');
-    } catch { toast.error('Error fetching allocations'); }
+      if (data.success) {
+        setAllocations(data.data);
+      } else {
+        console.error('Failed to fetch allocations', data);
+      }
+    } catch (error) {
+      console.error('Error fetching allocations:', error);
+    }
     finally { setAllocLoading(false); }
   };
 
@@ -160,14 +175,21 @@ export default function SubjectAllocation() {
       if (deptId && deptId !== 'all') params.append('department_id', deptId);
       else params.append('all', 'true');
       const data = await apiFetch(`/api/v1/department-admin/faculty-allocations/faculty?${params}`);
-      if (data.success) setFaculty(data.data);
-    } catch { toast.error('Error fetching faculty'); }
+      if (data.success) {
+        setFaculty(data.data);
+      } else {
+        console.error('Failed to fetch faculty', data);
+      }
+    } catch (error) {
+      console.error('Error fetching faculty:', error);
+    }
   };
 
-  const fetchClasses = async (semester?: string) => {
+  const fetchClasses = async (semester?: string, year?: string) => {
     try {
       const params = new URLSearchParams();
       if (semester) params.append('semester', semester);
+      if (year) params.append('year', year);
       const data = await apiFetch(`/api/v1/department-admin/faculty-allocations/classes?${params}`);
       if (data.success) setClasses(data.data);
     } catch { /* non-critical */ }
@@ -176,28 +198,76 @@ export default function SubjectAllocation() {
   const fetchDepartments = async () => {
     try {
       const data = await apiFetch('/api/v1/department-admin/faculty-allocations/departments');
-      if (data.success) setDepartments(data.data);
-    } catch { /* non-critical */ }
+      if (data.success) {
+        setDepartments(data.data);
+      } else {
+        console.error('Failed to fetch departments', data);
+      }
+    } catch (error) {
+      console.error('Error fetching departments:', error);
+    }
   };
 
   useEffect(() => { fetchSubjects(); }, [subjectFilters.semester, subjectFilters.status]);
   useEffect(() => { fetchAllocations(); }, [allocFilters]);
   useEffect(() => { fetchDepartments(); fetchFaculty('all'); }, []);
 
+  // whenever semester or year in the form changes refresh available class list
+  useEffect(() => {
+    if (allocForm.semester) {
+      fetchClasses(allocForm.semester, allocForm.year);
+    }
+  }, [allocForm.semester, allocForm.year]);
+
+  // Whenever selected class changes, attempt to fill the batch from student profiles
+  useEffect(() => {
+    const fetchBatchFromClass = async (classId: string) => {
+      if (!classId) return;
+      try {
+        const data = await apiFetch(`/api/v1/students/class/${classId}`);
+        if (data.success && Array.isArray(data.data) && data.data.length > 0) {
+          const firstStudent = data.data[0];
+          if (firstStudent.batch) {
+            setAllocForm(f => ({ ...f, batch: firstStudent.batch }));
+          }
+        }
+      } catch {
+        // ignore
+      }
+    };
+
+    if (allocForm.class_id) {
+      fetchBatchFromClass(allocForm.class_id);
+    }
+  }, [allocForm.class_id]);
+
   // ── Allocation modal open ──────────────────────────────────────────────────
 
-  const openAllocModal = (subject: Subject) => {
-    setAllocatingSubject(subject);
+  const openAllocModal = async (subject: Subject) => {
+    // Fetch latest subject info so batch (and other fields) reflect any recent updates
+    const subjectResp = await apiFetch(`/api/v1/department-admin/subjects/${subject.id}`);
+    const subjectData = subjectResp.success ? subjectResp.data : subject;
+
+    setAllocatingSubject(subjectData as Subject);
+
+    const assigned = subjectData.assignedFaculty && subjectData.assignedFaculty.length > 0
+      ? subjectData.assignedFaculty[0]
+      : null;
+
     setAllocForm({
-      subject_id: subject.id.toString(),
-      faculty_id: '',
+      subject_id: subjectData.id.toString(),
+      faculty_id: assigned?.faculty_id?.toString() || '',
       class_id: '',
-      academic_year: subject.academic_year || (new Date().getFullYear() + '-' + (new Date().getFullYear() + 1)),
-      semester: subject.semester.toString(),
+      year: subjectData.year ? subjectData.year.toString() : Math.ceil(subjectData.semester / 2).toString(),
+      academic_year: subjectData.academic_year || (new Date().getFullYear() + '-' + (new Date().getFullYear() + 1)),
+      semester: subjectData.semester.toString(),
       total_hours: '45',
       no_of_periods: '3',
+      batch: subjectData.batch || '',
     });
-    fetchClasses(subject.semester.toString());
+
+    // pass year along when fetching classes in case backend later supports filtering
+    fetchClasses(subjectData.semester.toString(), subjectData.year?.toString());
     setFacultyDeptFilter('all');
     setShowAllocModal(true);
   };
@@ -212,34 +282,45 @@ export default function SubjectAllocation() {
   // ── Save allocation ────────────────────────────────────────────────────────
 
   const handleSaveAllocation = async () => {
-    if (!allocForm.faculty_id || !allocForm.subject_id || !allocForm.academic_year || !allocForm.semester) {
-      toast.error('Please fill all required fields: faculty, academic year and semester');
+    if (!allocForm.faculty_id || !allocForm.subject_id || !allocForm.class_id || !allocForm.academic_year || !allocForm.semester) {
+      console.warn('Missing required fields for allocation');
       return;
     }
     setSaving(true);
     try {
-      const payload = {
+      const yearValue = Math.min(Math.max(parseInt(allocForm.year) || 1, 1), 4);
+      const payload: any = {
         faculty_id: parseInt(allocForm.faculty_id),
         subject_id: parseInt(allocForm.subject_id),
-        class_id: allocForm.class_id ? parseInt(allocForm.class_id) : undefined,
+        class_id: parseInt(allocForm.class_id),
         academic_year: allocForm.academic_year,
         semester: parseInt(allocForm.semester),
+        year: yearValue,
         total_hours: parseInt(allocForm.total_hours) || 45,
         no_of_periods: parseInt(allocForm.no_of_periods) || 3,
       };
+
+      // Include batch only if it exists on the subject
+      if (allocForm.batch) {
+        payload.batch = allocForm.batch;
+      }
+
+      // include year if present (backend will ignore if unsupported)
+      if (allocForm.year) payload.year = allocForm.year;
       const data = await apiFetch('/api/v1/department-admin/faculty-allocations', {
         method: 'POST',
         body: JSON.stringify(payload),
       });
       if (data.success) {
-        toast.success('Faculty assigned to subject successfully');
         setShowAllocModal(false);
         fetchSubjects();
         fetchAllocations();
       } else {
-        toast.error(data.error || data.message || 'Failed to save allocation');
+        console.error('Failed to save allocation:', data);
       }
-    } catch { toast.error('Error saving allocation'); }
+    } catch (error) {
+      console.error('Error saving allocation:', error);
+    }
     finally { setSaving(false); }
   };
 
@@ -250,11 +331,34 @@ export default function SubjectAllocation() {
     try {
       const data = await apiFetch(`/api/v1/department-admin/faculty-allocations/${id}`, { method: 'DELETE' });
       if (data.success) {
-        toast.success('Assignment removed');
         fetchAllocations();
         fetchSubjects();
-      } else toast.error('Failed to remove assignment');
-    } catch { toast.error('Error removing assignment'); }
+      } else {
+        console.error('Failed to remove assignment:', data);
+      }
+    } catch (error) {
+      console.error('Error removing assignment:', error);
+    }
+  };
+
+  // ── Unassign faculty from subject (one-to-one assignment) ───────────────────
+
+  const handleUnassignSubject = async (subjectId: number, assignmentId: number) => {
+    if (!confirm('Remove the assigned faculty from this subject?')) return;
+
+    try {
+      const data = await apiFetch(`/api/v1/department-admin/subjects/${subjectId}/assignments/${assignmentId}`, {
+        method: 'DELETE'
+      });
+      if (data.success) {
+        fetchSubjects();
+        fetchAllocations();
+      } else {
+        console.error('Failed to unassign faculty:', data);
+      }
+    } catch (error) {
+      console.error('Error unassigning faculty:', error);
+    }
   };
 
   // ── Helpers ────────────────────────────────────────────────────────────────
@@ -341,75 +445,79 @@ export default function SubjectAllocation() {
                 </select>
               </div>
 
-              {/* Subjects Grid */}
+              {/* Subjects List */}
               {loading ? (
                 <div className="text-center py-16 text-gray-400">Loading subjects...</div>
               ) : filteredSubjects.length === 0 ? (
                 <div className="text-center py-16 text-gray-400">No subjects found</div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {filteredSubjects.map(subject => {
-                    const name = subject.name || subject.subject_name || '';
-                    const code = subject.code || subject.subject_code || '';
-                    const year = subject.year ?? Math.ceil(subject.semester / 2);
-                    const assignedCount = subject.assignedFaculty?.length ?? 0;
-                    return (
-                      <motion.div
-                        key={subject.id}
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="bg-white rounded-xl shadow hover:shadow-md transition-shadow border border-gray-100"
-                      >
-                        <div className="p-5">
-                          {/* Code badge + type */}
-                          <div className="flex justify-between items-start mb-3">
-                            <span className="bg-[#790c0c]/10 text-[#790c0c] text-xs font-bold px-2 py-1 rounded">
-                              {code}
-                            </span>
-                            <div className="flex gap-1">
-                              {subject.is_laboratory && (
-                                <span className="bg-purple-100 text-purple-700 text-xs px-2 py-0.5 rounded flex items-center gap-1">
-                                  <FlaskConical className="w-3 h-3" /> Lab
-                                </span>
-                              )}
-                              {subject.is_elective && (
-                                <span className="bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded">Elective</span>
-                              )}
-                            </div>
-                          </div>
+                <div className="bg-white rounded-xl shadow overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead className="bg-gray-50 border-b">
+                        <tr>
+                          <th className="px-5 py-3 text-left font-semibold text-gray-700">Code</th>
+                          <th className="px-5 py-3 text-left font-semibold text-gray-700">Subject</th>
+                          <th className="px-5 py-3 text-left font-semibold text-gray-700">Sem</th>
+                          <th className="px-5 py-3 text-left font-semibold text-gray-700">Year</th>
+                          <th className="px-5 py-3 text-left font-semibold text-gray-700">Credits</th>
+                          <th className="px-5 py-3 text-left font-semibold text-gray-700">Assigned Faculty</th>
+                          <th className="px-5 py-3 text-left font-semibold text-gray-700">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y">
+                        {filteredSubjects.map(subject => {
+                          const name = subject.name || subject.subject_name || '';
+                          const code = subject.code || subject.subject_code || '';
+                          const year = subject.year ?? Math.ceil(subject.semester / 2);
+                          const assigned = subject.assignedFaculty?.[0];
+                          const assignedName = assigned?.Name;
+                          const assignedDesignation = assigned?.designation;
+                          const assignmentId = assigned?.FacultySubjectAssignment?.id;
 
-                          {/* Name */}
-                          <h3 className="font-semibold text-gray-800 text-sm mb-1 line-clamp-2">{name}</h3>
-
-                          {/* Meta */}
-                          <div className="flex flex-wrap gap-3 text-xs text-gray-500 mb-3">
-                            <span>Sem {subject.semester} ({subject.sem_type})</span>
-                            <span>Year {year}</span>
-                            <span>{subject.credits} credits</span>
-                            {subject.academic_year && <span>{subject.academic_year}</span>}
-                          </div>
-
-                          {subject.is_laboratory && subject.lab_name && (
-                            <p className="text-xs text-purple-600 mb-3">🧪 {subject.lab_name}</p>
-                          )}
-
-                          {/* Assigned faculty count */}
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs text-gray-400 flex items-center gap-1">
-                              <Users className="w-3 h-3" />
-                              {assignedCount === 0 ? 'No faculty assigned' : `${assignedCount} faculty assigned`}
-                            </span>
-                            <button
-                              onClick={() => openAllocModal(subject)}
-                              className="flex items-center gap-1 bg-[#790c0c] hover:bg-[#5a0909] text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
-                            >
-                              <Plus className="w-3 h-3" /> Assign
-                            </button>
-                          </div>
-                        </div>
-                      </motion.div>
-                    );
-                  })}
+                          return (
+                            <tr key={subject.id} className="hover:bg-gray-50">
+                              <td className="px-5 py-3 font-medium text-gray-800">{code}</td>
+                              <td className="px-5 py-3 text-gray-700">{name}</td>
+                              <td className="px-5 py-3 text-gray-500">{subject.semester} ({subject.sem_type})</td>
+                              <td className="px-5 py-3 text-gray-500">{year}</td>
+                              <td className="px-5 py-3 text-gray-500">{subject.credits}</td>
+                              <td className="px-5 py-3">
+                                {assigned ? (
+                                  <div>
+                                    <div className="font-medium text-gray-800">{assignedName}</div>
+                                    {assignedDesignation && (
+                                      <div className="text-xs text-gray-500">{assignedDesignation}</div>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <span className="text-gray-400">Unassigned</span>
+                                )}
+                              </td>
+                              <td className="px-5 py-3">
+                                <div className="flex flex-wrap gap-2 items-center">
+                                  <button
+                                    onClick={() => openAllocModal(subject)}
+                                    className="px-3 py-1.5 bg-[#790c0c] hover:bg-[#5a0909] text-white text-xs font-semibold rounded-lg transition"
+                                  >
+                                    {assigned ? 'Change' : 'Assign'}
+                                  </button>
+                                  {assignmentId && (
+                                    <button
+                                      onClick={() => handleUnassignSubject(subject.id, assignmentId)}
+                                      className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold rounded-lg transition"
+                                    >
+                                      Unassign
+                                    </button>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               )}
             </>
@@ -476,7 +584,7 @@ export default function SubjectAllocation() {
                               <div className="text-xs text-gray-400">{alloc.faculty?.designation}</div>
                             </td>
                             <td className="px-5 py-3 text-gray-500">
-                              {alloc.faculty?.department?.short_name || '—'}
+                              {alloc.faculty?.department?.full_name || alloc.faculty?.department?.short_name || '—'}
                             </td>
                             <td className="px-5 py-3 text-gray-500">
                               {alloc.class ? `${alloc.class.name}` : '—'}
@@ -600,23 +708,37 @@ export default function SubjectAllocation() {
 
                 {/* Class selection */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Class (optional)</label>
-                  <select
-                    value={allocForm.class_id}
-                    onChange={e => setAllocForm(f => ({ ...f, class_id: e.target.value }))}
-                    className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#790c0c]/30"
-                  >
-                    <option value="">— No specific class —</option>
-                    {classes.map(c => (
-                      <option key={c.id} value={c.id}>
-                        {c.name} | Sem {c.semester} | Batch {c.batch} {c.capacity ? `(${c.capacity} students)` : ''}
-                      </option>
-                    ))}
-                  </select>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Class *</label>
+                    <select
+                      value={allocForm.class_id}
+                      onChange={e => setAllocForm(f => ({ ...f, class_id: e.target.value }))}
+                      className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#790c0c]/30"
+                    >
+                      <option value="">— Select class —</option>
+                      {classes.map(c => (
+                        <option key={c.id} value={c.id}>
+                          {c.name} {c.room ? `| Room ${c.room}` : ''} {c.capacity ? `| ${c.capacity} students` : ''}
+                        </option>
+                      ))}
+                    </select>
                 </div>
 
-                {/* Academic year + Semester row */}
-                <div className="grid grid-cols-2 gap-4">
+                {/* Year, academic year + Semester row */}
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Year of Study *</label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="4"
+                      value={allocForm.year}
+                      onChange={e => {
+                        const value = Number(e.target.value);
+                        setAllocForm(f => ({ ...f, year: String(Math.min(Math.max(1, value), 4)) }));
+                      }}
+                      className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#790c0c]/30"
+                    />
+                  </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Academic Year *</label>
                     <input
@@ -664,6 +786,21 @@ export default function SubjectAllocation() {
                       className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#790c0c]/30"
                     />
                   </div>
+                </div>
+
+                {/* Batch Year */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Batch Year</label>
+                  <input
+                    type="text"
+                    placeholder="Auto-filled from subject"
+                    value={allocForm.batch}
+                    readOnly
+                    className="w-full border rounded-lg px-3 py-2 text-sm bg-gray-100 cursor-not-allowed"
+                  />
+                  {!allocForm.batch && (
+                    <p className="text-xs text-gray-400 mt-1">Batch is not set on this subject. Update the subject to add a batch year.</p>
+                  )}
                 </div>
               </div>
 

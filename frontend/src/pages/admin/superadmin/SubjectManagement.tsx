@@ -26,6 +26,7 @@ interface Subject {
   semester: number;
   sem_type: 'odd' | 'even';
   academic_year?: string;
+  batch?: string;
   year?: number;
   lab_name?: string;
   credits: number;
@@ -46,6 +47,7 @@ interface Department {
 export default function SuperAdminSubjectManagement() {
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
+  const [batches, setBatches] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
     department_id: '',
@@ -95,6 +97,7 @@ export default function SuperAdminSubjectManagement() {
     semester: '',
     sem_type: 'odd',
     academic_year: '',
+    batch: 'none',
     year: '',
     lab_name: '',
     credits: 4,
@@ -112,6 +115,7 @@ export default function SuperAdminSubjectManagement() {
         const result = await response.json();
         if (result.success) {
           setDepartments(result.data);
+          if (Array.isArray(result.batches)) setBatches(result.batches);
         }
       } catch (error) {
         console.error('Error fetching departments:', error);
@@ -158,6 +162,7 @@ export default function SuperAdminSubjectManagement() {
       semester: '',
       sem_type: 'odd',
       academic_year: '',
+      batch: '',
       year: '',
       lab_name: '',
       credits: 4,
@@ -178,6 +183,7 @@ export default function SuperAdminSubjectManagement() {
       semester: subject.semester.toString(),
       sem_type: subject.sem_type,
       academic_year: subject.academic_year || '',
+      batch: subject.batch || 'none',
       year: subject.year?.toString() || '',
       lab_name: subject.lab_name || '',
       credits: subject.credits,
@@ -204,12 +210,13 @@ export default function SuperAdminSubjectManagement() {
         year: formData.year ? parseInt(formData.year) : Math.ceil(parseInt(formData.semester) / 2),
         credits: parseInt(formData.credits.toString()),
         academic_year: formData.academic_year || undefined,
-        lab_name: formData.is_laboratory ? (formData.lab_name || undefined) : undefined,
+        batch: formData.batch && formData.batch !== 'none' ? formData.batch : undefined,
       };
 
-      const url = formModal.mode === 'add' 
-        ? '/api/v1/admin/subjects' 
-        : `/api/v1/admin/subjects/${formModal.data?.id}`;
+      const url =
+        formModal.mode === 'add'
+          ? '/api/v1/admin/subjects'
+          : `/api/v1/admin/subjects/${formModal.data?.id}`;
 
       const response = await fetch(url, {
         method: formModal.mode === 'add' ? 'POST' : 'PUT',
@@ -365,10 +372,13 @@ CS201,Database Management Lab,Database concepts,1,3,odd,2025-2026,2,Computer Lab
       <div className="p-6 bg-gray-50 min-h-screen">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
-          <div className="flex justify-between items-center mb-6">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-6">
             <h1 className="text-3xl font-bold text-gray-900">Subject Management</h1>
-            <div className="flex gap-2">
-              <Button onClick={() => setBulkUploadModal({ ...bulkUploadModal, open: true })} className="bg-green-600 hover:bg-green-700">
+            <div className="flex flex-wrap justify-start gap-2 md:justify-end">
+              <Button
+                onClick={() => setBulkUploadModal({ ...bulkUploadModal, open: true })}
+                className="bg-green-600 hover:bg-green-700"
+              >
                 <Upload className="w-4 h-4 mr-2" />
                 Bulk Upload
               </Button>
@@ -483,33 +493,38 @@ CS201,Database Management Lab,Database concepts,1,3,odd,2025-2026,2,Computer Lab
               <div className="p-8 text-center text-gray-500">No subjects found</div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full">
+                <table className="w-full min-w-[1100px] table-auto">
                   <thead className="bg-gray-100 border-b">
                     <tr>
-                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Code</th>
-                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Name</th>
-                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Department</th>
-                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Sem / Year</th>
-                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Acad. Year</th>
-                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Type</th>
-                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Lab Name</th>
-                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Credits</th>
-                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Status</th>
-                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Actions</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap">Code</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap">Name</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap">Department</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap">Sem / Year</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap">Acad. Year</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap">Type</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap">Lab</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap">Credits</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap">Status</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y">
                     {subjects.map(subject => (
                       <tr key={subject.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-3 text-sm font-medium text-gray-900">{subject.code}</td>
-                        <td className="px-6 py-3 text-sm text-gray-600">{subject.name}</td>
-                        <td className="px-6 py-3 text-sm text-gray-600">{subject.department?.short_name}</td>
-                        <td className="px-6 py-3 text-sm text-gray-600">S{subject.semester} / Yr{subject.year ?? Math.ceil(subject.semester/2)} <span className="text-xs text-gray-400">({subject.sem_type})</span></td>
-                        <td className="px-6 py-3 text-sm text-gray-600">{subject.academic_year || '—'}</td>
-                        <td className="px-6 py-3 text-sm text-gray-600">{subject.type}</td>
-                        <td className="px-6 py-3 text-sm text-gray-600">{subject.is_laboratory ? (subject.lab_name || '—') : '—'}</td>
-                        <td className="px-6 py-3 text-sm text-gray-600">{subject.credits}</td>
-                        <td className="px-6 py-3 text-sm">
+                        <td className="px-6 py-3 text-sm font-medium text-gray-900 whitespace-nowrap">{subject.code}</td>
+                        <td className="px-6 py-3 text-sm text-gray-600 max-w-[240px] truncate" title={subject.name}>{subject.name}</td>
+                        <td className="px-6 py-3 text-sm text-gray-600 whitespace-nowrap">{subject.department?.short_name}</td>
+                        <td className="px-6 py-3 text-sm text-gray-600 whitespace-nowrap">
+                          <div className="flex items-baseline gap-1">
+                            <span>S{subject.semester} / Yr{subject.year ?? Math.ceil(subject.semester / 2)}</span>
+                            <span className="text-xs text-gray-400">({subject.sem_type})</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-3 text-sm text-gray-600 whitespace-nowrap">{subject.academic_year || '—'}</td>
+                        <td className="px-6 py-3 text-sm text-gray-600 whitespace-nowrap">{subject.type}</td>
+                        <td className="px-6 py-3 text-sm text-gray-600 whitespace-nowrap">{subject.is_laboratory ? (subject.lab_name || '—') : '—'}</td>
+                        <td className="px-6 py-3 text-sm text-gray-600 whitespace-nowrap">{subject.credits}</td>
+                        <td className="px-6 py-3 text-sm whitespace-nowrap">
                           <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
                             subject.status === 'active' ? 'bg-green-100 text-green-800' :
                             subject.status === 'inactive' ? 'bg-yellow-100 text-yellow-800' :
@@ -522,12 +537,14 @@ CS201,Database Management Lab,Database concepts,1,3,odd,2025-2026,2,Computer Lab
                           <button
                             onClick={() => handleEditClick(subject)}
                             className="text-blue-600 hover:text-blue-900"
+                            title="Edit subject"
                           >
                             <Edit2 className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => setDeleteDialog({ open: true, data: subject })}
                             className="text-red-600 hover:text-red-900"
+                            title="Delete subject"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -683,6 +700,28 @@ CS201,Database Management Lab,Database concepts,1,3,odd,2025-2026,2,Computer Lab
                     onChange={(e) => setFormData({ ...formData, academic_year: e.target.value })}
                     placeholder="e.g., 2025-2026"
                   />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Batch Year</label>
+                  <Select value={formData.batch} onValueChange={(value) => setFormData({ ...formData, batch: value })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Batch" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">None</SelectItem>
+                      {batches.map(batch => (
+                        <SelectItem key={batch} value={batch}>
+                          {batch}
+                        </SelectItem>
+                      ))}
+                      {formData.batch && formData.batch !== 'none' && !batches.includes(formData.batch) && (
+                        <SelectItem key="current" value={formData.batch}>
+                          {formData.batch} (current)
+                        </SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 

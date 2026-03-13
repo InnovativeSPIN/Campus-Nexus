@@ -30,7 +30,6 @@ const menuItems = [
   { title: "Dashboard", url: "/admin/department-admin/dashboard", icon: LayoutDashboard },
   { title: "Profile", url: "/admin/department-admin/profile", icon: User },
   { title: "Coordinators", url: "/admin/department-admin/coordinators", icon: Users },
-  { title: "Subjects", url: "/admin/department-admin/subjects", icon: Book },
   { title: "Subject Allocation", url: "/admin/department-admin/subject-allocation", icon: BookOpen },
   { title: "Class Incharges", url: "/admin/department-admin/class-incharges", icon: GraduationCap },
   { title: "Create Timetable", url: "/admin/department-admin/create-timetable", icon: Plus },

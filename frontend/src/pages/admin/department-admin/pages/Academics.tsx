@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { MainLayout } from "@/pages/admin/department-admin/components/layout/MainLayout";
 import { motion } from "framer-motion";
 import { Button } from "@/pages/admin/department-admin/components/ui/button";
@@ -94,63 +94,54 @@ interface SemesterCredits {
   subjects: Subject[];
 }
 
-// Credits data organized by semester, department, and year
-const creditsData: SemesterCredits[] = [
-  {
-    semester: 5,
-    year: 3,
-    department: "CSE",
-    subjects: [
-      { id: "1", code: "CS3452", name: "Theory of Computation", category: "PCC", lectureHours: 3, tutorialHours: 0, practicalHours: 0, totalHours: 3, credits: 3 },
-      { id: "2", code: "CS3491", name: "Artificial Intelligence and Machine Learning", category: "PCC", lectureHours: 3, tutorialHours: 0, practicalHours: 2, totalHours: 5, credits: 4 },
-      { id: "3", code: "CS3492", name: "Database Management Systems", category: "PCC", lectureHours: 3, tutorialHours: 0, practicalHours: 0, totalHours: 3, credits: 3 },
-      { id: "4", code: "IT3401", name: "Web Essentials", category: "PCC", lectureHours: 3, tutorialHours: 0, practicalHours: 2, totalHours: 5, credits: 4 },
-      { id: "5", code: "CS3451", name: "Introduction to Operating Systems", category: "PCC", lectureHours: 3, tutorialHours: 0, practicalHours: 0, totalHours: 3, credits: 3 },
-      { id: "6", code: "GE3451", name: "Environmental Sciences and Sustainability", category: "BSC", lectureHours: 2, tutorialHours: 0, practicalHours: 0, totalHours: 2, credits: 2 },
-    ],
-  },
-  {
-    semester: 4,
-    year: 2,
-    department: "CSE",
-    subjects: [
-      { id: "1", code: "CS3401", name: "Algorithms", category: "PCC", lectureHours: 3, tutorialHours: 1, practicalHours: 0, totalHours: 4, credits: 4 },
-      { id: "2", code: "CS3402", name: "Database Systems", category: "PCC", lectureHours: 3, tutorialHours: 0, practicalHours: 2, totalHours: 5, credits: 4 },
-      { id: "3", code: "CS3403", name: "Operating Systems", category: "PCC", lectureHours: 3, tutorialHours: 0, practicalHours: 0, totalHours: 3, credits: 3 },
-      { id: "4", code: "MA3401", name: "Probability and Statistics", category: "BSC", lectureHours: 3, tutorialHours: 1, practicalHours: 0, totalHours: 4, credits: 4 },
-    ],
-  },
-  {
-    semester: 3,
-    year: 2,
-    department: "CSE",
-    subjects: [
-      { id: "1", code: "CS3301", name: "Data Structures", category: "PCC", lectureHours: 3, tutorialHours: 0, practicalHours: 2, totalHours: 5, credits: 4 },
-      { id: "2", code: "CS3302", name: "Digital Logic Design", category: "PCC", lectureHours: 3, tutorialHours: 0, practicalHours: 0, totalHours: 3, credits: 3 },
-      { id: "3", code: "CS3303", name: "Object Oriented Programming", category: "PCC", lectureHours: 3, tutorialHours: 0, practicalHours: 2, totalHours: 5, credits: 4 },
-    ],
-  },
-  {
-    semester: 5,
-    year: 3,
-    department: "AI&DS",
-    subjects: [
-      { id: "1", code: "AD3501", name: "Deep Learning", category: "PCC", lectureHours: 3, tutorialHours: 0, practicalHours: 2, totalHours: 5, credits: 4 },
-      { id: "2", code: "AD3502", name: "Natural Language Processing", category: "PCC", lectureHours: 3, tutorialHours: 0, practicalHours: 2, totalHours: 5, credits: 4 },
-      { id: "3", code: "AD3503", name: "Computer Vision", category: "PCC", lectureHours: 3, tutorialHours: 0, practicalHours: 2, totalHours: 5, credits: 4 },
-    ],
-  },
-  {
-    semester: 4,
-    year: 2,
-    department: "IT",
-    subjects: [
-      { id: "1", code: "IT3401", name: "Web Technology", category: "PCC", lectureHours: 3, tutorialHours: 0, practicalHours: 2, totalHours: 5, credits: 4 },
-      { id: "2", code: "IT3402", name: "Software Engineering", category: "PCC", lectureHours: 3, tutorialHours: 0, practicalHours: 0, totalHours: 3, credits: 3 },
-      { id: "3", code: "IT3403", name: "Computer Networks", category: "PCC", lectureHours: 3, tutorialHours: 0, practicalHours: 2, totalHours: 5, credits: 4 },
-    ],
-  },
-];
+const apiFetch = async (url: string, options?: RequestInit) => {
+  const token = localStorage.getItem('authToken');
+  const res = await fetch(url, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(options?.headers ?? {}),
+    },
+  });
+  return res.json();
+};
+
+const mapAllocationsToCredits = (allocations: any[]): SemesterCredits[] => {
+  const map = new Map<string, SemesterCredits>();
+
+  allocations.forEach((alloc) => {
+    const semester = Number(alloc.semester) || 0;
+    const year = Number(alloc.subject?.year) || Math.ceil(semester / 2);
+    const department = alloc.faculty?.department?.short_name || alloc.faculty?.department?.full_name || 'Unknown';
+    const key = `${department}-${year}-${semester}`;
+
+    const subject: Subject = {
+      id: alloc.subject?.id?.toString() ?? alloc.id?.toString() ?? '',
+      code: alloc.subject?.code ?? alloc.subject?.subject_code ?? '',
+      name: alloc.subject?.name ?? alloc.subject?.subject_name ?? '',
+      category: alloc.subject?.type || 'PCC',
+      lectureHours: alloc.total_hours ?? 0,
+      tutorialHours: 0,
+      practicalHours: 0,
+      totalHours: alloc.total_hours ?? 0,
+      credits: alloc.subject?.credits ?? 0,
+    };
+
+    if (!map.has(key)) {
+      map.set(key, {
+        semester,
+        year,
+        department,
+        subjects: [],
+      });
+    }
+
+    map.get(key)!.subjects.push(subject);
+  });
+
+  return Array.from(map.values());
+};
 
 // Classes handled by the faculty
 const classesHandled: ClassSubject[] = [
@@ -305,10 +296,41 @@ export default function Academics() {
   const [marksData, setMarksData] = useState<Record<string, StudentMark[]>>(studentMarksDataByClass);
   const [lockedClasses, setLockedClasses] = useState<Record<string, boolean>>({});
 
+  // Dynamic credits data (based on allocated subjects)
+  const [creditsData, setCreditsData] = useState<SemesterCredits[]>([]);
+  const [isLoadingCredits, setIsLoadingCredits] = useState(false);
+
   // Credits filter states
   const [creditsDepartment, setCreditsDepartment] = useState<string>("CSE");
   const [creditsYear, setCreditsYear] = useState<string>("3");
   const [creditsSemester, setCreditsSemester] = useState<string>("5");
+
+  // Fetch allocations and build credits list
+  useEffect(() => {
+    const loadAllocations = async () => {
+      setIsLoadingCredits(true);
+      try {
+        const params: Record<string, string> = {};
+        if (creditsSemester) params.semester = creditsSemester;
+        const query = new URLSearchParams(params).toString();
+        const url = `/api/v1/department-admin/faculty-allocations${query ? `?${query}` : ''}`;
+
+        const res = await apiFetch(url);
+        if (res?.success && Array.isArray(res.data)) {
+          setCreditsData(mapAllocationsToCredits(res.data));
+        } else {
+          setCreditsData([]);
+        }
+      } catch (error) {
+        console.error('[Academics] Failed to load allocations', error);
+        setCreditsData([]);
+      } finally {
+        setIsLoadingCredits(false);
+      }
+    };
+
+    loadAllocations();
+  }, [creditsSemester, creditsDepartment, creditsYear]);
 
   // Course file states
   const [courseFile, setCourseFile] = useState<File | null>(null);
@@ -438,14 +460,6 @@ export default function Academics() {
     });
 
     setTimeout(() => setSuccessMessage(null), 4000);
-  };
-
-  const calculateInternal100 = (student: StudentMark) => {
-    return student.internalMarks + student.assignmentMarks;
-  };
-
-  const calculateExamStatus = (student: StudentMark) => {
-    return student.totalMarks >= student.passPercentage ? 'Pass' : 'Fail';
   };
 
   const updateStudentMark = (studentId: string, field: keyof StudentMark, value: string | number) => {
@@ -1623,162 +1637,186 @@ export default function Academics() {
             </div>
           </motion.div>
 
-          {/* Credits Summary */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6"
-          >
-            <div className="widget-card bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
-              <div className="flex items-center gap-3">
-                <div className="p-3 bg-primary/10 rounded-xl">
-                  <BookOpen className="w-6 h-6 text-primary" />
+          {isLoadingCredits ? (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="widget-card text-center py-12"
+            >
+              <div className="text-muted-foreground">Loading allocated subjects...</div>
+            </motion.div>
+          ) : (
+            <>
+              {/* Credits Summary */}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6"
+              >
+                <div className="widget-card bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
+                  <div className="flex items-center gap-3">
+                    <div className="p-3 bg-primary/10 rounded-xl">
+                      <BookOpen className="w-6 h-6 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Total Subjects</p>
+                      <p className="text-2xl font-bold text-primary">{filteredCredits?.subjects.length || 0}</p>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Total Subjects</p>
-                  <p className="text-2xl font-bold text-primary">{filteredCredits?.subjects.length || 0}</p>
-                </div>
-              </div>
-            </div>
 
-            <div className="widget-card bg-gradient-to-br from-success/5 to-success/10 border-success/20">
-              <div className="flex items-center gap-3">
-                <div className="p-3 bg-success/10 rounded-xl">
-                  <ClipboardList className="w-6 h-6 text-success" />
+                <div className="widget-card bg-gradient-to-br from-success/5 to-success/10 border-success/20">
+                  <div className="flex items-center gap-3">
+                    <div className="p-3 bg-success/10 rounded-xl">
+                      <ClipboardList className="w-6 h-6 text-success" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Contact Hours/Week</p>
+                      <p className="text-2xl font-bold text-success">{totalContactHours}</p>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Contact Hours/Week</p>
-                  <p className="text-2xl font-bold text-success">{totalContactHours}</p>
+
+                <div className="widget-card bg-gradient-to-br from-amber/5 to-amber/10 border-amber/20">
+                  <div className="flex items-center gap-3">
+                    <div className="p-3 bg-amber/10 rounded-xl">
+                      <GraduationCap className="w-6 h-6 text-amber-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Total Credits</p>
+                      <p className="text-2xl font-bold text-amber-600">{totalCredits}</p>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-          </motion.div>
+              </motion.div>
 
-          {/* Subjects Table */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="widget-card"
-          >
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h3 className="section-title mb-0">
-                  {creditsDepartment} - Year {creditsYear} - Semester {creditsSemester}
-                </h3>
-                <div className="flex flex-wrap gap-3 mt-2">
-                  <span className="flex items-center gap-1.5 text-xs">
-                    <span className="w-3 h-3 rounded-full bg-blue-500"></span>
-                    <span className="text-muted-foreground">L = Lecture</span>
-                  </span>
-                  <span className="flex items-center gap-1.5 text-xs">
-                    <span className="w-3 h-3 rounded-full bg-amber-500"></span>
-                    <span className="text-muted-foreground">T = Tutorial</span>
-                  </span>
-                  <span className="flex items-center gap-1.5 text-xs">
-                    <span className="w-3 h-3 rounded-full bg-emerald-500"></span>
-                    <span className="text-muted-foreground">P = Practical</span>
-                  </span>
-
+              {/* Subjects Table */}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="widget-card"
+              >
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h3 className="section-title mb-0">
+                      {creditsDepartment} - Year {creditsYear} - Semester {creditsSemester}
+                    </h3>
+                    <div className="flex flex-wrap gap-3 mt-2">
+                      <span className="flex items-center gap-1.5 text-xs">
+                        <span className="w-3 h-3 rounded-full bg-blue-500"></span>
+                        <span className="text-muted-foreground">L = Lecture</span>
+                      </span>
+                      <span className="flex items-center gap-1.5 text-xs">
+                        <span className="w-3 h-3 rounded-full bg-amber-500"></span>
+                        <span className="text-muted-foreground">T = Tutorial</span>
+                      </span>
+                      <span className="flex items-center gap-1.5 text-xs">
+                        <span className="w-3 h-3 rounded-full bg-emerald-500"></span>
+                        <span className="text-muted-foreground">P = Practical</span>
+                      </span>
+                    </div>
+                  </div>
+                  <Badge variant="outline" className="text-sm px-3 py-1">
+                    {filteredCredits?.subjects.length || 0} Subjects
+                  </Badge>
                 </div>
-              </div>
-              <Badge variant="outline" className="text-sm px-3 py-1">
-                {filteredCredits?.subjects.length || 0} Subjects
-              </Badge>
-            </div>
 
-            {!filteredCredits || filteredCredits.subjects.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground">
-                <GraduationCap className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                <p className="font-medium">No subjects found</p>
-                <p className="text-sm">Try selecting a different department, year, or semester</p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b bg-muted/30">
-                      <th className="text-left p-3 text-sm font-semibold text-muted-foreground">S.No</th>
-                      <th className="text-left p-3 text-sm font-semibold text-muted-foreground">Code</th>
-                      <th className="text-left p-3 text-sm font-semibold text-muted-foreground">Subject Name</th>
-                      <th className="text-center p-3 text-sm font-semibold text-muted-foreground">Category</th>
-                      <th className="text-center p-3 text-sm font-semibold text-blue-500">L</th>
-                      <th className="text-center p-3 text-sm font-semibold text-amber-500">T</th>
-                      <th className="text-center p-3 text-sm font-semibold text-emerald-500">P</th>
-                      <th className="text-center p-3 text-sm font-semibold text-muted-foreground">Total</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredCredits.subjects.map((subject, index) => (
-                      <motion.tr
-                        key={subject.id}
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.1 + index * 0.05 }}
-                        className="border-b hover:bg-muted/30 transition-colors"
-                      >
-                        <td className="p-3 text-sm text-muted-foreground">{index + 1}</td>
-                        <td className="p-3 text-sm font-mono text-secondary">{subject.code}</td>
-                        <td className="p-3 text-sm font-medium">{subject.name}</td>
-                        <td className="p-3 text-center">
-                          <Badge
-                            variant="outline"
-                            className={cn(
-                              "text-xs",
-                              subject.category === "PCC" && "border-primary/50 text-primary bg-primary/5",
-                              subject.category === "BSC" && "border-success/50 text-success bg-success/5",
-                              subject.category === "ESC" && "border-warning/50 text-warning bg-warning/5",
-                              subject.category === "HSMC" && "border-secondary/50 text-secondary bg-secondary/5"
-                            )}
+                {!filteredCredits || filteredCredits.subjects.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <GraduationCap className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                    <p className="font-medium">No subjects found</p>
+                    <p className="text-sm">Try selecting a different department, year, or semester</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b bg-muted/30">
+                          <th className="text-left p-3 text-sm font-semibold text-muted-foreground">S.No</th>
+                          <th className="text-left p-3 text-sm font-semibold text-muted-foreground">Code</th>
+                          <th className="text-left p-3 text-sm font-semibold text-muted-foreground">Subject Name</th>
+                          <th className="text-center p-3 text-sm font-semibold text-muted-foreground">Category</th>
+                          <th className="text-center p-3 text-sm font-semibold text-blue-500">L</th>
+                          <th className="text-center p-3 text-sm font-semibold text-amber-500">T</th>
+                          <th className="text-center p-3 text-sm font-semibold text-emerald-500">P</th>
+                          <th className="text-center p-3 text-sm font-semibold text-muted-foreground">Total</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredCredits.subjects.map((subject, index) => (
+                          <motion.tr
+                            key={subject.id}
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: 0.1 + index * 0.05 }}
+                            className="border-b hover:bg-muted/30 transition-colors"
                           >
-                            {subject.category}
-                          </Badge>
-                        </td>
-                        <td className="p-3 text-sm text-center">
-                          <span className="px-2 py-0.5 bg-blue-500/10 text-blue-600 dark:text-blue-400 font-medium rounded">
-                            {subject.lectureHours}
-                          </span>
-                        </td>
-                        <td className="p-3 text-sm text-center">
-                          <span className="px-2 py-0.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 font-medium rounded">
-                            {subject.tutorialHours}
-                          </span>
-                        </td>
-                        <td className="p-3 text-sm text-center">
-                          <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-medium rounded">
-                            {subject.practicalHours}
-                          </span>
-                        </td>
-                        <td className="p-3 text-sm text-center font-medium">{subject.totalHours}</td>
-                      </motion.tr>
-                    ))}
-                  </tbody>
-                  <tfoot>
-                    <tr className="bg-muted/50 font-semibold">
-                      <td colSpan={4} className="p-3 text-right text-sm">Total:</td>
-                      <td className="p-3 text-center text-sm">
-                        <span className="px-2 py-0.5 bg-blue-500/10 text-blue-600 dark:text-blue-400 font-medium rounded">
-                          {filteredCredits.subjects.reduce((acc, s) => acc + s.lectureHours, 0)}
-                        </span>
-                      </td>
-                      <td className="p-3 text-center text-sm">
-                        <span className="px-2 py-0.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 font-medium rounded">
-                          {filteredCredits.subjects.reduce((acc, s) => acc + s.tutorialHours, 0)}
-                        </span>
-                      </td>
-                      <td className="p-3 text-center text-sm">
-                        <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-medium rounded">
-                          {filteredCredits.subjects.reduce((acc, s) => acc + s.practicalHours, 0)}
-                        </span>
-                      </td>
-                      <td className="p-3 text-center text-sm">{totalContactHours}</td>
-                    </tr>
-                  </tfoot>
-                </table>
-              </div>
-            )}
-          </motion.div>
+                            <td className="p-3 text-sm text-muted-foreground">{index + 1}</td>
+                            <td className="p-3 text-sm font-mono text-secondary">{subject.code}</td>
+                            <td className="p-3 text-sm font-medium">{subject.name}</td>
+                            <td className="p-3 text-center">
+                              <Badge
+                                variant="outline"
+                                className={cn(
+                                  "text-xs",
+                                  subject.category === "PCC" && "border-primary/50 text-primary bg-primary/5",
+                                  subject.category === "BSC" && "border-success/50 text-success bg-success/5",
+                                  subject.category === "ESC" && "border-warning/50 text-warning bg-warning/5",
+                                  subject.category === "HSMC" && "border-secondary/50 text-secondary bg-secondary/5"
+                                )}
+                              >
+                                {subject.category}
+                              </Badge>
+                            </td>
+                            <td className="p-3 text-sm text-center">
+                              <span className="px-2 py-0.5 bg-blue-500/10 text-blue-600 dark:text-blue-400 font-medium rounded">
+                                {subject.lectureHours}
+                              </span>
+                            </td>
+                            <td className="p-3 text-sm text-center">
+                              <span className="px-2 py-0.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 font-medium rounded">
+                                {subject.tutorialHours}
+                              </span>
+                            </td>
+                            <td className="p-3 text-sm text-center">
+                              <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-medium rounded">
+                                {subject.practicalHours}
+                              </span>
+                            </td>
+                            <td className="p-3 text-sm text-center font-medium">{subject.totalHours}</td>
+                          </motion.tr>
+                        ))}
+                      </tbody>
+                      <tfoot>
+                        <tr className="bg-muted/50 font-semibold">
+                          <td colSpan={4} className="p-3 text-right text-sm">Total:</td>
+                          <td className="p-3 text-center text-sm">
+                            <span className="px-2 py-0.5 bg-blue-500/10 text-blue-600 dark:text-blue-400 font-medium rounded">
+                              {filteredCredits.subjects.reduce((acc, s) => acc + s.lectureHours, 0)}
+                            </span>
+                          </td>
+                          <td className="p-3 text-center text-sm">
+                            <span className="px-2 py-0.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 font-medium rounded">
+                              {filteredCredits.subjects.reduce((acc, s) => acc + s.tutorialHours, 0)}
+                            </span>
+                          </td>
+                          <td className="p-3 text-center text-sm">
+                            <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-medium rounded">
+                              {filteredCredits.subjects.reduce((acc, s) => acc + s.practicalHours, 0)}
+                            </span>
+                          </td>
+                          <td className="p-3 text-center text-sm">{totalContactHours}</td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                )}
+              </motion.div>
+            </>
+          )}
         </TabsContent>
       </Tabs>
     </MainLayout>
