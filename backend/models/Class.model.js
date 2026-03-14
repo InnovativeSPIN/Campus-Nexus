@@ -27,6 +27,22 @@ const ClassModel = (sequelize) => {
       type: DataTypes.ENUM('active', 'inactive'),
       defaultValue: 'active',
     },
+    batch: {
+      type: DataTypes.STRING(20),
+      allowNull: true,
+    },
+    semester: {
+      type: DataTypes.TINYINT,
+      allowNull: true,
+    },
+    academic_year: {
+      type: DataTypes.STRING(9),
+      allowNull: true,
+    },
+    section: {
+      type: DataTypes.STRING(10),
+      allowNull: true,
+    },
   }, {
     tableName: 'classes',
     timestamps: false,

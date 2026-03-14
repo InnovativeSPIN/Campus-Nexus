@@ -21,6 +21,8 @@ export const allocateSubjectToFaculty = asyncHandler(async (req, res, next) => {
     batch
   } = req.body;
 
+  console.log('[ALLOC] Request payload:', { faculty_id, subject_id, class_id, academic_year, semester, batch });
+
   // Validate required fields (class now mandatory)
   if (!faculty_id || !subject_id || !class_id || !academic_year || !semester) {
     return next(new ErrorResponse('Please provide faculty_id, subject_id, class_id, academic_year, and semester', 400));
@@ -33,19 +35,22 @@ export const allocateSubjectToFaculty = asyncHandler(async (req, res, next) => {
 
   const departmentId = req.user.department_id;
 
-  // Verify subject belongs to department
-  const subject = await Subject.findOne({
-    where: { id: subject_id, department_id: departmentId }
-  });
-
+  // Verify subject exists (department admin may allocate across faculty departments)
+  const subject = await Subject.findByPk(subject_id);
   if (!subject) {
-    return next(new ErrorResponse('Subject not found in your department', 404));
+    return next(new ErrorResponse('Subject not found', 404));
+  }
+
+  // log if subject is from another department (allowed for cross-dept faculty assignment)
+  if (subject.department_id !== departmentId) {
+    console.warn(`[ALLOC] Subject ${subject_id} belongs to department ${subject.department_id} but admin is in ${departmentId}`);
   }
 
   // Verify faculty exists (can be from any department - cross-dept teaching allowed)
   const faculty = await Faculty.findByPk(faculty_id);
 
   if (!faculty) {
+    console.warn('[ALLOC] Faculty not found:', faculty_id);
     return next(new ErrorResponse('Faculty not found', 404));
   }
 
@@ -102,6 +107,7 @@ export const allocateSubjectToFaculty = asyncHandler(async (req, res, next) => {
       allocation = await existingExact.update({
         total_hours: total_hours ? parseInt(total_hours) : existingExact.total_hours,
         no_of_periods: no_of_periods ? parseInt(no_of_periods) : existingExact.no_of_periods,
+        batch: batch || existingExact.batch,
         assigned_by: req.user.id,
         assigned_at: new Date(),
         status: 'active'
@@ -128,6 +134,7 @@ export const allocateSubjectToFaculty = asyncHandler(async (req, res, next) => {
         class_id: class_id || null,
         total_hours: total_hours ? parseInt(total_hours) : existingSubjectYearSem.total_hours,
         no_of_periods: no_of_periods ? parseInt(no_of_periods) : existingSubjectYearSem.no_of_periods,
+        batch: batch || existingSubjectYearSem.batch,
         assigned_by: req.user.id,
         assigned_at: new Date()
       }, { transaction });
@@ -141,6 +148,7 @@ export const allocateSubjectToFaculty = asyncHandler(async (req, res, next) => {
         semester,
         total_hours: total_hours ? parseInt(total_hours) : 0,
         no_of_periods: no_of_periods ? parseInt(no_of_periods) : 0,
+        batch: batch || null,
         assigned_by: req.user.id,
         assigned_at: new Date(),
         status: 'active'
@@ -225,7 +233,13 @@ export const getFacultyAllocations = asyncHandler(async (req, res, next) => {
     }
 
     const where = { status: 'active' };
-    if (academic_year) where.academic_year = academic_year;
+    if (academic_year) {
+      if (academic_year.includes('-')) {
+        where.academic_year = academic_year;
+      } else {
+        where.academic_year = { [Op.like]: `${academic_year}%` };
+      }
+    }
     if (semester) where.semester = parseInt(semester);
     if (status) where.status = status;
     if (faculty_id) where.faculty_id = parseInt(faculty_id);
@@ -250,13 +264,19 @@ export const getFacultyAllocations = asyncHandler(async (req, res, next) => {
         {
           model: Faculty,
           as: 'faculty',
-          attributes: ['faculty_id', 'Name', 'email', 'designation'],
+          required: false,  // Allow allocations without faculty (outer join)
+          attributes: ['faculty_id', 'Name', 'email', 'designation', 'department_id'],
           include: [
-            { model: Department, as: 'department', attributes: ['id', 'short_name', 'full_name'] }
+            { 
+              model: Department, 
+              as: 'department', 
+              required: false,
+              attributes: ['id', 'short_name', 'full_name'] 
+            }
           ]
         },
-        { model: Subject, as: 'subject', attributes: ['id', 'subject_code', 'subject_name', 'semester', 'sem_type', 'type', 'credits', 'year', 'batch'] },
-        { model: ClassModel, as: 'class', attributes: ['id', 'name'] }
+        { model: Subject, as: 'subject', required: true, attributes: ['id', 'subject_code', 'subject_name', 'semester', 'sem_type', 'type', 'credits', 'year', 'batch'] },
+        { model: ClassModel, as: 'class', required: false, attributes: ['id', 'name'] }
       ],
       order: [['academic_year', 'DESC'], ['semester', 'ASC'], ['faculty_id', 'ASC']]
     });
@@ -281,6 +301,14 @@ export const getFacultyAllocations = asyncHandler(async (req, res, next) => {
     });
 
     console.log('[GET ALLOCATIONS] Found allocations:', mappedAllocations.length);
+    console.log('[GET ALLOCATIONS] Sample allocation with faculty:', JSON.stringify(mappedAllocations.slice(0, 2), null, 2));
+    
+    // Debug - check if faculty field is present for each allocation
+    mappedAllocations.forEach((alloc, idx) => {
+      if (idx < 2) {
+        console.log(`[GET ALLOCATIONS] Alloc ${alloc.id} has faculty?`, Boolean(alloc.faculty), '| Faculty obj:', alloc.faculty ? alloc.faculty.Name : 'MISSING');
+      }
+    });
 
     res.status(200).json({
       success: true,
@@ -299,9 +327,11 @@ export const getFacultyAllocations = asyncHandler(async (req, res, next) => {
 export const getAllocationDetails = asyncHandler(async (req, res, next) => {
   const allocation = await FacultySubjectAssignment.findByPk(req.params.id, {
     include: [
-      { model: Faculty, as: 'faculty', attributes: ['faculty_id', 'Name', 'email', 'designation', 'department_id'] },
-      { model: Subject, as: 'subject', attributes: ['id', 'subject_code', 'subject_name', 'semester', 'sem_type', 'type', 'credits'] },
-      { model: ClassModel, as: 'class', attributes: ['id', 'name', 'capacity'] }
+      { model: Faculty, as: 'faculty', required: false, attributes: ['faculty_id', 'Name', 'email', 'designation', 'department_id'],
+        include: [{ model: Department, as: 'department', required: false, attributes: ['id', 'short_name', 'full_name'] }]
+      },
+      { model: Subject, as: 'subject', required: true, attributes: ['id', 'subject_code', 'subject_name', 'semester', 'sem_type', 'type', 'credits'] },
+      { model: ClassModel, as: 'class', required: false, attributes: ['id', 'name', 'capacity'] }
     ]
   });
 
@@ -544,15 +574,16 @@ export const getAllocationFaculty = asyncHandler(async (req, res, next) => {
 // @access    Private/DepartmentAdmin
 export const getAllocationClasses = asyncHandler(async (req, res, next) => {
   try {
-    const departmentId = req.user?.department_id;
+    const departmentId = req.user?.department_id || req.user?.departmentId;
 
     console.log('[GET CLASSES] departmentId:', departmentId);
 
-    if (!departmentId) {
-      return next(new ErrorResponse('Department ID not found in user', 400));
+    const where = { status: 'active' };
+    if (departmentId) {
+      where.department_id = departmentId;
+    } else {
+      console.warn('[GET CLASSES] No departmentId found on user - returning all active classes');
     }
-
-    const where = { department_id: departmentId, status: 'active' };
 
     const classes = await ClassModel.findAll({
       where,
@@ -595,9 +626,11 @@ export const getFacultyAllocationsBySemester = asyncHandler(async (req, res, nex
       subject_id: { [models.sequelize.Op.in]: subjectIds }
     },
     include: [
-      { model: Faculty, as: 'faculty', attributes: ['faculty_id', 'Name', 'email', 'designation'] },
-      { model: Subject, as: 'subject', attributes: ['id', 'subject_code', 'subject_name', 'type', 'sem_type'] },
-      { model: ClassModel, as: 'class', attributes: ['id', 'name'] }
+      { model: Faculty, as: 'faculty', required: false, attributes: ['faculty_id', 'Name', 'email', 'designation', 'department_id'],
+        include: [{ model: Department, as: 'department', required: false, attributes: ['id', 'short_name', 'full_name'] }]
+      },
+      { model: Subject, as: 'subject', required: true, attributes: ['id', 'subject_code', 'subject_name', 'type', 'sem_type'] },
+      { model: ClassModel, as: 'class', required: false, attributes: ['id', 'name'] }
     ],
     order: [['faculty_id', 'ASC']]
   });

@@ -3,6 +3,7 @@ import { protect } from '../middleware/auth.js';
 import { models } from '../models/index.js';
 import asyncHandler from '../middleware/async.js';
 import ErrorResponse from '../utils/errorResponse.js';
+import { getAllClasses, getClass, createClass, updateClass, deleteClass } from '../controllers/admin/class.controller.js';
 
 const { Class: ClassModel, Department } = models;
 
@@ -49,7 +50,7 @@ const getClasses = asyncHandler(async (req, res, next) => {
 // @route   GET /api/v1/classes/:id
 // @desc    Get single class
 // @access  Private
-const getClass = asyncHandler(async (req, res, next) => {
+const getClassDetail = asyncHandler(async (req, res, next) => {
   const classRecord = await ClassModel.findByPk(req.params.id, {
     include: [
       {
@@ -70,10 +71,21 @@ const getClass = asyncHandler(async (req, res, next) => {
   });
 });
 
+// Admin routes for CRUD operations
 router.route('/')
-  .get(getClasses);
+  .get(getAllClasses)
+  .post(createClass);
 
 router.route('/:id')
-  .get(getClass);
+  .get(getClass)
+  .put(updateClass)
+  .delete(deleteClass);
+
+// General routes for dropdowns/forms (same endpoints but for general users)
+router.route('/general/list')
+  .get(getClasses);
+
+router.route('/general/:id')
+  .get(getClassDetail);
 
 export default router;

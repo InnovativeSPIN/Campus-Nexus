@@ -50,6 +50,11 @@ const FacultySubjectAssignment = (sequelize) => {
       defaultValue: 0,
       comment: 'Total hours for the subject',
     },
+    batch: {
+      type: DataTypes.STRING(20),
+      allowNull: true,
+      comment: 'Batch year (e.g. 2025)',
+    },
     no_of_periods: {
       type: DataTypes.INTEGER,
       allowNull: true,
