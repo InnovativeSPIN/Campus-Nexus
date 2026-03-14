@@ -218,6 +218,7 @@ export default function SuperAdminSubjectManagement() {
           ? '/api/v1/admin/subjects'
           : `/api/v1/admin/subjects/${formModal.data?.id}`;
 
+      console.log('SUBJECT SAVE payload:', payload, 'url:', url);
       const response = await fetch(url, {
         method: formModal.mode === 'add' ? 'POST' : 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -225,6 +226,7 @@ export default function SuperAdminSubjectManagement() {
       });
 
       const result = await response.json();
+      console.log('SUBJECT SAVE response:', result);
       if (result.success) {
         toast.success(formModal.mode === 'add' ? 'Subject created successfully' : 'Subject updated successfully');
         setFormModal({ open: false, mode: 'add' });

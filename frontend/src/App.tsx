@@ -8,6 +8,7 @@ import SuperAdminDashboard from './pages/admin/superadmin/Dashboard';
 import SuperAdminStudents from './pages/admin/superadmin/Students';
 import SuperAdminFaculty from './pages/admin/superadmin/Faculty';
 import SuperAdminDepartments from './pages/admin/superadmin/Departments';
+import SuperAdminClasses from './pages/admin/superadmin/Classes';
 import SuperAdminReports from './pages/admin/superadmin/Reports';
 import SuperAdminBackup from './pages/admin/superadmin/Backup';
 import SuperAdminAdmins from './pages/admin/superadmin/Admins';
@@ -83,6 +84,7 @@ const App = () => {
               <Route path="/admin/superadmin/faculty" element={<SuperAdminFaculty />} />
               <Route path="/admin/superadmin/faculty/:id" element={<SuperAdminFacultyProfile />} />
               <Route path="/admin/superadmin/departments" element={<SuperAdminDepartments />} />
+              <Route path="/admin/superadmin/classes" element={<SuperAdminClasses />} />
               <Route path="/admin/superadmin/reports" element={<SuperAdminReports />} />
               <Route path="/admin/superadmin/backup" element={<SuperAdminBackup />} />
               <Route path="/admin/superadmin/announcements" element={<SuperAdminAnnouncements />} />

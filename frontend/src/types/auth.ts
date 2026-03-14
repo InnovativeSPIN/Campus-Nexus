@@ -138,6 +138,20 @@ export interface Department {
 	studentCount: number;
 }
 
+export interface Class {
+	id: string | number;
+	name: string;
+	room?: string;
+	department_id: number;
+	capacity?: number;
+	status?: 'active' | 'inactive';
+	batch?: string;
+	semester?: number;
+	academic_year?: string;
+	section?: string;
+	department?: Department;
+}
+
 export interface TimeTableEntry {
 	id: string;
 	facultyId: string;
