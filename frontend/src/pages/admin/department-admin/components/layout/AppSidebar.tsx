@@ -31,7 +31,6 @@ const menuItems = [
   { title: "Profile", url: "/admin/department-admin/profile", icon: User },
   { title: "Coordinators", url: "/admin/department-admin/coordinators", icon: Users },
   { title: "Subject Allocation", url: "/admin/department-admin/subject-allocation", icon: BookOpen },
-  { title: "Class Incharges", url: "/admin/department-admin/class-incharges", icon: GraduationCap },
   { title: "Attendance", url: "/admin/department-admin/attendance", icon: ClipboardCheck },
   { title: "Academics", url: "/admin/department-admin/academics", icon: BookOpen },
   { title: "Leave Management", url: "/admin/department-admin/leave", icon: CalendarDays },

@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -15,7 +14,6 @@ import {
   ChevronRight,
   GraduationCap,
   Users,
-  ShieldCheck,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
@@ -40,30 +38,7 @@ interface AppSidebarProps {
 
 export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
   const location = useLocation();
-  const { user, authToken } = useAuth();
-  const [inchargeCount, setInchargeCount] = useState(0);
-
-  useEffect(() => {
-    if (user?.is_class_incharge && authToken) {
-      const fetchCount = async () => {
-        try {
-          const res = await fetch('/api/v1/student/portfolio-notifications/unread-count', {
-            headers: { 'Authorization': `Bearer ${authToken}` }
-          });
-          if (res.ok) {
-            const data = await res.json();
-            setInchargeCount(data.data?.unreadCount || 0);
-          }
-        } catch (err) {
-          console.error('Failed to fetch incharge count:', err);
-        }
-      };
-      fetchCount();
-      // Refresh every 2 minutes
-      const interval = setInterval(fetchCount, 120000);
-      return () => clearInterval(interval);
-    }
-  }, [user, authToken]);
+  const { user } = useAuth();
 
   return (
     <motion.aside
@@ -101,10 +76,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
       {/* Navigation */}
       <nav className="flex-1 py-4 overflow-y-auto">
         <ul className="space-y-1 px-3">
-          {[
-            ...menuItems,
-            ...(user?.is_class_incharge ? [{ title: "Class Incharge", url: "/faculty/class-incharge", icon: ShieldCheck }] : [])
-          ].map((item, index) => {
+          {menuItems.map((item, index) => {
             const isActive = location.pathname.startsWith(item.url);
             return (
               <motion.li
@@ -119,8 +91,7 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                     "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group",
                     isActive
                       ? "bg-sidebar-accent text-white"
-                      : "text-white/70 hover:bg-sidebar-accent/50 hover:text-white",
-                    item.title === "Class Incharge" && "relative"
+                      : "text-white/70 hover:bg-sidebar-accent/50 hover:text-white"
                   )}
                 >
                   <item.icon
@@ -141,14 +112,6 @@ export function AppSidebar({ collapsed, setCollapsed }: AppSidebarProps) {
                       </motion.span>
                     )}
                   </AnimatePresence>
-                  {item.title === "Class Incharge" && inchargeCount > 0 && (
-                    <div className={cn(
-                      "absolute right-2 flex items-center justify-center min-w-[18px] h-[18px] rounded-full bg-red-500 text-[10px] font-bold text-white px-1 leading-none shadow-sm",
-                      collapsed && "right-3 top-3 border-2 border-sidebar"
-                    )}>
-                      {inchargeCount > 9 ? '9+' : inchargeCount}
-                    </div>
-                  )}
                 </NavLink>
               </motion.li>
             );
