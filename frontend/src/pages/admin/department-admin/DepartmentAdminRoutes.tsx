@@ -21,11 +21,7 @@ import Announcements from "./pages/Announcements";
 import { MentorDashboard } from "./pages/MentorDashboard";
 import { MenteesList } from "./pages/MenteesList";
 import { StudentProfileView } from "./pages/StudentProfileView";
-import TimetableEditor from "./pages/TimetableEditor";
-import CreateTimetable from "./pages/CreateTimetable";
-import { Substitutions } from "./pages/Substitutions";import BreakTimingManager from './pages/BreakTimingManager';
 import SubjectAllocation from './pages/SubjectAllocation';
-import TimetableAlteration from './pages/TimetableAlteration';
 import './department-admin.css';
 
 const queryClient = new QueryClient();
@@ -45,13 +41,7 @@ const DepartmentAdminRoutes = () => (
               <Route path="profile" element={<Profile />} />
               <Route path="change-password" element={<ChangePassword />} />
               <Route path="coordinators" element={<CoordinatorManagement />} />
-              <Route path="class-incharges" element={<ClassInchargeManagement />} />
-              <Route path="timetable" element={<TimetableEditor />} />
-              <Route path="create-timetable" element={<CreateTimetable />} />
-              <Route path="timetable/alterations" element={<TimetableAlteration />} />
-              <Route path="break-timings" element={<BreakTimingManager />} />
               <Route path="subject-allocation" element={<SubjectAllocation />} />
-              <Route path="substitutions" element={<Substitutions />} />
               <Route path="attendance" element={<Attendance />} />
               <Route path="academics" element={<Academics />} />
               <Route path="leave" element={<Leave />} />

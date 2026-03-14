@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { toast } from '@/pages/admin/department-admin/components/ui/sonner';
 import { Users, Plus, Edit, Trash2, Save, X, ChevronDown } from 'lucide-react';
-import { MainLayout } from '@/pages/admin/department-admin/components/layout/MainLayout';
 import { motion } from 'framer-motion';
 
 interface Faculty {
@@ -41,7 +40,11 @@ interface ClassStudent {
   semester: number;
 }
 
-export default function ClassInchargeManagement() {
+interface ClassInchargeManagementProps {
+  hideHeader?: boolean;
+}
+
+export default function ClassInchargeManagement({ hideHeader }: ClassInchargeManagementProps) {
   const [incharges, setIncharges] = useState<ClassIncharge[]>([]);
   const [faculty, setFaculty] = useState<Faculty[]>([]);
   const [loading, setLoading] = useState(false);
@@ -211,32 +214,34 @@ export default function ClassInchargeManagement() {
   };
 
   return (
-    <MainLayout>
-      <motion.div
-        initial={{ opacity: 0, y: -6 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="mb-8 flex items-center justify-between"
-      >
-        <div className="flex items-center gap-3">
-          <Users className="h-8 w-8 text-primary" />
-          <div>
-            <h1 className="page-header font-serif">Class Incharge Management</h1>
-            <p className="text-muted-foreground -mt-4">Assign class incharges for all semester classes</p>
-          </div>
-        </div>
-
-        <button
-          onClick={() => {
-            setEditingIncharge(null);
-            setNewAssignment({ class_id: '', faculty_id: '', academic_year });
-            setShowAssignModal(true);
-          }}
-          className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+    <div>
+      {!hideHeader && (
+        <motion.div
+          initial={{ opacity: 0, y: -6 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8 flex items-center justify-between"
         >
-          <Plus className="h-5 w-5" />
-          Assign Incharge
-        </button>
-      </motion.div>
+          <div className="flex items-center gap-3">
+            <Users className="h-8 w-8 text-primary" />
+            <div>
+              <h1 className="page-header font-serif">Class Incharge Management</h1>
+              <p className="text-muted-foreground -mt-4">Assign class incharges for all semester classes</p>
+            </div>
+          </div>
+
+          <button
+            onClick={() => {
+              setEditingIncharge(null);
+              setNewAssignment({ class_id: '', faculty_id: '', academic_year });
+              setShowAssignModal(true);
+            }}
+            className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+          >
+            <Plus className="h-5 w-5" />
+            Assign Incharge
+          </button>
+        </motion.div>
+      )}
 
       {/* Filters */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 p-6 bg-muted/40 rounded-xl border border-border">
@@ -496,6 +501,6 @@ export default function ClassInchargeManagement() {
           </motion.div>
         </div>
       )}
-    </MainLayout>
+    </div>
   );
 }

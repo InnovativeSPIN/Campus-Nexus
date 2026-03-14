@@ -7,7 +7,6 @@ import { NotificationProvider, MentorProvider } from "@/pages/faculty/context";
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
 import ChangePassword from "./pages/ChangePassword";
-import TimetableAlteration from "./pages/TimetableAlteration";
 import PlacementCoordinator from "./pages/PlacementCoordinator";
 import Timetable from "./pages/Timetable";
 import Attendance from "./pages/Attendance";
@@ -24,8 +23,6 @@ import { StudentProfileView } from "./pages/StudentProfileView";
 import AnnouncementDetail from "./pages/AnnouncementDetail";
 import Announcements from "./pages/Announcements";import NotificationCenter from './pages/NotificationCenter';
 import { InternalMarksEntry } from './pages/InternalMarksEntry';
-import CreateTimetable from './pages/CreateTimetable';
-import { Substitutions } from './pages/Substitutions';
 import ClassInchargeView from './pages/ClassInchargeView';
 import './faculty.css';
 
@@ -45,7 +42,6 @@ const FacultyRoutes = () => (
               <Route path="profile" element={<Profile />} />
               <Route path="change-password" element={<ChangePassword />} />
               <Route path="timetable" element={<Timetable />} />
-              <Route path="timetable/alterations" element={<TimetableAlteration />} />
               <Route path="placement" element={<PlacementCoordinator />} />
               <Route path="attendance" element={<Attendance />} />
               <Route path="academics" element={<Academics />} />
@@ -58,8 +54,6 @@ const FacultyRoutes = () => (
               <Route path="announcements/:id" element={<AnnouncementDetail />} />
               <Route path="notifications" element={<NotificationCenter />} />
               <Route path="internal-marks" element={<InternalMarksEntry />} />
-              <Route path="create-timetable" element={<CreateTimetable />} />
-              <Route path="substitutions" element={<Substitutions />} />
               <Route path="mentor" element={<MentorDashboard />} />
               <Route path="mentor/:year" element={<MenteesList />} />
               <Route path="mentor/student/:studentId" element={<StudentProfileView />} />
