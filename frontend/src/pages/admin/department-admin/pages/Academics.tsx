@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { MainLayout } from "@/pages/admin/department-admin/components/layout/MainLayout";
 import { motion } from "framer-motion";
 import { Button } from "@/pages/admin/department-admin/components/ui/button";
@@ -305,6 +305,14 @@ export default function Academics() {
   const [creditsYear, setCreditsYear] = useState<string>("3");
   const [creditsSemester, setCreditsSemester] = useState<string>("5");
 
+  const availableDepartments = useMemo(() => {
+    return Array.from(new Set(creditsData.map((c) => c.department))).filter(Boolean);
+  }, [creditsData]);
+
+  const availableYears = useMemo(() => {
+    return Array.from(new Set(creditsData.map((c) => c.year))).sort((a, b) => a - b);
+  }, [creditsData]);
+
   // Fetch allocations and build credits list
   useEffect(() => {
     const loadAllocations = async () => {
@@ -317,7 +325,20 @@ export default function Academics() {
 
         const res = await apiFetch(url);
         if (res?.success && Array.isArray(res.data)) {
-          setCreditsData(mapAllocationsToCredits(res.data));
+          const mapped = mapAllocationsToCredits(res.data);
+          setCreditsData(mapped);
+
+          // Update credits data only; derived filter options are computed via useMemo.
+          // Ensure selected filters stay valid when allocations change.
+          const departments = Array.from(new Set(mapped.map((c) => c.department))).filter(Boolean);
+          const years = Array.from(new Set(mapped.map((c) => c.year))).sort((a, b) => a - b);
+
+          if (departments.length && !departments.includes(creditsDepartment)) {
+            setCreditsDepartment(departments[0]);
+          }
+          if (years.length && !years.includes(parseInt(creditsYear))) {
+            setCreditsYear(years[0].toString());
+          }
         } else {
           setCreditsData([]);
         }
@@ -1600,11 +1621,11 @@ export default function Academics() {
                     <SelectValue placeholder="Department" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="CSE">CSE</SelectItem>
-                    <SelectItem value="IT">IT</SelectItem>
-                    <SelectItem value="AI&DS">AI&DS</SelectItem>
-                    <SelectItem value="ECE">ECE</SelectItem>
-                    <SelectItem value="EEE">EEE</SelectItem>
+                    {(availableDepartments.length ? availableDepartments : ["CSE", "IT", "AI&DS", "ECE", "EEE"]).map((dept: string) => (
+                      <SelectItem key={dept} value={dept}>
+                        {dept}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 <Select value={creditsYear} onValueChange={setCreditsYear}>
@@ -1612,10 +1633,11 @@ export default function Academics() {
                     <SelectValue placeholder="Year" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="1">1st Year</SelectItem>
-                    <SelectItem value="2">2nd Year</SelectItem>
-                    <SelectItem value="3">3rd Year</SelectItem>
-                    <SelectItem value="4">4th Year</SelectItem>
+                    {(availableYears.length ? availableYears : [1, 2, 3, 4]).map((year: number) => (
+                      <SelectItem key={year} value={year.toString()}>
+                        {year === 1 ? '1st Year' : year === 2 ? '2nd Year' : year === 3 ? '3rd Year' : `${year}th Year`}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 <Select value={creditsSemester} onValueChange={setCreditsSemester}>
