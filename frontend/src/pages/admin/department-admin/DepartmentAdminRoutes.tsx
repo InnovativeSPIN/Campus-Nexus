@@ -22,6 +22,9 @@ import { MentorDashboard } from "./pages/MentorDashboard";
 import { MenteesList } from "./pages/MenteesList";
 import { StudentProfileView } from "./pages/StudentProfileView";
 import SubjectAllocation from './pages/SubjectAllocation';
+import TimetableMasterManagement from './pages/TimetableMasterManagement';
+import TimetableSlotsManagement from './pages/TimetableSlotsManagement';
+import LeaveWithAlteration from './pages/LeaveWithAlteration';
 import './department-admin.css';
 
 const queryClient = new QueryClient();
@@ -52,6 +55,9 @@ const DepartmentAdminRoutes = () => (
               <Route path="mentor" element={<MentorDashboard />} />
               <Route path="mentor/:year" element={<MenteesList />} />
               <Route path="mentor/student/:studentId" element={<StudentProfileView />} />
+              <Route path="timetable-master" element={<TimetableMasterManagement />} />
+              <Route path="timetable-master/:masterId/slots" element={<TimetableSlotsManagement />} />
+              <Route path="leave-with-alteration" element={<LeaveWithAlteration />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </div>

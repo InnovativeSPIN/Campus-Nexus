@@ -1,18 +1,16 @@
 import { useEffect, useState } from 'react';
 import { toast } from '@/components/ui/sonner';
-import { Users, BookOpen, Award, Loader2, Check, Calendar, Clock } from 'lucide-react';
+import { Users, Award, Loader2, Check, Calendar, Clock } from 'lucide-react';
 import { MainLayout } from '@/pages/admin/department-admin/components/layout/MainLayout';
 import { motion } from 'framer-motion';
 import { IntegratedNotificationBell } from '@/components/common/IntegratedNotificationBell';
 import { cn } from '@/pages/admin/department-admin/lib/utils';
-import ClassInchargeManagement from './ClassInchargeManagement';
 
 type FacultyType = {
   faculty_id: number;
   Name: string;
   email: string;
   designation: string;
-  is_timetable_incharge?: boolean;
   is_placement_coordinator?: boolean;
 };
 
@@ -20,7 +18,6 @@ const CoordinatorManagement = () => {
   const [faculty, setFaculty] = useState<FacultyType[]>([]);
   const [loading, setLoading] = useState(false);
   const [assignmentLoading, setAssignmentLoading] = useState<Record<string, boolean>>({});
-  const [activeTab, setActiveTab] = useState<'roles' | 'classIncharge'>('roles');
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
@@ -55,7 +52,7 @@ const CoordinatorManagement = () => {
   const updateAssignment = async (
     facultyId: number,
     endpoint: string,
-    toggleKey: 'is_timetable_incharge' | 'is_placement_coordinator',
+    toggleKey: 'is_placement_coordinator',
     currentValue: boolean
   ) => {
     setAssignmentLoading(prev => ({ ...prev, [endpoint]: true }));
@@ -92,13 +89,6 @@ const CoordinatorManagement = () => {
     }
   };
 
-  const toggleTimetableIncharge = (facultyId: number, currentStatus: boolean) =>
-    updateAssignment(
-      facultyId,
-      currentStatus ? 'remove-timetable' : 'assign-timetable',
-      'is_timetable_incharge',
-      currentStatus
-    );
 
   const togglePlacementCoordinator = (facultyId: number, currentStatus: boolean) =>
     updateAssignment(
@@ -139,7 +129,7 @@ const CoordinatorManagement = () => {
         <div>
           <h1 className="page-header font-serif">Coordinator Management</h1>
           <p className="text-muted-foreground -mt-4">
-            Assign Timetable Incharge and Placement Coordinators
+            Assign Placement Coordinators
           </p>
         </div>
         <div className="flex items-center gap-4">
@@ -159,37 +149,12 @@ const CoordinatorManagement = () => {
 
       <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => setActiveTab('roles')}
-            className={cn(
-              'px-4 py-2 rounded-lg font-medium transition',
-              activeTab === 'roles'
-                ? 'bg-primary text-white'
-                : 'bg-muted hover:bg-muted/70 text-foreground'
-            )}
-          >
-            Coordinator Roles
-          </button>
-          <button
-            onClick={() => setActiveTab('classIncharge')}
-            className={cn(
-              'px-4 py-2 rounded-lg font-medium transition',
-              activeTab === 'classIncharge'
-                ? 'bg-primary text-white'
-                : 'bg-muted hover:bg-muted/70 text-foreground'
-            )}
-          >
-            Class Incharge
-          </button>
+          <h2 className="text-lg font-semibold">Coordinator Roles</h2>
         </div>
         <div className="text-sm text-muted-foreground">
-          {activeTab === 'roles'
-            ? 'Manage timetable / placement coordinators.'
-            : 'Assign class incharges and view student lists.'}
+          Manage placement coordinators.
         </div>
       </div>
-
-      {activeTab === 'roles' ? (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -216,49 +181,19 @@ const CoordinatorManagement = () => {
                     Current Roles
                   </p>
                   <div className="flex flex-wrap gap-2">
-                    {fac.is_timetable_incharge && (
-                      <span className="inline-flex items-center gap-1.5 bg-blue-500/15 text-blue-600 dark:text-blue-400 px-3 py-1.5 rounded-full text-xs font-medium border border-blue-200 dark:border-blue-500/30">
-                        <BookOpen className="w-3.5 h-3.5" />
-                        Timetable Incharge
-                      </span>
-                    )}
                     {fac.is_placement_coordinator && (
                       <span className="inline-flex items-center gap-1.5 bg-green-500/15 text-green-600 dark:text-green-400 px-3 py-1.5 rounded-full text-xs font-medium border border-green-200 dark:border-green-500/30">
                         <Award className="w-3.5 h-3.5" />
                         Placement Coordinator
                       </span>
                     )}
-                    {!fac.is_timetable_incharge && !fac.is_placement_coordinator && (
+                    {!fac.is_placement_coordinator && (
                       <span className="text-xs text-muted-foreground italic">No roles assigned</span>
                     )}
                   </div>
                 </div>
 
                 <div className="space-y-2.5">
-                  <button
-                    onClick={() => toggleTimetableIncharge(fac.faculty_id, !!fac.is_timetable_incharge)}
-                    disabled={assignmentLoading[fac.faculty_id]}
-                    className={cn(
-                      'w-full flex items-center justify-between px-4 py-2.5 rounded-lg font-medium transition-all',
-                      fac.is_timetable_incharge
-                        ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm'
-                        : 'bg-muted hover:bg-muted/80 text-foreground border border-border hover:border-blue-500/30',
-                      assignmentLoading[fac.faculty_id] && 'opacity-50 cursor-not-allowed'
-                    )}
-                  >
-                    <div className="flex items-center gap-2">
-                      <BookOpen className="w-4 h-4" />
-                      <span className="text-sm">
-                        {fac.is_timetable_incharge ? 'Remove' : 'Assign'} Timetable
-                      </span>
-                    </div>
-                    {assignmentLoading[fac.faculty_id] ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : fac.is_timetable_incharge ? (
-                      <Check className="w-4 h-4" />
-                    ) : null}
-                  </button>
-
                   <button
                     onClick={() => togglePlacementCoordinator(fac.faculty_id, !!fac.is_placement_coordinator)}
                     disabled={assignmentLoading[`placement_${fac.faculty_id}`]}
@@ -289,13 +224,10 @@ const CoordinatorManagement = () => {
             <div className="col-span-full text-center py-12 text-muted-foreground">
               <Users className="mx-auto mb-4 w-12 h-12" />
               <p className="font-medium">No coordinator roles assigned yet.</p>
-              <p className="text-sm">Use the buttons above to assign Timetable or Placement coordinators.</p>
+              <p className="text-sm">Use the button above to assign Placement coordinators.</p>
             </div>
           )}
         </motion.div>
-      ) : (
-        <ClassInchargeManagement hideHeader />
-      )}
     </MainLayout>
   );
 };
