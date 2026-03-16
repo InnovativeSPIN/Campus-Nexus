@@ -23,6 +23,11 @@ import {
   Flag,
 } from 'lucide-react';
 import { cn } from '@/pages/faculty/lib/utils';
+import { useToast } from '@/pages/faculty/hooks/use-toast';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/pages/faculty/components/ui/dialog';
+import { Textarea } from '@/pages/faculty/components/ui/textarea';
+import { Button } from '@/pages/faculty/components/ui/button';
+import { Label } from '@/pages/faculty/components/ui/label';
 
 interface ClassInfo {
   id: number;
@@ -54,7 +59,9 @@ interface StudentLeave {
   endDate: string;
   totalDays: number;
   reason: string;
-  status: 'pending' | 'approved' | 'rejected' | 'cancelled';
+  overall_status: 'pending' | 'approved' | 'rejected' | 'cancelled';
+  class_incharge_approval_status: 'pending' | 'approved' | 'rejected';
+  class_incharge_remarks?: string;
   attachment: string | null;
   student: Student;
 }
@@ -86,6 +93,7 @@ interface ClassInchargeData {
 
 export default function ClassInchargeView() {
   const { user, refreshUserData } = useAuth();
+  const { toast } = useToast();
   const refreshedRef = useRef(false);
   const [data, setData] = useState<ClassInchargeData | null>(null);
   const [leaves, setLeaves] = useState<StudentLeave[]>([]);
@@ -102,6 +110,9 @@ export default function ClassInchargeView() {
     projects: PortfolioItem[];
   }>({ sports: [], events: [], certs: [], projects: [] });
   const [activePortfolioCategory, setActivePortfolioCategory] = useState<'sports' | 'events' | 'certs' | 'projects'>('sports');
+  const [selectedLeave, setSelectedLeave] = useState<StudentLeave | null>(null);
+  const [leaveRemarks, setLeaveRemarks] = useState('');
+  const [processingLeaveId, setProcessingLeaveId] = useState<number | null>(null);
 
   useEffect(() => {
     if (!refreshedRef.current) {
@@ -138,44 +149,70 @@ export default function ClassInchargeView() {
     setLeavesLoading(true);
     try {
       const token = localStorage.getItem('authToken');
-      const res = await fetch('/api/v1/student-leaves/class-incharge', {
+      const res = await fetch('/api/v1/student-leaves/approvals/pending/class-incharge', {
         headers: { 'Authorization': `Bearer ${token}` },
       });
       if (res.ok) {
         const json = await res.json();
-        setLeaves(json.data);
+        setLeaves(json.data || []);
+      } else {
+        console.error('Failed to fetch leave requests:', res.status);
       }
     } catch (err) {
       console.error('Failed to fetch leave requests:', err);
+      toast({
+        title: 'Error',
+        description: 'Failed to load leave requests',
+        variant: 'destructive',
+      });
     } finally {
       setLeavesLoading(false);
     }
   };
 
-  const handleLeaveApproval = async (id: number, status: 'approved' | 'rejected') => {
-    const remarks = prompt(`Enter ${status} remarks (optional):`);
-    if (remarks === null) return;
-
+  const handleLeaveApproval = async (leaveId: number, action: 'approved' | 'rejected') => {
+    if (!selectedLeave) return;
+    
+    setProcessingLeaveId(leaveId);
     try {
       const token = localStorage.getItem('authToken');
-      const res = await fetch(`/api/v1/student-leaves/${id}/approval`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ status, approvalRemarks: remarks }),
-      });
+      const res = await fetch(
+        `/api/v1/student-leaves/approvals/${leaveId}/class-incharge/${action}`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ remarks: leaveRemarks || undefined }),
+        }
+      );
 
       if (res.ok) {
+        toast({
+          title: '✅ Success',
+          description: `Leave ${action} successfully. Forwarded to Department Admin.`,
+        });
+        setLeaveRemarks('');
+        setSelectedLeave(null);
         fetchLeaveRequests();
       } else {
-        const err = await res.json();
-        alert(`Error: ${err.error || err.message || 'Failed to update leave status'}`);
+        const error = await res.json();
+        toast({
+          title: 'Error',
+          description: error.message || `Failed to ${action} leave`,
+          variant: 'destructive',
+        });
       }
-
     } catch (err) {
-      console.error('Error updating leave status:', err);
+      console.error('Error processing leave:', err);
+      toast({
+        title: 'Error',
+        description: 'An error occurred while processing the request',
+        variant: 'destructive',
+      });
+    } finally {
+      setProcessingLeaveId(null);
     }
   };
 
@@ -247,7 +284,9 @@ export default function ClassInchargeView() {
   };
 
 
-  if (!user?.is_class_incharge) {
+  // If the user isn't statically flagged as class incharge, we still attempt to
+  // load their assignment from the API (useful when the role is set via timetable master).
+  if (!user?.is_class_incharge && !data && !loading) {
     return (
       <MainLayout>
         <div className="flex flex-col items-center justify-center h-96 text-muted-foreground gap-4">
@@ -319,7 +358,7 @@ export default function ClassInchargeView() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Semester</p>
-                <p className="font-semibold text-lg">Sem {classInfo?.semester}</p>
+                <p className="font-semibold text-lg">Sem {classInfo?.semester || '—'}</p>
               </div>
             </div>
             <div className="bg-card rounded-xl border p-5 flex items-center gap-4">
@@ -337,7 +376,7 @@ export default function ClassInchargeView() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Academic Year</p>
-                <p className="font-semibold text-lg">{classInfo?.batch || '—'}</p>
+                <p className="font-semibold text-lg">{data.incharge.academic_year || classInfo?.batch || '—'}</p>
               </div>
             </div>
 
@@ -367,7 +406,7 @@ export default function ClassInchargeView() {
               Leave Requests
               {leaves.length > 0 && (
                 <span className="bg-primary/10 text-primary text-[10px] px-1.5 py-0.5 rounded-full font-bold">
-                  {leaves.filter(l => l.status === 'pending').length}
+                  {leaves.filter(l => l.class_incharge_approval_status === 'pending').length}
                 </span>
               )}
               {activeTab === 'leaves' && (
@@ -585,34 +624,28 @@ export default function ClassInchargeView() {
                               <span
                                 className={cn(
                                   'inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider',
-                                  leave.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
-                                    leave.status === 'approved' ? 'bg-green-100 text-green-700' :
-                                      leave.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                                  leave.class_incharge_approval_status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                                    leave.class_incharge_approval_status === 'approved' ? 'bg-green-100 text-green-700' :
+                                      leave.class_incharge_approval_status === 'rejected' ? 'bg-red-100 text-red-700' :
                                         'bg-gray-100 text-gray-700'
                                 )}
                               >
-                                {leave.status === 'pending' && <Clock className="w-3 h-3 mr-1" />}
-                                {leave.status === 'approved' && <CheckCircle2 className="w-3 h-3 mr-1" />}
-                                {leave.status === 'rejected' && <XCircle className="w-3 h-3 mr-1" />}
-                                {leave.status}
+                                {leave.class_incharge_approval_status === 'pending' && <Clock className="w-3 h-3 mr-1" />}
+                                {leave.class_incharge_approval_status === 'approved' && <CheckCircle2 className="w-3 h-3 mr-1" />}
+                                {leave.class_incharge_approval_status === 'rejected' && <XCircle className="w-3 h-3 mr-1" />}
+                                CI: {leave.class_incharge_approval_status}
                               </span>
                             </td>
                             <td className="py-3 px-4 text-center">
-                              {leave.status === 'pending' ? (
+                              {leave.class_incharge_approval_status === 'pending' ? (
                                 <div className="flex items-center justify-center gap-2">
                                   <button
-                                    onClick={() => handleLeaveApproval(leave.id, 'approved')}
-                                    className="p-1.5 rounded-lg bg-green-100 text-green-600 hover:bg-green-600 hover:text-white transition-all shadow-sm"
+                                    onClick={() => setSelectedLeave(leave)}
+                                    className="px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-700 hover:bg-green-600 hover:text-white transition-all"
                                     title="Approve"
                                   >
-                                    <Check className="w-4 h-4" />
-                                  </button>
-                                  <button
-                                    onClick={() => handleLeaveApproval(leave.id, 'rejected')}
-                                    className="p-1.5 rounded-lg bg-red-100 text-red-600 hover:bg-red-600 hover:text-white transition-all shadow-sm"
-                                    title="Reject"
-                                  >
-                                    <X className="w-4 h-4" />
+                                    <Check className="w-3 h-3 inline mr-1" />
+                                    Take Action
                                   </button>
                                 </div>
                               ) : (
@@ -784,6 +817,96 @@ export default function ClassInchargeView() {
         </div>
       )
       }
+
+      {/* Leave Approval Dialog */}
+      <Dialog open={selectedLeave !== null} onOpenChange={(open) => {
+        if (!open) {
+          setSelectedLeave(null);
+          setLeaveRemarks('');
+        }
+      }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Review Leave Request</DialogTitle>
+          </DialogHeader>
+          
+          {selectedLeave && (
+            <div className="space-y-4">
+              {/* Leave Details Card */}
+              <div className="bg-muted p-4 rounded-lg space-y-2">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Student</p>
+                    <p className="font-semibold">{selectedLeave.student.firstName} {selectedLeave.student.lastName}</p>
+                    <p className="text-xs text-muted-foreground">{selectedLeave.student.studentId}</p>
+                  </div>
+                </div>
+                
+                <div className="border-t pt-2">
+                  <p className="text-xs text-muted-foreground">Leave Type</p>
+                  <p className="font-medium">{selectedLeave.leaveType} - {selectedLeave.leaveSubType}</p>
+                </div>
+
+                <div className="border-t pt-2">
+                  <p className="text-xs text-muted-foreground">Duration</p>
+                  <p className="font-medium">
+                    {new Date(selectedLeave.startDate).toLocaleDateString()} to {new Date(selectedLeave.endDate).toLocaleDateString()}
+                  </p>
+                  <p className="text-xs text-muted-foreground">{selectedLeave.totalDays} day(s)</p>
+                </div>
+
+                <div className="border-t pt-2">
+                  <p className="text-xs text-muted-foreground">Reason</p>
+                  <p className="text-sm">{selectedLeave.reason}</p>
+                </div>
+              </div>
+
+              {/* Remarks Input */}
+              <div className="space-y-2">
+                <Label htmlFor="remarks">Add Remarks (Optional)</Label>
+                <Textarea
+                  id="remarks"
+                  placeholder="Enter your comments or feedback on this leave request..."
+                  value={leaveRemarks}
+                  onChange={(e) => setLeaveRemarks(e.target.value)}
+                  rows={3}
+                  className="resize-none"
+                />
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-2 pt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setSelectedLeave(null);
+                    setLeaveRemarks('');
+                  }}
+                  disabled={processingLeaveId === selectedLeave.id}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={() => handleLeaveApproval(selectedLeave.id, 'rejected')}
+                  disabled={processingLeaveId === selectedLeave.id}
+                  className="flex-1"
+                >
+                  {processingLeaveId === selectedLeave.id ? 'Processing...' : 'Reject'}
+                </Button>
+                <Button
+                  onClick={() => handleLeaveApproval(selectedLeave.id, 'approved')}
+                  disabled={processingLeaveId === selectedLeave.id}
+                  className="flex-1"
+                >
+                  {processingLeaveId === selectedLeave.id ? 'Processing...' : 'Approve'}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </MainLayout >
   );
 }

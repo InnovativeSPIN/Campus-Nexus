@@ -8,7 +8,9 @@ import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
 import ChangePassword from "./pages/ChangePassword";
 import PlacementCoordinator from "./pages/PlacementCoordinator";
-import Timetable from "./pages/Timetable";
+import TimetableView from "./pages/TimetableView";
+import TimetableManagement from "./pages/TimetableManagement";
+import TimetableAlteration from "./pages/TimetableAlteration";
 import Attendance from "./pages/Attendance";
 import Academics from "./pages/Academics";
 import Leave from "./pages/Leave";
@@ -41,7 +43,9 @@ const FacultyRoutes = () => (
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="profile" element={<Profile />} />
               <Route path="change-password" element={<ChangePassword />} />
-              <Route path="timetable" element={<Timetable />} />
+              <Route path="timetable" element={<TimetableView />} />
+              <Route path="timetable-management" element={<TimetableManagement />} />
+              <Route path="timetable-alteration" element={<TimetableAlteration />} />
               <Route path="placement" element={<PlacementCoordinator />} />
               <Route path="attendance" element={<Attendance />} />
               <Route path="academics" element={<Academics />} />
