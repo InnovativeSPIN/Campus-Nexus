@@ -26,6 +26,12 @@ const Student = (sequelize) => {
       type: DataTypes.STRING(30),
       allowNull: true,
     },
+    emisNo: {
+      type: DataTypes.STRING(50),
+      allowNull: true,
+      unique: true,
+      comment: 'Education Management Information System Number'
+    },
     firstName: {
       type: DataTypes.STRING(100),
       allowNull: false,

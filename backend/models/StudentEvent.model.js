@@ -21,7 +21,6 @@ const StudentEvent = (sequelize) => {
             defaultValue: 'college',
         },
         certificateUrl: { type: DataTypes.STRING(500), allowNull: true },
-        classId: { type: DataTypes.INTEGER, allowNull: true },
         approvalStatus: {
             type: DataTypes.ENUM('pending', 'approved', 'rejected'),
             defaultValue: 'pending',
@@ -37,7 +36,6 @@ const StudentEvent = (sequelize) => {
     StudentEventModel.associate = (models) => {
         StudentEventModel.belongsTo(models.Student, { foreignKey: 'studentId', as: 'student' });
         StudentEventModel.belongsTo(models.Faculty, { foreignKey: 'approvedById', as: 'approvedBy' });
-        StudentEventModel.belongsTo(models.Class, { foreignKey: 'classId', as: 'class' });
     };
 
     return StudentEventModel;

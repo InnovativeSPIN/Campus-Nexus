@@ -46,10 +46,14 @@ import TimetableSimple from './TimetableSimple.model.js';
 import Room from './Room.model.js';
 import Lab from './Lab.model.js';
 import TimetablePeriod from './TimetablePeriod.model.js';
+import PeriodSlot from './PeriodSlot.model.js';
 import StudentLeave from './StudentLeave.model.js';
 import ClassIncharge from './ClassIncharge.model.js';
 import LeaveNotification from './LeaveNotification.model.js';
 import PortfolioNotification from './PortfolioNotification.model.js';
+import TimetableMasterSlots from './TimetableMasterSlots.model.js';
+import TimetableOverlay from './TimetableOverlay.model.js';
+import FacultySubstitutes from './FacultySubstitutes.model.js';
 
 // Initialize models
 const models = {
@@ -97,10 +101,14 @@ const models = {
   Room: Room(sequelize),
   Lab: Lab(sequelize),
   TimetablePeriod: TimetablePeriod(sequelize),
+  PeriodSlot: PeriodSlot(sequelize),
   StudentLeave: StudentLeave(sequelize),
   ClassIncharge: ClassIncharge(sequelize),
   LeaveNotification: LeaveNotification(sequelize),
   PortfolioNotification: PortfolioNotification(sequelize),
+  TimetableMasterSlots: TimetableMasterSlots(sequelize),
+  TimetableOverlay: TimetableOverlay(sequelize),
+  FacultySubstitutes: FacultySubstitutes(sequelize),
 };
 
 // Define associations

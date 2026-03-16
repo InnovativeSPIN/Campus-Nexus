@@ -20,7 +20,6 @@ const StudentSport = (sequelize) => {
             defaultValue: 'college',
         },
         documentUrl: { type: DataTypes.STRING(500), allowNull: true },
-        classId: { type: DataTypes.INTEGER, allowNull: true },
         approvalStatus: {
             type: DataTypes.ENUM('pending', 'approved', 'rejected'),
             defaultValue: 'pending',
@@ -36,7 +35,6 @@ const StudentSport = (sequelize) => {
     StudentSportModel.associate = (models) => {
         StudentSportModel.belongsTo(models.Student, { foreignKey: 'studentId', as: 'student' });
         StudentSportModel.belongsTo(models.Faculty, { foreignKey: 'approvedById', as: 'approvedBy' });
-        StudentSportModel.belongsTo(models.Class, { foreignKey: 'classId', as: 'class' });
     };
 
     return StudentSportModel;

@@ -12,7 +12,6 @@ const StudentCertification = (sequelize) => {
         credentialUrl: { type: DataTypes.STRING(500), allowNull: true },
         skills: { type: DataTypes.JSON, allowNull: true },
         documentUrl: { type: DataTypes.STRING(500), allowNull: true },
-        classId: { type: DataTypes.INTEGER, allowNull: true },
         approvalStatus: {
             type: DataTypes.ENUM('pending', 'approved', 'rejected'),
             defaultValue: 'pending',
@@ -28,7 +27,6 @@ const StudentCertification = (sequelize) => {
     StudentCertificationModel.associate = (models) => {
         StudentCertificationModel.belongsTo(models.Student, { foreignKey: 'studentId', as: 'student' });
         StudentCertificationModel.belongsTo(models.Faculty, { foreignKey: 'approvedById', as: 'approvedBy' });
-        StudentCertificationModel.belongsTo(models.Class, { foreignKey: 'classId', as: 'class' });
     };
 
     return StudentCertificationModel;
