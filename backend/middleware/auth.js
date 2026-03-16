@@ -77,8 +77,36 @@ export const protect = asyncHandler(async (req, res, next) => {
 
     // Handle faculty tokens
     if (decoded.type === 'faculty') {
+      // Explicitly list columns to avoid selecting removed legacy fields
       req.user = await Faculty.findByPk(decoded.id, {
-        attributes: { exclude: ['userId'] },
+        attributes: [
+          'faculty_id',
+          'faculty_college_code',
+          'AICTE_ID',
+          'Anna_University_ID',
+          'Name',
+          'email',
+          'phone_number',
+          'password',
+          'role_id',
+          'department_id',
+          'designation',
+          'educational_qualification',
+          'phd_status',
+          'gender',
+          'date_of_birth',
+          'date_of_joining',
+          'profile_image_url',
+          'status',
+          'blood_group',
+          'aadhar_number',
+          'pan_number',
+          'perm_address',
+          'curr_address',
+          'linkedin_url',
+          'created_at',
+          'updated_at'
+        ],
         include: [{
           model: models.Department,
           as: 'department',
