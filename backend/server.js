@@ -26,6 +26,10 @@ import adminSubjectRoutes from './routes/admin/subject.routes.js';
 import facultyRoutes from './routes/faculty/faculty.routes.js';
 import studentRoutes from './routes/student/student.routes.js';
 import timetableRoutes from './routes/timetable/timetable.routes.js';
+import timetableMasterRoutes from './routes/timetable/timetable-master.routes.js';
+import timetableSlotsRoutes from './routes/timetable/timetable-slots.routes.js';
+import timetableAlterationWorkflowRoutes from './routes/timetable/timetable-alteration.routes.js';
+import timetableDisplayRoutes from './routes/timetable/timetable-display.routes.js';
 import timetableManagementAdminRoutes from './routes/admin/timetable-management.routes.js';
 import leaveRoutes from './routes/leave-attendance/leave.routes.js';
 import attendanceRoutes from './routes/leave-attendance/attendance.routes.js';
@@ -50,7 +54,10 @@ import studentExtracurricularRoutes from './routes/student/studentExtracurricula
 import studentNotificationRoutes from './routes/student/studentNotification.routes.js';
 import studentDisciplinaryRoutes from './routes/student/disciplinary.routes.js';
 import studentLeaveRoutes from './routes/student/studentLeave.routes.js';
+import studentLeaveApprovalRoutes from './routes/student/studentLeaveApproval.routes.js';
 import portfolioNotificationRoutes from './routes/student/portfolioNotification.routes.js';
+import notificationRoutes from './routes/notification.routes.js';
+import approvalHistoryRoutes from './routes/approvalHistory.routes.js';
 
 // Load env vars
 dotenv.config();
@@ -176,6 +183,10 @@ const startServer = () => {
   app.use('/api/v1/subjects', generalSubjectRoutes);
   app.use('/api/v1/classes', classRoutes);
   app.use('/api/v1/timetable', timetableRoutes);
+  app.use('/api/v1/timetable-display', timetableDisplayRoutes);
+  app.use('/api/v1/timetable-master', timetableMasterRoutes);
+  app.use('/api/v1/timetable-master/:masterId/slots', timetableSlotsRoutes);
+  app.use('/api/v1/alteration', timetableAlterationWorkflowRoutes);
   app.use('/api/v1/timetable-management', timetableManagementAdminRoutes);
   app.use('/api/v1/leave', leaveRoutes);
   app.use('/api/v1/attendance', attendanceRoutes);
@@ -198,7 +209,10 @@ const startServer = () => {
   app.use('/api/v1/student/notifications', studentNotificationRoutes);
   app.use('/api/v1/student/disciplinary', studentDisciplinaryRoutes);
   app.use('/api/v1/student-leaves', studentLeaveRoutes);
+  app.use('/api/v1/student-leaves/approvals', studentLeaveApprovalRoutes);
   app.use('/api/v1/student/portfolio-notifications', portfolioNotificationRoutes);
+  app.use('/api/v1/notifications', notificationRoutes);
+  app.use('/api/v1/approval-history', approvalHistoryRoutes);
 
   // Dashboard stats - real counts from DB
   app.get('/api/v1/dashboard/stats', async (req, res) => {
