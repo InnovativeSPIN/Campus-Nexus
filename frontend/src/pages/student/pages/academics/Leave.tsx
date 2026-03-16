@@ -18,7 +18,7 @@ interface LeaveRequest {
   leaveSubType?: string;
   recipient?: string;
   attachment?: string;
-  status: 'pending' | 'approved' | 'rejected' | 'cancelled';
+  overall_status: 'pending' | 'approved' | 'rejected' | 'cancelled';
   createdAt: string;
   approvedBy?: { name: string };
   approvalDate?: string;
@@ -184,12 +184,12 @@ export default function Leave() {
 
   const filteredRequests = activeTab === 'all'
     ? leaveRequests
-    : leaveRequests.filter(r => r.status === activeTab);
+    : leaveRequests.filter(r => r.overall_status === activeTab);
 
   const stats = {
-    pending: leaveRequests.filter(r => r.status === 'pending').length,
-    approved: leaveRequests.filter(r => r.status === 'approved').length,
-    rejected: leaveRequests.filter(r => r.status === 'rejected').length,
+    pending: leaveRequests.filter(r => r.overall_status === 'pending').length,
+    approved: leaveRequests.filter(r => r.overall_status === 'approved').length,
+    rejected: leaveRequests.filter(r => r.overall_status === 'rejected').length,
   };
 
   return (
@@ -287,7 +287,7 @@ export default function Leave() {
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-start gap-4 flex-1">
                   <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
-                    {getStatusIcon(request.status)}
+                    {getStatusIcon(request.overall_status)}
                   </div>
 
                   <div className="flex-1 min-w-0">
@@ -297,10 +297,10 @@ export default function Leave() {
                         {request.leaveSubType && <span className="text-sm font-normal text-muted-foreground ml-2">({request.leaveSubType})</span>}
                       </h3>
                       <div className="flex items-center gap-2">
-                        <Badge variant={getStatusVariant(request.status)}>
-                          {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
+                        <Badge variant={getStatusVariant(request.overall_status)}>
+                          {request.overall_status.charAt(0).toUpperCase() + request.overall_status.slice(1)}
                         </Badge>
-                        {request.status === 'pending' && (
+                        {request.overall_status === 'pending' && (
                           <button
                             onClick={() => handleCancel(request.id)}
                             className="p-1.5 text-muted-foreground hover:text-destructive transition-colors rounded-md hover:bg-destructive/10"
@@ -338,11 +338,11 @@ export default function Leave() {
                       {request.approvalDate && (
                         <>
                           <p>
-                            {request.status === 'approved' ? 'Approved' : 'Reviewed'} by:{' '}
+                            {request.overall_status === 'approved' ? 'Approved' : 'Reviewed'} by:{' '}
                             <span className="font-semibold text-foreground">{request.approvedBy?.name || 'Faculty Member'}</span>
                           </p>
                           <p>
-                            {request.status === 'approved' ? 'Approved' : 'Reviewed'} on:{' '}
+                            {request.overall_status === 'approved' ? 'Approved' : 'Reviewed'} on:{' '}
                             {formatDate(request.approvalDate)}
                           </p>
                         </>

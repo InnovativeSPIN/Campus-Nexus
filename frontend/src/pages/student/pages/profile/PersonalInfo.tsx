@@ -25,6 +25,7 @@ const defaultPersonalData = {
   bloodGroup: '',
   motherTongue: '',
   admissionNo: '',
+  emisNo: '',
   batch: '',
   admissionDate: '',
   admissionType: '',
@@ -66,6 +67,7 @@ export default function PersonalInfo() {
             bloodGroup: bio.bloodGroup || '',
             motherTongue: bio.motherTongue || '',
             admissionNo: apiData.admissionNo || '',
+            emisNo: apiData.emisNo || '',
             batch: apiData.batch || '',
             admissionDate: bio.admissionDate || '',
             admissionType: bio.admissionType || 'Regular',
@@ -200,7 +202,11 @@ export default function PersonalInfo() {
             <div className="grid grid-cols-2 gap-y-8 gap-x-6">
               <div>
                 <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1.5 block">Admission Number</label>
-                <p className="text-lg font-bold text-foreground bg-muted/30 px-3 py-2 rounded-lg border border-border/50">{personalData.admissionNo}</p>
+                <p className="text-lg font-bold text-foreground bg-muted/30 px-3 py-2 rounded-lg border border-border/50">{personalData.admissionNo || 'N/A'}</p>
+              </div>
+              <div>
+                <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1.5 block">EMIS Number</label>
+                <p className="text-lg font-bold text-foreground bg-muted/30 px-3 py-2 rounded-lg border border-border/50 text-primary">{personalData.emisNo || 'N/A'}</p>
               </div>
               <div>
                 <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1.5 block">Aadhar Number</label>
@@ -216,7 +222,7 @@ export default function PersonalInfo() {
               </div>
               <div>
                 <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1.5 block">Batch</label>
-                <p className="text-base font-semibold">{personalData.batch}</p>
+                <p className="text-base font-semibold">{personalData.batch || 'N/A'}</p>
               </div>
               <div>
                 <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1.5 block">Residence</label>

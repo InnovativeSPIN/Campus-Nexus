@@ -18,7 +18,7 @@ import ChangePassword from './pages/profile/ChangePassword';
 // Academics
 import Attendance from './pages/academics/Attendance';
 import Marks from './pages/academics/Marks';
-import Timetable from './pages/academics/Timetable';
+import StudentTimetable from './pages/StudentTimetable';
 import Leave from './pages/academics/Leave';
 
 // Records
@@ -68,7 +68,7 @@ const StudentRoutes = () => {
           {/* Academics */}
           <Route path="academics/attendance" element={<Attendance />} />
           <Route path="academics/marks" element={<Marks />} />
-          <Route path="academics/timetable" element={<Timetable />} />
+          <Route path="academics/timetable" element={<StudentTimetable />} />
           <Route path="academics/leave" element={<Leave />} />
 
           {/* Portfolio (combines Records and Extra-curricular) */}
