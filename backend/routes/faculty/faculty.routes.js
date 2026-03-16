@@ -14,6 +14,7 @@ import {
   updateFacultyProfile,
   getMyTimetable,
   getMyClassIncharge,
+  getMyTimetableRoles,
   getDepartmentColleagues
 } from '../../controllers/faculty/faculty.controller.js';
 import {
@@ -60,6 +61,8 @@ router.use(protect);
 router.get('/me/profile', authorize('faculty', 'department-admin'), getMyProfile);
 // Faculty class incharge - get assigned class and students
 router.get('/me/class-incharge', authorize('faculty', 'department-admin'), getMyClassIncharge);
+// Faculty timetable roles (class coordinator / timetable incharge)
+router.get('/me/timetable-roles', authorize('faculty', 'department-admin'), getMyTimetableRoles);
 // Faculty department colleagues - for leave reassign dropdown
 router.get('/me/department-colleagues', authorize('faculty', 'department-admin'), getDepartmentColleagues);
 // Faculty can get their timetable

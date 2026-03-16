@@ -13,7 +13,9 @@ import {
   updateMyProfile,
   getStudentStats,
   getAcademicYears,
-  uploadStudentPhoto
+  uploadStudentPhoto,
+  downloadBulkTemplate,
+  bulkUploadStudents
 } from '../../controllers/student/student.controller.js';
 
 import { protect, authorize } from '../../middleware/auth.js';
@@ -34,6 +36,10 @@ router.post('/me/photo', authorize('student'), studentUpload.single('photo'), up
 
 // fetch academic years (batches) for dropdowns
 router.get('/academic-years', authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin', 'department-admin', 'faculty'), getAcademicYears);
+
+// Bulk upload routes
+router.get('/bulk/template', authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin'), downloadBulkTemplate);
+router.post('/bulk/upload', authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin'), studentUpload.single('file'), bulkUploadStudents);
 
 // Stats route
 router.get('/stats', authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin'), getStudentStats);
