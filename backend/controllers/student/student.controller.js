@@ -502,3 +502,162 @@ export const uploadStudentPhoto = asyncHandler(async (req, res, next) => {
     }
   });
 });
+
+// @desc      Download student bulk upload template
+// @route     GET /api/v1/students/bulk/template
+// @access    Private/Admin
+export const downloadBulkTemplate = asyncHandler(async (req, res, next) => {
+  // Get departments for reference
+  const departments = await Department.findAll({ attributes: ['id', 'short_name'] });
+  
+  // CSV headers with example data
+  const headers = ['studentId', 'rollNumber', 'firstName', 'lastName', 'email', 'phone', 'gender', 'departmentId', 'batch', 'semester', 'year', 'admissionNo', 'emisNo', 'status'];
+  
+  // Create example row
+  const exampleRow = [
+    'STU001',
+    'ROLL001',
+    'John',
+    'Doe',
+    'john.doe@example.com',
+    '9876543210',
+    'male',
+    '1',
+    '2024-2028',
+    '1',
+    '1',
+    'ADM001',
+    'EMIS001',
+    'active'
+  ];
+
+  // Create CSV content
+  let csvContent = headers.join(',') + '\n';
+  csvContent += exampleRow.join(',') + '\n';
+  
+  // Add reference section as comments
+  csvContent += '\n# Field Descriptions:\n';
+  csvContent += '# studentId: Unique student identifier (required, must be unique)\n';
+  csvContent += '# rollNumber: Roll number (required)\n';
+  csvContent += '# firstName: Student first name (required)\n';
+  csvContent += '# lastName: Student last name (required)\n';
+  csvContent += '# email: Student email (required, must be unique)\n';
+  csvContent += '# phone: Student phone number (required, 10 digits)\n';
+  csvContent += '# gender: male, female, or other (required)\n';
+  csvContent += '# departmentId: Department ID (required) - Available IDs: ' + departments.map(d => `${d.id}(${d.short_name})`).join(', ') + '\n';
+  csvContent += '# batch: Academic batch e.g., 2024-2028 (required)\n';
+  csvContent += '# semester: Semester number 1-8 (required)\n';
+  csvContent += '# year: Study year 1-4 (required)\n';
+  csvContent += '# admissionNo: Admission number (optional)\n';
+  csvContent += '# emisNo: EMIS number (optional)\n';
+  csvContent += '# status: active, inactive, graduated, dropped, or suspended (default: active)\n';
+
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', 'attachment; filename="student_bulk_upload_template.csv"');
+  res.send(csvContent);
+});
+
+// @desc      Bulk upload students
+// @route     POST /api/v1/students/bulk/upload
+// @access    Private/Admin
+export const bulkUploadStudents = asyncHandler(async (req, res, next) => {
+  if (!req.file) {
+    return next(new ErrorResponse('No file uploaded', 400));
+  }
+
+  try {
+    // Parse CSV content
+    const fileContent = req.file.buffer.toString('utf8');
+    const lines = fileContent.split('\n').filter(line => line.trim() && !line.startsWith('#'));
+    
+    if (lines.length < 2) {
+      return next(new ErrorResponse('CSV must contain headers and at least one data row', 400));
+    }
+
+    // Extract headers
+    const headers = lines[0].split(',').map(h => h.trim());
+    const requiredFields = ['studentId', 'rollNumber', 'firstName', 'lastName', 'email', 'phone', 'gender', 'departmentId', 'batch', 'semester', 'year'];
+    
+    // Validate headers
+    const missingHeaders = requiredFields.filter(field => !headers.includes(field));
+    if (missingHeaders.length > 0) {
+      return next(new ErrorResponse(`Missing required headers: ${missingHeaders.join(', ')}`, 400));
+    }
+
+    // Parse data rows
+    const students = [];
+    const errors = [];
+    
+    for (let i = 1; i < lines.length; i++) {
+      const values = lines[i].split(',').map(v => v.trim());
+      const row = {};
+      
+      headers.forEach((header, idx) => {
+        row[header] = values[idx] || null;
+      });
+
+      // Basic validation
+      if (!row.studentId) errors.push(`Row ${i}: studentId is required`);
+      if (!row.firstName) errors.push(`Row ${i}: firstName is required`);
+      if (!row.lastName) errors.push(`Row ${i}: lastName is required`);
+      if (!row.email) errors.push(`Row ${i}: email is required`);
+      if (!row.phone || !/^\d{10}$/.test(row.phone)) errors.push(`Row ${i}: phone must be 10 digits`);
+      if (!['male', 'female', 'other'].includes(row.gender)) errors.push(`Row ${i}: gender must be male, female, or other`);
+      if (!row.departmentId) errors.push(`Row ${i}: departmentId is required`);
+      if (!row.batch) errors.push(`Row ${i}: batch is required`);
+      if (!row.semester || isNaN(row.semester)) errors.push(`Row ${i}: semester must be a number`);
+      if (!row.year || isNaN(row.year)) errors.push(`Row ${i}: year must be a number`);
+
+      if (errors.length === 0) {
+        // Set defaults
+        row.role_id = 3; // student role
+        row.password = 'student123'; // default password
+        row.status = row.status || 'active';
+        row.departmentId = parseInt(row.departmentId);
+        row.semester = parseInt(row.semester);
+        row.year = String(row.year);
+        
+        students.push(row);
+      }
+    }
+
+    if (errors.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation errors found',
+        errors: errors.slice(0, 20) // Return first 20 errors
+      });
+    }
+
+    if (students.length === 0) {
+      return next(new ErrorResponse('No valid student records to upload', 400));
+    }
+
+    // Bulk create students
+    const createdStudents = [];
+    const createErrors = [];
+
+    for (const studentData of students) {
+      try {
+        const student = await Student.create(studentData);
+        createdStudents.push(student.id);
+      } catch (error) {
+        createErrors.push(`Failed to create student ${studentData.studentId}: ${error.message}`);
+      }
+    }
+
+    res.status(201).json({
+      success: true,
+      message: `Successfully created ${createdStudents.length} students`,
+      data: {
+        totalRequested: students.length,
+        successfullyCreated: createdStudents.length,
+        failed: createErrors.length,
+        errors: createErrors.length > 0 ? createErrors.slice(0, 10) : undefined
+      }
+    });
+  } catch (error) {
+    console.error('Bulk upload error:', error);
+    return next(new ErrorResponse(`Error processing file: ${error.message}`, 400));
+  }
+});

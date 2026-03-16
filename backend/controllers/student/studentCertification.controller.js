@@ -1,8 +1,9 @@
 import asyncHandler from '../../middleware/async.js';
 import ErrorResponse from '../../utils/errorResponse.js';
 import { models } from '../../models/index.js';
+import { Op } from 'sequelize';
 import { notifyClassIncharge } from '../../utils/portfolioNotification.js';
-const { StudentCertification, Student, User, Faculty } = models;
+const { StudentCertification, Student, User, Faculty, TimetableMaster } = models;
 
 const getStudentId = async (userOrId, next) => {
     // if already a student instance (has studentId), return its id
@@ -135,19 +136,45 @@ export const updateApprovalStatus = asyncHandler(async (req, res, next) => {
     res.status(200).json({ success: true, data: cert });
 });
 
+const getAssignedClassIdForFaculty = async (facultyId) => {
+    // Check if faculty is class coordinator / assistant coordinator in an active/draft timetable
+    const timetable = await TimetableMaster.findOne({
+        where: {
+            status: { [Op.in]: ['draft', 'active'] },
+            [Op.or]: [
+                { class_coordinator_id: facultyId },
+                { asst_coordinator_id: facultyId }
+            ]
+        },
+        attributes: ['class_id']
+    });
+
+    return timetable?.class_id || null;
+};
+
 // @desc   Get certifications for class in-charge
 // @route  GET /api/student/certifications/class-incharge
 // @access Private/Faculty
 export const getClassInchargeCertifications = asyncHandler(async (req, res, next) => {
-    const faculty = await models.Faculty.findOne({ where: { faculty_id: req.user.id } });
-    if (!faculty || !faculty.is_class_incharge || !faculty.class_incharge_class_id) {
+    const facultyId = req.user.faculty_id || req.user.id;
+    const classId = await getAssignedClassIdForFaculty(facultyId);
+    if (!classId) {
         return next(new ErrorResponse('User is not assigned as a class in-charge', 403));
     }
 
-    const classId = faculty.class_incharge_class_id;
+    const studentIds = await Student.findAll({
+        where: { classId },
+        attributes: ['id'],
+        raw: true
+    }).then(rows => rows.map(r => r.id));
+
+    if (studentIds.length === 0) {
+        return res.status(200).json({ success: true, count: 0, data: [] });
+    }
+
     const { approvalStatus } = req.query;
 
-    const where = { classId };
+    const where = { studentId: { [Op.in]: studentIds } };
     if (approvalStatus) where.approvalStatus = approvalStatus;
 
     const certifications = await StudentCertification.findAll({

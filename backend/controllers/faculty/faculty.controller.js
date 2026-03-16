@@ -1,7 +1,7 @@
 import ErrorResponse from '../../utils/errorResponse.js';
 import asyncHandler from '../../middleware/async.js';
 import { models } from '../../models/index.js';
-const { Faculty, User } = models;
+const { Faculty, User, TimetableMaster } = models;
 // additional models imported from models index
 const { Department, Subject, Class: ClassModel } = models;
 import { Op } from 'sequelize';
@@ -723,7 +723,7 @@ export const getMyClassIncharge = asyncHandler(async (req, res, next) => {
   }
 
   // Find active class incharge record for this faculty
-  const incharge = await ClassIncharge.findOne({
+  let incharge = await ClassIncharge.findOne({
     where: { faculty_id: facultyId, status: 'active' },
     include: [
       {
@@ -736,6 +736,41 @@ export const getMyClassIncharge = asyncHandler(async (req, res, next) => {
       }
     ]
   });
+
+  // If no explicit class incharge record exists, fall back to timetable master assignments
+  if (!incharge) {
+    const timetable = await TimetableMaster.findOne({
+      where: {
+        status: { [Op.in]: ['draft', 'active'] },
+        [Op.or]: [
+          { class_coordinator_id: facultyId },
+          { asst_coordinator_id: facultyId },
+          { timetable_incharge_id: facultyId }
+        ]
+      },
+      include: [
+        {
+          model: ClassModel,
+          as: 'class',
+          attributes: ['id', 'name', 'capacity', 'department_id'],
+          include: [
+            { model: Department, as: 'department', attributes: ['short_name', 'full_name'] }
+          ]
+        }
+      ]
+    });
+
+    if (timetable) {
+      incharge = {
+        id: timetable.id,
+        academic_year: timetable.academic_year,
+        semester: timetable.semester,
+        semester_type: timetable.semester_type,
+        class_id: timetable.class_id,
+        class: timetable.class,
+      };
+    }
+  }
 
   if (!incharge) {
     return res.status(200).json({
@@ -768,6 +803,8 @@ export const getMyClassIncharge = asyncHandler(async (req, res, next) => {
       incharge: {
         id: incharge.id,
         academic_year: incharge.academic_year,
+        semester: incharge.semester,
+        semester_type: incharge.semester_type,
         class: assignedClass
       },
       students,
@@ -775,6 +812,43 @@ export const getMyClassIncharge = asyncHandler(async (req, res, next) => {
     }
   });
 });
+
+// @desc      Get my timetable-related roles (class coordinator / timetable incharge)
+// @route     GET /api/v1/faculty/me/timetable-roles
+// @access    Private/Faculty
+export const getMyTimetableRoles = asyncHandler(async (req, res, next) => {
+  const facultyId = req.user.faculty_id;
+
+  if (!facultyId) {
+    return next(new ErrorResponse('Faculty ID not found', 400));
+  }
+
+  const activeStatus = 'active';
+
+  const [isClassCoordinator, isTimetableIncharge] = await Promise.all([
+    TimetableMaster.count({
+      where: {
+        class_coordinator_id: facultyId,
+        status: activeStatus,
+      },
+    }),
+    TimetableMaster.count({
+      where: {
+        timetable_incharge_id: facultyId,
+        status: activeStatus,
+      },
+    }),
+  ]);
+
+  res.status(200).json({
+    success: true,
+    data: {
+      isClassCoordinator: isClassCoordinator > 0,
+      isTimetableIncharge: isTimetableIncharge > 0,
+    },
+  });
+});
+
 // @desc      Get faculty colleagues in same department (for leave reassign)
 // @route     GET /api/v1/faculty/me/department-colleagues
 // @access    Private/Faculty

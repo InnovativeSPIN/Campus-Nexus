@@ -9,7 +9,7 @@ const { SubjectClassMapping, Subject, Class, Department } = models;
 // @route     GET /api/v1/department-admin/subject-class-mappings
 // @access    Private/DepartmentAdmin
 export const getMappings = asyncHandler(async (req, res, next) => {
-  const { semester, academic_year } = req.query;
+  const { semester, academic_year, class_id } = req.query;
   const departmentId = req.user?.department_id;
 
   if (!departmentId) {
@@ -17,6 +17,11 @@ export const getMappings = asyncHandler(async (req, res, next) => {
   }
 
   const where = { department_id: departmentId };
+
+  // Filter by class_id if provided
+  if (class_id && class_id !== 'undefined' && class_id !== 'null') {
+    where.class_id = parseInt(class_id);
+  }
 
   if (semester && semester !== 'undefined' && semester !== 'null') {
     const semNumber = parseInt(semester);

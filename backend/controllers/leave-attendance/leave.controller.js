@@ -769,20 +769,20 @@ export const getLeaveNotifications = asyncHandler(async (req, res, next) => {
     const where = {};
 
     if (req.user.role === 'faculty') {
-      where.recipientType = 'faculty';
-      where.recipientId = req.user.id;
+      where.recipient_type = 'faculty';
+      where.recipient_id = req.user.id;
     } else if (req.user.role === 'department-admin') {
-      where.recipientType = 'department-admin';
-      where.departmentId = req.user.departmentId;
+      where.recipient_type = 'department-admin';
+      where.recipient_id = req.user.id;
     } else if (['executiveadmin', 'superadmin', 'super-admin', 'academicadmin'].includes(req.user.role)) {
-      where.recipientType = 'executiveadmin';
+      where.recipient_type = 'executiveadmin';
     } else {
       return res.status(200).json({ success: true, count: 0, data: [] });
     }
 
     const notifications = await LeaveNotification.findAll({
       where,
-      order: [['createdAt', 'DESC']],
+      order: [['sent_at', 'DESC']],
       limit: 30,
       raw: true,
     });
@@ -799,16 +799,16 @@ export const getLeaveNotifications = asyncHandler(async (req, res, next) => {
 // @access    Private
 export const getLeaveNotificationCount = asyncHandler(async (req, res, next) => {
   try {
-    const where = { isRead: false };
+    const where = { is_read: false };
 
     if (req.user.role === 'faculty') {
-      where.recipientType = 'faculty';
-      where.recipientId = req.user.id;
+      where.recipient_type = 'faculty';
+      where.recipient_id = req.user.id;
     } else if (req.user.role === 'department-admin') {
-      where.recipientType = 'department-admin';
-      where.departmentId = req.user.departmentId;
+      where.recipient_type = 'department-admin';
+      where.recipient_id = req.user.id;
     } else if (['executiveadmin', 'superadmin', 'super-admin', 'academicadmin'].includes(req.user.role)) {
-      where.recipientType = 'executiveadmin';
+      where.recipient_type = 'executiveadmin';
     } else {
       return res.status(200).json({ success: true, data: { count: 0 } });
     }
@@ -827,7 +827,7 @@ export const getLeaveNotificationCount = asyncHandler(async (req, res, next) => 
 export const markLeaveNotificationRead = asyncHandler(async (req, res, next) => {
   try {
     await LeaveNotification.update(
-      { isRead: true },
+      { is_read: true },
       { where: { id: req.params.id } }
     );
     res.status(200).json({ success: true });
@@ -844,16 +844,16 @@ export const markAllLeaveNotificationsRead = asyncHandler(async (req, res, next)
     const where = {};
 
     if (req.user.role === 'faculty') {
-      where.recipientType = 'faculty';
-      where.recipientId = req.user.id;
+      where.recipient_type = 'faculty';
+      where.recipient_id = req.user.id;
     } else if (req.user.role === 'department-admin') {
-      where.recipientType = 'department-admin';
-      where.departmentId = req.user.departmentId;
+      where.recipient_type = 'department-admin';
+      where.recipient_id = req.user.id;
     } else if (['executiveadmin', 'superadmin'].includes(req.user.role)) {
-      where.recipientType = 'executiveadmin';
+      where.recipient_type = 'executiveadmin';
     }
 
-    await LeaveNotification.update({ isRead: true }, { where });
+    await LeaveNotification.update({ is_read: true }, { where });
     res.status(200).json({ success: true });
   } catch (error) {
     return next(new ErrorResponse(`Error marking notifications as read: ${error.message}`, 500));
