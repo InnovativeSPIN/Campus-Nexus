@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { AdminLayout } from '@/pages/admin/superadmin/components/layout/AdminLayout';
 import { DataTable } from '@/pages/admin/superadmin/components/dashboard/DataTable';
 import { UserFormModal } from '@/pages/admin/superadmin/components/modals/UserFormModal';
+import { StudentBulkUploadModal } from '@/pages/admin/superadmin/components/modals/StudentBulkUploadModal';
 import { Student } from '@/types/auth';
 import { Badge } from '@/pages/admin/superadmin/components/ui/badge';
 import { toast } from '@/components/ui/sonner';
@@ -122,6 +123,7 @@ export default function SuperAdminStudents() {
     open: false,
     mode: 'add',
   });
+  const [bulkUploadModal, setBulkUploadModal] = useState(false);
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; data: Student | null }>({
     open: false,
     data: null,
@@ -171,6 +173,10 @@ export default function SuperAdminStudents() {
 
   const handleAdd = () => {
     setFormModal({ open: true, mode: 'add' });
+  };
+
+  const handleBulkUpload = () => {
+    setBulkUploadModal(true);
   };
 
   const handleView = (student: Student) => {
@@ -259,6 +265,22 @@ export default function SuperAdminStudents() {
           <p className="text-muted-foreground">Manage all student records</p>
         </div>
 
+        {/* Action Buttons */}
+        <div className="flex gap-2 flex-wrap">
+          <button
+            onClick={handleAdd}
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 font-medium text-sm transition-colors"
+          >
+            + Add Student
+          </button>
+          <button
+            onClick={handleBulkUpload}
+            className="px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80 font-medium text-sm transition-colors"
+          >
+            📥 Bulk Upload
+          </button>
+        </div>
+
         {/* Filters */}
         <div className="flex flex-col sm:flex-row gap-4 p-4 bg-card rounded-lg border border-border shadow-sm">
           <div className="flex-1">
@@ -323,7 +345,13 @@ export default function SuperAdminStudents() {
           mode={formModal.mode}
         />
 
-
+        <StudentBulkUploadModal
+          open={bulkUploadModal}
+          onOpenChange={setBulkUploadModal}
+          onSuccess={() => {
+            loadData();
+          }}
+        />
 
         <AlertDialog open={deleteDialog.open} onOpenChange={(open) => setDeleteDialog({ open, data: null })}>
           <AlertDialogContent className="bg-card">
