@@ -74,10 +74,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           year: result.user.year,
           semester: result.user.semester,
           rollNo: result.user.rollNo,
-          is_timetable_incharge: result.user.is_timetable_incharge || false,
-          is_placement_coordinator: result.user.is_placement_coordinator || false,
-          is_class_incharge: result.user.is_class_incharge || false,
-          class_incharge_class_id: result.user.class_incharge_class_id || null,
           token: result.token
         };
         console.log('Login successful:', userObj.name, userObj.role);
@@ -126,6 +122,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setUser(userObj);
         localStorage.setItem('campus_nexus_user', JSON.stringify(userObj));
         localStorage.setItem('authToken', result.token);
+
+        // Fetch timetable-related role flags (class coordinator / timetable incharge)
+        try {
+          const rolesRes = await fetch('/api/v1/faculty/me/timetable-roles', {
+            headers: { 'Authorization': `Bearer ${result.token}` }
+          });
+          if (rolesRes.ok) {
+            const rolesJson = await rolesRes.json();
+            if (rolesJson.success && rolesJson.data) {
+              setUser((prev) => {
+                if (!prev) return prev;
+                const updated = {
+                  ...prev,
+                  is_timetable_incharge: rolesJson.data.isTimetableIncharge || false,
+                  is_class_incharge: rolesJson.data.isClassCoordinator || false
+                };
+                localStorage.setItem('campus_nexus_user', JSON.stringify(updated));
+                return updated;
+              });
+            }
+          }
+        } catch (err) {
+          console.warn('Failed to fetch timetable role flags:', err);
+        }
+
         return true;
       }
 
