@@ -53,9 +53,7 @@ const sendTokenResponse = (user, statusCode, res) => {
       role: isDeptAdmin ? 'department-admin' : 'faculty',
       designation: user.designation || null,
       department: user.department,
-      avatar: normalizeUrl(user.profile_image_url) || null,
-      is_timetable_incharge: user.is_timetable_incharge || false,
-      is_placement_coordinator: user.is_placement_coordinator || false
+      avatar: normalizeUrl(user.profile_image_url) || null
     };
   } else {
     userData = {
