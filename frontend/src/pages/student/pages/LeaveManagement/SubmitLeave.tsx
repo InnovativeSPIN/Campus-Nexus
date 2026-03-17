@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MainLayout } from '@/pages/student/components/layout/MainLayout';
+import MainLayout from '@/pages/student/components/layout/MainLayout';
 import { motion } from 'framer-motion';
 import { Button } from '@/pages/student/components/ui/button';
 import { Input } from '@/pages/student/components/ui/input';
@@ -21,11 +21,9 @@ import {
   CardDescription,
 } from '@/pages/student/components/ui/card';
 import {
-  Calendar,
   FileText,
   Clock,
   AlertCircle,
-  CheckCircle2,
 } from 'lucide-react';
 import { toast } from '@/pages/student/hooks/use-toast';
 
@@ -37,11 +35,11 @@ interface LeaveFormData {
   totalDays: string;
   reason: string;
   attachment: File | null;
+  recipient: string;
 }
 
 export default function SubmitLeave() {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState<LeaveFormData>({
     leaveType: '',
@@ -51,21 +49,22 @@ export default function SubmitLeave() {
     totalDays: '',
     reason: '',
     attachment: null,
+    recipient: 'Class Incharge',
   });
 
   const leaveTypes = [
-    'Casual Leave',
-    'Medical Leave',
+    'Casual',
+    'Medical',
     'On-Duty',
-    'Exam Leave',
+    'Special',
     'Other',
   ];
 
   const leaveSubTypes = {
-    'Casual Leave': ['Personal', 'Family Event', 'Travel', 'Other'],
-    'Medical Leave': ['Sick', 'Hospitalization', 'Medical Checkup'],
+    'Casual': ['Personal', 'Family Event', 'Travel', 'Other'],
+    'Medical': ['Sick', 'Hospitalization', 'Medical Checkup'],
     'On-Duty': ['Academic', 'Sports', 'Cultural', 'Other'],
-    'Exam Leave': ['Semester Exams', 'Supplementary', 'Special'],
+    'Special': ['Semester Exams', 'Supplementary', 'Emergency'],
     'Other': ['Emergency', 'Other Reason'],
   };
 
@@ -120,6 +119,7 @@ export default function SubmitLeave() {
           endDate: formData.endDate,
           totalDays: formData.totalDays,
           reason: formData.reason,
+          submitted_to: formData.recipient,
         }),
       });
 
@@ -191,9 +191,26 @@ export default function SubmitLeave() {
                   <SelectContent>
                     {leaveTypes.map((type) => (
                       <SelectItem key={type} value={type}>
-                        {type}
+                        {type === 'On-Duty' ? 'On-Duty' :
+                         type === 'Other' ? 'Other' :
+                         type + ' Leave'}
                       </SelectItem>
                     ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Submit To */}
+              <div>
+                <Label>Submit To *</Label>
+                <Select value={formData.recipient} onValueChange={(value) => setFormData({ ...formData, recipient: value })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select primary recipient" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Class Incharge">Class Incharge</SelectItem>
+                    <SelectItem value="Faculty Advisor">Faculty Advisor</SelectItem>
+                    <SelectItem value="HOD">Head of Department (HOD)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

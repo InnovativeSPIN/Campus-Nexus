@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { MainLayout } from '@/pages/student/components/layout/MainLayout';
+import MainLayout from '@/pages/student/components/layout/MainLayout';
 import { motion } from 'framer-motion';
 import { Button } from '@/pages/student/components/ui/button';
 import {
@@ -35,6 +35,7 @@ interface Leave {
   endDate: string;
   totalDays: number;
   reason: string;
+  submitted_to: string;
   created_at: string;
   overall_status: 'pending' | 'approved' | 'rejected' | 'cancelled';
   class_incharge_approval_status: string;
@@ -286,6 +287,37 @@ export default function MyLeaveTracker() {
                 <p className="text-sm text-muted-foreground">
                   <strong>Reason:</strong> {leave.reason}
                 </p>
+
+                {/* Approval workflow status */}
+                <div className="flex items-center gap-2 text-xs flex-wrap">
+                  <span className="px-2 py-1 rounded-full bg-blue-100 text-blue-700 font-medium">
+                    Submitted to: {leave.submitted_to || 'Class Incharge'}
+                  </span>
+                  <span className="text-muted-foreground">→</span>
+                  <span className={cn(
+                    'px-2 py-1 rounded-full font-medium',
+                    leave.class_incharge_approval_status === 'approved'
+                      ? 'bg-green-100 text-green-700'
+                      : leave.class_incharge_approval_status === 'rejected'
+                      ? 'bg-red-100 text-red-700'
+                      : 'bg-yellow-100 text-yellow-700'
+                  )}>
+                    Class Incharge: {leave.class_incharge_approval_status || 'pending'}
+                  </span>
+                  <span className="text-muted-foreground">→</span>
+                  <span className={cn(
+                    'px-2 py-1 rounded-full font-medium',
+                    leave.class_incharge_approval_status !== 'approved'
+                      ? 'bg-gray-100 text-gray-500'
+                      : leave.department_admin_approval_status === 'approved'
+                      ? 'bg-green-100 text-green-700'
+                      : leave.department_admin_approval_status === 'rejected'
+                      ? 'bg-red-100 text-red-700'
+                      : 'bg-purple-100 text-purple-700'
+                  )}>
+                    Dept Admin: {leave.class_incharge_approval_status !== 'approved' ? 'awaiting CI' : (leave.department_admin_approval_status || 'pending')}
+                  </span>
+                </div>
 
                 <Dialog>
                   <DialogTrigger asChild>
