@@ -6,7 +6,7 @@ const StudentLeave = (sequelize) => {
         studentId: { type: DataTypes.INTEGER, allowNull: false },
         classId: { type: DataTypes.INTEGER, allowNull: false },
         leaveType: {
-            type: DataTypes.ENUM('Medical', 'Casual', 'On-Duty', 'Special', 'Other'),
+            type: DataTypes.ENUM('Medical', 'Casual', 'On-Duty', 'Special', 'Other', 'Leave', 'Personal', 'Earned'),
             defaultValue: 'Casual',
             allowNull: false
         },

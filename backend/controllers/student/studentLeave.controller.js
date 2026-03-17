@@ -105,8 +105,26 @@ export const applyLeave = asyncHandler(async (req, res, next) => {
         assignedClassInchargeId = approvers.asst_coordinator_id || approvers.class_coordinator_id;
     }
 
+    let { leaveType, leaveSubType } = req.body;
+
+    // Sanitize leaveType and leaveSubType to match database ENUMs/Expectations
+    // If leaveType is generic 'Leave', try to use a cleaner version of the subType
+    if (leaveType === 'Leave' && leaveSubType) {
+        // Map 'Medical Leave' -> 'Medical', 'Personal Leave' -> 'Personal' etc
+        const cleanSubType = leaveSubType.replace(' Leave', '').trim();
+        // Check if the cleaned subType is one of our allowed ENUMs
+        const allowedEnums = ['Medical', 'Casual', 'On-Duty', 'Special', 'Personal', 'Earned'];
+        if (allowedEnums.includes(cleanSubType)) {
+            leaveType = cleanSubType;
+        } else {
+            leaveType = 'Other';
+        }
+    }
+
     const leave = await StudentLeave.create({
         ...req.body,
+        leaveType,
+        leaveSubType,
         studentId,
         classId: student.classId,
         submitted_to: recipient || 'Class Incharge',

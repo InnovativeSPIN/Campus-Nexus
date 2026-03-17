@@ -212,8 +212,8 @@ const startServer = () => {
   app.use('/api/v1/student/notifications', studentNotificationRoutes);
   app.use('/api/v1/student/attendance', studentAttendanceRoutes);
   app.use('/api/v1/student/disciplinary', studentDisciplinaryRoutes);
+  app.use('/api/v1/student-leaves/approvals', studentLeaveApprovalRoutes); // MUST be before /student-leaves to avoid :id shadowing
   app.use('/api/v1/student-leaves', studentLeaveRoutes);
-  app.use('/api/v1/student-leaves/approvals', studentLeaveApprovalRoutes);
   app.use('/api/v1/student/portfolio-notifications', portfolioNotificationRoutes);
   app.use('/api/v1/notifications', notificationRoutes);
   app.use('/api/v1/approval-history', approvalHistoryRoutes);

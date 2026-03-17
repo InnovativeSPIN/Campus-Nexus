@@ -259,7 +259,7 @@ export function LeaveApprovals() {
                       </span>
                     </div>
                     <p className="text-sm text-muted-foreground mb-1">
-                      {leave.leaveType}{leave.leaveSubType ? ` — ${leave.leaveSubType}` : ""}
+                      {leave.leaveType || "Leave"}{leave.leaveSubType ? ` — ${leave.leaveSubType}` : ""}
                     </p>
 
                     {/* Class Incharge approved badge */}
@@ -464,7 +464,11 @@ export function LeaveApprovals() {
                   </p>
                 )}
                 <p>
-                  <span className="font-medium">Type:</span> {activeDialog.leave.leaveType}
+                  <span className="font-medium">Type:</span> {
+                    activeDialog.type === "student" 
+                      ? (activeDialog.leave.leaveSubType || activeDialog.leave.leaveType)
+                      : activeDialog.leave.leaveType
+                  }
                 </p>
                 <p>
                   <span className="font-medium">Duration:</span>{" "}

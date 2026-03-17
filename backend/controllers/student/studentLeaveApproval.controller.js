@@ -301,7 +301,10 @@ export const getPendingLeavesForDeptAdmin = asyncHandler(async (req, res, next) 
             class_incharge_approval_status: 'approved',
             department_admin_approval_status: 'pending'
         },
-        include: [{ model: Student, as: 'student' }],
+        include: [
+            { model: Student, as: 'student' },
+            { model: Faculty, as: 'classInchargeApprover', attributes: ['Name', 'email'] }
+        ],
         order: [['createdAt', 'DESC']]
     });
 
