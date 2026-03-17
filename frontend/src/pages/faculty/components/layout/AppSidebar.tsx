@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
@@ -18,7 +18,6 @@ import {
   LogOut,
   Briefcase,
   Lock,
-  GraduationCap,
   CheckCircle2,
 } from "lucide-react";
 import { cn } from "@/pages/faculty/lib/utils";
@@ -270,43 +269,7 @@ export function AppSidebar() {
                 </NavLink>
               </motion.li>
 
-              <motion.li
-                key="timetable-alteration"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.57 }}
-              >
-                <NavLink
-                  to="/faculty/timetable-alteration"
-                  className={cn(
-                    "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group",
-                    location.pathname.startsWith("/faculty/timetable-alteration")
-                      ? "bg-sidebar-accent text-white"
-                      : "text-white/70 hover:bg-sidebar-accent/50 hover:text-white"
-                  )}
-                >
-                  <ClipboardCheck
-                    className={cn(
-                      "w-5 h-5 flex-shrink-0 transition-colors",
-                      location.pathname.startsWith("/faculty/timetable-alteration")
-                        ? "text-secondary"
-                        : "text-white/70 group-hover:text-secondary"
-                    )}
-                  />
-                  <AnimatePresence>
-                    {!collapsed && (
-                      <motion.span
-                        initial={{ opacity: 0, width: 0 }}
-                        animate={{ opacity: 1, width: "auto" }}
-                        exit={{ opacity: 0, width: 0 }}
-                        className="font-medium text-sm whitespace-nowrap overflow-hidden"
-                      >
-                        Alteration Mgmt
-                      </motion.span>
-                    )}
-                  </AnimatePresence>
-                </NavLink>
-              </motion.li>
+
             </>
           )}
 
@@ -429,46 +392,7 @@ export function AppSidebar() {
             </NavLink>
           </motion.li>
 
-          {/* Conditional: Apply Alterations - shows only if faculty is timetable incharge */}
-          {isTimetableIncharge && (
-            <motion.li
-              key="apply-alterations"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.61 }}
-            >
-              <NavLink
-                to="/faculty/timetable-alterations"
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group",
-                  location.pathname.startsWith("/faculty/timetable-alterations")
-                    ? "bg-sidebar-accent text-white"
-                    : "text-white/70 hover:bg-sidebar-accent/50 hover:text-white"
-                )}
-              >
-                <Calendar
-                  className={cn(
-                    "w-5 h-5 flex-shrink-0 transition-colors",
-                    location.pathname.startsWith("/faculty/timetable-alterations")
-                      ? "text-secondary"
-                      : "text-white/70 group-hover:text-secondary"
-                  )}
-                />
-                <AnimatePresence>
-                  {!collapsed && (
-                    <motion.span
-                      initial={{ opacity: 0, width: 0 }}
-                      animate={{ opacity: 1, width: "auto" }}
-                      exit={{ opacity: 0, width: 0 }}
-                      className="font-medium text-sm whitespace-nowrap overflow-hidden"
-                    >
-                      Apply Alterations
-                    </motion.span>
-                  )}
-                </AnimatePresence>
-              </NavLink>
-            </motion.li>
-          )}
+
         </ul>
       </nav>
 

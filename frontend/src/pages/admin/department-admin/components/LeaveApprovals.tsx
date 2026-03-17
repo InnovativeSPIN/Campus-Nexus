@@ -16,11 +16,13 @@ import {
   User,
   Calendar,
   FileText,
+  GraduationCap,
 } from "lucide-react";
 import { toast } from "@/pages/admin/department-admin/hooks/use-toast";
 import { cn } from "@/pages/admin/department-admin/lib/utils";
 
-interface Leave {
+// Faculty leave (HOD approval)
+interface FacultyLeave {
   id: number;
   startDate: string;
   endDate: string;
@@ -28,40 +30,71 @@ interface Leave {
   reason: string;
   totalDays: number;
   status: string;
-  applicant?: {
-    name: string;
-    email: string;
-    role: string;
-  };
+  applicant?: { name: string; email: string; role: string };
   applicantType: string;
   createdAt: string;
   reassignFacultyName?: string;
 }
 
+// Student leave (Department Admin approval - after class incharge approved)
+interface StudentLeave {
+  id: number;
+  startDate: string;
+  endDate: string;
+  leaveType: string;
+  leaveSubType?: string;
+  reason: string;
+  totalDays: number;
+  submitted_to: string;
+  overall_status: string;
+  class_incharge_approval_status: string;
+  department_admin_approval_status: string;
+  classInchargeApprover?: { Name: string };
+  student?: {
+    id: number;
+    firstName: string;
+    lastName: string;
+    rollNumber: string;
+    studentId: string;
+  };
+  createdAt: string;
+}
+
+type ActiveDialog =
+  | { type: "faculty"; leave: FacultyLeave; status: "approved" | "rejected" }
+  | { type: "student"; leave: StudentLeave; status: "approved" | "rejected" }
+  | null;
+
 export function LeaveApprovals() {
-  const [leaves, setLeaves] = useState<Leave[]>([]);
+  const [facultyLeaves, setFacultyLeaves] = useState<FacultyLeave[]>([]);
+  const [studentLeaves, setStudentLeaves] = useState<StudentLeave[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedLeave, setSelectedLeave] = useState<Leave | null>(null);
-  const [showApprovalDialog, setShowApprovalDialog] = useState(false);
-  const [approvalStatus, setApprovalStatus] = useState<"approved" | "rejected">("approved");
+  const [activeDialog, setActiveDialog] = useState<ActiveDialog>(null);
   const [approvalRemarks, setApprovalRemarks] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    fetchPendingLeaves();
+    fetchAllPendingLeaves();
   }, []);
 
-  const fetchPendingLeaves = async () => {
+  const fetchAllPendingLeaves = async () => {
+    setLoading(true);
+    const token = localStorage.getItem("authToken");
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
     try {
-      setLoading(true);
-      const token = localStorage.getItem("authToken");
-      const response = await fetch("/api/v1/leave/pending-approvals", {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-      const result = await response.json();
-      if (result.success) {
-        setLeaves(result.data || []);
-      }
+      const [facultyRes, studentRes] = await Promise.all([
+        fetch("/api/v1/leave/pending-approvals", { headers }),
+        fetch("/api/v1/student-leaves/approvals/pending/dept-admin", { headers }),
+      ]);
+
+      const [facultyData, studentData] = await Promise.all([
+        facultyRes.json(),
+        studentRes.json(),
+      ]);
+
+      if (facultyData.success) setFacultyLeaves(facultyData.data || []);
+      if (studentData.success) setStudentLeaves(studentData.data || []);
     } catch (error) {
       console.error("Error fetching pending leaves:", error);
       toast({
@@ -74,74 +107,93 @@ export function LeaveApprovals() {
     }
   };
 
-  const handleApprovalClick = (leave: Leave) => {
-    setSelectedLeave(leave);
-    setApprovalStatus("approved");
-    setApprovalRemarks("");
-    setShowApprovalDialog(true);
-  };
-
-  const submitApproval = async () => {
-    if (!selectedLeave) return;
-
+  // ─── Faculty leave approval ────────────────────────────────────────────
+  const submitFacultyApproval = async () => {
+    if (!activeDialog || activeDialog.type !== "faculty") return;
+    const leave = activeDialog.leave;
     try {
       setSubmitting(true);
       const token = localStorage.getItem("authToken");
-      const response = await fetch(`/api/v1/leave/${selectedLeave.id}/status`, {
+      const res = await fetch(`/api/v1/leave/${leave.id}/status`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
           ...(token && { Authorization: `Bearer ${token}` }),
         },
-        body: JSON.stringify({
-          status: approvalStatus,
-          remarks: approvalRemarks,
-        }),
+        body: JSON.stringify({ status: activeDialog.status, remarks: approvalRemarks }),
       });
-
-      const result = await response.json();
-
+      const result = await res.json();
       if (result.success) {
-        toast({
-          title: approvalStatus === "approved" ? "Leave Approved" : "Leave Rejected",
-          description:
-            approvalStatus === "approved"
-              ? `The leave request has been approved.`
-              : `The leave request has been rejected.`,
-        });
-
-        // Remove from list
-        setLeaves((prev) => prev.filter((l) => l.id !== selectedLeave.id));
-        setShowApprovalDialog(false);
-        setSelectedLeave(null);
+        toast({ title: activeDialog.status === "approved" ? "Leave Approved" : "Leave Rejected" });
+        setFacultyLeaves((prev) => prev.filter((l) => l.id !== leave.id));
+        setActiveDialog(null);
       } else {
-        toast({
-          title: "Error",
-          description: result.error || "Failed to process leave approval",
-          variant: "destructive",
-        });
+        toast({ title: result.error || "Failed to process approval", variant: "destructive" });
       }
-    } catch (error) {
-      console.error("Error submitting approval:", error);
-      toast({
-        title: "Error",
-        description: "Failed to submit approval",
-        variant: "destructive",
-      });
+    } catch {
+      toast({ title: "Failed to submit approval", variant: "destructive" });
     } finally {
       setSubmitting(false);
     }
   };
 
+  // ─── Student leave approval ────────────────────────────────────────────
+  const submitStudentApproval = async () => {
+    if (!activeDialog || activeDialog.type !== "student") return;
+    const leave = activeDialog.leave;
+    const action = activeDialog.status; // "approved" | "rejected"
+    try {
+      setSubmitting(true);
+      const token = localStorage.getItem("authToken");
+      const res = await fetch(
+        `/api/v1/student-leaves/approvals/${leave.id}/dept-admin/${action}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token && { Authorization: `Bearer ${token}` }),
+          },
+          body: JSON.stringify({ remarks: approvalRemarks }),
+        }
+      );
+      const result = await res.json();
+      if (result.success) {
+        toast({
+          title: action === "approved" ? "Student Leave Approved ✅" : "Student Leave Rejected",
+          description:
+            action === "approved"
+              ? "Student has been notified of the approval."
+              : "Student has been notified of the rejection.",
+        });
+        setStudentLeaves((prev) => prev.filter((l) => l.id !== leave.id));
+        setActiveDialog(null);
+      } else {
+        toast({ title: result.error || "Failed to process approval", variant: "destructive" });
+      }
+    } catch {
+      toast({ title: "Failed to submit approval", variant: "destructive" });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleSubmitApproval = () => {
+    if (!activeDialog) return;
+    if (activeDialog.type === "faculty") submitFacultyApproval();
+    else submitStudentApproval();
+  };
+
+  const totalPending = facultyLeaves.length + studentLeaves.length;
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="animate-spin w-8 h-8 border-3 border-primary border-t-transparent rounded-full" />
+        <div className="animate-spin w-8 h-8 border-[3px] border-primary border-t-transparent rounded-full" />
       </div>
     );
   }
 
-  if (leaves.length === 0) {
+  if (totalPending === 0) {
     return (
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -160,132 +212,269 @@ export function LeaveApprovals() {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-3 mb-6">
+    <div className="space-y-6">
+      <div className="flex items-center gap-3 mb-2">
         <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
           <Clock className="w-5 h-5 text-primary" />
         </div>
         <div>
           <h2 className="text-2xl font-bold text-foreground">Leave Approvals</h2>
           <p className="text-sm text-muted-foreground">
-            {leaves.length} pending leave request{leaves.length !== 1 ? "s" : ""}
+            {totalPending} pending leave request{totalPending !== 1 ? "s" : ""}
           </p>
         </div>
       </div>
 
-      <div className="space-y-3">
-        {leaves.map((leave, index) => (
-          <motion.div
-            key={leave.id}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.05 }}
-            className="bg-card border border-border rounded-lg p-5 hover:border-primary/50 transition-all group"
-          >
-            <div className="flex items-start justify-between gap-4 mb-4">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
-                  <User className="w-4 h-4 text-primary" />
-                  <h3 className="font-bold text-foreground">{leave.applicant?.name || "Unknown"}</h3>
-                  <span className="text-xs bg-secondary/20 text-secondary px-2 py-0.5 rounded">
-                    {leave.applicant?.role || ""}
-                  </span>
-                </div>
+      {/* ── Student Leave Requests ── */}
+      {studentLeaves.length > 0 && (
+        <div>
+          <div className="flex items-center gap-2 mb-3">
+            <GraduationCap className="w-4 h-4 text-blue-600" />
+            <h3 className="font-semibold text-base text-blue-700">
+              Student Leave Requests ({studentLeaves.length})
+            </h3>
+            <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">
+              Class Incharge Approved · Awaiting Your Approval
+            </span>
+          </div>
 
-                <p className="text-sm text-muted-foreground mb-3">{leave.leaveType}</p>
-
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-3">
-                  <div>
-                    <p className="text-xs text-muted-foreground uppercase font-medium mb-1">From</p>
-                    <p className="text-sm font-medium flex items-center gap-1">
-                      <Calendar className="w-3 h-3" />
-                      {new Date(leave.startDate).toLocaleDateString()}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground uppercase font-medium mb-1">To</p>
-                    <p className="text-sm font-medium flex items-center gap-1">
-                      <Calendar className="w-3 h-3" />
-                      {new Date(leave.endDate).toLocaleDateString()}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground uppercase font-medium mb-1">Days</p>
-                    <p className="text-sm font-medium">{leave.totalDays}</p>
-                  </div>
-                  {leave.reassignFacultyName && (
-                    <div>
-                      <p className="text-xs text-muted-foreground uppercase font-medium mb-1">Covered By</p>
-                      <p className="text-sm font-medium text-primary">{leave.reassignFacultyName}</p>
+          <div className="space-y-3">
+            {studentLeaves.map((leave, index) => (
+              <motion.div
+                key={`student-${leave.id}`}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05 }}
+                className="bg-card border border-blue-200 rounded-lg p-5 hover:border-blue-400 transition-all"
+              >
+                <div className="flex items-start justify-between gap-4 mb-4">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <GraduationCap className="w-4 h-4 text-blue-600" />
+                      <h3 className="font-bold text-foreground">
+                        {leave.student?.firstName} {leave.student?.lastName}
+                      </h3>
+                      <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
+                        Roll: {leave.student?.rollNumber || leave.student?.studentId || "—"}
+                      </span>
                     </div>
-                  )}
+                    <p className="text-sm text-muted-foreground mb-1">
+                      {leave.leaveType}{leave.leaveSubType ? ` — ${leave.leaveSubType}` : ""}
+                    </p>
+
+                    {/* Class Incharge approved badge */}
+                    {leave.classInchargeApprover && (
+                      <p className="text-xs text-green-700 bg-green-50 border border-green-200 px-2 py-1 rounded mb-2 inline-block">
+                        ✅ Approved by Class Incharge: {leave.classInchargeApprover.Name}
+                      </p>
+                    )}
+
+                    <div className="grid grid-cols-3 gap-3 mb-3 text-sm">
+                      <div>
+                        <p className="text-xs text-muted-foreground uppercase font-medium mb-0.5">From</p>
+                        <p className="font-medium flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
+                          {new Date(leave.startDate).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground uppercase font-medium mb-0.5">To</p>
+                        <p className="font-medium flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
+                          {new Date(leave.endDate).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground uppercase font-medium mb-0.5">Days</p>
+                        <p className="font-medium">{leave.totalDays}</p>
+                      </div>
+                    </div>
+
+                    {leave.reason && (
+                      <div className="flex items-start gap-2 p-3 bg-muted/40 rounded border border-border/50">
+                        <FileText className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                        <p className="text-sm text-foreground">{leave.reason}</p>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-destructive hover:bg-destructive/10"
+                      onClick={() => {
+                        setActiveDialog({ type: "student", leave, status: "rejected" });
+                        setApprovalRemarks("");
+                      }}
+                    >
+                      <XCircle className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="bg-success hover:bg-success/90 text-white"
+                      onClick={() => {
+                        setActiveDialog({ type: "student", leave, status: "approved" });
+                        setApprovalRemarks("");
+                      }}
+                    >
+                      <CheckCircle2 className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
 
-                {leave.reason && (
-                  <div className="flex items-start gap-2 p-3 bg-muted/40 rounded border border-border/50">
-                    <FileText className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-                    <p className="text-sm text-foreground">{leave.reason}</p>
+                <p className="text-xs text-muted-foreground">
+                  Applied on {new Date(leave.createdAt).toLocaleDateString()}
+                </p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Faculty Leave Requests ── */}
+      {facultyLeaves.length > 0 && (
+        <div>
+          <div className="flex items-center gap-2 mb-3">
+            <User className="w-4 h-4 text-purple-600" />
+            <h3 className="font-semibold text-base text-purple-700">
+              Faculty Leave Requests ({facultyLeaves.length})
+            </h3>
+          </div>
+
+          <div className="space-y-3">
+            {facultyLeaves.map((leave, index) => (
+              <motion.div
+                key={`faculty-${leave.id}`}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05 }}
+                className="bg-card border border-border rounded-lg p-5 hover:border-primary/50 transition-all group"
+              >
+                <div className="flex items-start justify-between gap-4 mb-4">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <User className="w-4 h-4 text-primary" />
+                      <h3 className="font-bold text-foreground">{leave.applicant?.name || "Unknown"}</h3>
+                      <span className="text-xs bg-secondary/20 text-secondary px-2 py-0.5 rounded">
+                        {leave.applicant?.role || ""}
+                      </span>
+                    </div>
+
+                    <p className="text-sm text-muted-foreground mb-3">{leave.leaveType}</p>
+
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-3">
+                      <div>
+                        <p className="text-xs text-muted-foreground uppercase font-medium mb-1">From</p>
+                        <p className="text-sm font-medium flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
+                          {new Date(leave.startDate).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground uppercase font-medium mb-1">To</p>
+                        <p className="text-sm font-medium flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
+                          {new Date(leave.endDate).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground uppercase font-medium mb-1">Days</p>
+                        <p className="text-sm font-medium">{leave.totalDays}</p>
+                      </div>
+                      {leave.reassignFacultyName && (
+                        <div>
+                          <p className="text-xs text-muted-foreground uppercase font-medium mb-1">Covered By</p>
+                          <p className="text-sm font-medium text-primary">{leave.reassignFacultyName}</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {leave.reason && (
+                      <div className="flex items-start gap-2 p-3 bg-muted/40 rounded border border-border/50">
+                        <FileText className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                        <p className="text-sm text-foreground">{leave.reason}</p>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
 
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="text-destructive hover:bg-destructive/10"
-                  onClick={() => {
-                    setSelectedLeave(leave);
-                    setApprovalStatus("rejected");
-                    setApprovalRemarks("");
-                    setShowApprovalDialog(true);
-                  }}
-                >
-                  <XCircle className="w-4 h-4" />
-                </Button>
-                <Button
-                  size="sm"
-                  className="bg-success hover:bg-success/90 text-white"
-                  onClick={() => handleApprovalClick(leave)}
-                >
-                  <CheckCircle2 className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-destructive hover:bg-destructive/10"
+                      onClick={() => {
+                        setActiveDialog({ type: "faculty", leave, status: "rejected" });
+                        setApprovalRemarks("");
+                      }}
+                    >
+                      <XCircle className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="bg-success hover:bg-success/90 text-white"
+                      onClick={() => {
+                        setActiveDialog({ type: "faculty", leave, status: "approved" });
+                        setApprovalRemarks("");
+                      }}
+                    >
+                      <CheckCircle2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
 
-            <p className="text-xs text-muted-foreground">
-              Applied on {new Date(leave.createdAt).toLocaleDateString()}
-            </p>
-          </motion.div>
-        ))}
-      </div>
+                <p className="text-xs text-muted-foreground">
+                  Applied on {new Date(leave.createdAt).toLocaleDateString()}
+                </p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      )}
 
-      <Dialog open={showApprovalDialog} onOpenChange={setShowApprovalDialog}>
+      {/* Approval Dialog */}
+      <Dialog open={!!activeDialog} onOpenChange={(open) => !open && setActiveDialog(null)}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {approvalStatus === "approved" ? "Approve" : "Reject"} Leave Request
+              {activeDialog?.status === "approved" ? "Approve" : "Reject"}{" "}
+              {activeDialog?.type === "student" ? "Student" : "Faculty"} Leave Request
             </DialogTitle>
           </DialogHeader>
 
-          {selectedLeave && (
+          {activeDialog && (
             <div className="space-y-4">
-              <div className="bg-muted/50 rounded-lg p-4 space-y-2">
-                <p className="text-sm">
-                  <span className="font-medium">Applicant:</span> {selectedLeave.applicant?.name}
+              <div className="bg-muted/50 rounded-lg p-4 space-y-2 text-sm">
+                {activeDialog.type === "student" ? (
+                  <>
+                    <p>
+                      <span className="font-medium">Student:</span>{" "}
+                      {(activeDialog.leave as StudentLeave).student?.firstName}{" "}
+                      {(activeDialog.leave as StudentLeave).student?.lastName}
+                    </p>
+                    <p>
+                      <span className="font-medium">Roll No:</span>{" "}
+                      {(activeDialog.leave as StudentLeave).student?.rollNumber || "—"}
+                    </p>
+                  </>
+                ) : (
+                  <p>
+                    <span className="font-medium">Applicant:</span>{" "}
+                    {(activeDialog.leave as FacultyLeave).applicant?.name}
+                  </p>
+                )}
+                <p>
+                  <span className="font-medium">Type:</span> {activeDialog.leave.leaveType}
                 </p>
-                <p className="text-sm">
-                  <span className="font-medium">Type:</span> {selectedLeave.leaveType}
-                </p>
-                <p className="text-sm">
+                <p>
                   <span className="font-medium">Duration:</span>{" "}
-                  {new Date(selectedLeave.startDate).toLocaleDateString()} to{" "}
-                  {new Date(selectedLeave.endDate).toLocaleDateString()} ({selectedLeave.totalDays} day
-                  {selectedLeave.totalDays !== 1 ? "s" : ""})
+                  {new Date(activeDialog.leave.startDate).toLocaleDateString()} to{" "}
+                  {new Date(activeDialog.leave.endDate).toLocaleDateString()} (
+                  {activeDialog.leave.totalDays} day{activeDialog.leave.totalDays !== 1 ? "s" : ""})
                 </p>
-                {selectedLeave.reason && (
-                  <p className="text-sm">
-                    <span className="font-medium">Reason:</span> {selectedLeave.reason}
+                {activeDialog.leave.reason && (
+                  <p>
+                    <span className="font-medium">Reason:</span> {activeDialog.leave.reason}
                   </p>
                 )}
               </div>
@@ -303,22 +492,24 @@ export function LeaveApprovals() {
           )}
 
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setShowApprovalDialog(false)}
-              disabled={submitting}
-            >
+            <Button variant="outline" onClick={() => setActiveDialog(null)} disabled={submitting}>
               Cancel
             </Button>
             <Button
-              onClick={submitApproval}
+              onClick={handleSubmitApproval}
               disabled={submitting}
               className={cn(
                 "text-white",
-                approvalStatus === "approved" ? "bg-success hover:bg-success/90" : "bg-destructive hover:bg-destructive/90"
+                activeDialog?.status === "approved"
+                  ? "bg-success hover:bg-success/90"
+                  : "bg-destructive hover:bg-destructive/90"
               )}
             >
-              {submitting ? "Processing..." : approvalStatus === "approved" ? "Approve" : "Reject"}
+              {submitting
+                ? "Processing..."
+                : activeDialog?.status === "approved"
+                ? "Approve"
+                : "Reject"}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -1,4 +1,4 @@
-﻿import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "@/pages/faculty/components/ui/toaster";
 import { Toaster as Sonner } from "@/pages/faculty/components/ui/sonner";
 import { TooltipProvider } from "@/pages/faculty/components/ui/tooltip";
@@ -10,7 +10,7 @@ import ChangePassword from "./pages/ChangePassword";
 import PlacementCoordinator from "./pages/PlacementCoordinator";
 import TimetableView from "./pages/TimetableView";
 import TimetableManagement from "./pages/TimetableManagement";
-import TimetableAlteration from "./pages/TimetableAlteration";
+
 import Attendance from "./pages/Attendance";
 import Academics from "./pages/Academics";
 import Assessments from "./pages/Assessments";
@@ -27,7 +27,7 @@ import { InternalMarksEntry } from './pages/InternalMarksEntry';
 import ClassInchargeView from './pages/ClassInchargeView';
 import LeaveManagement from "./pages/LeaveManagement";
 import SubstituteApprovalPanel from "./pages/SubstituteApprovalPanel";
-import TimetableAlterationManager from "./pages/TimetableAlterationManager";
+
 import './faculty.css';
 
 const queryClient = new QueryClient();
@@ -47,13 +47,13 @@ const FacultyRoutes = () => (
               <Route path="change-password" element={<ChangePassword />} />
               <Route path="timetable" element={<TimetableView />} />
               <Route path="timetable-management" element={<TimetableManagement />} />
-              <Route path="timetable-alteration" element={<TimetableAlteration />} />
+
               <Route path="placement" element={<PlacementCoordinator />} />
               <Route path="attendance" element={<Attendance />} />
               <Route path="academics" element={<Academics />} />
               <Route path="leave-management" element={<LeaveManagement />} />
               <Route path="alteration-approval" element={<SubstituteApprovalPanel />} />
-              <Route path="timetable-alterations" element={<TimetableAlterationManager />} />
+
               <Route path="assessments" element={<Assessments />} />
               <Route path="communication" element={<Communication />} />
               <Route path="counseling" element={<Counseling />} />
