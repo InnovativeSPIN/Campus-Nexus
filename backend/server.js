@@ -39,6 +39,7 @@ import breakTimingRoutes from './routes/department-admin/break-timing.routes.js'
 import facultyAllocationRoutes from './routes/department-admin/faculty-allocation.routes.js';
 import timetableNotificationRoutes from './routes/faculty/timetable-notification.routes.js';
 import timetableAlterationRoutes from './routes/faculty/timetable-alteration.routes.js';
+import leaveManagementRoutes from './routes/faculty/leaveManagement.routes.js';
 import coordinatorRoutes from './routes/department-admin/coordinator.routes.js';
 import subjectRoutes from './routes/department-admin/subject.routes.js';
 import roomRoutes from './routes/department-admin/room.routes.js';
@@ -202,6 +203,7 @@ const startServer = () => {
   app.use('/api/v1/department-admin/class-incharges', classInchargeRoutes);
   app.use('/api/v1/faculty/notifications', timetableNotificationRoutes);
   app.use('/api/v1/faculty/timetable/alterations', timetableAlterationRoutes);
+  app.use('/api/v1/faculty', leaveManagementRoutes);
   app.use('/api/v1/student/marks', studentMarksRoutes);
   app.use('/api/v1/student/projects', studentProjectRoutes);
   app.use('/api/v1/student/certifications', studentCertificationRoutes);
