@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Mar 16, 2026 at 07:44 AM
+-- Generation Time: Mar 17, 2026 at 06:04 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -511,7 +511,8 @@ INSERT INTO `faculty_subject_assignments` (`id`, `faculty_id`, `subject_id`, `as
 (33, 436, 100, 435, '2026-03-14 17:17:19', '2026-2027', 6, 21, NULL, '2026-03-14', 'active', 45, 3, '2026-03-14 17:17:19', '2026-03-14 17:17:19'),
 (34, 435, 90, 435, '2026-03-14 17:17:27', '2026-2027', 6, 21, NULL, '2026-03-14', 'active', 45, 3, '2026-03-14 17:17:27', '2026-03-14 17:17:27'),
 (35, 406, 98, 435, '2026-03-14 17:17:31', '2026-2027', 6, 21, NULL, '2026-03-14', 'active', 45, 3, '2026-03-14 17:17:31', '2026-03-14 17:17:31'),
-(36, 496, 94, 435, '2026-03-15 08:06:06', '2026-2027', 6, 21, '2023-2027', '2026-03-15', 'active', 45, 3, '2026-03-15 08:06:06', '2026-03-15 08:06:06');
+(36, 496, 94, 435, '2026-03-15 08:06:06', '2026-2027', 6, 21, '2023-2027', '2026-03-15', 'active', 45, 3, '2026-03-15 08:06:06', '2026-03-15 08:06:06'),
+(37, 406, 107, 435, '2026-03-17 04:05:30', '2026-2027', 6, 21, '2023-2027', '2026-03-17', 'active', 45, 3, '2026-03-17 04:05:30', '2026-03-17 04:05:30');
 
 -- --------------------------------------------------------
 
@@ -553,6 +554,57 @@ CREATE TABLE `faculy_edu_qualification` (
   `society_name` varchar(255) NOT NULL,
   `status` enum('Active','Inactive') DEFAULT 'Active'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `leaves`
+--
+
+CREATE TABLE `leaves` (
+  `id` int(11) NOT NULL,
+  `applicantId` int(11) NOT NULL,
+  `departmentId` int(11) DEFAULT NULL,
+  `leaveType` enum('Medical','Casual','Earned','On-Duty','Personal','Maternity','Comp-Off') NOT NULL,
+  `startDate` datetime NOT NULL,
+  `endDate` datetime NOT NULL,
+  `totalDays` decimal(4,1) NOT NULL,
+  `reason` text NOT NULL,
+  `status` enum('pending','hod_approved','approved','rejected','cancelled') DEFAULT 'pending',
+  `approvedById` int(11) DEFAULT NULL,
+  `approvalDate` datetime DEFAULT NULL,
+  `approvalRemarks` text DEFAULT NULL,
+  `applicantType` enum('faculty','student') NOT NULL DEFAULT 'faculty',
+  `affected_periods` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT 'Array of timetable period IDs affected by this leave' CHECK (json_valid(`affected_periods`)),
+  `substitute_faculty_code` varchar(50) DEFAULT NULL COMMENT 'Faculty college code of the substitute',
+  `substitute_status` enum('pending','accepted','rejected') DEFAULT NULL,
+  `substitute_notified_at` datetime DEFAULT NULL,
+  `substitute_response_at` datetime DEFAULT NULL,
+  `substitute_remarks` text DEFAULT NULL,
+  `admin_approval_status` enum('pending','approved','rejected') DEFAULT NULL,
+  `admin_approval_date` datetime DEFAULT NULL,
+  `timetable_altered` tinyint(1) DEFAULT 0,
+  `reassign_faculty_id` int(11) DEFAULT NULL COMMENT 'Faculty ID who will cover during this leave',
+  `documentUrl` varchar(255) DEFAULT NULL COMMENT 'URL of the uploaded supporting document',
+  `loadAssign` text DEFAULT NULL COMMENT 'Workload distribution details',
+  `overall_status` enum('pending','substitute_pending','substitute_approved','substitute_rejected','timetable_pending','timetable_approved','executive_pending','executive_approved','approved','rejected','cancelled') DEFAULT 'pending' COMMENT 'Overall status of leave request through the complete workflow',
+  `substitute_faculty_id` int(11) DEFAULT NULL COMMENT 'Requested substitute faculty ID',
+  `substitute_approval_status` enum('pending','approved','rejected') DEFAULT 'pending' COMMENT 'Substitute faculty approval decision',
+  `substitute_approval_date` datetime DEFAULT NULL COMMENT 'Date when substitute approved or rejected',
+  `substitute_rejection_reason` text DEFAULT NULL COMMENT 'Reason provided by substitute if rejected',
+  `timetable_incharge_approval_status` enum('pending','approved','rejected') DEFAULT 'pending' COMMENT 'Timetable incharge approval decision',
+  `timetable_incharge_id` int(11) DEFAULT NULL COMMENT 'Timetable incharge faculty ID',
+  `timetable_incharge_approval_date` datetime DEFAULT NULL COMMENT 'Date when timetable incharge approved or rejected',
+  `timetable_incharge_rejection_reason` text DEFAULT NULL COMMENT 'Reason provided by timetable incharge if rejected',
+  `executive_admin_approval_status` enum('pending','approved','rejected') DEFAULT NULL COMMENT 'Executive admin approval (only for leaves > 2 days)',
+  `executive_admin_id` int(11) DEFAULT NULL COMMENT 'Executive admin faculty ID who approved/rejected',
+  `executive_admin_approval_date` datetime DEFAULT NULL COMMENT 'Date when executive admin approved or rejected',
+  `executive_admin_rejection_reason` text DEFAULT NULL COMMENT 'Reason provided by executive admin if rejected',
+  `dept_admin_notified` tinyint(1) DEFAULT 0 COMMENT 'Whether department admin has been notified of alteration',
+  `dept_admin_notified_at` datetime DEFAULT NULL COMMENT 'Timestamp when department admin was notified',
+  `createdAt` datetime NOT NULL,
+  `updatedAt` datetime NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -1189,7 +1241,7 @@ INSERT INTO `subjects` (`id`, `subject_code`, `subject_name`, `description`, `de
 (104, 'CCS332-', 'App Development', '', 6, 6, '2025-2026', 3, 'even', NULL, 4.00, 'Theory+Practical', 1, 0, NULL, 3, 0, 'active', 109, '2026-03-15 08:04:40', '2026-03-15 08:04:40', '2023-2027'),
 (105, '-', 'LIBRARY', '', 6, 6, '2025-2026', 3, 'even', NULL, 4.00, 'Theory+Practical', 1, 0, NULL, 3, 0, 'active', 109, '2026-03-15 08:12:01', '2026-03-15 08:12:01', '2023-2027'),
 (106, '.', 'Placement', '', 6, 6, '2025-2026', 3, 'even', NULL, 4.00, 'Theory+Practical', 0, 0, NULL, 3, 0, 'active', 109, '2026-03-15 08:12:33', '2026-03-15 08:12:33', '2023-2027'),
-(107, 'MH', 'MINI-HACKATHON', '', 6, 6, '2025-2026', 3, 'even', NULL, 4.00, 'Practical', 1, 0, NULL, 3, 0, 'active', 109, '2026-03-15 08:36:47', '2026-03-15 08:36:47', '2023-2027');
+(107, 'MH', 'MINI-HACKATHON', '', 6, 6, '2025-2026', 3, 'even', NULL, 4.00, 'Practical', 1, 0, NULL, 3, 0, 'active', 109, '2026-03-15 08:36:47', '2026-03-17 04:05:30', '2023-2027');
 
 -- --------------------------------------------------------
 
@@ -1722,6 +1774,18 @@ ALTER TABLE `faculy_edu_qualification`
   ADD KEY `idx_faculty_id` (`faculty_id`);
 
 --
+-- Indexes for table `leaves`
+--
+ALTER TABLE `leaves`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `applicantId` (`applicantId`),
+  ADD KEY `departmentId` (`departmentId`),
+  ADD KEY `reassign_faculty_id` (`reassign_faculty_id`),
+  ADD KEY `substitute_faculty_id` (`substitute_faculty_id`),
+  ADD KEY `timetable_incharge_id` (`timetable_incharge_id`),
+  ADD KEY `executive_admin_id` (`executive_admin_id`);
+
+--
 -- Indexes for table `leave_approvals`
 --
 ALTER TABLE `leave_approvals`
@@ -2091,7 +2155,7 @@ ALTER TABLE `faculty_research`
 -- AUTO_INCREMENT for table `faculty_subject_assignments`
 --
 ALTER TABLE `faculty_subject_assignments`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=37;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=38;
 
 --
 -- AUTO_INCREMENT for table `faculty_substitutes`
@@ -2104,6 +2168,12 @@ ALTER TABLE `faculty_substitutes`
 --
 ALTER TABLE `faculy_edu_qualification`
   MODIFY `membership_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
+
+--
+-- AUTO_INCREMENT for table `leaves`
+--
+ALTER TABLE `leaves`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `leave_approvals`
@@ -2373,6 +2443,17 @@ ALTER TABLE `faculty_substitutes`
 --
 ALTER TABLE `faculy_edu_qualification`
   ADD CONSTRAINT `faculy_edu_qualification_ibfk_1` FOREIGN KEY (`faculty_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `leaves`
+--
+ALTER TABLE `leaves`
+  ADD CONSTRAINT `leaves_ibfk_1` FOREIGN KEY (`applicantId`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE NO ACTION ON UPDATE CASCADE,
+  ADD CONSTRAINT `leaves_ibfk_2` FOREIGN KEY (`departmentId`) REFERENCES `departments` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  ADD CONSTRAINT `leaves_ibfk_3` FOREIGN KEY (`reassign_faculty_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  ADD CONSTRAINT `leaves_ibfk_4` FOREIGN KEY (`substitute_faculty_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  ADD CONSTRAINT `leaves_ibfk_5` FOREIGN KEY (`timetable_incharge_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  ADD CONSTRAINT `leaves_ibfk_6` FOREIGN KEY (`executive_admin_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 --
 -- Constraints for table `leave_approvals`
