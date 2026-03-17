@@ -729,7 +729,7 @@ export const getMyClassIncharge = asyncHandler(async (req, res, next) => {
       {
         model: ClassModel,
         as: 'class',
-        attributes: ['id', 'name', 'capacity', 'department_id'],
+        attributes: ['id', 'name', 'capacity', 'department_id', 'semester', 'section', 'batch'],
         include: [
           { model: Department, as: 'department', attributes: ['short_name', 'full_name'] }
         ]
@@ -752,7 +752,7 @@ export const getMyClassIncharge = asyncHandler(async (req, res, next) => {
         {
           model: ClassModel,
           as: 'class',
-          attributes: ['id', 'name', 'capacity', 'department_id'],
+          attributes: ['id', 'name', 'capacity', 'department_id', 'semester', 'section', 'batch'],
           include: [
             { model: Department, as: 'department', attributes: ['short_name', 'full_name'] }
           ]
@@ -802,9 +802,9 @@ export const getMyClassIncharge = asyncHandler(async (req, res, next) => {
     data: {
       incharge: {
         id: incharge.id,
-        academic_year: incharge.academic_year,
-        semester: incharge.semester,
-        semester_type: incharge.semester_type,
+        academic_year: incharge.academic_year || assignedClass?.academic_year,
+        semester: incharge.semester || assignedClass?.semester,
+        semester_type: incharge.semester_type || (assignedClass?.semester ? (assignedClass.semester % 2 === 0 ? 'even' : 'odd') : null),
         class: assignedClass
       },
       students,

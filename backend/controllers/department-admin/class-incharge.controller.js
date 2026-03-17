@@ -133,13 +133,13 @@ export const getClassIncharges = asyncHandler(async (req, res, next) => {
   }
 
   where.class_id = { [Op.in]: classIds };
-  
+
   const incharges = await ClassIncharge.findAll({
     where,
     include: [
-      { 
-        model: ClassModel, 
-        as: 'class', 
+      {
+        model: ClassModel,
+        as: 'class',
         attributes: ['id', 'name', 'capacity'],
       },
       { model: Faculty, as: 'faculty', attributes: ['faculty_id', 'Name', 'email', 'designation'] }
