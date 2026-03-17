@@ -26,6 +26,9 @@ import AnnouncementDetail from "./pages/AnnouncementDetail";
 import Announcements from "./pages/Announcements";import NotificationCenter from './pages/NotificationCenter';
 import { InternalMarksEntry } from './pages/InternalMarksEntry';
 import ClassInchargeView from './pages/ClassInchargeView';
+import LeaveManagement from "./pages/LeaveManagement";
+import SubstituteApprovalPanel from "./pages/SubstituteApprovalPanel";
+import TimetableAlterationManager from "./pages/TimetableAlterationManager";
 import './faculty.css';
 
 const queryClient = new QueryClient();
@@ -50,6 +53,9 @@ const FacultyRoutes = () => (
               <Route path="attendance" element={<Attendance />} />
               <Route path="academics" element={<Academics />} />
               <Route path="leave" element={<Leave />} />
+              <Route path="leave-management" element={<LeaveManagement />} />
+              <Route path="alteration-approval" element={<SubstituteApprovalPanel />} />
+              <Route path="timetable-alterations" element={<TimetableAlterationManager />} />
               <Route path="assessments" element={<Assessments />} />
               <Route path="communication" element={<Communication />} />
               <Route path="counseling" element={<Counseling />} />
