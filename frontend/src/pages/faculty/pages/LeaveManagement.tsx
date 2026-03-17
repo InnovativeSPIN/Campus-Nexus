@@ -5,11 +5,10 @@ import { Button } from "@/pages/faculty/components/ui/button";
 import { Input } from "@/pages/faculty/components/ui/input";
 import { Label } from "@/pages/faculty/components/ui/label";
 import { Textarea } from "@/pages/faculty/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/pages/faculty/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/pages/faculty/components/ui/tabs";
 import {
-  CalendarDays, PlusCircle, Clock, CheckCircle2, XCircle, AlertCircle, FileText, ArrowRight,
-  Calendar, User, Trash2, Wallet, UserCheck, Users, CheckIcon, XIcon, RefreshCw
+  CalendarDays, PlusCircle, Clock, CheckCircle2, XCircle, AlertCircle, FileText,
+  Calendar, User, Trash2, Wallet, Users, CheckIcon, XIcon, RefreshCw
 } from "lucide-react";
 import { cn } from "@/pages/faculty/lib/utils";
 import { toast } from "sonner";
@@ -19,6 +18,14 @@ interface Faculty {
   faculty_id: number;
   Name: string;
   email: string;
+  phone_number?: string;
+  designation?: string;
+  matching_subjects?: number;
+  subjects?: Array<{
+    subject_id: number;
+    subject_name: string;
+    subject_code: string;
+  }>;
 }
 
 interface LeaveRequest {
@@ -73,6 +80,8 @@ export default function FacultyLeaveManagement() {
   const [colleagues, setColleagues] = useState<Faculty[]>([]);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [slotDetailsLoading, setSlotDetailsLoading] = useState<{[key: number]: boolean}>({});
+  const [slotDetails, setSlotDetails] = useState<{[key: number]: any}>({});
   const [activeTab, setActiveTab] = useState("apply");
 
   const [form, setForm] = useState({
@@ -116,15 +125,45 @@ export default function FacultyLeaveManagement() {
   const fetchColleagues = async () => {
     try {
       const token = localStorage.getItem("authToken");
-      const res = await fetch("/api/v1/faculty/alteration/department-colleagues", {
+      console.log('[fetchColleagues] Starting fetch with token:', !!token);
+      const res = await fetch("/api/v1/faculty/leave-management/colleagues?debug=true", {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
+      console.log('[fetchColleagues] Response status:', res.status);
       const result = await res.json();
+      console.log('[fetchColleagues] Response data:', result);
       if (result.success) {
+        console.log('[fetchColleagues] Setting colleagues:', result.data);
         setColleagues(result.data || []);
+      } else {
+        console.warn('[fetchColleagues] Success is false:', result);
       }
     } catch (error) {
       console.error("Error fetching colleagues:", error);
+      toast.error("Failed to load substitute faculty");
+    }
+  };
+
+  const fetchSlotDetailsForPeriod = async (index: number, date: string, periodSlotId: number) => {
+    if (!date || !periodSlotId) return;
+
+    try {
+      setSlotDetailsLoading({ ...slotDetailsLoading, [index]: true });
+      const token = localStorage.getItem("authToken");
+      const res = await fetch(`/api/v1/faculty/leave-request/slot-details?date=${date}&period_slot_id=${periodSlotId}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      const result = await res.json();
+      if (result.success && result.data) {
+        setSlotDetails({ ...slotDetails, [index]: result.data });
+      } else if (result.success && !result.data) {
+        setSlotDetails({ ...slotDetails, [index]: null });
+      }
+    } catch (error) {
+      console.error("Error fetching slot details:", error);
+      toast.error("Failed to fetch slot details");
+    } finally {
+      setSlotDetailsLoading({ ...slotDetailsLoading, [index]: false });
     }
   };
 
@@ -158,6 +197,11 @@ export default function FacultyLeaveManagement() {
     const updated = [...form.affected_periods];
     updated[index] = { ...updated[index], [field]: value };
     setForm({ ...form, affected_periods: updated });
+
+    // Fetch slot details if date or period is changed
+    if ((field === 'date' || field === 'period_slot_id') && updated[index].date && updated[index].period_slot_id) {
+      fetchSlotDetailsForPeriod(index, updated[index].date, updated[index].period_slot_id);
+    }
   };
 
   const handleRemoveAffectedPeriod = (index: number) => {
@@ -333,13 +377,31 @@ export default function FacultyLeaveManagement() {
                         <ShadSelectValue placeholder="Select substitute faculty" />
                       </ShadSelectTrigger>
                       <ShadSelectContent>
-                        {colleagues.map((colleague) => (
-                          <ShadSelectItem key={colleague.faculty_id} value={colleague.faculty_id.toString()}>
-                            {colleague.Name}
-                          </ShadSelectItem>
-                        ))}
+                        {colleagues.length === 0 ? (
+                          <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                            No matching faculty found for your assigned classes
+                          </div>
+                        ) : (
+                          colleagues.map((colleague) => (
+                            <ShadSelectItem key={colleague.faculty_id} value={colleague.faculty_id.toString()}>
+                              <div className="flex items-center gap-2">
+                                <span>{colleague.Name}</span>
+                                {colleague.matching_subjects && colleague.matching_subjects > 0 && (
+                                  <span className="text-xs bg-primary/20 text-primary px-2 py-0.5 rounded">
+                                    {colleague.matching_subjects} {colleague.matching_subjects === 1 ? 'subject' : 'subjects'}
+                                  </span>
+                                )}
+                              </div>
+                            </ShadSelectItem>
+                          ))
+                        )}
                       </ShadSelectContent>
                     </ShadSelect>
+                    {colleagues.length > 0 && (
+                      <p className="text-xs text-muted-foreground">
+                        Showing faculty who teach your assigned classes
+                      </p>
+                    )}
                   </div>
 
                   {/* Start Date */}
@@ -425,38 +487,84 @@ export default function FacultyLeaveManagement() {
                           key={index}
                           initial={{ opacity: 0, x: -10 }}
                           animate={{ opacity: 1, x: 0 }}
-                          className="bg-card p-4 rounded-lg border border-border flex items-end gap-3"
+                          className="bg-card p-4 rounded-lg border border-border space-y-3"
                         >
-                          <div className="flex-1">
-                            <Label className="text-xs">Date</Label>
-                            <Input
-                              type="date"
-                              value={period.date}
-                              onChange={(e) => handleUpdateAffectedPeriod(index, "date", e.target.value)}
-                              className="mt-1"
-                            />
+                          <div className="flex items-end gap-3">
+                            <div className="flex-1">
+                              <Label className="text-xs">Date</Label>
+                              <Input
+                                type="date"
+                                value={period.date}
+                                onChange={(e) => handleUpdateAffectedPeriod(index, "date", e.target.value)}
+                                className="mt-1"
+                              />
+                            </div>
+                            <div className="flex-1">
+                              <Label className="text-xs">Period Slot ID</Label>
+                              <Input
+                                type="number"
+                                min="1"
+                                max="10"
+                                value={period.period_slot_id || ""}
+                                onChange={(e) => {
+                                  const val = e.target.value ? parseInt(e.target.value) : 0;
+                                  handleUpdateAffectedPeriod(index, "period_slot_id", val);
+                                }}
+                                className="mt-1"
+                                placeholder="1-10"
+                              />
+                            </div>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleRemoveAffectedPeriod(index)}
+                              className="text-destructive hover:bg-destructive/10"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
                           </div>
-                          <div className="flex-1">
-                            <Label className="text-xs">Period Slot ID</Label>
-                            <Input
-                              type="number"
-                              min="1"
-                              max="10"
-                              value={period.period_slot_id}
-                              onChange={(e) => handleUpdateAffectedPeriod(index, "period_slot_id", parseInt(e.target.value))}
-                              className="mt-1"
-                              placeholder="1-10"
-                            />
-                          </div>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleRemoveAffectedPeriod(index)}
-                            className="text-destructive hover:bg-destructive/10"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
+
+                          {/* Slot Details Section */}
+                          {slotDetailsLoading[index] && (
+                            <div className="bg-primary/5 border border-primary/20 rounded p-3 flex items-center gap-2">
+                              <RefreshCw className="w-4 h-4 animate-spin text-primary" />
+                              <span className="text-sm text-primary">Loading slot details...</span>
+                            </div>
+                          )}
+
+                          {!slotDetailsLoading[index] && slotDetails[index] && (
+                            <div className="bg-success/5 border border-success/20 rounded p-3 space-y-2">
+                              <div className="grid grid-cols-2 gap-3 text-sm">
+                                <div>
+                                  <p className="text-muted-foreground text-xs">Subject</p>
+                                  <p className="font-medium">{slotDetails[index].subject?.name || "N/A"}</p>
+                                  {slotDetails[index].subject?.code && (
+                                    <p className="text-xs text-muted-foreground">{slotDetails[index].subject.code}</p>
+                                  )}
+                                </div>
+                                <div>
+                                  <p className="text-muted-foreground text-xs">Class</p>
+                                  <p className="font-medium">{slotDetails[index].class?.name || "N/A"}</p>
+                                </div>
+                                <div>
+                                  <p className="text-muted-foreground text-xs">Time</p>
+                                  <p className="font-medium">{slotDetails[index].start_time} - {slotDetails[index].end_time}</p>
+                                </div>
+                                <div>
+                                  <p className="text-muted-foreground text-xs">Room</p>
+                                  <p className="font-medium">{slotDetails[index].room || "N/A"}</p>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {!slotDetailsLoading[index] && slotDetails[index] === null && period.date && period.period_slot_id && (
+                            <div className="bg-warning/5 border border-warning/20 rounded p-3 flex items-center gap-2">
+                              <AlertCircle className="w-4 h-4 text-warning" />
+                              <span className="text-sm text-warning">No slot found for this day and period</span>
+                            </div>
+                          )}
                         </motion.div>
                       ))}
                     </div>

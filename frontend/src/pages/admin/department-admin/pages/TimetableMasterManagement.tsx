@@ -272,8 +272,18 @@ export default function TimetableMasterManagement() {
   };
 
   const handleActivate = async (timetableId: number) => {
+    if (!authToken) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in again to activate timetables.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       setLoading(true);
+      console.log('[handleActivate] timetableId:', timetableId, 'authToken present:', !!authToken);
 
       const response = await fetch(`/api/v1/timetable-master/${timetableId}/activate`, {
         method: "PATCH",
@@ -282,6 +292,8 @@ export default function TimetableMasterManagement() {
           Authorization: `Bearer ${authToken}`,
         },
       });
+
+      console.log('[handleActivate] response status:', response.status);
 
       if (response.ok) {
         const updatedTimetable = await response.json();
@@ -294,6 +306,7 @@ export default function TimetableMasterManagement() {
         });
       } else {
         const errorData = await response.json();
+        console.log('[handleActivate] error response:', errorData);
         throw new Error(errorData.message || "Failed to activate timetable");
       }
     } catch (error) {
@@ -592,7 +605,7 @@ export default function TimetableMasterManagement() {
                     Manage Slots
                   </Button>
 
-                  {((timetable.status?.toLowerCase?.() === "draft" || timetable.status === "") || timetable.status?.toLowerCase?.() === "inactive") && (
+                  {((!timetable.status) || timetable.status?.toLowerCase?.() === "draft" || timetable.status?.toLowerCase?.() === "inactive") && (
                     <Button
                       size="sm"
                       className="bg-green-600 hover:bg-green-700"

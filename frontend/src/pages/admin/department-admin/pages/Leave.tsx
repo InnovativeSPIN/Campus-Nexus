@@ -140,7 +140,7 @@ export default function Leave() {
   const fetchColleagues = async () => {
     try {
       const token = localStorage.getItem("authToken");
-      const res = await fetch("/api/v1/faculty/me/department-colleagues", {
+      const res = await fetch("/api/v1/faculty/leave-management/colleagues", {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       const result = await res.json();

@@ -13,7 +13,6 @@ import TimetableManagement from "./pages/TimetableManagement";
 import TimetableAlteration from "./pages/TimetableAlteration";
 import Attendance from "./pages/Attendance";
 import Academics from "./pages/Academics";
-import Leave from "./pages/Leave";
 import Assessments from "./pages/Assessments";
 import Communication from "./pages/Communication";
 import Counseling from "./pages/Counseling";
@@ -52,7 +51,6 @@ const FacultyRoutes = () => (
               <Route path="placement" element={<PlacementCoordinator />} />
               <Route path="attendance" element={<Attendance />} />
               <Route path="academics" element={<Academics />} />
-              <Route path="leave" element={<Leave />} />
               <Route path="leave-management" element={<LeaveManagement />} />
               <Route path="alteration-approval" element={<SubstituteApprovalPanel />} />
               <Route path="timetable-alterations" element={<TimetableAlterationManager />} />

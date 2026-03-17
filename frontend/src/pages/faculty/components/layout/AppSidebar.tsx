@@ -29,7 +29,6 @@ const menuItems = [
   { title: "Timetable", url: "/faculty/timetable", icon: Calendar },
   { title: "Attendance", url: "/faculty/attendance", icon: ClipboardCheck },
   { title: "Academics", url: "/faculty/academics", icon: BookOpen },
-  { title: "Leave", url: "/faculty/leave", icon: CalendarDays },
   { title: "Assessments", url: "/faculty/assessments", icon: FileText },
   { title: "Counseling", url: "/faculty/counseling", icon: Users },
   { title: "Announcement", url: "/faculty/communication", icon: MessageSquare },
