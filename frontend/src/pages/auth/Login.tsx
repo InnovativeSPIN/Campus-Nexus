@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import campusNexusLogo from '@/assets/campusnexus.png';
 import { UserRole } from '@/types/auth';
 import { Button } from '@/pages/admin/superadmin/components/ui/button';
 import { Input } from '@/pages/admin/superadmin/components/ui/input';
@@ -12,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/pages/admin/superadmin/components/ui/select';
-import { GraduationCap, Lock, Mail, Users, User as UserIcon, Calendar, Building } from 'lucide-react';
+import { Lock, Mail, Users, User as UserIcon, Calendar, Building } from 'lucide-react';
 import { toast } from '@/components/ui/sonner';
 import {
   AlertDialog,
@@ -155,7 +156,7 @@ export default function Login() {
               }}
             >
               <img
-                src="./dist/assets/campusnexus.png"
+                src={campusNexusLogo}
                 alt="Campus Nexus"
                 className="h-36 w-36 rounded-full object-cover"
                 style={{
@@ -187,7 +188,7 @@ export default function Login() {
               }}
             >
               <img
-                src="./dist/assets/campusnexus.png"
+                src={campusNexusLogo}
                 alt="Campus Nexus"
                 className="h-24 w-24 rounded-full object-cover"
                 style={{ filter: 'drop-shadow(0 0 4px rgba(255,255,255,0.40))' }}

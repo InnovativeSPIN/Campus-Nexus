@@ -13,7 +13,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/pages/admin/superadmin/components/ui/select';
-import { GraduationCap, Lock, Mail, Users, User as UserIcon } from 'lucide-react';
+import { Lock, Mail, Users, User as UserIcon } from 'lucide-react';
 import { toast } from '@/components/ui/sonner';
 import { mockAdmins } from '@/data/mockData';
 import {
