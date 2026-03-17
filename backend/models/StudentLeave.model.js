@@ -27,6 +27,10 @@ const StudentLeave = (sequelize) => {
             type: DataTypes.ENUM('pending', 'approved', 'rejected', 'cancelled'),
             defaultValue: 'pending',
         },
+        submitted_to: {
+            type: DataTypes.ENUM('Class Incharge', 'Faculty Advisor', 'HOD'),
+            defaultValue: 'Class Incharge',
+        },
         // Approval tracking
         class_incharge_approval_status: {
             type: DataTypes.ENUM('pending', 'approved', 'rejected'),

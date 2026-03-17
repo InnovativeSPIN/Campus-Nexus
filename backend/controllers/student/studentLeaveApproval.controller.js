@@ -1,11 +1,11 @@
-import asyncHandler from '../../middleware/async.js';
+    import asyncHandler from '../../middleware/async.js';
 import ErrorResponse from '../../utils/errorResponse.js';
 import { models } from '../../models/index.js';
 import { Op } from 'sequelize';
-import { 
-    notifyStudentLeaveEvent, 
+import {
+    notifyStudentLeaveEvent,
     notifyFacultyApprovalPending,
-    notifyDeptAdminApprovalPending 
+    notifyDeptAdminApprovalPending
 } from '../notification.controller.js';
 const { StudentLeave, Student, Class: ClassModel, Faculty, TimetableMaster } = models;
 
@@ -20,7 +20,7 @@ const { StudentLeave, Student, Class: ClassModel, Faculty, TimetableMaster } = m
 // @route  POST /api/v1/student-leaves/submit
 // @access Private/Student
 export const submitLeaveApplication = asyncHandler(async (req, res, next) => {
-    const { leaveType, leaveSubType, startDate, endDate, totalDays, reason, attachment } = req.body;
+    const { leaveType, leaveSubType, startDate, endDate, totalDays, reason, attachment, recipient } = req.body;
     const studentId = req.user.id;
 
     // Fetch student details to get classId
@@ -34,7 +34,20 @@ export const submitLeaveApplication = asyncHandler(async (req, res, next) => {
         return next(new ErrorResponse('Student class not assigned', 400));
     }
 
-    // Create leave application
+    // Get assigned approvers from TimetableMaster
+    const approvers = await getTimetableApprovers(classId, student.departmentId);
+
+    // Determine IDs based on recipient selection and system assignments
+    let assignedClassInchargeId = null;
+    let assignedDeptAdminId = approvers.hod_id;
+
+    if (recipient === 'Faculty Advisor') {
+        assignedClassInchargeId = approvers.asst_coordinator_id || approvers.class_coordinator_id;
+    } else {
+        // Default to Class Incharge
+        assignedClassInchargeId = approvers.class_coordinator_id;
+    }
+
     const leave = await StudentLeave.create({
         studentId,
         classId,
@@ -45,9 +58,12 @@ export const submitLeaveApplication = asyncHandler(async (req, res, next) => {
         totalDays,
         reason,
         attachment: attachment || null,
+        submitted_to: recipient || 'Class Incharge',
         overall_status: 'pending',
-        class_incharge_approval_status: 'pending',
-        department_admin_approval_status: 'pending'
+        class_incharge_approval_status: (recipient === 'HOD') ? 'approved' : 'pending',
+        department_admin_approval_status: 'pending',
+        class_incharge_id: assignedClassInchargeId,
+        department_admin_id: assignedDeptAdminId
     });
 
     // Notify student of submission
@@ -57,15 +73,13 @@ export const submitLeaveApplication = asyncHandler(async (req, res, next) => {
         relatedData: { leaveType, leaveSubType, totalDays }
     });
 
-    // Fetch class incharge and notify them
-    const classIncharge = await getTimetableIncharge(classId);
-    if (classIncharge) {
-        const fetchedStudent = await Student.findByPk(studentId, {
-            attributes: ['Name']
-        });
+    // Notify the primary recipient
+    const primaryApproverId = (recipient === 'HOD') ? assignedDeptAdminId : assignedClassInchargeId;
+
+    if (primaryApproverId) {
         await notifyFacultyApprovalPending({
-            facultyId: classIncharge,
-            studentName: fetchedStudent?.Name || 'A student',
+            facultyId: primaryApproverId,
+            studentName: `${student.firstName} ${student.lastName}`,
             leaveType,
             totalDays,
             entityId: leave.id
@@ -79,16 +93,23 @@ export const submitLeaveApplication = asyncHandler(async (req, res, next) => {
     });
 });
 
-// @desc   Get class incharge for a class via timetable_master
-const getTimetableIncharge = async (classId) => {
+// @desc   Get approvers for a class via timetable_master
+const getTimetableApprovers = async (classId, departmentId) => {
     try {
         const timetable = await TimetableMaster.findOne({
             where: { class_id: classId, status: { [Op.in]: ['draft', 'active'] } },
-            attributes: ['class_coordinator_id']
+            attributes: ['class_coordinator_id', 'asst_coordinator_id', 'hod_id']
         });
-        return timetable?.class_coordinator_id || null;
+
+        const hod_id = timetable?.hod_id || await getDepartmentAdminId(departmentId);
+
+        return {
+            class_coordinator_id: timetable?.class_coordinator_id || null,
+            asst_coordinator_id: timetable?.asst_coordinator_id || null,
+            hod_id: hod_id
+        };
     } catch (error) {
-        return null;
+        return { class_coordinator_id: null, asst_coordinator_id: null, hod_id: null };
     }
 };
 
@@ -131,15 +152,15 @@ export const classInchargeApproveLeave = asyncHandler(async (req, res, next) => 
         await notifyStudentLeaveEvent('leave_rejected', {
             userId: leave.studentId,
             entityId: leave.id,
-            relatedData: { 
-                leaveType: leave.leaveType, 
+            relatedData: {
+                leaveType: leave.leaveType,
                 remarks: remarks || 'Not specified'
             }
         });
     } else if (approval_status === 'approved') {
         // Move to next level - Department Admin approval
         leave.department_admin_approval_status = 'pending';
-        
+
         // Notify student
         const classInchargeData = await Faculty.findOne({
             where: { faculty_id: facultyId },
@@ -148,7 +169,7 @@ export const classInchargeApproveLeave = asyncHandler(async (req, res, next) => 
         await notifyStudentLeaveEvent('leave_approved_by_ci', {
             userId: leave.studentId,
             entityId: leave.id,
-            relatedData: { 
+            relatedData: {
                 leaveType: leave.leaveType,
                 approverName: classInchargeData?.Name || 'Class Incharge'
             }
@@ -157,12 +178,10 @@ export const classInchargeApproveLeave = asyncHandler(async (req, res, next) => 
         // Notify department admin
         const deptAdminId = await getDepartmentAdminId(leave.student.class.department_id);
         if (deptAdminId) {
-            const studentData = await Student.findByPk(leave.studentId, {
-                attributes: ['Name']
-            });
+            const studentData = await Student.findByPk(leave.studentId);
             await notifyDeptAdminApprovalPending({
                 facultyId: deptAdminId,
-                studentName: studentData?.Name || 'A student',
+                studentName: `${studentData?.firstName} ${studentData?.lastName}` || 'A student',
                 leaveType: leave.leaveType,
                 classInchargeName: classInchargeData?.Name || 'Class Incharge',
                 entityId: leave.id
@@ -230,8 +249,8 @@ export const deptAdminApproveLeave = asyncHandler(async (req, res, next) => {
         await notifyStudentLeaveEvent('leave_rejected', {
             userId: leave.studentId,
             entityId: leave.id,
-            relatedData: { 
-                leaveType: leave.leaveType, 
+            relatedData: {
+                leaveType: leave.leaveType,
                 remarks: remarks || 'Not specified'
             }
         });
@@ -252,25 +271,14 @@ export const deptAdminApproveLeave = asyncHandler(async (req, res, next) => {
 export const getPendingLeavesForClassIncharge = asyncHandler(async (req, res, next) => {
     const facultyId = req.user.faculty_id;
 
-    // Get all classes where this faculty is class coordinator
-    const timetables = await TimetableMaster.findAll({
-        where: { class_coordinator_id: facultyId },
-        attributes: ['class_id']
-    });
-
-    const classIds = timetables.map(t => t.class_id);
-    if (classIds.length === 0) {
-        return res.status(200).json({ success: true, data: [] });
-    }
-
-    // Get pending leaves for these classes
+    // Get pending leaves where this faculty is the assigned incharge
     const leaves = await StudentLeave.findAll({
         where: {
-            classId: { [Op.in]: classIds },
+            class_incharge_id: facultyId,
             class_incharge_approval_status: 'pending'
         },
         include: [{ model: Student, as: 'student' }],
-        order: [['created_at', 'DESC']]
+        order: [['createdAt', 'DESC']]
     });
 
     res.status(200).json({
@@ -285,37 +293,16 @@ export const getPendingLeavesForClassIncharge = asyncHandler(async (req, res, ne
 // @access Private/Faculty (Department Admin)
 export const getPendingLeavesForDeptAdmin = asyncHandler(async (req, res, next) => {
     const facultyId = req.user.faculty_id;
-    const departmentId = req.user.department_id;
 
-    // Find department admin
-    const admin = await Faculty.findOne({
-        where: { faculty_id: facultyId, role_id: 7, department_id: departmentId }
-    });
-
-    if (!admin) {
-        return next(new ErrorResponse('You are not a department admin', 403));
-    }
-
-    // Get classes in this department
-    const classes = await ClassModel.findAll({
-        where: { department_id: departmentId },
-        attributes: ['id']
-    });
-
-    const classIds = classes.map(c => c.id);
-    if (classIds.length === 0) {
-        return res.status(200).json({ success: true, data: [] });
-    }
-
-    // Get leaves pending department admin approval
+    // Get leaves pending department admin approval where this faculty is the assigned admin
     const leaves = await StudentLeave.findAll({
         where: {
-            classId: { [Op.in]: classIds },
+            department_admin_id: facultyId,
             class_incharge_approval_status: 'approved',
             department_admin_approval_status: 'pending'
         },
         include: [{ model: Student, as: 'student' }],
-        order: [['created_at', 'DESC']]
+        order: [['createdAt', 'DESC']]
     });
 
     res.status(200).json({

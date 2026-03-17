@@ -40,6 +40,23 @@ router.get(
     getMyLeaveApplications
 );
 
+// Class Incharge pending approvals - MUST be before /:id to avoid shadowing
+router.get(
+    '/pending/class-incharge',
+    protect,
+    authorize('faculty', 'department-admin'),
+    getPendingLeavesForClassIncharge
+);
+
+// Department Admin pending approvals - MUST be before /:id to avoid shadowing
+router.get(
+    '/pending/dept-admin',
+    protect,
+    authorize('department-admin'),
+    getPendingLeavesForDeptAdmin
+);
+
+// Generic get by ID - must come AFTER all named paths
 router.get(
     '/:id',
     protect,
@@ -51,14 +68,6 @@ router.delete(
     protect,
     authorize('student'),
     withdrawLeave
-);
-
-// Class Incharge approval routes
-router.get(
-    '/pending/class-incharge',
-    protect,
-    authorize('faculty', 'department-admin'),
-    getPendingLeavesForClassIncharge
 );
 
 // New format: /approvals/:id/class-incharge/approved or /rejected
@@ -123,12 +132,10 @@ const classInchargeApprovalHandler = asyncHandler(async (req, res, next) => {
         // Notify department admin
         const deptAdminId = await getDepartmentAdminId(leave.student.class.department_id);
         if (deptAdminId) {
-            const studentData = await Student.findByPk(leave.studentId, {
-                attributes: ['Name']
-            });
+            const studentData = await Student.findByPk(leave.studentId);
             await notifyDeptAdminApprovalPending({
                 facultyId: deptAdminId,
-                studentName: studentData?.Name || 'A student',
+                studentName: `${studentData?.firstName} ${studentData?.lastName}` || 'A student',
                 leaveType: leave.leaveType,
                 classInchargeName: classInchargeData?.Name || 'Class Incharge',
                 entityId: leave.id
@@ -152,13 +159,6 @@ router.patch(
     classInchargeApprovalHandler
 );
 
-// Department Admin approval routes
-router.get(
-    '/pending/dept-admin',
-    protect,
-    authorize('department-admin'),
-    getPendingLeavesForDeptAdmin
-);
 
 // New format: /approvals/:id/dept-admin/approved or /rejected
 const deptAdminApprovalHandler = asyncHandler(async (req, res, next) => {

@@ -3,7 +3,7 @@ import ErrorResponse from '../utils/errorResponse.js';
 import { models } from '../models/index.js';
 import { Op } from 'sequelize';
 
-const { StudentNotification, FacultyLeaveNotification, User } = models;
+const { StudentNotification, LeaveNotification, User } = models;
 
 /**
  * ==============================================================
@@ -164,14 +164,13 @@ export const notifyStudentLeaveEvent = async (event, data) => {
         }
 
         await StudentNotification.create({
-            user_id: userId,
-            entity_type: 'StudentLeave',
-            entity_id: entityId,
+            studentId: userId,
             title,
             message,
-            action_type: event,
-            status: 'unread',
-            related_data: relatedData
+            type: 'leave',
+            referenceId: entityId,
+            referenceType: 'StudentLeave',
+            isRead: false
         });
     } catch (error) {
         console.error('Error creating student notification:', error);
@@ -186,15 +185,14 @@ export const notifyFacultyApprovalPending = async (data) => {
         const title = 'New Leave Application to Review';
         const message = `${studentName} has submitted a ${leaveType} leave request for ${totalDays} days requiring your approval.`;
 
-        await StudentNotification.create({
-            user_id: facultyId,
-            entity_type: 'StudentLeave',
-            entity_id: entityId,
+        await LeaveNotification.create({
+            leave_request_id: entityId,
+            recipient_type: 'faculty',
+            recipient_id: facultyId,
+            notification_type: 'submitted',
             title,
             message,
-            action_type: 'leave_pending_approval',
-            status: 'unread',
-            related_data: { studentName, leaveType, totalDays }
+            is_read: false
         });
     } catch (error) {
         console.error('Error creating faculty notification:', error);
@@ -209,15 +207,14 @@ export const notifyDeptAdminApprovalPending = async (data) => {
         const title = 'Leave Application Ready for Final Approval';
         const message = `${studentName}'s ${leaveType} leave has been approved by ${classInchargeName} and awaits your final approval.`;
 
-        await StudentNotification.create({
-            user_id: facultyId,
-            entity_type: 'StudentLeave',
-            entity_id: entityId,
+        await LeaveNotification.create({
+            leave_request_id: entityId,
+            recipient_type: 'department-admin',
+            recipient_id: facultyId,
+            notification_type: 'submitted',
             title,
             message,
-            action_type: 'leave_pending_approval',
-            status: 'unread',
-            related_data: { studentName, leaveType, classInchargeName }
+            is_read: false
         });
     } catch (error) {
         console.error('Error creating department admin notification:', error);

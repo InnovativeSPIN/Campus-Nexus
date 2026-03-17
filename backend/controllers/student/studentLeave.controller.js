@@ -2,8 +2,46 @@ import asyncHandler from '../../middleware/async.js';
 import ErrorResponse from '../../utils/errorResponse.js';
 import { models } from '../../models/index.js';
 import { Op } from 'sequelize';
+import {
+    notifyStudentLeaveEvent,
+    notifyFacultyApprovalPending,
+    notifyDeptAdminApprovalPending
+} from '../notification.controller.js';
+import {
+    checkIfClassIncharge,
+    checkIfDepartmentAdmin,
+    getDepartmentAdminId
+} from './studentLeaveApproval.controller.js';
 
-const { StudentLeave, Student, User, Faculty, TimetableMaster } = models;
+const { StudentLeave, Student, User, Faculty, TimetableMaster, Department } = models;
+
+// Helper: Get approvers for a class via timetable_master
+const getTimetableApprovers = async (classId, departmentId) => {
+    try {
+        const timetable = await TimetableMaster.findOne({
+            where: { class_id: classId, status: { [Op.in]: ['draft', 'active'] } },
+            attributes: ['class_coordinator_id', 'asst_coordinator_id', 'hod_id']
+        });
+
+        // Fallback for HOD if not set in timetable
+        let hod_id = timetable?.hod_id;
+        if (!hod_id && departmentId) {
+            const admin = await Faculty.findOne({
+                where: { role_id: 7, department_id: departmentId },
+                attributes: ['faculty_id']
+            });
+            hod_id = admin?.faculty_id || null;
+        }
+
+        return {
+            class_coordinator_id: timetable?.class_coordinator_id || null,
+            asst_coordinator_id: timetable?.asst_coordinator_id || null,
+            hod_id: hod_id
+        };
+    } catch (error) {
+        return { class_coordinator_id: null, asst_coordinator_id: null, hod_id: null };
+    }
+};
 
 // @desc   Get all leave applications for logged-in student
 // @route  GET /api/v1/student-leaves
@@ -56,15 +94,52 @@ export const applyLeave = asyncHandler(async (req, res, next) => {
     const student = await Student.findByPk(studentId);
     if (!student) return next(new ErrorResponse('Student not found', 404));
 
+    const { recipient } = req.body;
+
+    // Get assigned approvers from TimetableMaster
+    const approvers = await getTimetableApprovers(student.classId, student.departmentId);
+
+    // Determine IDs based on recipient selection
+    let assignedClassInchargeId = approvers.class_coordinator_id;
+    if (recipient === 'Faculty Advisor') {
+        assignedClassInchargeId = approvers.asst_coordinator_id || approvers.class_coordinator_id;
+    }
+
     const leave = await StudentLeave.create({
         ...req.body,
         studentId,
         classId: student.classId,
+        submitted_to: recipient || 'Class Incharge',
         overall_status: 'pending',
-        class_incharge_approval_status: 'pending',
+        class_incharge_approval_status: (recipient === 'HOD') ? 'approved' : 'pending',
         department_admin_approval_status: 'pending',
+        class_incharge_id: assignedClassInchargeId,
+        department_admin_id: approvers.hod_id,
         attachment: req.file ? req.file.filename : req.body.attachment
     });
+
+    // Notify student of submission
+    await notifyStudentLeaveEvent('leave_submitted', {
+        userId: studentId,
+        entityId: leave.id,
+        relatedData: { 
+            leaveType: leave.leaveType, 
+            leaveSubType: leave.leaveSubType, 
+            totalDays: leave.totalDays 
+        }
+    });
+
+    // Notify the primary recipient
+    const primaryApproverId = (recipient === 'HOD') ? approvers.hod_id : assignedClassInchargeId;
+    if (primaryApproverId) {
+        await notifyFacultyApprovalPending({
+            facultyId: primaryApproverId,
+            studentName: `${student.firstName} ${student.lastName}`,
+            leaveType: leave.leaveType,
+            totalDays: leave.totalDays,
+            entityId: leave.id
+        });
+    }
 
     res.status(201).json({ success: true, data: leave });
 });
@@ -198,11 +273,47 @@ export const processLeaveApproval = asyncHandler(async (req, res, next) => {
 
         if (status === 'rejected') {
             leave.overall_status = 'rejected';
+            // Notify student of rejection
+            await notifyStudentLeaveEvent('leave_rejected', {
+                userId: leave.studentId,
+                entityId: leave.id,
+                relatedData: {
+                    leaveType: leave.leaveType,
+                    remarks: approvalRemarks || 'Not specified'
+                }
+            });
         }
 
-        // If class incharge approves, keep overall status pending until dept admin approves.
-        if (status === 'approved' && leave.department_admin_approval_status === 'approved') {
-            leave.overall_status = 'approved';
+        // If class incharge approves, send notification to Dept Admin
+        if (status === 'approved') {
+            // Fetch class details to get department_id
+            const classData = await models.Class.findByPk(leave.classId);
+            const deptAdminId = await models.Faculty.findOne({
+                where: { role_id: 7, department_id: classData.department_id },
+                attributes: ['faculty_id']
+            });
+
+            // Notify student that Class Incharge approved
+            const faculty = await Faculty.findOne({ where: { faculty_id: facultyId }, attributes: ['Name'] });
+            await notifyStudentLeaveEvent('leave_approved_by_ci', {
+                userId: leave.studentId,
+                entityId: leave.id,
+                relatedData: { 
+                    leaveType: leave.leaveType,
+                    approverName: faculty?.Name || 'Class Incharge'
+                }
+            });
+
+            if (deptAdminId) {
+                const student = await Student.findByPk(leave.studentId);
+                await notifyDeptAdminApprovalPending({
+                    facultyId: deptAdminId.faculty_id,
+                    studentName: `${student.firstName} ${student.lastName}`,
+                    leaveType: leave.leaveType,
+                    classInchargeName: faculty?.Name || 'Class Incharge',
+                    entityId: leave.id
+                });
+            }
         }
     }
 
@@ -225,8 +336,23 @@ export const processLeaveApproval = asyncHandler(async (req, res, next) => {
 
         if (status === 'approved') {
             leave.overall_status = 'approved';
+            // Notify student of final approval
+            await notifyStudentLeaveEvent('leave_approved', {
+                userId: leave.studentId,
+                entityId: leave.id,
+                relatedData: { leaveType: leave.leaveType }
+            });
         } else if (status === 'rejected') {
             leave.overall_status = 'rejected';
+            // Notify student of rejection
+            await notifyStudentLeaveEvent('leave_rejected', {
+                userId: leave.studentId,
+                entityId: leave.id,
+                relatedData: {
+                    leaveType: leave.leaveType,
+                    remarks: approvalRemarks || 'Not specified'
+                }
+            });
         }
     }
 
