@@ -11,6 +11,9 @@ const {
   FacultyLeaveSchedule,
   TimetableMaster,
   Class: ClassModel,
+  TimetableSlot,
+  Subject,
+  PeriodSlot,
 } = models;
 
 /**
@@ -398,5 +401,93 @@ export const getPendingAlterationsForIncharge = asyncHandler(async (req, res, ne
   } catch (error) {
     console.error('[getPendingAlterationsForIncharge] Error:', error.message);
     return next(new ErrorResponse(`Error fetching pending alterations: ${error.message}`, 500));
+  }
+});
+
+/**
+ * @desc    Get slot details for a specific date and period
+ * @route   GET /api/v1/faculty/leave-request/slot-details
+ * @access  Private (Faculty)
+ */
+export const getSlotDetails = asyncHandler(async (req, res, next) => {
+  const { date, period_slot_id } = req.query;
+  const facultyId = req.user.faculty_id;
+  const departmentId = req.user.department_id;
+
+  if (!date || !period_slot_id) {
+    return next(new ErrorResponse('Please provide date and period_slot_id', 400));
+  }
+
+  try {
+    // Convert date to day of week
+    const dateObj = new Date(date);
+    const dayOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][dateObj.getDay()];
+
+    // Get the active timetable for the faculty's department
+    const activeTimetable = await TimetableMaster.findOne({
+      where: {
+        department_id: departmentId,
+        status: 'active',
+      },
+      attributes: ['id', 'class_id', 'academic_year', 'semester'],
+    });
+
+    if (!activeTimetable) {
+      return res.status(200).json({
+        success: true,
+        data: null,
+        message: 'No active timetable found',
+      });
+    }
+
+    // Get the slot details
+    const slotDetails = await TimetableSlot.findOne({
+      where: {
+        timetable_id: activeTimetable.id,
+        day: dayOfWeek,
+        period_number: parseInt(period_slot_id),
+        faculty_id: facultyId,
+      },
+      include: [
+        {
+          model: Subject,
+          as: 'subject',
+          attributes: ['id', 'subject_code', 'subject_name'],
+        },
+        {
+          model: ClassModel,
+          as: 'class',
+          attributes: ['id', 'class_name', 'semester'],
+        },
+      ],
+      attributes: ['id', 'timetable_id', 'day', 'period_number', 'start_time', 'end_time', 'subject_id', 'faculty_id', 'class_id', 'room', 'type'],
+    });
+
+    res.status(200).json({
+      success: true,
+      data: slotDetails ? {
+        id: slotDetails.id,
+        day: slotDetails.day,
+        period_number: slotDetails.period_number,
+        start_time: slotDetails.start_time,
+        end_time: slotDetails.end_time,
+        type: slotDetails.type,
+        room: slotDetails.room,
+        subject: slotDetails.subject ? {
+          id: slotDetails.subject.id,
+          code: slotDetails.subject.subject_code,
+          name: slotDetails.subject.subject_name,
+        } : null,
+        class: slotDetails.class ? {
+          id: slotDetails.class.id,
+          name: slotDetails.class.class_name,
+          semester: slotDetails.class.semester,
+        } : null,
+      } : null,
+      message: slotDetails ? 'Slot details found' : 'No slot found for this day and period',
+    });
+  } catch (error) {
+    console.error('[getSlotDetails] Error:', error.message);
+    return next(new ErrorResponse(`Error fetching slot details: ${error.message}`, 500));
   }
 });

@@ -9,6 +9,9 @@ const {
   FacultySubstitutes,
   LeaveNotification,
   TimetableMaster,
+  FacultySubjectAssignment,
+  Subject,
+  TimetableMasterSlots,
 } = models;
 
 /**
@@ -262,7 +265,7 @@ export const getDepartmentColleagues = asyncHandler(async (req, res, next) => {
         status: 'active',
         role_id: 5, // Faculty role
       },
-      attributes: ['faculty_id', 'Name', 'email', 'phone_no'],
+      attributes: ['faculty_id', 'Name', 'email', 'phone_number'],
       order: [['Name', 'ASC']],
     });
 
@@ -274,5 +277,221 @@ export const getDepartmentColleagues = asyncHandler(async (req, res, next) => {
   } catch (error) {
     console.error('[getDepartmentColleagues] Error:', error.message);
     return next(new ErrorResponse(`Error fetching colleagues: ${error.message}`, 500));
+  }
+});
+
+/**
+ * @desc    Get substitute faculty who teach same classes as current faculty
+ * @route   GET /api/v1/faculty/leave-management/class-teachers
+ * @access  Private (Faculty)
+ */
+export const getSubstitutesByClasses = asyncHandler(async (req, res, next) => {
+  const facultyId = req.user.faculty_id;
+  const academicYear = req.query.academic_year; // optional
+
+  try {
+    // Step 1: Get all subject IDs taught by current faculty (from FacultySubjectAssignment)
+    let subjectIds = [];
+
+    const assignmentWhere = {
+      faculty_id: facultyId,
+      status: 'active',
+    };
+    if (academicYear) {
+      assignmentWhere.academic_year = academicYear;
+    }
+
+    const myAssignments = await FacultySubjectAssignment.findAll({
+      where: assignmentWhere,
+      attributes: ['subject_id'],
+      raw: true,
+    });
+
+    if (myAssignments.length > 0) {
+      subjectIds = [...new Set(myAssignments.map(a => a.subject_id).filter(Boolean))];
+    }
+
+    console.log('[getSubstitutesByClasses] facultyId:', facultyId, 'academicYear:', academicYear, 'initial subjectIds:', subjectIds);
+
+    // Step 2: If no assignment records, try to get subjects from active timetable (TimetableMasterSlots)
+    if (subjectIds.length === 0) {
+      const masterWhere = {
+        status: 'active',
+      };
+      if (academicYear) {
+        masterWhere.academic_year = academicYear;
+      }
+
+      const slotAssignments = await TimetableMasterSlots.findAll({
+        where: {
+          faculty_id: facultyId,
+        },
+        include: [
+          {
+            model: TimetableMaster,
+            as: 'master',
+            where: masterWhere,
+            required: true,
+            attributes: [],
+          },
+        ],
+        attributes: ['subject_id'],
+        raw: true,
+      });
+
+      if (slotAssignments.length > 0) {
+        subjectIds = [...new Set(slotAssignments.map(a => a.subject_id).filter(Boolean))];
+      }
+    }
+
+    // Step 3: If still no subjects, return empty result
+    if (subjectIds.length === 0) {
+      console.log('[getSubstitutesByClasses] No subjects found for faculty', facultyId);
+      return res.status(200).json({
+        success: true,
+        count: 0,
+        data: [],
+      });
+    }
+
+    console.log('[getSubstitutesByClasses] Found subject IDs:', subjectIds, 'for faculty', facultyId);
+
+    // Step 4: Find other faculty who teach these subjects (from FacultySubjectAssignment first)
+    const colleagueWhere = {
+      subject_id: { [Op.in]: subjectIds },
+      status: 'active',
+      faculty_id: { [Op.ne]: facultyId },
+    };
+    if (academicYear) {
+      colleagueWhere.academic_year = academicYear;
+    }
+
+    let colleagues = await FacultySubjectAssignment.findAll({
+      where: colleagueWhere,
+      include: [
+        {
+          model: Faculty,
+          as: 'faculty',
+          attributes: ['faculty_id', 'Name', 'email', 'phone_number', 'designation'],
+          required: true,
+        },
+        {
+          model: Subject,
+          as: 'subject',
+          attributes: ['id', 'subject_name', 'subject_code'],
+          required: false,
+        },
+      ],
+      raw: false,
+      subQuery: false,
+    });
+
+    // Step 5: If no colleagues from assignments, get them from timetable slots
+    if (colleagues.length === 0) {
+      console.log('[getSubstitutesByClasses] No colleagues from FacultySubjectAssignment, checking TimetableMasterSlots');
+      
+      const slotColleagues = await TimetableMasterSlots.findAll({
+        where: {
+          faculty_id: { [Op.ne]: facultyId },
+          subject_id: { [Op.in]: subjectIds },
+        },
+        include: [
+          {
+            model: TimetableMaster,
+            as: 'master',
+            where: {
+              status: 'active',
+              ...(academicYear ? { academic_year: academicYear } : {}),
+            },
+            required: true,
+            attributes: ['class_id'],
+          },
+          {
+            model: Faculty,
+            as: 'faculty',
+            attributes: ['faculty_id', 'Name', 'email', 'phone_number', 'designation'],
+            required: true,
+          },
+          {
+            model: Subject,
+            as: 'subject',
+            attributes: ['id', 'subject_name', 'subject_code'],
+            required: false,
+          },
+        ],
+        raw: false,
+        subQuery: false,
+      });
+
+      colleagues = slotColleagues;
+    }
+
+    // Step 6: De-duplicate by faculty_id and aggregate subject/count data
+    const uniqueFaculty = {};
+    const facultySubjects = {};
+
+    colleagues.forEach(assignment => {
+      let fId, name, email, phone, designation, subject;
+
+      // Handle both FacultySubjectAssignment and TimetableMasterSlots structures
+      if (assignment.faculty) {
+        fId = assignment.faculty.faculty_id;
+        name = assignment.faculty.Name;
+        email = assignment.faculty.email;
+        phone = assignment.faculty.phone_number;
+        designation = assignment.faculty.designation;
+      }
+
+      if (fId && !uniqueFaculty[fId]) {
+        uniqueFaculty[fId] = {
+          faculty_id: fId,
+          Name: name,
+          email: email,
+          phone_number: phone,
+          designation: designation,
+        };
+        facultySubjects[fId] = [];
+      }
+
+      if (assignment.subject && fId) {
+        const subjectData = {
+          subject_id: assignment.subject.id,
+          subject_name: assignment.subject.subject_name,
+          subject_code: assignment.subject.subject_code,
+        };
+        // Avoid duplicates in subject list
+        if (!facultySubjects[fId].find(s => s.subject_id === subjectData.subject_id)) {
+          facultySubjects[fId].push(subjectData);
+        }
+      }
+    });
+
+    // Step 7: Combine faculty with their subjects
+    const result = Object.values(uniqueFaculty).map(faculty => ({
+      ...faculty,
+      matching_subjects: facultySubjects[faculty.faculty_id]?.length || 0,
+      subjects: facultySubjects[faculty.faculty_id] || [],
+    }));
+
+    console.log('[getSubstitutesByClasses] Found', result.length, 'substitute faculty');
+
+    const responsePayload = {
+      success: true,
+      count: result.length,
+      data: result,
+    };
+
+    if (req.query.debug === 'true') {
+      responsePayload.debug = {
+        subjectIds,
+        academicYear,
+        colleagueCount: result.length,
+      };
+    }
+
+    res.status(200).json(responsePayload);
+  } catch (error) {
+    console.error('[getSubstitutesByClasses] Error:', error.message);
+    return next(new ErrorResponse(`Error fetching substitute faculty: ${error.message}`, 500));
   }
 });

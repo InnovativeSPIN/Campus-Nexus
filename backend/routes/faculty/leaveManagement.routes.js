@@ -7,12 +7,14 @@ import {
   withdrawLeaveRequest,
   getPendingAlterationRequests,
   getPendingAlterationsForIncharge,
+  getSlotDetails,
 } from '../../controllers/faculty/leaveRequest.controller.js';
 import {
   acceptAlteration,
   rejectAlteration,
   checkFacultyAvailability,
   getDepartmentColleagues,
+  getSubstitutesByClasses,
 } from '../../controllers/faculty/alterationApproval.controller.js';
 import {
   applyTimetableAlterations,
@@ -49,6 +51,9 @@ router.delete('/leave-request/:id/withdraw', authorize('faculty', 'department-ad
 // Get rejection reasons for a leave request
 router.get('/leave-request/:leaveId/rejection-reasons', authorize('faculty', 'department-admin'), getLeaveRejectionReasons);
 
+// Get slot details for a specific date and period
+router.get('/leave-request/slot-details', authorize('faculty', 'department-admin'), getSlotDetails);
+
 // ==================== SUBSTITUTE FACULTY APPROVAL ROUTES ====================
 
 // Get pending alteration requests for substitute faculty
@@ -64,6 +69,10 @@ router.patch('/alteration/:leaveId/reject', authorize('faculty', 'department-adm
 router.get('/alteration/check-faculty/:facultyId', authorize('faculty', 'department-admin'), checkFacultyAvailability);
 
 // Get department colleagues for substitute selection
+// Multiple route aliases for backward compatibility and clarity
+router.get('/colleagues', authorize('faculty', 'department-admin'), getDepartmentColleagues);
+router.get('/leave-management/colleagues', authorize('faculty', 'department-admin'), getSubstitutesByClasses);
+router.get('/leave-management/class-teachers', authorize('faculty', 'department-admin'), getSubstitutesByClasses);
 router.get('/alteration/department-colleagues', authorize('faculty', 'department-admin'), getDepartmentColleagues);
 
 // ==================== TIMETABLE INCHARGE ALTERATION APPLICATION ROUTES ====================

@@ -30,15 +30,15 @@ router.get('/:id', getTimetableMaster);
 router.post('/', authorize('department-admin'), createTimetableMaster);
 
 // Update timetable master (coordinator assignments)
-router.patch('/:id', authorize('department-admin'), updateTimetableMaster);
+router.patch('/:id', authorize('department-admin', 'timetable-incharge'), updateTimetableMaster);
 
 // Activate timetable master
-router.patch('/:id/activate', authorize('department-admin'), activateTimetableMaster);
+router.patch('/:id/activate', authorize('department-admin', 'timetable-incharge'), activateTimetableMaster);
 
 // Deactivate timetable master
-router.patch('/:id/deactivate', authorize('department-admin'), deactivateTimetableMaster);
+router.patch('/:id/deactivate', authorize('department-admin', 'timetable-incharge'), deactivateTimetableMaster);
 
 // Delete timetable master (only draft)
-router.delete('/:id', authorize('department-admin'), deleteTimetableMaster);
+router.delete('/:id', authorize('department-admin', 'timetable-incharge'), deleteTimetableMaster);
 
 export default router;

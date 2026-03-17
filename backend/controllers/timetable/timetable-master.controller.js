@@ -267,6 +267,8 @@ export const activateTimetableMaster = asyncHandler(async (req, res, next) => {
     where: { master_id: id },
   });
 
+  console.log('[activateTimetableMaster] timetableId:', id, 'slotCount:', slotCount);
+
   if (slotCount === 0) {
     return next(new ErrorResponse('Cannot activate timetable without slots', 400));
   }
