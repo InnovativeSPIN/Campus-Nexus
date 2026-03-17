@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import PageHeader from '@/pages/student/components/layout/PageHeader';
 import SectionCard from '@/pages/student/components/common/SectionCard';
 import Badge from '@/pages/student/components/common/Badge';
@@ -17,8 +17,11 @@ interface LeaveRequest {
   leaveType: string;
   leaveSubType?: string;
   recipient?: string;
+  submitted_to?: string;
   attachment?: string;
   overall_status: 'pending' | 'approved' | 'rejected' | 'cancelled';
+  class_incharge_approval_status?: string;
+  department_admin_approval_status?: string;
   createdAt: string;
   approvedBy?: { name: string };
   approvalDate?: string;
@@ -329,7 +332,7 @@ export default function Leave() {
                       </div>
                       <div>
                         <p className="text-muted-foreground text-xs uppercase tracking-wider font-semibold">Submitted To</p>
-                        <p className="font-medium">{request.recipient || 'Faculty Advisor'}</p>
+                        <p className="font-medium">{request.submitted_to || 'Class Incharge'}</p>
                       </div>
                     </div>
 
@@ -356,7 +359,7 @@ export default function Leave() {
                   </div>
                 </div>
 
-                {request.status === 'approved' && (
+                {request.overall_status === 'approved' && (
                   <button
                     onClick={() => handleDownloadCertificate()}
                     className="px-4 py-2 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors flex items-center gap-2 whitespace-nowrap shadow-sm"

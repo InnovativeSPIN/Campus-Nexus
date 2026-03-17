@@ -1,11 +1,11 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Navbar from './Navbar';
 import { cn } from '@/pages/student/lib/utils';
 import { motion } from 'framer-motion';
 
-export default function MainLayout() {
+export default function MainLayout({ children }: { children?: React.ReactNode }) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   return (
@@ -27,7 +27,7 @@ export default function MainLayout() {
           transition={{ duration: 0.3 }}
           className="p-6 lg:p-8 max-w-7xl mx-auto"
         >
-          <Outlet />
+          {children || <Outlet />}
         </motion.main>
       </div>
     </div>
