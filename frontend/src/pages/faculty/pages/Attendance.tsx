@@ -40,16 +40,20 @@ interface Student {
   attendance?: "present" | "absent" | "leave" | "od";
 }
 
-interface Department {
-  id: number;
-  short_name: string;
-  full_name: string;
-}
-
-interface Subject {
-  id: number;
-  code: string;
-  name: string;
+interface TimetableSlot {
+  slotId: string;
+  classSectionId: number;
+  className: string;
+  classSection: string;
+  academicYear: string;
+  subjectId: number;
+  subjectCode: string;
+  subjectName: string;
+  periodId: number;
+  periodLabel: string;
+  startTime: string;
+  endTime: string;
+  dayOfWeek: string;
 }
 
 const attendanceHistory = [
@@ -68,24 +72,14 @@ export default function Attendance() {
   const [bulkStatus, setBulkStatus] = useState("");
   const [bulkError, setBulkError] = useState("");
   const [bulkSuccess, setBulkSuccess] = useState("");
-  const [selectedYear, setSelectedYear] = useState("");
-  const [selectedDepartment, setSelectedDepartment] = useState("");
-  const [selectedSemester, setSelectedSemester] = useState("");
-  const [selectedSection, setSelectedSection] = useState("a");
-  const [selectedSubject, setSelectedSubject] = useState("");
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split("T")[0]);
-
-  const [departments, setDepartments] = useState<Department[]>([]);
-  const [subjects, setSubjects] = useState<Subject[]>([]);
-  const [students, setStudents] = useState<Student[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [timetableSlots, setTimetableSlots] = useState<TimetableSlot[]>([]);
+  const [selectedSlot, setSelectedSlot] = useState("");
+  const [slotStudents, setSlotStudents] = useState<Student[]>([]);
 
   const [locked, setLocked] = useState(false);
   const [digitSearch, setDigitSearch] = useState("");
   const [showAttendanceSummary, setShowAttendanceSummary] = useState(false);
-  const [topicSemester, setTopicSemester] = useState("");
-  const [topicYear, setTopicYear] = useState("");
-  const [topicDept, setTopicDept] = useState("");
   const [topicCovered, setTopicCovered] = useState("");
   const [currentPage, setCurrentPage] = useState(0);
   const itemsPerPage = 10;
@@ -99,120 +93,88 @@ export default function Attendance() {
     return () => clearInterval(timer);
   }, []);
 
-  // Fetch Departments
+  // Fetch Timetable Slots for selected date
   useEffect(() => {
-    const fetchDepts = async () => {
+    const fetchTimetableSlots = async () => {
       try {
-        const res = await fetch('/api/v1/departments', {
+        const response = await fetch(`/api/v1/attendance/faculty/timetable/${selectedDate}`, {
           headers: { 'Authorization': `Bearer ${authToken}` }
         });
-        const result = await res.json();
-        if (result.success) {
-          setDepartments(result.data);
-          if (result.data.length > 0 && !selectedDepartment) {
-            setSelectedDepartment(result.data[0].id.toString());
-          }
-        }
-      } catch (err) {
-        console.error('Failed to fetch departments', err);
-      }
-    };
-    if (authToken) fetchDepts();
-  }, [authToken]);
-
-  // Fetch Subjects
-  useEffect(() => {
-    const fetchSubjs = async () => {
-      if (!selectedDepartment || !selectedSemester) return;
-      try {
-        const res = await fetch(`/api/v1/admin/subjects/dept/${selectedDepartment}/sem/${selectedSemester}`, {
-          headers: { 'Authorization': `Bearer ${authToken}` }
-        });
-        const result = await res.json();
-        if (result.success) {
-          setSubjects(result.data);
-          if (result.data.length > 0) {
-            setSelectedSubject(result.data[0].id.toString());
+        const result = await response.json();
+        if (result.success && result.data?.slots) {
+          setTimetableSlots(result.data.slots);
+          if (result.data.slots.length > 0) {
+            setSelectedSlot(result.data.slots[0].slotId);
+            // Store students data for later use
+            (window as any).__timetableStudentData = result.data.studentsByClass;
           } else {
-            setSelectedSubject("");
+            setSelectedSlot("");
           }
+        } else {
+          setTimetableSlots([]);
+          setSelectedSlot("");
         }
       } catch (err) {
-        console.error('Failed to fetch subjects', err);
+        console.error('Failed to fetch timetable slots', err);
+        toast.error('Failed to load timetable slots');
+        setTimetableSlots([]);
       }
     };
-    if (authToken && selectedDepartment && selectedSemester) fetchSubjs();
-  }, [authToken, selectedDepartment, selectedSemester]);
+    if (authToken) fetchTimetableSlots();
+  }, [authToken, selectedDate]);
 
-  // Fetch Students
+  // Fetch Students for selected slot
   useEffect(() => {
-    const fetchStuds = async () => {
-      if (!selectedDepartment || !selectedSemester) return;
-      try {
-        setLoading(true);
-        const params = new URLSearchParams({
-          department: selectedDepartment,
-          semester: selectedSemester,
-          section: selectedSection,
-          limit: '0' // Get all
-        });
-        const res = await fetch(`/api/v1/students?${params}`, {
-          headers: { 'Authorization': `Bearer ${authToken}` }
-        });
-        const result = await res.json();
-        if (result.success) {
-          setStudents(result.data);
-          // Reset attendance data when student list changes
-          setAttendanceData({});
-        }
-      } catch (err) {
-        console.error('Failed to fetch students', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    if (authToken && selectedDepartment && selectedSemester && selectedSection) fetchStuds();
-  }, [authToken, selectedDepartment, selectedSemester, selectedSection]);
+    if (!selectedSlot || timetableSlots.length === 0) {
+      setSlotStudents([]);
+      setAttendanceData({});
+      return;
+    }
+
+    const slot = timetableSlots.find(s => s.slotId === selectedSlot);
+    if (slot) {
+      const studentData = (window as any).__timetableStudentData;
+      const classStudents = studentData?.[slot.classSectionId] || [];
+      const formattedStudents: Student[] = classStudents.map((s: any) => ({
+        id: s.id,
+        studentId: s.student_id,
+        firstName: s.first_name,
+        lastName: s.last_name,
+        rollNumber: s.roll_number,
+        photo: s.photo_path,
+      }));
+      setSlotStudents(formattedStudents);
+    }
+    setAttendanceData({});
+  }, [selectedSlot, timetableSlots]);
 
   useEffect(() => {
-    const key = `attendance_${selectedDate}_${selectedDepartment}_${selectedSemester}_${selectedSection}_${selectedSubject}`;
+    const key = `attendance_${selectedDate}_${selectedSlot}`;
     const raw = localStorage.getItem(key);
     if (raw) {
       try {
         const parsed = JSON.parse(raw);
         if (parsed.attendance) {
           setAttendanceData(parsed.attendance);
-          setTopicSemester(parsed.topicDetails?.semester || "");
-          setTopicYear(parsed.topicDetails?.year || "");
-          setTopicDept(parsed.topicDetails?.department || "");
-          setTopicCovered(parsed.topicDetails?.topic || "");
+          setTopicCovered(parsed.topicCovered || "");
         } else {
           setAttendanceData(parsed);
-          setTopicSemester("");
-          setTopicYear("");
-          setTopicDept("");
           setTopicCovered("");
         }
         setLocked(true);
       } catch (e) {
         setAttendanceData({});
-        setTopicSemester("");
-        setTopicYear("");
-        setTopicDept("");
         setTopicCovered("");
         setLocked(!isToday);
       }
     } else {
       setAttendanceData({});
-      setTopicSemester("");
-      setTopicYear("");
-      setTopicDept("");
       setTopicCovered("");
       setLocked(!isToday);
     }
     setMarkAllPresent(false);
     setDigitSearch("");
-  }, [selectedDate, isToday, selectedDepartment, selectedSemester, selectedSection, selectedSubject]);
+  }, [selectedDate, isToday, selectedSlot]);
 
   const formatDate = (date: Date) => {
     return date.toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
@@ -224,22 +186,17 @@ export default function Attendance() {
 
   const handleSave = (showSummary = false) => {
     if (!isToday) return;
-    const key = `attendance_${selectedDate}_${selectedDepartment}_${selectedSemester}_${selectedSection}_${selectedSubject}`;
+    const key = `attendance_${selectedDate}_${selectedSlot}`;
     const dataToSave = {
       attendance: attendanceData,
-      topicDetails: {
-        semester: topicSemester || selectedSemester,
-        year: topicYear || selectedYear,
-        department: topicDept || selectedDepartment,
-        topic: topicCovered
-      }
+      topicCovered,
     };
     localStorage.setItem(key, JSON.stringify(dataToSave));
     setLocked(true);
     if (showSummary) {
       setShowAttendanceSummary(true);
     }
-    toast.success("Attendance and coverage details saved successfully!");
+    toast.success("Attendance marked successfully!");
   };
 
   const handleMarkAll = (checked: boolean) => {
@@ -247,7 +204,7 @@ export default function Attendance() {
     setMarkAllPresent(checked);
     if (checked) {
       const allPresent: Record<string, string> = {};
-      students.forEach((s) => {
+      slotStudents.forEach((s) => {
         allPresent[s.id] = "present";
       });
       setAttendanceData(allPresent);
@@ -292,7 +249,7 @@ export default function Attendance() {
     const newAttendance = { ...attendanceData };
     let matchedCount = 0;
 
-    students.forEach((student) => {
+    slotStudents.forEach((student) => {
       const lastTwoDigits = student.rollNumber.slice(-2);
       if (validDigits.includes(lastTwoDigits)) {
         newAttendance[student.id] = bulkStatus;
@@ -316,7 +273,7 @@ export default function Attendance() {
     setTimeout(() => setBulkSuccess(""), 3000);
   };
 
-  const filteredStudents = students.filter(
+  const filteredStudents = slotStudents.filter(
     (s) => {
       if (digitSearch && (digitSearch.length === 2 || digitSearch.length === 3)) {
         return s.rollNumber.slice(-3).endsWith(digitSearch);
@@ -333,14 +290,6 @@ export default function Attendance() {
   const absentCount = Object.values(attendanceData).filter((v) => v === "absent").length;
   const leaveCount = Object.values(attendanceData).filter((v) => v === "leave").length;
   const odCount = Object.values(attendanceData).filter((v) => v === "od").length;
-
-  const getRollNumbersByStatus = (status: string) => {
-    return Object.entries(attendanceData)
-      .filter(([, v]) => v === status)
-      .map(([sid]) => students.find((s) => s.id.toString() === sid.toString())?.rollNumber)
-      .filter(Boolean)
-      .join(", ") || "-";
-  };
 
   return (
     <MainLayout hideHeader={true}>
@@ -390,83 +339,7 @@ export default function Attendance() {
             transition={{ delay: 0.1 }}
             className="widget-card mb-6"
           >
-            <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
-              <div className="space-y-2">
-                <Label>Year</Label>
-                <Select value={selectedYear} onValueChange={setSelectedYear}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Year" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1">1st Year</SelectItem>
-                    <SelectItem value="2">2nd Year</SelectItem>
-                    <SelectItem value="3">3rd Year</SelectItem>
-                    <SelectItem value="4">4th Year</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Department</Label>
-                <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Department" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {departments.map((dept) => (
-                      <SelectItem key={dept.id} value={dept.id.toString()}>
-                        {dept.short_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Semester</Label>
-                <Select value={selectedSemester} onValueChange={setSelectedSemester}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Semester" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {[1, 2, 3, 4, 5, 6, 7, 8].map((s) => (
-                      <SelectItem key={s} value={s.toString()}>
-                        Semester {s}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Section</Label>
-                <Select value={selectedSection} onValueChange={setSelectedSection}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Section" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="a">Section A</SelectItem>
-                    <SelectItem value="b">Section B</SelectItem>
-                    <SelectItem value="c">Section C</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Subject</Label>
-                <Select value={selectedSubject} onValueChange={setSelectedSubject}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Subject" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {subjects.length > 0 ? (
-                      subjects.map((sub) => (
-                        <SelectItem key={sub.id} value={sub.id.toString()}>
-                          {sub.name}
-                        </SelectItem>
-                      ))
-                    ) : (
-                      <SelectItem value="none" disabled>No subjects available</SelectItem>
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Date</Label>
                 <Input
@@ -475,7 +348,58 @@ export default function Attendance() {
                   onChange={(e) => setSelectedDate(e.target.value)}
                 />
               </div>
+              <div className="space-y-2">
+                <Label>Timetable Slot</Label>
+                <Select value={selectedSlot} onValueChange={setSelectedSlot}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a class slot" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {timetableSlots.length > 0 ? (
+                      timetableSlots.map((slot) => (
+                        <SelectItem key={slot.slotId} value={slot.slotId}>
+                          {slot.className} - {slot.subjectCode} ({slot.periodLabel}) {slot.startTime}-{slot.endTime}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem value="none" disabled>
+                        No timetable slots available for this date
+                      </SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
+
+            {/* Current Slot Information */}
+            {selectedSlot && timetableSlots.length > 0 && (
+              <div className="mt-4 p-4 bg-info/5 border border-info/20 rounded-lg">
+                {(() => {
+                  const currentSlot = timetableSlots.find((s) => s.slotId === selectedSlot);
+                  if (!currentSlot) return null;
+                  return (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                      <div>
+                        <p className="text-muted-foreground font-semibold">Class</p>
+                        <p className="text-foreground">{currentSlot.className}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground font-semibold">Subject</p>
+                        <p className="text-foreground">{currentSlot.subjectCode} - {currentSlot.subjectName}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground font-semibold">Period</p>
+                        <p className="text-foreground">{currentSlot.periodLabel}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground font-semibold">Time</p>
+                        <p className="text-foreground">{currentSlot.startTime} - {currentSlot.endTime}</p>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
           </motion.div>
 
           {/* Stats & Actions */}
@@ -832,53 +756,6 @@ export default function Attendance() {
             className="widget-card mt-6 p-6 border-2 border-primary/10"
           >
             <h3 className="text-lg font-semibold mb-4 text-primary">Class Coverage Details</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-              <div className="space-y-2">
-                <Label>Semester</Label>
-                <Select
-                  value={topicSemester}
-                  onValueChange={setTopicSemester}
-                >
-                  <SelectTrigger><SelectValue placeholder="Select Semester" /></SelectTrigger>
-                  <SelectContent>
-                    {[1, 2, 3, 4, 5, 6, 7, 8].map(s => (
-                      <SelectItem key={s} value={s.toString()}>Semester {s}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Year</Label>
-                <Select
-                  value={topicYear}
-                  onValueChange={setTopicYear}
-                >
-                  <SelectTrigger><SelectValue placeholder="Select Year" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1">1st Year</SelectItem>
-                    <SelectItem value="2">2nd Year</SelectItem>
-                    <SelectItem value="3">3rd Year</SelectItem>
-                    <SelectItem value="4">4th Year</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Department</Label>
-                <Select
-                  value={topicDept}
-                  onValueChange={setTopicDept}
-                >
-                  <SelectTrigger><SelectValue placeholder="Select Department" /></SelectTrigger>
-                  <SelectContent>
-                    {departments.map((dept) => (
-                      <SelectItem key={dept.id} value={dept.id.toString()}>
-                        {dept.short_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
             <div className="space-y-2">
               <Label className="text-sm font-medium">Topic / Unit Covered</Label>
               <Textarea
@@ -996,22 +873,18 @@ export default function Attendance() {
             <div className="space-y-4">
               <div className="p-3 bg-success/10 rounded-lg border border-success/30">
                 <p className="text-sm font-semibold text-success mb-2">Present ({presentCount})</p>
-                <p className="text-sm text-foreground break-words">{getRollNumbersByStatus("present")}</p>
               </div>
 
               <div className="p-3 bg-destructive/10 rounded-lg border border-destructive/30">
                 <p className="text-sm font-semibold text-destructive mb-2">Absent ({absentCount})</p>
-                <p className="text-sm text-foreground break-words">{getRollNumbersByStatus("absent")}</p>
               </div>
 
               <div className="p-3 bg-warning/10 rounded-lg border border-warning/30">
                 <p className="text-sm font-semibold text-warning mb-2">Leave ({leaveCount})</p>
-                <p className="text-sm text-foreground break-words">{getRollNumbersByStatus("leave")}</p>
               </div>
 
               <div className="p-3 bg-info/10 rounded-lg border border-info/30">
                 <p className="text-sm font-semibold text-info mb-2">OD ({odCount})</p>
-                <p className="text-sm text-foreground break-words">{getRollNumbersByStatus("od")}</p>
               </div>
             </div>
 

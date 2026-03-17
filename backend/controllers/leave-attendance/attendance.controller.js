@@ -539,3 +539,205 @@ export const getAttendanceStats = asyncHandler(async (req, res, next) => {
     }
   });
 });
+
+/**
+ * Get Faculty's Timetable Slots for a given date
+ * Returns subjects and periods from timetable_master and timetable_master_slots
+ */
+export const getFacultyTimetableSlots = asyncHandler(async (req, res, next) => {
+  const { date } = req.params;
+  const facultyId = req.user.facultyId || req.user.id;
+
+  if (!date) {
+    return res.status(400).json({ success: false, error: 'Date parameter is required' });
+  }
+
+  const { TimetableMaster, TimetableMasterSlots, PeriodSlot, Subject, Class: ClassModel, Student } = models;
+
+  try {
+    // Get day of week name from date
+    const dateObj = new Date(date);
+    const dayOfWeek = dateObj.getDay();
+    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const dayName = dayNames[dayOfWeek];
+
+    // Fetch timetable assignments for this faculty on this day
+    const timetableMasters = await TimetableMaster.findAll({
+      where: { faculty_id: facultyId },
+      include: [
+        {
+          model: TimetableMasterSlots,
+          as: 'slots',
+          where: { day_of_week: dayName },
+          required: true,
+          include: [
+            { model: Subject, as: 'subject', attributes: ['id', 'subject_code', 'subject_name'] },
+            { model: PeriodSlot, as: 'period', attributes: ['id', 'period_label', 'start_time', 'end_time'] },
+          ],
+          attributes: ['id', 'day_of_week', 'subject_id', 'period_slot_id'],
+        },
+        { model: ClassModel, as: 'classSection', attributes: ['id', 'name', 'section'] },
+      ],
+      attributes: ['id', 'class_section_id', 'academic_year'],
+      raw: false,
+    });
+
+    // Format response removing duplicates
+    const uniqueSlots = {};
+    timetableMasters.forEach(master => {
+      master.slots.forEach(slot => {
+        const key = `${slot.subject_id}_${slot.period_slot_id}`;
+        if (!uniqueSlots[key]) {
+          uniqueSlots[key] = {
+            slotId: `${slot.subject_id}_${slot.period_slot_id}`,
+            classSectionId: master.class_section_id,
+            className: master.classSection?.name || '',
+            classSection: master.classSection?.section || '',
+            academicYear: master.academic_year,
+            subjectId: slot.subject?.id,
+            subjectCode: slot.subject?.subject_code,
+            subjectName: slot.subject?.subject_name,
+            periodId: slot.period?.id,
+            periodLabel: slot.period?.period_label,
+            startTime: slot.period?.start_time,
+            endTime: slot.period?.end_time,
+            dayOfWeek: slot.day_of_week,
+          };
+        }
+      });
+    });
+
+    // Fetch students for each unique class section
+    const classStudents = {};
+    const uniqueClasses = [...new Set(Object.values(uniqueSlots).map(s => s.classSectionId))];
+    
+    for (const classId of uniqueClasses) {
+      const students = await Student.findAll({
+        where: { class_section_id: classId },
+        attributes: ['id', 'student_id', 'first_name', 'last_name', 'roll_number', 'photo_path'],
+        order: [['roll_number', 'ASC']],
+        raw: true,
+      });
+      classStudents[classId] = students;
+    }
+
+    res.status(200).json({
+      success: true,
+      date,
+      dayOfWeek: dayName,
+      data: {
+        slots: Object.values(uniqueSlots),
+        studentsByClass: classStudents,
+      }
+    });
+  } catch (error) {
+    console.error('[getFacultyTimetableSlots] Error:', error);
+    res.status(500).json({ success: false, error: 'Failed to fetch timetable slots' });
+  }
+});
+
+/**
+ * Get Department Admin's Classes/Slots for a given date
+ * Fetches all classes with subjects and periods from timetable
+ */
+export const getDepartmentAdminClassSlots = asyncHandler(async (req, res, next) => {
+  const { date } = req.params;
+  const departmentId = req.user.departmentId;
+
+  if (!date) {
+    return res.status(400).json({ success: false, error: 'Date parameter is required' });
+  }
+
+  if (!departmentId) {
+    return res.status(400).json({ success: false, error: 'Department ID not found in token' });
+  }
+
+  const { TimetableMaster, TimetableMasterSlots, PeriodSlot, Subject, Class: ClassModel, Student } = models;
+
+  try {
+    // Get day of week name from date
+    const dateObj = new Date(date);
+    const dayOfWeek = dateObj.getDay();
+    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const dayName = dayNames[dayOfWeek];
+
+    // Fetch all timetable assignments for department's classes on this day
+    const timetableMasters = await TimetableMaster.findAll({
+      include: [
+        {
+          model: ClassModel,
+          as: 'classSection',
+          where: { department_id: departmentId },
+          required: true,
+          attributes: ['id', 'name', 'section', 'department_id'],
+        },
+        {
+          model: TimetableMasterSlots,
+          as: 'slots',
+          where: { day_of_week: dayName },
+          required: true,
+          include: [
+            { model: Subject, as: 'subject', attributes: ['id', 'subject_code', 'subject_name'] },
+            { model: PeriodSlot, as: 'period', attributes: ['id', 'period_label', 'start_time', 'end_time'] },
+          ],
+          attributes: ['id', 'day_of_week', 'subject_id', 'period_slot_id'],
+        },
+      ],
+      attributes: ['id', 'class_section_id', 'academic_year', 'faculty_id'],
+      raw: false,
+    });
+
+    // Format response removing duplicates
+    const uniqueSlots = {};
+    timetableMasters.forEach(master => {
+      master.slots.forEach(slot => {
+        const key = `${slot.subject_id}_${slot.period_slot_id}`;
+        if (!uniqueSlots[key]) {
+          uniqueSlots[key] = {
+            slotId: `${slot.subject_id}_${slot.period_slot_id}`,
+            classSectionId: master.class_section_id,
+            className: master.classSection?.name || '',
+            classSection: master.classSection?.section || '',
+            academicYear: master.academic_year,
+            facultyId: master.faculty_id,
+            subjectId: slot.subject?.id,
+            subjectCode: slot.subject?.subject_code,
+            subjectName: slot.subject?.subject_name,
+            periodId: slot.period?.id,
+            periodLabel: slot.period?.period_label,
+            startTime: slot.period?.start_time,
+            endTime: slot.period?.end_time,
+            dayOfWeek: slot.day_of_week,
+          };
+        }
+      });
+    });
+
+    // Fetch students for each unique class section
+    const classStudents = {};
+    const uniqueClasses = [...new Set(Object.values(uniqueSlots).map(s => s.classSectionId))];
+    
+    for (const classId of uniqueClasses) {
+      const students = await Student.findAll({
+        where: { class_section_id: classId },
+        attributes: ['id', 'student_id', 'first_name', 'last_name', 'roll_number', 'photo_path'],
+        order: [['roll_number', 'ASC']],
+        raw: true,
+      });
+      classStudents[classId] = students;
+    }
+
+    res.status(200).json({
+      success: true,
+      date,
+      dayOfWeek: dayName,
+      data: {
+        slots: Object.values(uniqueSlots),
+        studentsByClass: classStudents,
+      }
+    });
+  } catch (error) {
+    console.error('[getDepartmentAdminClassSlots] Error:', error);
+    res.status(500).json({ success: false, error: 'Failed to fetch class slots' });
+  }
+});

@@ -105,73 +105,90 @@ export default function Attendance() {
   const [bulkStatus, setBulkStatus] = useState("");
   const [bulkError, setBulkError] = useState("");
   const [bulkSuccess, setBulkSuccess] = useState("");
-  const [selectedYear, setSelectedYear] = useState("2");
-  const [selectedDepartment, setSelectedDepartment] = useState("cse");
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split("T")[0]);
   const [locked, setLocked] = useState(false);
   const [digitSearch, setDigitSearch] = useState("");
   const [showAttendanceSummary, setShowAttendanceSummary] = useState(false);
-  const [topicSemester, setTopicSemester] = useState("");
-  const [topicYear, setTopicYear] = useState("");
-  const [topicDept, setTopicDept] = useState("");
   const [topicCovered, setTopicCovered] = useState("");
   const [currentPage, setCurrentPage] = useState(0);
   const itemsPerPage = 10;
+  const [timetableSlots, setTimetableSlots] = useState<Array<any>>([]);
+  const [selectedSlot, setSelectedSlot] = useState("");
+  const [slotStudents, setSlotStudents] = useState<Student[]>([]);
 
   const today = new Date().toISOString().split("T")[0];
   const isToday = selectedDate === today;
 
   useEffect(() => {
-    const key = `attendance_${selectedDate}`;
+    const key = `attendance_${selectedDate}${selectedSlot ? `_${selectedSlot}` : ""}`;
     const raw = localStorage.getItem(key);
     if (raw) {
       try {
         const parsed = JSON.parse(raw);
         if (parsed.attendance) {
           setAttendanceData(parsed.attendance);
-          setTopicSemester(parsed.topicDetails?.semester || "");
-          setTopicYear(parsed.topicDetails?.year || "");
-          setTopicDept(parsed.topicDetails?.department || "");
-          setTopicCovered(parsed.topicDetails?.topic || "");
+          setTopicCovered(parsed.topicCovered || "");
         } else {
           setAttendanceData(parsed);
-          setTopicSemester("");
-          setTopicYear("");
-          setTopicDept("");
           setTopicCovered("");
         }
         setLocked(true);
       } catch (e) {
         setAttendanceData({});
-        setTopicSemester("");
-        setTopicYear("");
-        setTopicDept("");
         setTopicCovered("");
         setLocked(!isToday);
       }
     } else {
       setAttendanceData({});
-      setTopicSemester("");
-      setTopicYear("");
-      setTopicDept("");
       setTopicCovered("");
       setLocked(!isToday);
     }
     setMarkAllPresent(false);
     setDigitSearch("");
-  }, [selectedDate, isToday]);
+  }, [selectedDate, selectedSlot, isToday]);
+
+  // Fetch timetable slots for the selected date
+  useEffect(() => {
+    const fetchTimetableSlots = async () => {
+      try {
+        const response = await fetch(`/api/v1/attendance/department-admin/classes/${selectedDate}`);
+        if (response.ok) {
+          const data = await response.json();
+          setTimetableSlots(data.data?.slots || []);
+          // Store students data globally for later use
+          window.__timetableStudentData = data.data?.studentsByClass || {};
+          setSelectedSlot("");
+          setSlotStudents([]);
+        }
+      } catch (error) {
+        console.error("Failed to fetch timetable slots:", error);
+        setTimetableSlots([]);
+        setSlotStudents([]);
+      }
+    };
+
+    if (selectedDate) {
+      fetchTimetableSlots();
+    }
+  }, [selectedDate]);
+
+  // Load students for selected slot
+  useEffect(() => {
+    if (selectedSlot && window.__timetableStudentData) {
+      const slot = timetableSlots.find((s) => s.slotId === selectedSlot);
+      if (slot && window.__timetableStudentData[slot.classSectionId]) {
+        const studentsData = window.__timetableStudentData[slot.classSectionId];
+        setSlotStudents(studentsData);
+      }
+    }
+  }, [selectedSlot, timetableSlots]);
 
   const handleSave = (showSummary = false) => {
     if (!isToday) return;
-    const key = `attendance_${selectedDate}`;
+    const key = `attendance_${selectedDate}${selectedSlot ? `_${selectedSlot}` : ""}`;
     const dataToSave = {
       attendance: attendanceData,
-      topicDetails: {
-        semester: topicSemester,
-        year: topicYear,
-        department: topicDept,
-        topic: topicCovered
-      }
+      topicCovered
     };
     localStorage.setItem(key, JSON.stringify(dataToSave));
     setLocked(true);
@@ -186,7 +203,7 @@ export default function Attendance() {
     setMarkAllPresent(checked);
     if (checked) {
       const allPresent: Record<string, string> = {};
-      students.forEach((s) => {
+      slotStudents.forEach((s) => {
         allPresent[s.id] = "present";
       });
       setAttendanceData(allPresent);
@@ -234,7 +251,7 @@ export default function Attendance() {
     const newAttendance = { ...attendanceData };
     let matchedCount = 0;
 
-    students.forEach((student) => {
+    slotStudents.forEach((student) => {
       const lastTwoDigits = student.rollNo.slice(-2);
       if (validDigits.includes(lastTwoDigits)) {
         newAttendance[student.id] = bulkStatus;
@@ -256,7 +273,7 @@ export default function Attendance() {
     setTimeout(() => setBulkSuccess(""), 3000);
   };
 
-  const filteredStudents = students.filter(
+  const filteredStudents = slotStudents.filter(
     (s) => {
       if (digitSearch && (digitSearch.length === 2 || digitSearch.length === 3)) {
         return s.rollNo.slice(-3).endsWith(digitSearch);
@@ -314,75 +331,7 @@ export default function Attendance() {
             transition={{ delay: 0.1 }}
             className="widget-card mb-6"
           >
-            <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
-              <div className="space-y-2">
-                <Label>Year</Label>
-                <Select value={selectedYear} onValueChange={setSelectedYear}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Year" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1">1st Year</SelectItem>
-                    <SelectItem value="2">2nd Year</SelectItem>
-                    <SelectItem value="3">3rd Year</SelectItem>
-                    <SelectItem value="4">4th Year</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Department</Label>
-                <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Department" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="cse">Computer Science and Engineering</SelectItem>
-                    <SelectItem value="aids">Artificial Intelligence and Data Science</SelectItem>
-                    <SelectItem value="eee">Electrical and Electronics Engineering</SelectItem>
-                    <SelectItem value="mech">Mechanical Engineering</SelectItem>
-                    <SelectItem value="it">Information Technology</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Semester</Label>
-                <Select defaultValue="5">
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Semester" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="3">Semester 3</SelectItem>
-                    <SelectItem value="5">Semester 5</SelectItem>
-                    <SelectItem value="7">Semester 7</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Section</Label>
-                <Select defaultValue="a">
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Section" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="a">Section A</SelectItem>
-                    <SelectItem value="b">Section B</SelectItem>
-                    <SelectItem value="c">Section C</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Subject</Label>
-                <Select defaultValue="ds">
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Subject" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ds">Data Structures</SelectItem>
-                    <SelectItem value="oop">Object Oriented Programming</SelectItem>
-                    <SelectItem value="algo">Algorithms</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Date</Label>
                 <Input
@@ -391,7 +340,58 @@ export default function Attendance() {
                   onChange={(e) => setSelectedDate(e.target.value)}
                 />
               </div>
+              <div className="space-y-2">
+                <Label>Timetable Slot</Label>
+                <Select value={selectedSlot} onValueChange={setSelectedSlot}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a class slot" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {timetableSlots.length > 0 ? (
+                      timetableSlots.map((slot) => (
+                        <SelectItem key={slot.slotId} value={slot.slotId}>
+                          {slot.className} - {slot.subjectCode} ({slot.periodLabel}) {slot.startTime}-{slot.endTime}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem value="none" disabled>
+                        No timetable slots available for this date
+                      </SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
+
+            {/* Current Slot Information */}
+            {selectedSlot && timetableSlots.length > 0 && (
+              <div className="mt-4 p-4 bg-info/5 border border-info/20 rounded-lg">
+                {(() => {
+                  const currentSlot = timetableSlots.find((s) => s.slotId === selectedSlot);
+                  if (!currentSlot) return null;
+                  return (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                      <div>
+                        <p className="text-muted-foreground font-semibold">Class</p>
+                        <p className="text-foreground">{currentSlot.className}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground font-semibold">Subject</p>
+                        <p className="text-foreground">{currentSlot.subjectCode} - {currentSlot.subjectName}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground font-semibold">Period</p>
+                        <p className="text-foreground">{currentSlot.periodLabel}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground font-semibold">Time</p>
+                        <p className="text-foreground">{currentSlot.startTime} - {currentSlot.endTime}</p>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
           </motion.div>
 
           {/* Stats & Actions */}
@@ -748,53 +748,6 @@ export default function Attendance() {
             className="widget-card mt-6 p-6 border-2 border-primary/10"
           >
             <h3 className="text-lg font-semibold mb-4 text-primary">Class Coverage Details</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-              <div className="space-y-2">
-                <Label>Semester</Label>
-                <Select
-                  value={topicSemester}
-                  onValueChange={setTopicSemester}
-                >
-                  <SelectTrigger><SelectValue placeholder="Select Semester" /></SelectTrigger>
-                  <SelectContent>
-                    {[1, 2, 3, 4, 5, 6, 7, 8].map(s => (
-                      <SelectItem key={s} value={s.toString()}>Semester {s}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Year</Label>
-                <Select
-                  value={topicYear}
-                  onValueChange={setTopicYear}
-                >
-                  <SelectTrigger><SelectValue placeholder="Select Year" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1">1st Year</SelectItem>
-                    <SelectItem value="2">2nd Year</SelectItem>
-                    <SelectItem value="3">3rd Year</SelectItem>
-                    <SelectItem value="4">4th Year</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Department</Label>
-                <Select
-                  value={topicDept}
-                  onValueChange={setTopicDept}
-                >
-                  <SelectTrigger><SelectValue placeholder="Select Department" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="cse">CSE</SelectItem>
-                    <SelectItem value="aids">AI & DS</SelectItem>
-                    <SelectItem value="eee">EEE</SelectItem>
-                    <SelectItem value="mech">MECH</SelectItem>
-                    <SelectItem value="it">IT</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
             <div className="space-y-2">
               <Label className="text-sm font-medium">Topic / Unit Covered</Label>
               <Textarea

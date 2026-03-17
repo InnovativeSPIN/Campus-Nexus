@@ -10,7 +10,9 @@ import {
   getMyAttendance,
   markFacultyAttendance,
   getFacultyAttendance,
-  getAttendanceStats
+  getAttendanceStats,
+  getFacultyTimetableSlots,
+  getDepartmentAdminClassSlots
 } from '../../controllers/leave-attendance/attendance.controller.js';
 
 import { protect, authorize } from '../../middleware/auth.js';
@@ -34,6 +36,10 @@ router.get('/student/:studentId', authorize('superadmin', 'super-admin', 'execut
 router.route('/faculty')
   .post(authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin'), markFacultyAttendance);
 router.get('/faculty/:facultyId', authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin', 'faculty'), getFacultyAttendance);
+
+// Timetable-based slot routes (NEW)
+router.get('/faculty/timetable/:date', authorize('faculty'), getFacultyTimetableSlots);
+router.get('/department-admin/classes/:date', authorize('department-admin'), getDepartmentAdminClassSlots);
 
 // Main routes
 router.route('/')

@@ -40,6 +40,7 @@ import facultyAllocationRoutes from './routes/department-admin/faculty-allocatio
 import timetableNotificationRoutes from './routes/faculty/timetable-notification.routes.js';
 import timetableAlterationRoutes from './routes/faculty/timetable-alteration.routes.js';
 import leaveManagementRoutes from './routes/faculty/leaveManagement.routes.js';
+import studentAttendanceRoutes from './routes/studentAttendance.routes.js';
 import coordinatorRoutes from './routes/department-admin/coordinator.routes.js';
 import subjectRoutes from './routes/department-admin/subject.routes.js';
 import roomRoutes from './routes/department-admin/room.routes.js';
@@ -209,6 +210,7 @@ const startServer = () => {
   app.use('/api/v1/student/certifications', studentCertificationRoutes);
   app.use('/api/v1/student/extracurricular', studentExtracurricularRoutes);
   app.use('/api/v1/student/notifications', studentNotificationRoutes);
+  app.use('/api/v1/student/attendance', studentAttendanceRoutes);
   app.use('/api/v1/student/disciplinary', studentDisciplinaryRoutes);
   app.use('/api/v1/student-leaves', studentLeaveRoutes);
   app.use('/api/v1/student-leaves/approvals', studentLeaveApprovalRoutes);
