@@ -562,58 +562,58 @@ export const getFacultyTimetableSlots = asyncHandler(async (req, res, next) => {
     const dayName = dayNames[dayOfWeek];
 
     // Fetch timetable assignments for this faculty on this day
-    const timetableMasters = await TimetableMaster.findAll({
-      where: { faculty_id: facultyId },
+    const timetableSlots = await TimetableMasterSlots.findAll({
+      where: { faculty_id: facultyId, day: dayName },
       include: [
         {
-          model: TimetableMasterSlots,
-          as: 'slots',
-          where: { day_of_week: dayName },
-          required: true,
+          model: TimetableMaster,
+          as: 'master',
           include: [
-            { model: Subject, as: 'subject', attributes: ['id', 'subject_code', 'subject_name'] },
-            { model: PeriodSlot, as: 'period', attributes: ['id', 'period_label', 'start_time', 'end_time'] },
-          ],
-          attributes: ['id', 'day_of_week', 'subject_id', 'period_slot_id'],
+            { model: ClassModel, as: 'class', attributes: ['id', 'name', 'section'] }
+          ]
         },
-        { model: ClassModel, as: 'classSection', attributes: ['id', 'name', 'section'] },
+        { model: Subject, as: 'subject', attributes: ['id', 'subject_code', 'subject_name'] },
+        { model: PeriodSlot, as: 'period', attributes: ['id', 'period_label', 'start_time', 'end_time'] },
       ],
-      attributes: ['id', 'class_section_id', 'academic_year'],
       raw: false,
     });
 
     // Format response removing duplicates
     const uniqueSlots = {};
-    timetableMasters.forEach(master => {
-      master.slots.forEach(slot => {
-        const key = `${slot.subject_id}_${slot.period_slot_id}`;
-        if (!uniqueSlots[key]) {
-          uniqueSlots[key] = {
-            slotId: `${slot.subject_id}_${slot.period_slot_id}`,
-            classSectionId: master.class_section_id,
-            className: master.classSection?.name || '',
-            classSection: master.classSection?.section || '',
-            academicYear: master.academic_year,
-            subjectId: slot.subject?.id,
-            subjectCode: slot.subject?.subject_code,
-            subjectName: slot.subject?.subject_name,
-            periodId: slot.period?.id,
-            periodLabel: slot.period?.period_label,
-            startTime: slot.period?.start_time,
-            endTime: slot.period?.end_time,
-            dayOfWeek: slot.day_of_week,
-          };
+    const classStudents = {};
+    
+    timetableSlots.forEach(slot => {
+      const key = `${slot.subject_id}_${slot.period_slot_id}`;
+      if (!uniqueSlots[key] && slot.master && slot.master.class) {
+        const classId = slot.master.class_id;
+        
+        uniqueSlots[key] = {
+          slotId: `${slot.subject_id}_${slot.period_slot_id}`,
+          classSectionId: classId,
+          className: slot.master.class?.name || '',
+          classSection: slot.master.class?.section || '',
+          academicYear: slot.master.academic_year,
+          subjectId: slot.subject?.id,
+          subjectCode: slot.subject?.subject_code,
+          subjectName: slot.subject?.subject_name,
+          periodId: slot.period?.id,
+          periodLabel: slot.period?.period_label,
+          startTime: slot.period?.start_time,
+          endTime: slot.period?.end_time,
+          dayOfWeek: slot.day,
+        };
+
+        // Prepare to fetch students for this class
+        if (!classStudents[classId]) {
+          classStudents[classId] = null;
         }
-      });
+      }
     });
 
     // Fetch students for each unique class section
-    const classStudents = {};
-    const uniqueClasses = [...new Set(Object.values(uniqueSlots).map(s => s.classSectionId))];
-    
-    for (const classId of uniqueClasses) {
+    for (const classId of Object.keys(classStudents)) {
       const students = await Student.findAll({
-        where: { class_section_id: classId },
+        where: { class_id: parseInt(classId) },
         attributes: ['id', 'student_id', 'first_name', 'last_name', 'roll_number', 'photo_path'],
         order: [['roll_number', 'ASC']],
         raw: true,
@@ -663,27 +663,22 @@ export const getDepartmentAdminClassSlots = asyncHandler(async (req, res, next) 
 
     // Fetch all timetable assignments for department's classes on this day
     const timetableMasters = await TimetableMaster.findAll({
+      where: { department_id: departmentId },
       include: [
-        {
-          model: ClassModel,
-          as: 'classSection',
-          where: { department_id: departmentId },
-          required: true,
-          attributes: ['id', 'name', 'section', 'department_id'],
-        },
         {
           model: TimetableMasterSlots,
           as: 'slots',
-          where: { day_of_week: dayName },
+          where: { day: dayName },
           required: true,
           include: [
             { model: Subject, as: 'subject', attributes: ['id', 'subject_code', 'subject_name'] },
             { model: PeriodSlot, as: 'period', attributes: ['id', 'period_label', 'start_time', 'end_time'] },
           ],
-          attributes: ['id', 'day_of_week', 'subject_id', 'period_slot_id'],
+          attributes: ['id', 'day', 'subject_id', 'period_slot_id', 'faculty_id'],
         },
+        { model: ClassModel, as: 'class', attributes: ['id', 'name', 'section'] },
       ],
-      attributes: ['id', 'class_section_id', 'academic_year', 'faculty_id'],
+      attributes: ['id', 'class_id', 'academic_year'],
       raw: false,
     });
 
@@ -695,11 +690,11 @@ export const getDepartmentAdminClassSlots = asyncHandler(async (req, res, next) 
         if (!uniqueSlots[key]) {
           uniqueSlots[key] = {
             slotId: `${slot.subject_id}_${slot.period_slot_id}`,
-            classSectionId: master.class_section_id,
-            className: master.classSection?.name || '',
-            classSection: master.classSection?.section || '',
+            classSectionId: master.class_id,
+            className: master.class?.name || '',
+            classSection: master.class?.section || '',
             academicYear: master.academic_year,
-            facultyId: master.faculty_id,
+            facultyId: slot.faculty_id,
             subjectId: slot.subject?.id,
             subjectCode: slot.subject?.subject_code,
             subjectName: slot.subject?.subject_name,
@@ -707,7 +702,7 @@ export const getDepartmentAdminClassSlots = asyncHandler(async (req, res, next) 
             periodLabel: slot.period?.period_label,
             startTime: slot.period?.start_time,
             endTime: slot.period?.end_time,
-            dayOfWeek: slot.day_of_week,
+            dayOfWeek: slot.day,
           };
         }
       });
@@ -719,7 +714,7 @@ export const getDepartmentAdminClassSlots = asyncHandler(async (req, res, next) 
     
     for (const classId of uniqueClasses) {
       const students = await Student.findAll({
-        where: { class_section_id: classId },
+        where: { class_id: classId },
         attributes: ['id', 'student_id', 'first_name', 'last_name', 'roll_number', 'photo_path'],
         order: [['roll_number', 'ASC']],
         raw: true,
