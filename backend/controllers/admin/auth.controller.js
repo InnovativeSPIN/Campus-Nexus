@@ -259,12 +259,13 @@ export const login = asyncHandler(async (req, res, next) => {
     user = null;
   }
 
-  // 2. Check for student in student_profile table (email or studentId)
+  // 2. Check for student in student_profile table (email, studentId, or rollNumber)
   user = await Student.findOne({
     where: {
       [Op.or]: [
         { email },
-        { studentId: email } // 'email' variable really holds the identifier string
+        { studentId: email },
+        { rollNumber: email }
       ]
     },
     attributes: { exclude: ['userId'] },
@@ -353,7 +354,8 @@ export const studentLogin = asyncHandler(async (req, res, next) => {
     where: {
       [Op.or]: [
         { studentId: identifier },
-        { email: identifier }
+        { email: identifier },
+        { rollNumber: identifier }
       ]
     },
     attributes: { exclude: ['userId'] },
@@ -404,10 +406,11 @@ export const getStudentDetails = asyncHandler(async (req, res, next) => {
     where: {
       [Op.or]: [
         { studentId: identifier },
-        { email: identifier }
+        { email: identifier },
+        { rollNumber: identifier }
       ]
     },
-    attributes: ['firstName', 'lastName', 'studentId', 'year', 'semester', 'departmentId'],
+    attributes: ['firstName', 'lastName', 'studentId', 'rollNumber', 'year', 'semester', 'departmentId'],
     include: [
       {
         model: models.Department,
@@ -426,7 +429,8 @@ export const getStudentDetails = asyncHandler(async (req, res, next) => {
     success: true,
     data: {
       name: `${student.firstName} ${student.lastName}`,
-      rollNo: student.studentId,
+      rollNo: student.rollNumber || student.studentId,
+      studentId: student.studentId,
       department: student.department?.short_name || student.department?.full_name,
       year: parseInt(student.year) || undefined,
       semester: student.semester
