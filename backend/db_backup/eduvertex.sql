@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Mar 17, 2026 at 06:04 AM
+-- Generation Time: Mar 18, 2026 at 06:42 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -927,6 +927,13 @@ CREATE TABLE `student_bio` (
   `updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `student_bio`
+--
+
+INSERT INTO `student_bio` (`id`, `studentId`, `alternatePhone`, `linkedinUrl`, `dateOfBirth`, `bloodGroup`, `nationality`, `religion`, `category`, `aadharNo`, `motherTongue`, `residenceType`, `address`, `permanentAddress`, `parentInfo`, `references`, `previousEducation`, `scholarshipDetails`, `documents`, `createdAt`, `updatedAt`) VALUES
+(1, 3975, NULL, 'https://www.linkedin.com/in/r-logesh-kumar-74566a2a3/', NULL, 'B+', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{\"father\":{\"name\":\"\",\"phone\":\"\",\"email\":\"\",\"occupation\":\"\",\"qualification\":\"\",\"annualIncome\":\"\"},\"mother\":{\"name\":\"\",\"phone\":\"\",\"email\":\"\",\"occupation\":\"\",\"qualification\":\"\",\"annualIncome\":\"\"},\"guardian\":{\"name\":\"\",\"relation\":\"\",\"phone\":\"\",\"address\":\"\"}}', NULL, NULL, NULL, NULL, '2026-03-18 05:26:59', '2026-03-18 05:31:17');
+
 -- --------------------------------------------------------
 
 --
@@ -1136,9 +1143,9 @@ INSERT INTO `student_profile` (`id`, `userId`, `role_id`, `studentId`, `rollNumb
 (3972, NULL, 6, '921023243007', '921023243007', NULL, 'GOKUL', 'M', '921023243007@nscet.org', '9876543210', 'default-student.png', 'male', 6, 21, '2023-2027', 6, '3', '2023-11-15', 'regular', 'paid', 'active', '$2a$10$dFoVkpiU4xkoGUYT3OhfOucc255f/yft8BhHC.o3aZqqY/vjHyY.O', '2026-03-14 13:13:50', '2026-03-14 13:13:50', NULL),
 (3973, NULL, 6, '921023243008', '921023243008', NULL, 'HARI PRABHA', 'S', '921023243008@nscet.org', '9876543210', 'default-student.png', 'male', 6, 21, '2023-2027', 6, '3', '2023-11-15', 'regular', 'paid', 'active', '$2a$10$dFoVkpiU4xkoGUYT3OhfOucc255f/yft8BhHC.o3aZqqY/vjHyY.O', '2026-03-14 13:13:50', '2026-03-14 13:13:50', NULL),
 (3974, NULL, 6, '921023243009', '921023243009', NULL, 'KAVIYAMAHESHWARI', 'J', '921023243009@nscet.org', '9876543210', 'default-student.png', 'female', 6, 21, '2023-2027', 6, '3', '2023-11-15', 'regular', 'paid', 'active', '$2a$10$dFoVkpiU4xkoGUYT3OhfOucc255f/yft8BhHC.o3aZqqY/vjHyY.O', '2026-03-14 13:13:50', '2026-03-14 13:13:50', NULL),
-(3975, NULL, 6, '921023243010', '921023243010', NULL, 'LOGESH KUMAR', 'R', '921023243010@nscet.org', '9876543210', 'default-student.png', 'male', 6, 21, '2023-2027', 6, '3', '2023-11-15', 'regular', 'paid', 'active', '$2a$10$dFoVkpiU4xkoGUYT3OhfOucc255f/yft8BhHC.o3aZqqY/vjHyY.O', '2026-03-14 13:13:50', '2026-03-14 13:13:50', NULL),
+(3975, NULL, 6, '3975', '921023243010', NULL, 'LOGESH KUMAR', 'R', '921023243010@nscet.org', '9876543210', 'default-student.png', 'male', 6, 21, '2023-2027', 6, '3', '2023-11-15', 'regular', 'paid', 'active', '$2a$10$dFoVkpiU4xkoGUYT3OhfOucc255f/yft8BhHC.o3aZqqY/vjHyY.O', '2026-03-14 13:13:50', '2026-03-18 05:39:53', NULL),
 (3976, NULL, 6, '921023243011', '921023243011', NULL, 'MALARVIZHI', 'S', '921023243011@nscet.org', '9876543210', 'default-student.png', 'female', 6, 21, '2023-2027', 6, '3', '2023-11-15', 'regular', 'paid', 'active', '$2a$10$dFoVkpiU4xkoGUYT3OhfOucc255f/yft8BhHC.o3aZqqY/vjHyY.O', '2026-03-14 13:13:50', '2026-03-14 13:13:50', NULL),
-(4159, NULL, 3, '23AI&100', '23AI&100', NULL, 'SHRIMATHI', 'R', 'shrimathiravi44@gmail.com', '9384114714', 'default-student.png', 'male', 6, NULL, '2023-2027', 1, '3', '2026-03-15', 'regular', 'pending', 'active', '$2a$10$jvuWQ71xy2Z1C2XBFBTdleqcajw0FoikNF5Tw.o4CZmzW1MrcJ2v6', '2026-03-15 09:29:14', '2026-03-15 09:29:14', NULL);
+(4159, NULL, 3, '921023243018', '23AI&100', NULL, 'SHRIMATHI', 'R', 'shrimathiravi44@gmail.com', '9384114714', 'default-student.png', 'female', 6, 21, '2023-2027', 1, '3', '2026-03-15', 'regular', 'pending', 'active', '$2a$10$jvuWQ71xy2Z1C2XBFBTdleqcajw0FoikNF5Tw.o4CZmzW1MrcJ2v6', '2026-03-15 09:29:14', '2026-03-18 10:24:18', NULL);
 
 -- --------------------------------------------------------
 
@@ -2251,7 +2258,7 @@ ALTER TABLE `student_attendance`
 -- AUTO_INCREMENT for table `student_bio`
 --
 ALTER TABLE `student_bio`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `student_certifications`
