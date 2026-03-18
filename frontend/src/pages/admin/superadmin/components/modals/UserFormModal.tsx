@@ -424,10 +424,193 @@ export function UserFormModal({ open, onClose, onSave, type, initialData, mode }
                   <Label htmlFor="rollNo">Roll Number</Label>
                   <Input
                     id="rollNo"
-                    value={(formData as Student).roll_no || ''}
-                    onChange={(e) => updateField('roll_no', e.target.value)}
+                    value={(formData as Student).rollNumber || ''}
+                    onChange={(e) => updateField('rollNumber', e.target.value)}
                     placeholder="Enter roll number"
                   />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="admissionNo">Admission Number</Label>
+                  <Input
+                    id="admissionNo"
+                    value={(formData as Student).admissionNo || ''}
+                    onChange={(e) => updateField('admissionNo', e.target.value)}
+                    placeholder="Enter admission number"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="emisNo">EMIS Number</Label>
+                  <Input
+                    id="emisNo"
+                    value={(formData as Student).emisNo || ''}
+                    onChange={(e) => updateField('emisNo', e.target.value)}
+                    placeholder="Enter EMIS number"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="semester">Semester</Label>
+                  <Select
+                    value={(formData as Student).semester?.toString() || ''}
+                    onValueChange={(value) => updateField('semester', parseInt(value))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select semester" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover">
+                      {[1, 2, 3, 4, 5, 6, 7, 8].map(sem => (
+                        <SelectItem key={sem} value={sem.toString()}>Semester {sem}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="admissionDate">Admission Date</Label>
+                  <Input
+                    id="admissionDate"
+                    type="date"
+                    value={(formData as Student).admissionDate ? String((formData as Student).admissionDate).split('T')[0] : ''}
+                    onChange={(e) => updateField('admissionDate', e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="admissionType">Admission Type</Label>
+                  <Select
+                    value={(formData as Student).admissionType || ''}
+                    onValueChange={(value) => updateField('admissionType', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select admission type" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover">
+                      <SelectItem value="regular">Regular</SelectItem>
+                      <SelectItem value="lateral">Lateral</SelectItem>
+                      <SelectItem value="management">Management</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="feeStatus">Fee Status</Label>
+                  <Select
+                    value={(formData as Student).feeStatus || ''}
+                    onValueChange={(value) => updateField('feeStatus', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select fee status" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover">
+                      <SelectItem value="paid">Paid</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="partial">Partial</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="border-t pt-4 mt-4">
+                  <h4 className="font-semibold text-sm mb-4">Bio Information</h4>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="alternatePhone">Alternate Phone</Label>
+                  <Input
+                    id="alternatePhone"
+                    value={(formData as any).alternatePhone || ''}
+                    onChange={(e) => updateField('alternatePhone', e.target.value)}
+                    placeholder="Enter alternate phone"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="dateOfBirth">Date of Birth</Label>
+                  <Input
+                    id="dateOfBirth"
+                    type="date"
+                    value={(formData as any).dateOfBirth ? String((formData as any).dateOfBirth).split('T')[0] : ''}
+                    onChange={(e) => updateField('dateOfBirth', e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="bloodGroup">Blood Group</Label>
+                  <Select
+                    value={(formData as any).bloodGroup || ''}
+                    onValueChange={(value) => updateField('bloodGroup', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select blood group" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover">
+                      {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map(bg => (
+                        <SelectItem key={bg} value={bg}>{bg}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="nationality">Nationality</Label>
+                  <Input
+                    id="nationality"
+                    value={(formData as any).nationality || ''}
+                    onChange={(e) => updateField('nationality', e.target.value)}
+                    placeholder="Enter nationality"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="religion">Religion</Label>
+                  <Input
+                    id="religion"
+                    value={(formData as any).religion || ''}
+                    onChange={(e) => updateField('religion', e.target.value)}
+                    placeholder="Enter religion"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="category">Category</Label>
+                  <Input
+                    id="category"
+                    value={(formData as any).category || ''}
+                    onChange={(e) => updateField('category', e.target.value)}
+                    placeholder="Enter category (e.g., General, SC, ST, OBC)"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="aadharNo">Aadhar Number</Label>
+                  <Input
+                    id="aadharNo"
+                    value={(formData as any).aadharNo || ''}
+                    onChange={(e) => updateField('aadharNo', e.target.value)}
+                    placeholder="Enter Aadhar number"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="motherTongue">Mother Tongue</Label>
+                  <Input
+                    id="motherTongue"
+                    value={(formData as any).motherTongue || ''}
+                    onChange={(e) => updateField('motherTongue', e.target.value)}
+                    placeholder="Enter mother tongue"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="linkedinUrl">LinkedIn URL</Label>
+                  <Input
+                    id="linkedinUrl"
+                    type="url"
+                    value={(formData as any).linkedinUrl || ''}
+                    onChange={(e) => updateField('linkedinUrl', e.target.value)}
+                    placeholder="Enter LinkedIn profile URL"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="residenceType">Residence Type</Label>
+                  <Select
+                    value={(formData as any).residenceType || ''}
+                    onValueChange={(value) => updateField('residenceType', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select residence type" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover">
+                      <SelectItem value="hosteller">Hosteller</SelectItem>
+                      <SelectItem value="day_scholar">Day Scholar</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </>
             )}
