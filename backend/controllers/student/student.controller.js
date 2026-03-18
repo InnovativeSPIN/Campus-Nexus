@@ -1,6 +1,7 @@
 import ErrorResponse from '../../utils/errorResponse.js';
 import asyncHandler from '../../middleware/async.js';
 import { models } from '../../models/index.js';
+import path from 'path';
 const { Student, Department, Class: ClassModel, Subject, StudentBio } = models;
 import { Op, Sequelize } from 'sequelize';
 
@@ -129,6 +130,8 @@ export const getStudent = asyncHandler(async (req, res, next) => {
   // runtime error and resulting in 500 responses when viewing profiles.
   // for now we drop the subjects include; add a proper association later
   // if subject information is actually required.
+  const { StudentBio } = models;
+  
   const student = await Student.findByPk(req.params.id, {
     attributes: { exclude: ['userId'] },
     include: [
@@ -137,20 +140,37 @@ export const getStudent = asyncHandler(async (req, res, next) => {
     ]
   });
 
-  // normalize department name
-  if (student && student.department) {
-    const dept = student.department.toJSON();
-    dept.name = dept.short_name || dept.full_name;
-    student.department = dept;
-  }
-
   if (!student) {
     return next(new ErrorResponse(`Student not found with id of ${req.params.id}`, 404));
   }
 
+  const studentData = student.toJSON();
+  
+  // Fetch student bio data and merge it (if StudentBio model exists)
+  try {
+    if (StudentBio) {
+      const studentBio = await StudentBio.findOne({ where: { studentId: student.id } });
+      if (studentBio) {
+        const bioData = studentBio.toJSON();
+        studentData.bio = bioData;
+        // Merge bio fields into main object for easier frontend access
+        Object.assign(studentData, bioData);
+      }
+    }
+  } catch (err) {
+    console.error('Error fetching StudentBio:', err);
+    // Continue without bio data if error occurs
+  }
+
+  // normalize department name
+  if (studentData.department) {
+    const dept = studentData.department;
+    dept.name = dept.short_name || dept.full_name;
+  }
+
   res.status(200).json({
     success: true,
-    data: student
+    data: studentData
   });
 });
 
@@ -209,9 +229,45 @@ export const createStudent = asyncHandler(async (req, res, next) => {
 
   const student = await Student.create(req.body);
 
+  // Extract and create student bio if bio fields are provided
+  const { StudentBio } = models;
+  const bioFields = ['alternatePhone', 'linkedinUrl', 'dateOfBirth', 'bloodGroup', 'nationality', 'religion', 'category', 'aadharNo', 'motherTongue', 'residenceType', 'address', 'permanentAddress', 'parentInfo', 'references', 'previousEducation', 'scholarshipDetails', 'documents'];
+  const bioData = { studentId: student.id };
+  let hasBioData = false;
+
+  bioFields.forEach(field => {
+    if (field in req.body) {
+      bioData[field] = req.body[field];
+      hasBioData = true;
+    }
+  });
+
+  if (hasBioData && StudentBio) {
+    try {
+      await StudentBio.create(bioData);
+    } catch (err) {
+      console.error('Error creating StudentBio:', err);
+    }
+  }
+
+  // Fetch and merge bio data in response
+  let responseData = student.toJSON();
+  try {
+    if (StudentBio) {
+      const studentBio = await StudentBio.findOne({ where: { studentId: student.id } });
+      if (studentBio) {
+        const studentBioData = studentBio.toJSON();
+        responseData.bio = studentBioData;
+        Object.assign(responseData, studentBioData);
+      }
+    }
+  } catch (err) {
+    console.error('Error fetching StudentBio after create:', err);
+  }
+
   res.status(201).json({
     success: true,
-    data: student
+    data: responseData
   });
 });
 
@@ -233,12 +289,86 @@ export const updateStudent = asyncHandler(async (req, res, next) => {
     req.body.classId = req.body.class;
     delete req.body.class;
   }
-  await Student.update(req.body, { where: { id: req.params.id } });
-  student = await Student.findByPk(req.params.id, { attributes: { exclude: ['userId'] } });
+
+  // Extract bio fields that belong to StudentBio table
+  const bioFields = ['alternatePhone', 'linkedinUrl', 'dateOfBirth', 'bloodGroup', 'nationality', 'religion', 'category', 'aadharNo', 'motherTongue', 'residenceType', 'address', 'permanentAddress', 'parentInfo', 'references', 'previousEducation', 'scholarshipDetails', 'documents'];
+  const bioData = {};
+  const profileData = { ...req.body };
+
+  bioFields.forEach(field => {
+    if (field in profileData) {
+      bioData[field] = profileData[field];
+      delete profileData[field];
+    }
+  });
+
+  // Remove computed/frontend-only fields that don't exist in Student model
+  const invalidFields = ['name', 'avatar', 'enrollmentYear', 'departmentName', 'bio', 'department', 'class'];
+  invalidFields.forEach(field => delete profileData[field]);
+
+  // Update student profile
+  try {
+    await Student.update(profileData, { where: { id: req.params.id } });
+  } catch (err) {
+    console.error('Error updating student profile:', err.message, 'Errors:', err.errors);
+    return next(new ErrorResponse(`Failed to update student: ${err.message}`, 400));
+  }
+
+  // Update student bio if there are bio fields
+  if (Object.keys(bioData).length > 0) {
+    const { StudentBio } = models;
+    try {
+      if (StudentBio) {
+        const studentBio = await StudentBio.findOne({ where: { studentId: req.params.id } });
+        if (studentBio) {
+          await studentBio.update(bioData);
+        } else {
+          // Create new bio record if it doesn't exist
+          await StudentBio.create({ studentId: req.params.id, ...bioData });
+        }
+      }
+    } catch (err) {
+      console.error('Error updating StudentBio:', err.message);
+      // Continue even if bio update fails - don't block the response
+    }
+  }
+
+  // Fetch updated student with department and class info
+  student = await Student.findByPk(req.params.id, {
+    attributes: { exclude: ['userId'] },
+    include: [
+      { model: Department, as: 'department', attributes: ['short_name', 'full_name'] },
+      { model: ClassModel, as: 'class', attributes: ['name', 'room'] }
+    ]
+  });
+
+  const studentData = student.toJSON();
+
+  // Fetch and merge updated bio data
+  try {
+    const { StudentBio } = models;
+    if (StudentBio) {
+      const studentBio = await StudentBio.findOne({ where: { studentId: req.params.id } });
+      if (studentBio) {
+        const bioData = studentBio.toJSON();
+        studentData.bio = bioData;
+        // Merge bio fields into main object
+        Object.assign(studentData, bioData);
+      }
+    }
+  } catch (err) {
+    console.error('Error fetching StudentBio after update:', err);
+  }
+
+  // Normalize department name
+  if (studentData.department) {
+    const dept = studentData.department;
+    dept.name = dept.short_name || dept.full_name;
+  }
 
   res.status(200).json({
     success: true,
-    data: student
+    data: studentData
   });
 });
 
@@ -480,6 +610,49 @@ export const getStudentStats = asyncHandler(async (req, res, next) => {
 // @desc      Upload student photo
 // @route     POST /api/v1/students/photo
 // @access    Private/Student
+// @desc      Upload student photo (admin)
+// @route     PUT /api/v1/students/:id/photo
+// @access    Private/Admin
+export const uploadStudentPhotoAdmin = asyncHandler(async (req, res, next) => {
+  if (!req.file) {
+    return next(new ErrorResponse('No file uploaded', 400));
+  }
+
+  const student = await Student.findByPk(req.params.id);
+  if (!student) {
+    return next(new ErrorResponse(`Student not found with id of ${req.params.id}`, 404));
+  }
+
+  // Generate filename with student name and ID
+  const studentNameFormatted = `${student.firstName}_${student.lastName}`.replace(/\s+/g, '_').toLowerCase();
+  const ext = path.extname(req.file.originalname);
+  const filename = `student_${student.id}_${studentNameFormatted}${ext}`;
+  
+  // Move file to permanent location with student name
+  const uploadsDir = path.join(process.cwd(), 'public', 'uploads', 'photos');
+  const filepath = path.join(uploadsDir, filename);
+  
+  try {
+    // Read the uploaded file and write to new location
+    const fs = await import('fs').then(m => m.promises);
+    await fs.rename(req.file.path, filepath);
+    
+    const photoPath = `/uploads/photos/${filename}`;
+    await Student.update({ photo: photoPath }, { where: { id: req.params.id } });
+    
+    res.status(200).json({
+      success: true,
+      message: 'Photo uploaded successfully',
+      data: {
+        photo: photoPath
+      }
+    });
+  } catch (err) {
+    console.error('Error uploading photo:', err);
+    next(new ErrorResponse('Error uploading photo', 500));
+  }
+});
+
 export const uploadStudentPhoto = asyncHandler(async (req, res, next) => {
   if (!req.file) {
     return next(new ErrorResponse('No file uploaded', 400));

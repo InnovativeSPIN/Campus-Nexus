@@ -14,6 +14,7 @@ import {
   getStudentStats,
   getAcademicYears,
   uploadStudentPhoto,
+  uploadStudentPhotoAdmin,
   downloadBulkTemplate,
   bulkUploadStudents
 } from '../../controllers/student/student.controller.js';
@@ -33,6 +34,9 @@ router.route('/me/profile')
 
 // Student can upload their own photo
 router.post('/me/photo', authorize('student'), studentUpload.single('photo'), uploadStudentPhoto);
+
+// Admin can upload student photo
+router.put('/:id/photo', authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin'), studentUpload.single('photo'), uploadStudentPhotoAdmin);
 
 // fetch academic years (batches) for dropdowns
 router.get('/academic-years', authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin', 'department-admin', 'faculty'), getAcademicYears);
