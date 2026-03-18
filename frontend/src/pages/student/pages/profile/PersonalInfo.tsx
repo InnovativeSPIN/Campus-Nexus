@@ -80,7 +80,7 @@ export default function PersonalInfo() {
             updateUserData({
               name: `${apiData.firstName} ${apiData.lastName || ''}`.trim(),
               department: apiData.department?.name || apiData.departmentId,
-              rollNo: apiData.rollNumber,
+              studentId: apiData.studentId || '',
             });
           }
         }
@@ -129,7 +129,7 @@ export default function PersonalInfo() {
                 <div className="space-y-1">
                   <h2 className="text-3xl font-bold text-foreground tracking-tight">{user?.name || 'N/A'}</h2>
                   <div className="flex items-center gap-2 text-muted-foreground font-medium">
-                    <span className="text-primary/80">{user?.rollNo || 'N/A'}</span>
+                    <span className="text-primary/80">{user?.studentId || 'N/A'}</span>
                     <span className="w-1 h-1 rounded-full bg-muted-foreground/30" />
                     <span className="truncate">{typeof user?.department === 'object' ? (user?.department?.name || user?.department?.short_name) : (user?.department || 'N/A')}</span>
                   </div>

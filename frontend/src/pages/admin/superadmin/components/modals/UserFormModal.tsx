@@ -34,6 +34,8 @@ export function UserFormModal({ open, onClose, onSave, type, initialData, mode }
   const [formData, setFormData] = useState<FormData>({});
   const [departments, setDepartments] = useState<Department[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
+  const [classes, setClasses] = useState<any[]>([]);
+  const [loadingClasses, setLoadingClasses] = useState(false);
 
   useEffect(() => {
     if (initialData) {
@@ -105,6 +107,29 @@ export function UserFormModal({ open, onClose, onSave, type, initialData, mode }
     }
   }, [open, type]);
 
+  // Fetch classes when batch is selected (for students)
+  useEffect(() => {
+    const fetchClasses = async () => {
+      if (type === 'student' && (formData as Student).batch) {
+        setLoadingClasses(true);
+        try {
+          const response = await fetch('/api/v1/classes', { credentials: 'include' });
+          const result = await response.json();
+          if (result.success) {
+            // Filter classes by batch
+            const filteredClasses = result.data.filter((c: any) => c.batch === (formData as Student).batch);
+            setClasses(filteredClasses);
+          }
+        } catch (error) {
+          console.error('Error fetching classes:', error);
+        } finally {
+          setLoadingClasses(false);
+        }
+      }
+    };
+    fetchClasses();
+  }, [(formData as Student).batch, type]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSave({ ...formData, avatarFile: file } as any);
@@ -129,14 +154,14 @@ export function UserFormModal({ open, onClose, onSave, type, initialData, mode }
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px] bg-card">
+      <DialogContent className="sm:max-w-[600px] bg-card max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-foreground">
             {mode === 'add' ? 'Add' : 'Edit'} {getTitle()}
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid gap-4">
+          <div className="grid gap-3">
             <div className="space-y-2">
               <Label htmlFor="name">Full Name</Label>
               <Input
@@ -329,6 +354,30 @@ export function UserFormModal({ open, onClose, onSave, type, initialData, mode }
                     </SelectContent>
                   </Select>
                 </div>
+                {(formData as Student).batch && (
+                  <div className="space-y-2">
+                    <Label htmlFor="className">Class Name</Label>
+                    <Select
+                      value={(formData as any).classId || ''}
+                      onValueChange={(value) => updateField('classId', value)}
+                      disabled={loadingClasses}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={loadingClasses ? "Loading classes..." : "Select class"} />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover">
+                        {classes.map((cls: any) => (
+                          <SelectItem key={cls.id} value={String(cls.id)}>
+                            {cls.name}
+                          </SelectItem>
+                        ))}
+                        {classes.length === 0 && !loadingClasses && (
+                          <div className="p-2 text-sm text-muted-foreground text-center">No classes available for this batch</div>
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
                 <div className="space-y-2">
                   <Label htmlFor="status">Status</Label>
                   <Select
@@ -361,6 +410,24 @@ export function UserFormModal({ open, onClose, onSave, type, initialData, mode }
                       <SelectItem value="4">Year 4</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="studentId">Register Number</Label>
+                  <Input
+                    id="studentId"
+                    value={(formData as Student).studentId || ''}
+                    onChange={(e) => updateField('studentId', e.target.value)}
+                    placeholder="Enter register number"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="rollNo">Roll Number</Label>
+                  <Input
+                    id="rollNo"
+                    value={(formData as Student).roll_no || ''}
+                    onChange={(e) => updateField('roll_no', e.target.value)}
+                    placeholder="Enter roll number"
+                  />
                 </div>
               </>
             )}
