@@ -308,6 +308,13 @@ export const updateStudent = asyncHandler(async (req, res, next) => {
 
   // Update student profile
   try {
+    // If studentId is being updated, check for duplicates
+    if (profileData.studentId && profileData.studentId !== student.studentId) {
+      const existingStudent = await Student.findOne({ where: { studentId: profileData.studentId } });
+      if (existingStudent) {
+        return next(new ErrorResponse(`Student ID '${profileData.studentId}' is already in use by another student`, 400));
+      }
+    }
     await Student.update(profileData, { where: { id: req.params.id } });
   } catch (err) {
     console.error('Error updating student profile:', err.message, 'Errors:', err.errors);

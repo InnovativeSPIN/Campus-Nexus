@@ -73,6 +73,25 @@ export default function SuperAdminStudentProfile() {
     const handleSaveSection = async (section: string) => {
         setSaving(true);
         try {
+            // Validate required fields
+            if (section === 'academic') {
+                if (!formData.studentId || formData.studentId.trim() === '') {
+                    toast.error('Student ID is required');
+                    setSaving(false);
+                    return;
+                }
+                if (!formData.firstName || formData.firstName.trim() === '') {
+                    toast.error('First Name is required');
+                    setSaving(false);
+                    return;
+                }
+                if (!formData.lastName || formData.lastName.trim() === '') {
+                    toast.error('Last Name is required');
+                    setSaving(false);
+                    return;
+                }
+            }
+
             // Clean formData - only include valid Student and StudentBio fields
             const validStudentFields = ['firstName', 'lastName', 'email', 'phone', 'gender', 'studentId', 'rollNumber', 'admissionNo', 'emisNo', 'batch', 'semester', 'year', 'admissionDate', 'admissionType', 'feeStatus', 'status'];
             const validBioFields = ['alternatePhone', 'linkedinUrl', 'dateOfBirth', 'bloodGroup', 'nationality', 'religion', 'category', 'aadharNo', 'motherTongue', 'residenceType', 'address', 'permanentAddress', 'parentInfo', 'references', 'previousEducation', 'scholarshipDetails', 'documents'];
@@ -115,26 +134,8 @@ export default function SuperAdminStudentProfile() {
             const json = await res.json();
             if (json.success) {
                 toast.success(`${section} updated successfully`);
-                // Process response data the same way as fetchStudent
-                const updatedStudent = json.data;
-                if (updatedStudent.department && typeof updatedStudent.department === 'object') {
-                    updatedStudent.departmentName = updatedStudent.department.name || updatedStudent.department.short_name || updatedStudent.department.full_name || '';
-                } else {
-                    updatedStudent.departmentName = updatedStudent.department || '';
-                }
-                if (updatedStudent.class && typeof updatedStudent.class === 'object') {
-                    updatedStudent.className = updatedStudent.class.name || '';
-                }
-                // Ensure parentInfo structure exists
-                if (!updatedStudent.parentInfo) {
-                    updatedStudent.parentInfo = {
-                        father: { name: '', phone: '', email: '', occupation: '', qualification: '', annualIncome: '' },
-                        mother: { name: '', phone: '', email: '', occupation: '', qualification: '', annualIncome: '' },
-                        guardian: { name: '', relation: '', phone: '', address: '' },
-                    };
-                }
-                setStudent(updatedStudent);
-                setFormData(updatedStudent);
+                // Re-fetch the latest student data from the database to ensure fresh display
+                await fetchStudent();
                 setEditingSection(null);
             } else {
                 toast.error(json.message || 'Failed to update');
@@ -485,8 +486,14 @@ export default function SuperAdminStudentProfile() {
                                         
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <div>
-                                                <Label>Student ID</Label>
-                                                <Input value={formData.studentId || ''} onChange={(e) => handleInputChange('studentId', e.target.value)} />
+                                                <Label>Student ID <span className="text-red-500">*</span></Label>
+                                                <Input 
+                                                    value={formData.studentId || ''} 
+                                                    onChange={(e) => handleInputChange('studentId', e.target.value)}
+                                                    placeholder="Enter unique student ID"
+                                                    required
+                                                />
+                                                <p className="text-xs text-muted-foreground mt-1">This ID will be saved in the studentId column</p>
                                             </div>
                                             <div>
                                                 <Label>Roll Number</Label>
@@ -593,25 +600,25 @@ export default function SuperAdminStudentProfile() {
                                             <div className="space-y-4">
                                                 <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Academic Details</h3>
                                                 <div className="space-y-3 text-sm">
-                                                    <p><span className="font-medium">Student ID:</span> {student.studentId}</p>
-                                                    <p><span className="font-medium">Roll No:</span> {student.rollNumber}</p>
-                                                    <p><span className="font-medium">Admission No:</span> {student.admissionNo || 'N/A'}</p>
+                                                    <p><span className="font-medium">Student ID:</span> {formData.studentId || student.studentId}</p>
+                                                    <p><span className="font-medium">Roll No:</span> {formData.rollNumber || student.rollNumber}</p>
+                                                    <p><span className="font-medium">Admission No:</span> {formData.admissionNo || student.admissionNo || 'N/A'}</p>
                                                 </div>
                                             </div>
                                             <div className="space-y-4">
                                                 <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Current Status</h3>
                                                 <div className="space-y-3 text-sm">
-                                                    <p><span className="font-medium">Batch:</span> {student.batch}</p>
-                                                    <p><span className="font-medium">Year:</span> {student.year || 'N/A'}</p>
-                                                    <p><span className="font-medium">Semester:</span> {student.semester}</p>
+                                                    <p><span className="font-medium">Batch:</span> {formData.batch || student.batch}</p>
+                                                    <p><span className="font-medium">Year:</span> {formData.year || student.year || 'N/A'}</p>
+                                                    <p><span className="font-medium">Semester:</span> {formData.semester !== undefined ? formData.semester : student.semester}</p>
                                                 </div>
                                             </div>
                                             <div className="space-y-4">
                                                 <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Enrollment</h3>
                                                 <div className="space-y-3 text-sm">
-                                                    <p><span className="font-medium">Admission Date:</span> {student.admissionDate || 'N/A'}</p>
-                                                    <p><span className="font-medium">Admission Type:</span> {student.admissionType || 'N/A'}</p>
-                                                    <p><span className="font-medium">Fee Status:</span> {student.feeStatus || 'N/A'}</p>
+                                                    <p><span className="font-medium">Admission Date:</span> {formData.admissionDate || student.admissionDate || 'N/A'}</p>
+                                                    <p><span className="font-medium">Admission Type:</span> {formData.admissionType || student.admissionType || 'N/A'}</p>
+                                                    <p><span className="font-medium">Fee Status:</span> {formData.feeStatus || student.feeStatus || 'N/A'}</p>
                                                 </div>
                                             </div>
                                         </div>
