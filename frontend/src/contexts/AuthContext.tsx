@@ -35,6 +35,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   });
 
+  const [authToken, setAuthTokenState] = useState<string | null>(() => {
+    return localStorage.getItem('authToken');
+  });
+
   const [loginError, setLoginError] = useState<string | null>(null);
 
   const clearLoginError = () => setLoginError(null);
@@ -63,7 +67,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (departmentObj && typeof departmentObj === 'string') {
           departmentObj = { short_name: departmentObj, full_name: departmentObj };
         }
-        const userObj = {
+        const userObj: any = {
           id: result.user.id,
           email: result.user.email,
           name: result.user.name,
@@ -119,9 +123,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           }
         }
 
-        setUser(userObj);
-        localStorage.setItem('campus_nexus_user', JSON.stringify(userObj));
+        // Persist to localStorage BEFORE updating state to avoid race conditions with redirects
         localStorage.setItem('authToken', result.token);
+        localStorage.setItem('campus_nexus_user', JSON.stringify(userObj));
+        
+        setUser(userObj);
+        setAuthTokenState(result.token);
 
         // Fetch timetable-related role flags (class coordinator / timetable incharge)
         try {
@@ -131,16 +138,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           if (rolesRes.ok) {
             const rolesJson = await rolesRes.json();
             if (rolesJson.success && rolesJson.data) {
-              setUser((prev) => {
-                if (!prev) return prev;
-                const updated = {
-                  ...prev,
-                  is_timetable_incharge: rolesJson.data.isTimetableIncharge || false,
-                  is_class_incharge: rolesJson.data.isClassCoordinator || false
-                };
-                localStorage.setItem('campus_nexus_user', JSON.stringify(updated));
-                return updated;
-              });
+              const updated = {
+                ...userObj,
+                is_timetable_incharge: rolesJson.data.isTimetableIncharge || false,
+                is_class_incharge: rolesJson.data.isClassCoordinator || false
+              };
+              localStorage.setItem('campus_nexus_user', JSON.stringify(updated));
+              setUser(updated);
             }
           }
         } catch (err) {
@@ -162,9 +166,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const logout = () => {
-    setUser(null);
     localStorage.removeItem('campus_nexus_user');
     localStorage.removeItem('authToken');
+    setUser(null);
+    setAuthTokenState(null);
   };
 
   const refreshUserData = useCallback(async () => {
@@ -260,8 +265,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
-  // derive token from localStorage so it stays updated
-  const authToken = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
+  // No need to derive from localStorage anymore as we have authToken state
 
   return (
     <AuthContext.Provider value={{ user, authToken, login, logout, updateUserData, refreshUserData, loginError, clearLoginError, isAuthenticated: !!user }}>

@@ -19,6 +19,17 @@ export default defineConfig({
         target: 'http://localhost:3005',
         changeOrigin: true,
         secure: false,
+        configure: (proxy, options) => {
+          proxy.on('error', (err, req, res) => {
+            console.log('[VITE-PROXY] Error:', err);
+          });
+          proxy.on('proxyReq', (proxyReq, req, res) => {
+            console.log(`[VITE-PROXY] Forwarding ${req.method} ${req.url} -> ${options.target}${req.url}`);
+          });
+          proxy.on('proxyRes', (proxyRes, req, res) => {
+            console.log(`[VITE-PROXY] Response from ${req.url}: ${proxyRes.statusCode}`);
+          });
+        }
       },
       '/uploads': {
         target: 'http://localhost:3005',

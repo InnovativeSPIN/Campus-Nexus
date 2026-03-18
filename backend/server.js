@@ -98,9 +98,39 @@ const startServer = () => {
 
   const app = express();
 
+  // ULTIMATE catch-all logger for debugging
+  app.use((req, res, next) => {
+    if (process.env.NODE_ENV === 'development') {
+        const time = new Date().toLocaleTimeString();
+        console.log(`\n[ULTIMATE-REQ] ${time} - ${req.method} ${req.url} (Type: ${req.header('content-type')})`.magenta.bold);
+    }
+    next();
+  });
+
+  const uploader = fileupload();
+
   // Body parser with increased limits for file uploads
   app.use(express.json({ limit: '50mb' }));
   app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+  // Static files should be served BEFORE any complex middleware to avoid overhead/crashes
+  const publicPath = path.join(__dirname, 'public');
+  app.use(express.static(publicPath));
+  console.log('Serving static files from:', publicPath);
+
+  // Handle missing uploads - serve default image for non-existent files in /uploads
+  app.use('/uploads/', (req, res, next) => {
+    const filePath = path.join(__dirname, 'public', req.path);
+    try {
+      if (!fs.existsSync(filePath)) {
+        // File doesn't exist, serve a default image
+        return res.sendFile(path.join(__dirname, 'public/uploads/faculty/avatar_7.jpg'));
+      }
+    } catch (error) {
+      console.error('Error checking file:', error);
+    }
+    next();
+  });
 
   // Cookie parser
   app.use(cookieParser());
@@ -112,32 +142,39 @@ const startServer = () => {
 
   // File uploading - skip for routes using Multer to avoid conflicts
   app.use((req, res, next) => {
+    // Explicit list of paths that MUST be handled by Multer
     const multerPaths = [
-      '/api/v1/timetable/bulk-upload',
-      '/api/v1/students/me/photo',
       '/api/v1/student-leaves',
       '/api/v1/student/certifications',
       '/api/v1/student/projects',
       '/api/v1/student/extracurricular',
       '/api/v1/student/sports',
-      '/api/v1/leave'
+      '/api/v1/leave',
+      '/api/v1/timetable/bulk-upload',
+      '/api/v1/students/me/photo'
     ];
 
+    // Check if the current request path starts with any of the multerPaths
+    const isMulterRoute = multerPaths.some(p => req.path.startsWith(p)) || 
+                           req.path.includes('student-leaves') ||
+                           req.path.includes('student/projects') ||
+                           req.path.includes('student/certifications');
 
-    if (multerPaths.some(p => req.path.includes(p)) || req.path.includes('/photo')) {
+    if (isMulterRoute) {
+      if (process.env.NODE_ENV === 'development') {
+          console.log(`[MULTER-SKIP] Bypassing express-fileupload for: ${req.method} ${req.path}`.cyan);
+      }
       return next();
     }
-    fileupload()(req, res, next);
+    
+    // Use express-fileupload for all other routes (admin, faculty, etc.)
+    uploader(req, res, next);
   });
 
-  // Sanitize data
-  app.use(mongoSanitize());
-
-  // Set security headers
-  app.use(helmet());
-
-  // Prevent XSS attacks
-  app.use(xss());
+  // Security middlewares - apply only to API routes to be safe
+  app.use('/api', mongoSanitize());
+  app.use('/api', helmet());
+  app.use('/api', xss());
 
   // Rate limiting: enable only in production to avoid hitting limits during local development
   if (process.env.NODE_ENV === 'production') {

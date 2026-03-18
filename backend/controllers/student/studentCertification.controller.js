@@ -2,7 +2,7 @@ import asyncHandler from '../../middleware/async.js';
 import ErrorResponse from '../../utils/errorResponse.js';
 import { models } from '../../models/index.js';
 import { Op } from 'sequelize';
-import { notifyClassIncharge } from '../../utils/portfolioNotification.js';
+import { notifyClassIncharge, notifyStudentPortfolioResult } from '../../utils/portfolioNotification.js';
 const { StudentCertification, Student, User, Faculty, TimetableMaster } = models;
 
 const getStudentId = async (userOrId, next) => {
@@ -131,6 +131,15 @@ export const updateApprovalStatus = asyncHandler(async (req, res, next) => {
         approvalRemarks: approvalRemarks || null,
         approvedById: req.user.id,
         approvalDate: new Date()
+    });
+
+    // Notify student (non-blocking)
+    notifyStudentPortfolioResult(cert.studentId, {
+        referenceId: cert.id,
+        referenceType: 'certification',
+        itemTitle: cert.name,
+        status: approvalStatus,
+        remarks: approvalRemarks
     });
 
     res.status(200).json({ success: true, data: cert });

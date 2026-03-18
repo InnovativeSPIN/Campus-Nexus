@@ -38,7 +38,12 @@ const fileFilter = (req, file, cb) => {
 // Create multer instance
 const studentUpload = multer({
     storage,
-    fileFilter,
+    fileFilter: (req, file, cb) => {
+        if (process.env.NODE_ENV === 'development') {
+            console.log(`[STUDENT-UPLOAD] Filtering file: ${file.originalname} (${file.mimetype})`.yellow);
+        }
+        fileFilter(req, file, cb);
+    },
     limits: {
         fileSize: 5 * 1024 * 1024, // 5MB limit
     }

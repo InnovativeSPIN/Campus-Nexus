@@ -21,6 +21,7 @@ import {
   Award,
   Star,
   Flag,
+  FileText,
 } from 'lucide-react';
 import { cn } from '@/pages/faculty/lib/utils';
 import { useToast } from '@/pages/faculty/hooks/use-toast';
@@ -859,6 +860,21 @@ export default function ClassInchargeView() {
                   <p className="text-xs text-muted-foreground">Reason</p>
                   <p className="text-sm">{selectedLeave.reason}</p>
                 </div>
+
+                {selectedLeave.attachment && (
+                  <div className="border-t pt-2">
+                    <p className="text-xs text-muted-foreground">Attached Document</p>
+                    <a
+                      href={`/uploads/students/${selectedLeave.attachment}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 mt-1 text-sm text-primary hover:underline font-medium bg-primary/10 px-3 py-1.5 rounded-md"
+                    >
+                      <FileText className="w-4 h-4" />
+                      View Attachment
+                    </a>
+                  </div>
+                )}
               </div>
 
               {/* Remarks Input */}

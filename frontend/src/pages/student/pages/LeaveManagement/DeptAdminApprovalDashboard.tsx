@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { MainLayout } from '@/pages/student/components/layout/MainLayout';
+import MainLayout from '@/pages/student/components/layout/MainLayout';
 import { motion } from 'framer-motion';
 import { Button } from '@/pages/student/components/ui/button';
 import {
@@ -20,21 +20,14 @@ import {
   Textarea,
 } from '@/pages/student/components/ui/textarea';
 import {
-  AlertCircle,
   CheckCircle2,
   XCircle,
   Clock,
   FileText,
   User,
 } from 'lucide-react';
-import { cn } from '@/pages/student/lib/utils';
 import { toast } from '@/pages/student/hooks/use-toast';
 
-interface ApprovalInfo {
-  name: string;
-  remarks?: string;
-  status: string;
-}
 
 interface PendingLeave {
   id: number;
@@ -242,11 +235,18 @@ export default function DeptAdminApprovalDashboard() {
                   </div>
                 )}
 
-                {leave.attachmentPath && (
-                  <Button variant="outline" size="sm">
-                    <FileText className="w-4 h-4 mr-2" />
-                    View Attachment
-                  </Button>
+                {(leave as any).attachment && (
+                  <a
+                    href={`/uploads/students/${(leave as any).attachment}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block"
+                  >
+                    <Button variant="outline" size="sm" className="w-full">
+                      <FileText className="w-4 h-4 mr-2" />
+                      View Student Attachment
+                    </Button>
+                  </a>
                 )}
 
                 <Dialog open={selectedLeave?.id === leave.id} onOpenChange={(open) => {

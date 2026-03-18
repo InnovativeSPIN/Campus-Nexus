@@ -2,13 +2,14 @@ import path from 'path';
 import ErrorResponse from '../../utils/errorResponse.js';
 import asyncHandler from '../../middleware/async.js';
 import { models } from '../../models/index.js';
-const { Announcement, User } = models;
+// Models destructured inside functions to avoid circularity
 import { Op, Sequelize } from 'sequelize';
 
 // @desc      Get all announcements for user
 // @route     GET /api/v1/announcements
 // @access    Private
 export const getAnnouncements = asyncHandler(async (req, res, next) => {
+    const { Announcement, User } = models;
     try {
       const { role, departmentCode, departmentId } = req.user;
 
@@ -91,6 +92,7 @@ export const getAnnouncements = asyncHandler(async (req, res, next) => {
 // @route     GET /api/v1/announcements/admin
 // @access    Private/Admin
 export const getAdminAnnouncements = asyncHandler(async (req, res, next) => {
+    const { Announcement, User } = models;
     try {
       const announcements = await Announcement.findAll({
           include: [{
@@ -119,6 +121,7 @@ export const getAdminAnnouncements = asyncHandler(async (req, res, next) => {
 // @route     GET /api/v1/announcements/:id
 // @access    Private
 export const getAnnouncement = asyncHandler(async (req, res, next) => {
+    const { Announcement, User } = models;
     try {
       const announcement = await Announcement.findByPk(req.params.id, {
           include: [{
@@ -152,6 +155,7 @@ export const getAnnouncement = asyncHandler(async (req, res, next) => {
 // @route     POST /api/v1/announcements
 // @access    Private/Admin
 export const createAnnouncement = asyncHandler(async (req, res, next) => {
+    const { Announcement } = models;
     req.body.createdById = req.user.id;
     req.body.creatorRole = req.user.role;
 
@@ -202,6 +206,7 @@ export const createAnnouncement = asyncHandler(async (req, res, next) => {
 // @route     DELETE /api/v1/announcements/:id
 // @access    Private/Admin
 export const deleteAnnouncement = asyncHandler(async (req, res, next) => {
+    const { Announcement } = models;
     const announcement = await Announcement.findByPk(req.params.id);
 
     if (!announcement) {

@@ -2,7 +2,7 @@ import asyncHandler from '../../middleware/async.js';
 import ErrorResponse from '../../utils/errorResponse.js';
 import { models } from '../../models/index.js';
 import { Op } from 'sequelize';
-import { notifyClassIncharge } from '../../utils/portfolioNotification.js';
+import { notifyClassIncharge, notifyStudentPortfolioResult } from '../../utils/portfolioNotification.js';
 const { StudentSport, StudentEvent, Student, User, Faculty, TimetableMaster } = models;
 
 const getStudentId = async (userOrId, next) => {
@@ -115,6 +115,16 @@ export const updateSportApproval = asyncHandler(async (req, res, next) => {
     if (!sport) return next(new ErrorResponse('Sport record not found', 404));
 
     await sport.update({ approvalStatus, approvalRemarks: approvalRemarks || null, approvedById: req.user.id, approvalDate: new Date() });
+    
+    // Notify student (non-blocking)
+    notifyStudentPortfolioResult(sport.studentId, {
+        referenceId: sport.id,
+        referenceType: 'sport',
+        itemTitle: sport.name,
+        status: approvalStatus,
+        remarks: approvalRemarks
+    });
+
     res.status(200).json({ success: true, data: sport });
 });
 
@@ -272,6 +282,16 @@ export const updateEventApproval = asyncHandler(async (req, res, next) => {
     if (!event) return next(new ErrorResponse('Event record not found', 404));
 
     await event.update({ approvalStatus, approvalRemarks: approvalRemarks || null, approvedById: req.user.id, approvalDate: new Date() });
+    
+    // Notify student (non-blocking)
+    notifyStudentPortfolioResult(event.studentId, {
+        referenceId: event.id,
+        referenceType: 'event',
+        itemTitle: event.eventName,
+        status: approvalStatus,
+        remarks: approvalRemarks
+    });
+
     res.status(200).json({ success: true, data: event });
 });
 
