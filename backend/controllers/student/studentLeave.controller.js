@@ -13,10 +13,11 @@ import {
     getDepartmentAdminId
 } from './studentLeaveApproval.controller.js';
 
-const { StudentLeave, Student, User, Faculty, TimetableMaster, Department } = models;
+// Models destructured inside functions to avoid circularity
 
 // Helper: Get approvers for a class via timetable_master
 const getTimetableApprovers = async (classId, departmentId) => {
+    const { TimetableMaster, Faculty } = models;
     try {
         const timetable = await TimetableMaster.findOne({
             where: { class_id: classId, status: { [Op.in]: ['draft', 'active'] } },
@@ -47,29 +48,34 @@ const getTimetableApprovers = async (classId, departmentId) => {
 // @route  GET /api/v1/student-leaves
 // @access Private/Student
 export const getMyLeaves = asyncHandler(async (req, res, next) => {
-    const studentId = req.user.id; // from protect middleware
+    const { StudentLeave, Faculty } = models;
+    try {
+        const studentId = req.user.id;
 
-    const where = { studentId };
-    if (req.query.status) where.overall_status = req.query.status;
-    if (req.query.classInchargeStatus) where.class_incharge_approval_status = req.query.classInchargeStatus;
-    if (req.query.deptAdminStatus) where.department_admin_approval_status = req.query.deptAdminStatus;
+        const where = { studentId };
+        if (req.query.status) where.overall_status = req.query.status;
 
-    const leaves = await StudentLeave.findAll({
-        where,
-        include: [
-            { model: Faculty, as: 'classInchargeApprover', attributes: ['Name', 'email'] },
-            { model: Faculty, as: 'deptAdminApprover', attributes: ['Name', 'email'] }
-        ],
-        order: [['startDate', 'DESC']]
-    });
+        const leaves = await StudentLeave.findAll({
+            where,
+            include: [
+                { model: Faculty, as: 'classInchargeApprover', attributes: ['Name', 'email'] },
+                { model: Faculty, as: 'deptAdminApprover', attributes: ['Name', 'email'] }
+            ],
+            order: [['startDate', 'DESC']]
+        });
 
-    res.status(200).json({ success: true, count: leaves.length, data: leaves });
+        res.status(200).json({ success: true, count: leaves.length, data: leaves });
+    } catch (error) {
+        console.error('[GET MY LEAVES] ERROR:', error);
+        return next(new ErrorResponse(error.message, 500));
+    }
 });
 
 // @desc   Get single leave application
 // @route  GET /api/v1/student-leaves/:id
 // @access Private/Student
 export const getLeave = asyncHandler(async (req, res, next) => {
+    const { StudentLeave, Faculty } = models;
     const studentId = req.user.id;
 
     const leave = await StudentLeave.findOne({
@@ -88,78 +94,131 @@ export const getLeave = asyncHandler(async (req, res, next) => {
 // @route  POST /api/v1/student-leaves
 // @access Private/Student
 export const applyLeave = asyncHandler(async (req, res, next) => {
+    const { Student, StudentLeave } = models;
     const studentId = req.user.id;
 
-    // Fetch student's classId if not provided
-    const student = await Student.findByPk(studentId);
-    if (!student) return next(new ErrorResponse('Student not found', 404));
+    try {
+        if (process.env.NODE_ENV === 'development') {
+            console.log('\n[APPLY-LEAVE] START'.green.bold);
+            console.log('[APPLY-LEAVE] headers:', req.header('content-type'));
+            console.log('[APPLY-LEAVE] body:', JSON.stringify(req.body, null, 2));
+            console.log('[APPLY-LEAVE] file (multer):', req.file ? `id: ${req.file.fieldname}, name: ${req.file.filename}` : 'NONE');
+            console.log('[APPLY-LEAVE] files (fileupload):', req.files ? Object.keys(req.files) : 'NONE');
+        }
 
-    const { recipient } = req.body;
+        const student = await Student.findByPk(studentId);
+        if (!student) {
+            console.error('[APPLY-LEAVE] Student not found ID:', studentId);
+            return next(new ErrorResponse('Student not found in database', 404));
+        }
 
-    // Get assigned approvers from TimetableMaster
-    const approvers = await getTimetableApprovers(student.classId, student.departmentId);
+        const { leaveType, leaveSubType, startDate, endDate, totalDays, reason, recipient } = req.body;
+        
+        // Basic Validation
+        if (!startDate || !endDate || !reason) {
+            console.error('[APPLY-LEAVE] VALIDATION FAILED: Missing dates or reason');
+            return next(new ErrorResponse('Please provide all required fields: startDate, endDate, and reason.', 400));
+        }
 
-    // Determine IDs based on recipient selection
-    let assignedClassInchargeId = approvers.class_coordinator_id;
-    if (recipient === 'Faculty Advisor') {
-        assignedClassInchargeId = approvers.asst_coordinator_id || approvers.class_coordinator_id;
-    }
+        // Determine IDs based on recipient selection and system assignments
+        const approvers = await getTimetableApprovers(student.classId || 0, student.departmentId);
+        console.log('[APPLY-LEAVE] Timetable Approvers:', JSON.stringify(approvers, null, 2));
 
-    let { leaveType, leaveSubType } = req.body;
+        // Map "Personal Leave" etc to clean ENUMs if needed
+        let finalLeaveType = 'Casual';
+        const allowedTypes = ['Medical', 'Casual', 'On-Duty', 'Special', 'Personal', 'Earned', 'Other'];
+        
+        const incomingType = (leaveType || 'Casual').toString().trim();
+        const incomingSub = (leaveSubType || '').toString().trim();
 
-    // Sanitize leaveType and leaveSubType to match database ENUMs/Expectations
-    // If leaveType is generic 'Leave', try to use a cleaner version of the subType
-    if (leaveType === 'Leave' && leaveSubType) {
-        // Map 'Medical Leave' -> 'Medical', 'Personal Leave' -> 'Personal' etc
-        const cleanSubType = leaveSubType.replace(' Leave', '').trim();
-        // Check if the cleaned subType is one of our allowed ENUMs
-        const allowedEnums = ['Medical', 'Casual', 'On-Duty', 'Special', 'Personal', 'Earned'];
-        if (allowedEnums.includes(cleanSubType)) {
-            leaveType = cleanSubType;
+        // 1. Try to find match in main leaveType
+        let found = allowedTypes.find(t => incomingType.includes(t));
+        if (!found && incomingSub) {
+            // 2. Try to find match in subType
+            found = allowedTypes.find(t => incomingSub.includes(t));
+        }
+        
+        finalLeaveType = found || 'Casual';
+
+        let assignedClassInchargeId = null;
+        let assignedDeptAdminId = approvers.hod_id;
+
+        if (recipient === 'Faculty Advisor') {
+            assignedClassInchargeId = approvers.asst_coordinator_id || approvers.class_coordinator_id;
+        } else if (recipient === 'HOD') {
+            assignedClassInchargeId = null; // Direct to HOD
         } else {
-            leaveType = 'Other';
+            assignedClassInchargeId = approvers.class_coordinator_id;
         }
-    }
 
-    const leave = await StudentLeave.create({
-        ...req.body,
-        leaveType,
-        leaveSubType,
-        studentId,
-        classId: student.classId,
-        submitted_to: recipient || 'Class Incharge',
-        overall_status: 'pending',
-        class_incharge_approval_status: (recipient === 'HOD') ? 'approved' : 'pending',
-        department_admin_approval_status: 'pending',
-        class_incharge_id: assignedClassInchargeId,
-        department_admin_id: approvers.hod_id,
-        attachment: req.file ? req.file.filename : req.body.attachment
-    });
-
-    // Notify student of submission
-    await notifyStudentLeaveEvent('leave_submitted', {
-        userId: studentId,
-        entityId: leave.id,
-        relatedData: { 
-            leaveType: leave.leaveType, 
-            leaveSubType: leave.leaveSubType, 
-            totalDays: leave.totalDays 
+        // Attachment Filename extraction
+        let imageFilename = null;
+        if (req.file) {
+            imageFilename = req.file.filename;
+        } else if (req.files && req.files.attachment) {
+            imageFilename = `legacy_upload_${Date.now()}_${req.files.attachment.name}`;
+            const uploadPath = path.join(process.cwd(), 'public', 'uploads', 'students', imageFilename);
+            await req.files.attachment.mv(uploadPath);
+        } else {
+            imageFilename = req.body.attachment || null;
         }
-    });
 
-    // Notify the primary recipient
-    const primaryApproverId = (recipient === 'HOD') ? approvers.hod_id : assignedClassInchargeId;
-    if (primaryApproverId) {
-        await notifyFacultyApprovalPending({
-            facultyId: primaryApproverId,
-            studentName: `${student.firstName} ${student.lastName}`,
-            leaveType: leave.leaveType,
-            totalDays: leave.totalDays,
-            entityId: leave.id
+        console.log('[APPLY-LEAVE] Creating database record with leaveType:', finalLeaveType);
+        const leave = await StudentLeave.create({
+            studentId,
+            classId: student.classId || null,
+            leaveType: finalLeaveType,
+            leaveSubType: incomingSub || null,
+            startDate,
+            endDate,
+            totalDays: parseFloat(totalDays) || 1,
+            reason,
+            attachment: imageFilename,
+            submitted_to: recipient || 'Class Incharge',
+            overall_status: 'pending',
+            class_incharge_approval_status: (recipient === 'HOD') ? 'approved' : 'pending',
+            department_admin_approval_status: 'pending',
+            class_incharge_id: assignedClassInchargeId,
+            department_admin_id: assignedDeptAdminId
         });
-    }
+        console.log('[APPLY-LEAVE] SUCCESS. Application ID:', leave.id);
 
-    res.status(201).json({ success: true, data: leave });
+        // Notify student of submission
+        try {
+            await notifyStudentLeaveEvent('leave_submitted', {
+                userId: studentId,
+                entityId: leave.id,
+                relatedData: { 
+                    leaveType: leave.leaveType, 
+                    leaveSubType: leave.leaveSubType, 
+                    totalDays: leave.totalDays 
+                }
+            });
+        } catch (nErr) {
+            console.error('[APPLY LEAVE] Notification Failed (Student):', nErr.message);
+        }
+
+        // Notify the primary recipient
+        try {
+            const primaryApproverId = (recipient === 'HOD') ? approvers.hod_id : assignedClassInchargeId;
+            if (primaryApproverId) {
+                await notifyFacultyApprovalPending({
+                    facultyId: primaryApproverId,
+                    studentName: `${student.firstName} ${student.lastName}`,
+                    leaveType: leave.leaveType,
+                    totalDays: leave.totalDays,
+                    entityId: leave.id
+                });
+            }
+        } catch (nErr) {
+            console.error('[APPLY LEAVE] Notification Failed (Approver):', nErr.message);
+        }
+
+        res.status(201).json({ success: true, data: leave });
+    } catch (error) {
+        console.error('[APPLY LEAVE] FATAL ERROR:', error);
+        return next(new ErrorResponse(error.message, 500));
+    }
 });
 
 // @desc   Get leaves for class in-charge
@@ -265,6 +324,7 @@ export const cancelLeave = asyncHandler(async (req, res, next) => {
 // @route  PUT /api/v1/student-leaves/:id/approval
 // @access Private/Faculty/Admin
 export const processLeaveApproval = asyncHandler(async (req, res, next) => {
+    const { StudentLeave, Student, Faculty } = models;
     const { status, approvalRemarks } = req.body;
     if (!['approved', 'rejected'].includes(status)) {
         return next(new ErrorResponse('status must be approved or rejected', 400));

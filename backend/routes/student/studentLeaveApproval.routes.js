@@ -20,6 +20,7 @@ import {
     notifyStudentLeaveEvent, 
     notifyDeptAdminApprovalPending 
 } from '../../controllers/notification.controller.js';
+import studentUpload from '../../middleware/studentUpload.js';
 
 const { StudentLeave, Student, Class: ClassModel, Faculty, TimetableMaster } = models;
 
@@ -30,6 +31,7 @@ router.post(
     '/submit',
     protect,
     authorize('student'),
+    studentUpload.single('attachment'),
     submitLeaveApplication
 );
 

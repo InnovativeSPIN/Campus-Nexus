@@ -30,6 +30,8 @@ interface LeaveRequest {
 
 export default function Leave() {
   const { toast } = useToast();
+  console.log('[DEBUG-LEAVE] COMPONENT MOUNTED');
+  
   const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -47,9 +49,14 @@ export default function Leave() {
   const fetchLeaves = async () => {
     try {
       setLoading(true);
+      const token = localStorage.getItem('authToken');
+      console.log('[DEBUG-LEAVE] Fetching leaves, token exists:', !!token);
+      
       const res: any = await getMyLeaves();
+      console.log('[DEBUG-LEAVE] Fetched data:', res);
       setLeaveRequests(res.data || []);
     } catch (error: any) {
+      console.error('[DEBUG-LEAVE] Fetch Error:', error);
       toast({ title: 'Error', description: error.message || 'Failed to fetch leaves', variant: 'destructive' });
     } finally {
       setLoading(false);
@@ -57,6 +64,7 @@ export default function Leave() {
   };
 
   useEffect(() => {
+    console.log('[DEBUG-LEAVE] useEffect running');
     fetchLeaves();
   }, []);
 
@@ -93,8 +101,12 @@ export default function Leave() {
 
     try {
       setLoading(true);
-      const days = calculateDays(formData.startDate, formData.endDate);
+      console.log('[DEBUG-LEAVE] Starting submission with data:', {
+        ...formData,
+        attachment: formData.attachment ? formData.attachment.name : null
+      });
 
+      const days = calculateDays(formData.startDate, formData.endDate);
       const submitData = new FormData();
       submitData.append('startDate', formData.startDate);
       submitData.append('endDate', formData.endDate);
@@ -108,7 +120,8 @@ export default function Leave() {
         submitData.append('attachment', formData.attachment);
       }
 
-      await applyLeave(submitData);
+      const result = await applyLeave(submitData);
+      console.log('[DEBUG-LEAVE] Result:', result);
 
       toast({
         title: 'Leave Request Submitted',
@@ -117,7 +130,9 @@ export default function Leave() {
       fetchLeaves();
       closeModal();
     } catch (error: any) {
-      toast({ title: 'Error', description: error.message || 'Failed to submit leave', variant: 'destructive' });
+      console.error('[DEBUG-LEAVE] Submission failed:', error);
+      const errorMsg = error.error || error.message || 'Failed to submit leave';
+      toast({ title: 'Error', description: errorMsg, variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -424,7 +439,7 @@ export default function Leave() {
                 className="input-field cursor-pointer"
               >
                 <option value="Class Incharge">Class Incharge</option>
-                <option value="Faculty Advisor">Faculty Advisor</option>
+                <option value="Faculty Advisor">Mentor</option>
                 <option value="HOD">Head of Department (HOD)</option>
               </select>
             </div>

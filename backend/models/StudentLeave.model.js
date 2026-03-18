@@ -4,7 +4,7 @@ const StudentLeave = (sequelize) => {
     const StudentLeaveModel = sequelize.define('StudentLeave', {
         id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
         studentId: { type: DataTypes.INTEGER, allowNull: false },
-        classId: { type: DataTypes.INTEGER, allowNull: false },
+        classId: { type: DataTypes.INTEGER, allowNull: true },
         leaveType: {
             type: DataTypes.ENUM('Medical', 'Casual', 'On-Duty', 'Special', 'Other', 'Leave', 'Personal', 'Earned'),
             defaultValue: 'Casual',

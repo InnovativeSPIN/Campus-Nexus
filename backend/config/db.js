@@ -16,7 +16,17 @@ const sequelize = new Sequelize(
 const connectDB = async () => {
   try {
     await sequelize.authenticate();
-    // await sequelize.sync(); // Comment out sync since tables already exist from SQL dump
+    
+    // In development mode, synchronize models to ensure database schema matches code
+    // This is useful when pulling new changes with column additions or model updates.
+    if (process.env.NODE_ENV === 'development') {
+        console.log('Synchronizing database models...'.yellow);
+        await sequelize.sync({ alter: true }).then(() => {
+            console.log('Database synchronization complete.'.green);
+        }).catch(err => {
+            console.error('Database sync warning (continuing):'.yellow, err.message);
+        });
+    }
 
     console.log(
       `MySQL Connected: ${sequelize.config.host}`.cyan.underline.bold

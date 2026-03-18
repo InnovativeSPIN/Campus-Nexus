@@ -1,4 +1,4 @@
-    import asyncHandler from '../../middleware/async.js';
+import asyncHandler from '../../middleware/async.js';
 import ErrorResponse from '../../utils/errorResponse.js';
 import { models } from '../../models/index.js';
 import { Op } from 'sequelize';
@@ -7,7 +7,7 @@ import {
     notifyFacultyApprovalPending,
     notifyDeptAdminApprovalPending
 } from '../notification.controller.js';
-const { StudentLeave, Student, Class: ClassModel, Faculty, TimetableMaster } = models;
+// Models destructured inside functions to avoid circularity
 
 /**
  * ==============================================================
@@ -17,84 +17,144 @@ const { StudentLeave, Student, Class: ClassModel, Faculty, TimetableMaster } = m
  */
 
 // @desc   Student submits leave application
-// @route  POST /api/v1/student-leaves/submit
+// @route  POST /api/v1/student-leaves/approvals/submit
 // @access Private/Student
 export const submitLeaveApplication = asyncHandler(async (req, res, next) => {
-    const { leaveType, leaveSubType, startDate, endDate, totalDays, reason, attachment, recipient } = req.body;
+    const { Student, StudentLeave } = models;
     const studentId = req.user.id;
 
-    // Fetch student details to get classId
-    const student = await Student.findByPk(studentId);
-    if (!student) {
-        return next(new ErrorResponse('Student not found', 404));
-    }
+    try {
+        if (process.env.NODE_ENV === 'development') {
+            console.log('\n[SUBMIT LEAVE APP] START'.blue.bold);
+            console.log('[SUBMIT-APP] headers:', req.header('content-type'));
+            console.log('[SUBMIT-APP] body:', JSON.stringify(req.body, null, 2));
+            console.log('[SUBMIT-APP] file (multer):', req.file ? `id: ${req.file.fieldname}, name: ${req.file.filename}` : 'NONE');
+            console.log('[SUBMIT-APP] files (fileupload):', req.files ? Object.keys(req.files) : 'NONE');
+        }
 
-    const classId = student.classId;
-    if (!classId) {
-        return next(new ErrorResponse('Student class not assigned', 400));
-    }
+        // Fetch student details to get classId
+        const student = await Student.findByPk(studentId);
+        if (!student) {
+            console.error('[SUBMIT LEAVE APP] Student not found ID:', studentId);
+            return next(new ErrorResponse('Student not found in database', 404));
+        }
 
-    // Get assigned approvers from TimetableMaster
-    const approvers = await getTimetableApprovers(classId, student.departmentId);
+        const { leaveType, leaveSubType, startDate, endDate, totalDays, reason, recipient } = req.body;
 
-    // Determine IDs based on recipient selection and system assignments
-    let assignedClassInchargeId = null;
-    let assignedDeptAdminId = approvers.hod_id;
+        // Basic Validation
+        if (!startDate || !endDate || !reason) {
+            console.error('[SUBMIT-APP] VALIDATION FAILED: Missing dates or reason');
+            return next(new ErrorResponse('Please provide all required fields: startDate, endDate, and reason.', 400));
+        }
 
-    if (recipient === 'Faculty Advisor') {
-        assignedClassInchargeId = approvers.asst_coordinator_id || approvers.class_coordinator_id;
-    } else {
-        // Default to Class Incharge
-        assignedClassInchargeId = approvers.class_coordinator_id;
-    }
+        const classId = student.classId;
+        if (!classId && process.env.NODE_ENV === 'development') {
+            console.warn('[SUBMIT-APP] WARNING: Student class not assigned in profile'.yellow);
+        }
 
-    const leave = await StudentLeave.create({
-        studentId,
-        classId,
-        leaveType,
-        leaveSubType,
-        startDate,
-        endDate,
-        totalDays,
-        reason,
-        attachment: attachment || null,
-        submitted_to: recipient || 'Class Incharge',
-        overall_status: 'pending',
-        class_incharge_approval_status: (recipient === 'HOD') ? 'approved' : 'pending',
-        department_admin_approval_status: 'pending',
-        class_incharge_id: assignedClassInchargeId,
-        department_admin_id: assignedDeptAdminId
-    });
+        // Determine IDs based on recipient selection and system assignments
+        // Approvers lookup helper is used here
+        const approvers = await getTimetableApprovers(classId || 0, student.departmentId);
+        console.log('[SUBMIT-APP] Timetable Approvers:', JSON.stringify(approvers, null, 2));
 
-    // Notify student of submission
-    await notifyStudentLeaveEvent('leave_submitted', {
-        userId: studentId,
-        entityId: leave.id,
-        relatedData: { leaveType, leaveSubType, totalDays }
-    });
+        // Map "Personal Leave" etc to clean ENUMs if needed for the database
+        let finalLeaveType = 'Casual';
+        const allowedTypes = ['Medical', 'Casual', 'On-Duty', 'Special', 'Personal', 'Earned', 'Other'];
+        
+        const incomingType = (leaveType || 'Casual').toString().trim();
+        const incomingSub = (leaveSubType || '').toString().trim();
 
-    // Notify the primary recipient
-    const primaryApproverId = (recipient === 'HOD') ? assignedDeptAdminId : assignedClassInchargeId;
+        // 1. Try to find match in main leaveType
+        let found = allowedTypes.find(t => incomingType.includes(t));
+        if (!found && incomingSub) {
+            // 2. Try to find match in subType
+            found = allowedTypes.find(t => incomingSub.includes(t));
+        }
+        
+        finalLeaveType = found || 'Casual';
 
-    if (primaryApproverId) {
-        await notifyFacultyApprovalPending({
-            facultyId: primaryApproverId,
-            studentName: `${student.firstName} ${student.lastName}`,
-            leaveType,
-            totalDays,
-            entityId: leave.id
+        let assignedClassInchargeId = null;
+        let assignedDeptAdminId = approvers.hod_id;
+
+        if (recipient === 'Faculty Advisor') {
+            assignedClassInchargeId = approvers.asst_coordinator_id || approvers.class_coordinator_id;
+        } else if (recipient === 'HOD') {
+            assignedClassInchargeId = null; // Direct to HOD - skips CI
+        } else {
+            assignedClassInchargeId = approvers.class_coordinator_id;
+        }
+
+        // Attachment Filename extraction
+        let imageFilename = null;
+        if (req.file) {
+            imageFilename = req.file.filename;
+        } else if (req.files && req.files.attachment) {
+            imageFilename = `legacy_upload_${Date.now()}_${req.files.attachment.name}`;
+            // Move it if express-fileupload actually caught it
+            const uploadPath = path.join(process.cwd(), 'public', 'uploads', 'students', imageFilename);
+            await req.files.attachment.mv(uploadPath);
+        } else {
+            imageFilename = req.body.attachment || null;
+        }
+
+        console.log('[SUBMIT-APP] Creating database record with leaveType:', finalLeaveType);
+        const leave = await StudentLeave.create({
+            studentId,
+            classId: classId || null,
+            leaveType: finalLeaveType,
+            leaveSubType: incomingSub || null,
+            startDate,
+            endDate,
+            totalDays: parseFloat(totalDays) || 1,
+            reason,
+            attachment: imageFilename,
+            submitted_to: recipient || 'Class Incharge',
+            overall_status: 'pending',
+            class_incharge_approval_status: (recipient === 'HOD') ? 'approved' : 'pending',
+            department_admin_approval_status: 'pending',
+            class_incharge_id: assignedClassInchargeId,
+            department_admin_id: assignedDeptAdminId
         });
-    }
+        console.log('[SUBMIT-APP] SUCCESS. Application ID:', leave.id);
 
-    res.status(201).json({
-        success: true,
-        message: 'Leave application submitted successfully',
-        data: leave
-    });
+        // Notify student of submission
+        try {
+            await notifyStudentLeaveEvent('leave_submitted', {
+                userId: studentId,
+                entityId: leave.id,
+                relatedData: { leaveType: leave.leaveType, leaveSubType, totalDays }
+            });
+        } catch (nErr) { console.error('[SUBMIT-APP-NOTIFICATION] Student Error:', nErr.message); }
+
+        // Notify the primary recipient (CI or HOD)
+        try {
+            const primaryId = (recipient === 'HOD') ? assignedDeptAdminId : assignedClassInchargeId;
+            if (primaryId) {
+                await notifyFacultyApprovalPending({
+                    facultyId: primaryId,
+                    studentName: `${student.firstName} ${student.lastName}`,
+                    leaveType: leave.leaveType,
+                    totalDays,
+                    entityId: leave.id
+                });
+            }
+        } catch (nErr) { console.error('[SUBMIT-APP-NOTIFICATION] Approver Error:', nErr.message); }
+
+        res.status(201).json({
+            success: true,
+            message: 'Leave application submitted successfully',
+            data: leave
+        });
+    } catch (error) {
+        console.error('[SUBMIT-APP] FATAL ERROR:'.red.bold, error.message);
+        console.error(error.stack);
+        return next(new ErrorResponse(error.message, 500));
+    }
 });
 
 // @desc   Get approvers for a class via timetable_master
 const getTimetableApprovers = async (classId, departmentId) => {
+    const { TimetableMaster } = models;
     try {
         const timetable = await TimetableMaster.findOne({
             where: { class_id: classId, status: { [Op.in]: ['draft', 'active'] } },
@@ -125,6 +185,7 @@ export const classInchargeApproveLeave = asyncHandler(async (req, res, next) => 
         return next(new ErrorResponse('Invalid approval status', 400));
     }
 
+    const { StudentLeave, Student, Class: ClassModel } = models;
     // Verify faculty is class incharge
     const leave = await StudentLeave.findByPk(leaveId, {
         include: [{ model: Student, as: 'student', include: [{ model: ClassModel, as: 'class' }] }]
@@ -161,6 +222,7 @@ export const classInchargeApproveLeave = asyncHandler(async (req, res, next) => 
         // Move to next level - Department Admin approval
         leave.department_admin_approval_status = 'pending';
 
+        const { Faculty } = models;
         // Notify student
         const classInchargeData = await Faculty.findOne({
             where: { faculty_id: facultyId },
@@ -202,6 +264,7 @@ export const classInchargeApproveLeave = asyncHandler(async (req, res, next) => 
 // @route  PATCH /api/v1/student-leaves/:id/dept-admin-approval
 // @access Private/Faculty (Department Admin)
 export const deptAdminApproveLeave = asyncHandler(async (req, res, next) => {
+    const { StudentLeave, Student, Class: ClassModel } = models;
     const { approval_status, remarks } = req.body;
     const leaveId = req.params.id;
     const facultyId = req.user.faculty_id;
@@ -271,6 +334,7 @@ export const deptAdminApproveLeave = asyncHandler(async (req, res, next) => {
 export const getPendingLeavesForClassIncharge = asyncHandler(async (req, res, next) => {
     const facultyId = req.user.faculty_id;
 
+    const { StudentLeave, Student } = models;
     // Get pending leaves where this faculty is the assigned incharge
     const leaves = await StudentLeave.findAll({
         where: {
@@ -294,6 +358,7 @@ export const getPendingLeavesForClassIncharge = asyncHandler(async (req, res, ne
 export const getPendingLeavesForDeptAdmin = asyncHandler(async (req, res, next) => {
     const facultyId = req.user.faculty_id;
 
+    const { StudentLeave, Student, Faculty } = models;
     // Get leaves pending department admin approval where this faculty is the assigned admin
     const leaves = await StudentLeave.findAll({
         where: {
@@ -321,6 +386,7 @@ export const getPendingLeavesForDeptAdmin = asyncHandler(async (req, res, next) 
 export const getMyLeaveApplications = asyncHandler(async (req, res, next) => {
     const studentId = req.user.id;
 
+    const { StudentLeave, Student, Faculty } = models;
     const leaves = await StudentLeave.findAll({
         where: { studentId },
         include: [
@@ -328,7 +394,7 @@ export const getMyLeaveApplications = asyncHandler(async (req, res, next) => {
             { model: Faculty, as: 'classInchargeApprover', attributes: ['Name', 'email'] },
             { model: Faculty, as: 'deptAdminApprover', attributes: ['Name', 'email'] }
         ],
-        order: [['created_at', 'DESC']]
+        order: [['createdAt', 'DESC']]
     });
 
     res.status(200).json({
@@ -344,6 +410,7 @@ export const getMyLeaveApplications = asyncHandler(async (req, res, next) => {
 export const getLeaveDetails = asyncHandler(async (req, res, next) => {
     const leaveId = req.params.id;
 
+    const { StudentLeave, Student, Faculty } = models;
     const leave = await StudentLeave.findByPk(leaveId, {
         include: [
             { model: Student, as: 'student' },
@@ -369,6 +436,7 @@ export const withdrawLeave = asyncHandler(async (req, res, next) => {
     const leaveId = req.params.id;
     const studentId = req.user.id;
 
+    const { StudentLeave } = models;
     const leave = await StudentLeave.findByPk(leaveId);
     if (!leave) {
         return next(new ErrorResponse('Leave application not found', 404));
@@ -392,16 +460,16 @@ export const withdrawLeave = asyncHandler(async (req, res, next) => {
     });
 });
 
-// Helper: Check if faculty is class incharge
 export const checkIfClassIncharge = async (facultyId, classId) => {
+    const { TimetableMaster } = models;
     const timetable = await TimetableMaster.findOne({
         where: { class_coordinator_id: facultyId, class_id: classId }
     });
     return !!timetable;
 };
 
-// Helper: Check if faculty is department admin
 export const checkIfDepartmentAdmin = async (facultyId, departmentId) => {
+    const { Faculty } = models;
     const admin = await Faculty.findOne({
         where: { faculty_id: facultyId, role_id: 7, department_id: departmentId }
     });
@@ -410,6 +478,7 @@ export const checkIfDepartmentAdmin = async (facultyId, departmentId) => {
 
 // Helper: Get department admin ID for a department
 export const getDepartmentAdminId = async (departmentId) => {
+    const { Faculty } = models;
     const admin = await Faculty.findOne({
         where: { role_id: 7, department_id: departmentId },
         attributes: ['faculty_id']

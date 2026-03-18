@@ -62,9 +62,11 @@ export const getMarksSummary = () => request('/student/marks/summary');
 // ─────────────────────────────────────────────────────────
 // PROJECTS
 // ─────────────────────────────────────────────────────────
-export const getMyProjects = (params?: { status?: string }) => {
-    const qs = params?.status ? `?status=${params.status}` : '';
-    return request(`/student/projects${qs}`);
+export const getMyProjects = (params?: { status?: string; approvalStatus?: string }) => {
+    const qs = new URLSearchParams();
+    if (params?.status) qs.set('status', params.status);
+    if (params?.approvalStatus) qs.set('approvalStatus', params.approvalStatus);
+    return request(`/student/projects${qs.toString() ? `?${qs}` : ''}`);
 };
 
 export const createProject = (data: FormData | Record<string, unknown>) =>
@@ -79,7 +81,10 @@ export const deleteProject = (id: string | number) =>
 // ─────────────────────────────────────────────────────────
 // CERTIFICATIONS
 // ─────────────────────────────────────────────────────────
-export const getMyCertifications = () => request('/student/certifications');
+export const getMyCertifications = (params?: { approvalStatus?: string }) => {
+    const qs = params?.approvalStatus ? `?approvalStatus=${params.approvalStatus}` : '';
+    return request(`/student/certifications${qs}`);
+};
 
 export const createCertification = (data: FormData | Record<string, unknown>) =>
     request('/student/certifications', { method: 'POST', body: data instanceof FormData ? data : JSON.stringify(data) });
@@ -93,7 +98,10 @@ export const deleteCertification = (id: string | number) =>
 // ─────────────────────────────────────────────────────────
 // SPORTS
 // ─────────────────────────────────────────────────────────
-export const getMySports = () => request('/student/extracurricular/sports');
+export const getMySports = (params?: { approvalStatus?: string }) => {
+    const qs = params?.approvalStatus ? `?approvalStatus=${params.approvalStatus}` : '';
+    return request(`/student/extracurricular/sports${qs}`);
+};
 
 export const createSport = (data: FormData | Record<string, unknown>) =>
     request('/student/extracurricular/sports', { method: 'POST', body: data instanceof FormData ? data : JSON.stringify(data) });
@@ -107,7 +115,10 @@ export const deleteSport = (id: string | number) =>
 // ─────────────────────────────────────────────────────────
 // EVENTS
 // ─────────────────────────────────────────────────────────
-export const getMyEvents = () => request('/student/extracurricular/events');
+export const getMyEvents = (params?: { approvalStatus?: string }) => {
+    const qs = params?.approvalStatus ? `?approvalStatus=${params.approvalStatus}` : '';
+    return request(`/student/extracurricular/events${qs}`);
+};
 
 export const createEvent = (data: FormData | Record<string, unknown>) =>
     request('/student/extracurricular/events', { method: 'POST', body: data instanceof FormData ? data : JSON.stringify(data) });

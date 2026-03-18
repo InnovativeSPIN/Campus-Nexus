@@ -3,8 +3,6 @@ import ErrorResponse from '../utils/errorResponse.js';
 import { models } from '../models/index.js';
 import { Op } from 'sequelize';
 
-const { StudentNotification, LeaveNotification, User } = models;
-
 /**
  * ==============================================================
  * NOTIFICATION MANAGEMENT SYSTEM
@@ -15,17 +13,15 @@ const { StudentNotification, LeaveNotification, User } = models;
  * - Administrative alerts
  */
 
-// @desc   Get all notifications for user
-// @route  GET /api/v1/notifications
-// @access Private
 export const getNotifications = asyncHandler(async (req, res, next) => {
+    const { StudentNotification } = models;
     const userId = req.user.id;
     const limit = req.query.limit ? parseInt(req.query.limit) : 20;
     const offset = req.query.offset ? parseInt(req.query.offset) : 0;
 
     const notifications = await StudentNotification.findAndCountAll({
-        where: { user_id: userId },
-        order: [['created_at', 'DESC']],
+        where: { studentId: userId },
+        order: [['createdAt', 'DESC']],
         limit,
         offset
     });
@@ -38,14 +34,12 @@ export const getNotifications = asyncHandler(async (req, res, next) => {
     });
 });
 
-// @desc   Get unread notification count
-// @route  GET /api/v1/notifications/unread/count
-// @access Private
 export const getUnreadCount = asyncHandler(async (req, res, next) => {
+    const { StudentNotification } = models;
     const userId = req.user.id;
 
     const count = await StudentNotification.count({
-        where: { user_id: userId, status: 'unread' }
+        where: { studentId: userId, isRead: false }
     });
 
     res.status(200).json({
@@ -61,16 +55,18 @@ export const markAsRead = asyncHandler(async (req, res, next) => {
     const notificationId = req.params.id;
     const userId = req.user.id;
 
+    const { StudentNotification } = models;
     const notification = await StudentNotification.findByPk(notificationId);
     if (!notification) {
         return next(new ErrorResponse('Notification not found', 404));
     }
 
-    if (notification.user_id !== userId) {
+    if (notification.studentId !== userId) {
         return next(new ErrorResponse('Unauthorized', 403));
     }
 
-    notification.status = 'read';
+    notification.isRead = true;
+    notification.readAt = new Date();
     await notification.save();
 
     res.status(200).json({
@@ -92,7 +88,7 @@ export const deleteNotification = asyncHandler(async (req, res, next) => {
         return next(new ErrorResponse('Notification not found', 404));
     }
 
-    if (notification.user_id !== userId) {
+    if (notification.studentId !== userId) {
         return next(new ErrorResponse('Unauthorized', 403));
     }
 
@@ -110,9 +106,10 @@ export const deleteNotification = asyncHandler(async (req, res, next) => {
 export const markAllAsRead = asyncHandler(async (req, res, next) => {
     const userId = req.user.id;
 
+    const { StudentNotification } = models;
     await StudentNotification.update(
-        { status: 'read' },
-        { where: { user_id: userId, status: 'unread' } }
+        { isRead: true, readAt: new Date() },
+        { where: { studentId: userId, isRead: false } }
     );
 
     res.status(200).json({
@@ -163,6 +160,7 @@ export const notifyStudentLeaveEvent = async (event, data) => {
                 return;
         }
 
+        const { StudentNotification } = models;
         await StudentNotification.create({
             studentId: userId,
             title,
@@ -185,6 +183,7 @@ export const notifyFacultyApprovalPending = async (data) => {
         const title = 'New Leave Application to Review';
         const message = `${studentName} has submitted a ${leaveType} leave request for ${totalDays} days requiring your approval.`;
 
+        const { LeaveNotification } = models;
         await LeaveNotification.create({
             leave_request_id: entityId,
             recipient_type: 'faculty',
@@ -207,6 +206,7 @@ export const notifyDeptAdminApprovalPending = async (data) => {
         const title = 'Leave Application Ready for Final Approval';
         const message = `${studentName}'s ${leaveType} leave has been approved by ${classInchargeName} and awaits your final approval.`;
 
+        const { LeaveNotification } = models;
         await LeaveNotification.create({
             leave_request_id: entityId,
             recipient_type: 'department-admin',

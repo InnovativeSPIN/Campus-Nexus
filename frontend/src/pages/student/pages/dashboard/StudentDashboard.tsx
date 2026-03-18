@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAnnouncementNotification } from '@/hooks/useAnnouncementNotification';
 import { AnnouncementNotificationModal } from '@/components/common/AnnouncementNotificationModal';
@@ -90,12 +90,12 @@ export default function StudentDashboard() {
           setRecentMarks((marksRes.value.data as Mark[]).slice(0, 5));
         }
 
-        // Fetch portfolio counts
+        // Fetch approved portfolio counts for "Reflection"
         const portfolioPromises = [
-          getMyProjects(),
-          getMyCertifications(),
-          getMySports(),
-          getMyEvents()
+          getMyProjects({ approvalStatus: 'approved' }),
+          getMyCertifications({ approvalStatus: 'approved' }),
+          getMySports({ approvalStatus: 'approved' }),
+          getMyEvents({ approvalStatus: 'approved' })
         ];
 
         const results = await Promise.allSettled(portfolioPromises);

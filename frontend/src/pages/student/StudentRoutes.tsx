@@ -1,4 +1,4 @@
-﻿import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import './student.css';
 
 // Layout
@@ -72,7 +72,8 @@ const StudentRoutes = () => {
           <Route path="academics/leave" element={<Leave />} />
 
           {/* Portfolio (combines Records and Extra-curricular) */}
-          <Route path="portfolio" element={<Navigate to="sports" replace />} />
+          <Route path="portfolio" element={<Navigate to="summary" replace />} />
+          <Route path="portfolio/summary" element={<StudentPortfolio />} />
           <Route path="portfolio/sports" element={<StudentPortfolio />} />
           <Route path="portfolio/events" element={<StudentPortfolio />} />
           <Route path="portfolio/certifications" element={<StudentPortfolio />} />

@@ -58,6 +58,7 @@ interface StudentLeave {
     studentId: string;
   };
   createdAt: string;
+  attachment?: string | null;
 }
 
 type ActiveDialog =
@@ -80,7 +81,7 @@ export function LeaveApprovals() {
   const fetchAllPendingLeaves = async () => {
     setLoading(true);
     const token = localStorage.getItem("authToken");
-    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    const headers: HeadersInit = token ? { Authorization: `Bearer ${token}` } : {};
 
     try {
       const [facultyRes, studentRes] = await Promise.all([
@@ -476,12 +477,26 @@ export function LeaveApprovals() {
                   {new Date(activeDialog.leave.endDate).toLocaleDateString()} (
                   {activeDialog.leave.totalDays} day{activeDialog.leave.totalDays !== 1 ? "s" : ""})
                 </p>
-                {activeDialog.leave.reason && (
-                  <p>
-                    <span className="font-medium">Reason:</span> {activeDialog.leave.reason}
-                  </p>
-                )}
-              </div>
+                 {activeDialog.leave.reason && (
+                   <p>
+                     <span className="font-medium">Reason:</span> {activeDialog.leave.reason}
+                   </p>
+                 )}
+                 {activeDialog.type === "student" && (activeDialog.leave as StudentLeave).attachment && (
+                   <div className="pt-2 border-t mt-2">
+                     <p className="text-xs text-muted-foreground uppercase font-medium mb-1">Attached Document</p>
+                     <a
+                       href={`/uploads/students/${(activeDialog.leave as StudentLeave).attachment}`}
+                       target="_blank"
+                       rel="noopener noreferrer"
+                       className="inline-flex items-center gap-2 text-primary hover:underline bg-primary/5 px-3 py-1.5 rounded border border-primary/20"
+                     >
+                       <FileText className="w-4 h-4" />
+                       View Student Document
+                     </a>
+                   </div>
+                 )}
+               </div>
 
               <div className="space-y-2">
                 <label className="text-sm font-medium">Remarks (Optional)</label>

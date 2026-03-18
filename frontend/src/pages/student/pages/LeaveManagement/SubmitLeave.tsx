@@ -106,21 +106,27 @@ export default function SubmitLeave() {
 
     try {
       const token = localStorage.getItem('authToken');
+      
+      const data = new FormData();
+      data.append('leaveType', formData.leaveType);
+      data.append('leaveSubType', formData.leaveSubType);
+      data.append('startDate', formData.startDate);
+      data.append('endDate', formData.endDate);
+      data.append('totalDays', formData.totalDays);
+      data.append('reason', formData.reason);
+      data.append('recipient', formData.recipient);
+      
+      if (formData.attachment) {
+        data.append('attachment', formData.attachment);
+      }
+
       const response = await fetch('/api/v1/student-leaves/approvals/submit', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
+          // Don't set Content-Type header when using FormData
         },
-        body: JSON.stringify({
-          leaveType: formData.leaveType,
-          leaveSubType: formData.leaveSubType,
-          startDate: formData.startDate,
-          endDate: formData.endDate,
-          totalDays: formData.totalDays,
-          reason: formData.reason,
-          submitted_to: formData.recipient,
-        }),
+        body: data,
       });
 
       if (response.ok) {
@@ -131,9 +137,10 @@ export default function SubmitLeave() {
         navigate('/student/my-leaves');
       } else {
         const error = await response.json();
+        const errorMsg = error.error || error.message || 'Failed to submit leave';
         toast({
-          title: '❌ Error',
-          description: error.message || 'Failed to submit leave',
+          title: '❌ Submission Error',
+          description: errorMsg,
           variant: 'destructive',
         });
       }
@@ -209,7 +216,7 @@ export default function SubmitLeave() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Class Incharge">Class Incharge</SelectItem>
-                    <SelectItem value="Faculty Advisor">Faculty Advisor</SelectItem>
+                    <SelectItem value="Faculty Advisor">Mentor</SelectItem>
                     <SelectItem value="HOD">Head of Department (HOD)</SelectItem>
                   </SelectContent>
                 </Select>

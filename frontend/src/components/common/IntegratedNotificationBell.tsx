@@ -34,7 +34,7 @@ export function IntegratedNotificationBell({}: IntegratedNotificationBellProps) 
             const response = await fetch('/api/v1/announcements', {
                 headers: token ? { 'Authorization': `Bearer ${token}` } : {}
             });
-            const result = await response.json();
+            const result = await response.json().catch(() => ({ success: false, message: 'Invalid server response' }));
             if (result.success) {
                 setAnnouncements(result.data.slice(0, 10)); // Top 10
             }

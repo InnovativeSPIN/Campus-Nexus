@@ -97,7 +97,7 @@ const models = {
   StudentEvent: StudentEvent(sequelize),
   StudentNotification: StudentNotification(sequelize),
   StudentBio: StudentBio(sequelize),
-  TimetableSimple: TimetableSimple,
+  TimetableSimple: TimetableSimple(sequelize),
   Room: Room(sequelize),
   Lab: Lab(sequelize),
   TimetablePeriod: TimetablePeriod(sequelize),
