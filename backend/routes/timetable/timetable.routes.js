@@ -16,6 +16,7 @@ import {
   getFacultyByYear,
   getFacultyTimetable,
   getTimetableByDepartmentAndYear,
+  getDepartmentTimetable,
   applyTimetableAlteration
 } from '../../controllers/timetable/timetable.controller.js';
 
@@ -54,8 +55,8 @@ router.get('/admin/faculty-timetable/:facultyId', authorize('department-admin'),
 // Bulk upload timetable (with file upload)
 router.post('/bulk-upload', upload.single('file'), handleMulterError, bulkUploadTimetable);
 
-// Get personal timetable for logged-in faculty (protected, faculty role only)
-router.get('/faculty/me', authorize('faculty'), getMyTimetable);
+// Get personal timetable for logged-in faculty or department admin (protected)
+router.get('/faculty/me', authorize('faculty', 'department-admin'), getMyTimetable);
 
 // Get personal timetable for logged-in student (protected, student role only)
 router.get('/student/me', authorize('student'), getMyStudentTimetable);
@@ -91,6 +92,7 @@ router.route('/:id/slots/:slotId')
   .delete(authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin'), removeSlot);
 
 // Get timetable by department and year (for timetable alteration)
+router.get('/department/me', authorize('department-admin'), getDepartmentTimetable);
 router.get('/department/:year', authorize('faculty', 'department-admin'), getTimetableByDepartmentAndYear);
 
 // Apply timetable alteration

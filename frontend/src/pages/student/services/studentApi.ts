@@ -160,5 +160,5 @@ export const updateLeave = (id: string | number, data: FormData | Record<string,
     request(`/student-leaves/${id}`, { method: 'PUT', body: data instanceof FormData ? data : JSON.stringify(data) });
 
 export const cancelLeave = (id: string | number) =>
-    request(`/student-leaves/${id}`, { method: 'DELETE' });
+    request(`/student-leaves/${id}`, { method: 'PUT', body: JSON.stringify({ overall_status: 'cancelled' }) });
 

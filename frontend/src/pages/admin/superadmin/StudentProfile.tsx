@@ -134,10 +134,17 @@ export default function SuperAdminStudentProfile() {
             const json = await res.json();
             if (json.success) {
                 toast.success(`${section} updated successfully`);
+                
+                // Log the response to debug
+                console.log('Update response:', json.data);
+                console.log('Previous studentId:', student.studentId);
+                console.log('Updated studentId in response:', json.data.studentId);
+                
                 // Re-fetch the latest student data from the database to ensure fresh display
                 await fetchStudent();
                 setEditingSection(null);
             } else {
+                console.error('Update failed:', json.message);
                 toast.error(json.message || 'Failed to update');
             }
         } catch (err: any) {

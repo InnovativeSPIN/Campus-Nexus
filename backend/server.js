@@ -98,6 +98,9 @@ const startServer = () => {
 
   const app = express();
 
+  // DISABLE ETags to prevent 304 Not Modified responses with empty bodies
+  app.disable('etag');
+
   // ULTIMATE catch-all logger for debugging
   app.use((req, res, next) => {
     if (process.env.NODE_ENV === 'development') {

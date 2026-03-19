@@ -315,7 +315,9 @@ export const updateStudent = asyncHandler(async (req, res, next) => {
         return next(new ErrorResponse(`Student ID '${profileData.studentId}' is already in use by another student`, 400));
       }
     }
-    await Student.update(profileData, { where: { id: req.params.id } });
+    console.log('Updating student with data:', profileData);
+    const updateResult = await Student.update(profileData, { where: { id: req.params.id } });
+    console.log('Update result:', updateResult);
   } catch (err) {
     console.error('Error updating student profile:', err.message, 'Errors:', err.errors);
     return next(new ErrorResponse(`Failed to update student: ${err.message}`, 400));

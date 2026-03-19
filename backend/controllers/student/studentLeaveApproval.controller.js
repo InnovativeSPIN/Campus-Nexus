@@ -237,9 +237,10 @@ export const classInchargeApproveLeave = asyncHandler(async (req, res, next) => 
             }
         });
 
-        // Notify department admin
+        // Notify department admin and assign to them
         const deptAdminId = await getDepartmentAdminId(leave.student.class.department_id);
         if (deptAdminId) {
+            leave.department_admin_id = deptAdminId;
             const studentData = await Student.findByPk(leave.studentId);
             await notifyDeptAdminApprovalPending({
                 facultyId: deptAdminId,

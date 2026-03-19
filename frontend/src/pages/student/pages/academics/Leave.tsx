@@ -3,7 +3,7 @@ import PageHeader from '@/pages/student/components/layout/PageHeader';
 import SectionCard from '@/pages/student/components/common/SectionCard';
 import Badge from '@/pages/student/components/common/Badge';
 import Modal from '@/pages/student/components/common/Modal';
-import { Plus, Calendar, Send, CheckCircle, Clock, XCircle, Download, Loader2, Trash2 } from 'lucide-react';
+import { Plus, Calendar, Send, CheckCircle, Clock, XCircle, Download, Loader2, X } from 'lucide-react';
 import { useToast } from '@/pages/student/hooks/use-toast';
 import { formatDate } from '@/pages/student/utils/formatDate';
 import { getMyLeaves, applyLeave, cancelLeave } from '@/pages/student/services/studentApi';
@@ -180,6 +180,8 @@ export default function Leave() {
         return 'warning';
       case 'rejected':
         return 'danger';
+      case 'cancelled':
+        return 'info';
       default:
         return 'info';
     }
@@ -321,10 +323,10 @@ export default function Leave() {
                         {request.overall_status === 'pending' && (
                           <button
                             onClick={() => handleCancel(request.id)}
-                            className="p-1.5 text-muted-foreground hover:text-destructive transition-colors rounded-md hover:bg-destructive/10"
+                            className="px-3 py-1.5 text-sm font-medium text-destructive hover:text-white hover:bg-destructive transition-colors rounded-md border border-destructive/30 hover:border-destructive"
                             title="Cancel Request"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            Cancel
                           </button>
                         )}
                       </div>

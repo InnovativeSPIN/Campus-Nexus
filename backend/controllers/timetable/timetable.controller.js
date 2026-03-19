@@ -1,7 +1,7 @@
 import ErrorResponse from '../../utils/errorResponse.js';
 import asyncHandler from '../../middleware/async.js';
 import { models, sequelize } from '../../models/index.js';
-const { Timetable, PeriodConfig, Faculty, Student, TimetableSlot, Department, Class: ClassModel, Subject, User, TimetableAlteration } = models;
+const { Timetable, PeriodConfig, Faculty, Student, TimetableSlot, Department, Class: ClassModel, Subject, User, TimetableAlteration, TimetableMaster, TimetableMasterSlots, PeriodSlot } = models;
 import TimetableSimple from '../../models/TimetableSimple.model.js';
 import { Op, QueryTypes } from 'sequelize';
 
@@ -103,33 +103,67 @@ export const getTimetable = asyncHandler(async (req, res, next) => {
 // @route     GET /api/v1/timetable/class/:classId
 // @access    Private
 export const getTimetableByClass = asyncHandler(async (req, res, next) => {
-  const timetable = await Timetable.findOne({
-    where: {
-      classId: req.params.classId,
-      isActive: true
-    },
-    include: [
-      { model: ClassModel, as: 'class', attributes: ['name', 'room'] },
-      { model: Department, as: 'department', attributes: ['name', 'code'] },
-      {
-        model: TimetableSlot,
-        as: 'slots',
-        include: [
-          { model: Subject, as: 'subject', attributes: ['name', 'code'] },
-          { model: Faculty, as: 'faculty', attributes: ['firstName', 'lastName'] }
-        ]
-      }
-    ]
-  });
+  const classId = req.params.classId;
 
-  if (!timetable) {
-    return next(new ErrorResponse('No active timetable found for this class', 404));
+  try {
+    // Use raw SQL query to fetch timetable data for a specific class
+    const sql = `
+      SELECT 
+        s.id,
+        s.day,
+        p.period_number as hour,
+        COALESCE(sub.subject_name, 'Unknown') as subject,
+        c.section,
+        d.short_name as department,
+        CEIL(c.semester / 2) as year,
+        tm.academic_year as academicYear,
+        COALESCE(f.Name, '') as faculty_name,
+        s.session_type as sessionType,
+        s.room
+      FROM timetable_master_slots s
+      INNER JOIN timetable_master tm ON s.master_id = tm.id
+      INNER JOIN classes c ON tm.class_id = c.id
+      INNER JOIN departments d ON tm.department_id = d.id
+      LEFT JOIN subjects sub ON s.subject_id = sub.id
+      LEFT JOIN period_slots p ON s.period_slot_id = p.id
+      LEFT JOIN faculty_profiles f ON s.faculty_id = f.faculty_id
+      WHERE tm.class_id = ?
+      AND tm.status = 'active'
+      ORDER BY 
+        CASE s.day 
+          WHEN 'Monday' THEN 1 
+          WHEN 'Tuesday' THEN 2 
+          WHEN 'Wednesday' THEN 3 
+          WHEN 'Thursday' THEN 4 
+          WHEN 'Friday' THEN 5 
+          WHEN 'Saturday' THEN 6 
+        END ASC,
+        p.period_number ASC
+    `;
+
+    const timetable = await sequelize.query(sql, {
+      replacements: [classId],
+      type: QueryTypes.SELECT
+    });
+
+    if (!timetable || timetable.length === 0) {
+      return next(new ErrorResponse('No active timetable found for this class', 404));
+    }
+
+    // Disable caching to ensure fresh data
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+    
+    res.status(200).json({
+      success: true,
+      count: timetable.length,
+      timetable: timetable
+    });
+  } catch (err) {
+    console.error('[TIMETABLE] getTimetableByClass error:', err);
+    return next(new ErrorResponse(`Failed to fetch class timetable: ${err.message}`, 500));
   }
-
-  res.status(200).json({
-    success: true,
-    data: timetable
-  });
 });
 
 // @desc      Get timetable for faculty
@@ -583,62 +617,81 @@ export const getFacultyByYear = asyncHandler(async (req, res, next) => {
   }
 });
 
-// @desc      Get faculty personal timetable for department admin
-// @route     GET /api/v1/timetable/faculty/:facultyId
-// @access    Private/Department-Admin
+// @desc      Get faculty timetable for department admin
+// @route     GET /api/v1/timetable/admin/faculty-timetable/:facultyId
+// @access    Private/DepartmentAdmin
 export const getFacultyTimetable = asyncHandler(async (req, res, next) => {
-  const isDepartmentAdmin2 = req.user.role === 'department_admin' || req.user.role === 'department-admin' || req.user.role_id === 7;
-  if (!isDepartmentAdmin2) {
-    return next(new ErrorResponse('Only department admin can access this feature', 403));
-  }
-
   const { facultyId } = req.params;
-  // Build department candidates similar to getFacultyByYear
-  const deptCandidates = [];
-  if (req.user.department) {
-    if (typeof req.user.department === 'string') deptCandidates.push(req.user.department);
-    else if (typeof req.user.department === 'object') {
-      if (req.user.department.short_name) deptCandidates.push(req.user.department.short_name);
-      if (req.user.department.full_name) deptCandidates.push(req.user.department.full_name);
-    }
-  }
-  if (req.user.departmentCode && typeof req.user.departmentCode === 'string') deptCandidates.push(req.user.departmentCode);
-  if (req.user.department_id) {
-    try {
-      const deptRecord = await Department.findByPk(req.user.department_id, { attributes: ['short_name', 'full_name'] });
-      if (deptRecord) {
-        if (deptRecord.short_name) deptCandidates.push(deptRecord.short_name);
-        if (deptRecord.full_name) deptCandidates.push(deptRecord.full_name);
-      }
-    } catch (err) {
-      console.warn('Failed to lookup department by id:', req.user.department_id, err && err.message);
-    }
-  }
-  const uniqueDepts = Array.from(new Set(deptCandidates.filter(Boolean).map(String)));
-
+  
   try {
-    console.log(`[TIMETABLE] Fetching timetable for faculty: ${facultyId}, dept candidates: ${uniqueDepts.join(',')}`);
-
-    if (uniqueDepts.length === 0) {
-      console.warn('[TIMETABLE] No department identifiers available for user; returning not found');
+    let departmentId = req.user.department_id || req.user.departmentId;
+    
+    if (!departmentId) {
       return next(new ErrorResponse('No department associated with your account', 400));
     }
 
-    const placeholders = uniqueDepts.map(() => '?').join(',');
-    const replacements = [facultyId, ...uniqueDepts];
+    console.log(`[TIMETABLE] Fetching timetable for faculty: ${facultyId}, department_id: ${departmentId}`);
 
-    const sql = `SELECT * FROM timetable WHERE facultyId = ? AND department IN (${placeholders}) ORDER BY CASE day WHEN 'Monday' THEN 1 WHEN 'Tuesday' THEN 2 WHEN 'Wednesday' THEN 3 WHEN 'Thursday' THEN 4 WHEN 'Friday' THEN 5 WHEN 'Saturday' THEN 6 WHEN 'Sunday' THEN 7 END ASC, hour ASC`;
-    const timetable = await sequelize.query(sql, { replacements, type: QueryTypes.SELECT });
+    // Use raw SQL query to fetch timetable data for a specific faculty
+    const sql = `
+      SELECT 
+        s.id,
+        s.day,
+        p.period_number as hour,
+        COALESCE(sub.subject_name, 'Unknown') as subject,
+        c.section,
+        d.short_name as department,
+        CEIL(c.semester / 2) as year,
+        tm.academic_year as academicYear,
+        COALESCE(f.Name, '') as faculty_name,
+        s.session_type as sessionType,
+        s.room
+      FROM timetable_master_slots s
+      INNER JOIN timetable_master tm ON s.master_id = tm.id
+      INNER JOIN classes c ON tm.class_id = c.id
+      INNER JOIN departments d ON tm.department_id = d.id
+      LEFT JOIN subjects sub ON s.subject_id = sub.id
+      LEFT JOIN period_slots p ON s.period_slot_id = p.id
+      LEFT JOIN faculty_profiles f ON s.faculty_id = f.faculty_id
+      WHERE s.faculty_id = ?
+      AND tm.department_id = ?
+      AND tm.status = 'active'
+      ORDER BY 
+        CASE s.day 
+          WHEN 'Monday' THEN 1 
+          WHEN 'Tuesday' THEN 2 
+          WHEN 'Wednesday' THEN 3 
+          WHEN 'Thursday' THEN 4 
+          WHEN 'Friday' THEN 5 
+          WHEN 'Saturday' THEN 6 
+        END ASC,
+        p.period_number ASC
+    `;
+
+    const timetable = await sequelize.query(sql, {
+      replacements: [facultyId, departmentId],
+      type: QueryTypes.SELECT
+    });
 
     if (timetable.length === 0) {
-      return next(new ErrorResponse('No timetable found for this faculty', 404));
+      return next(new ErrorResponse('No timetable found for this faculty in your department', 404));
     }
 
     console.log(`[TIMETABLE] Found ${timetable.length} slots for faculty ${facultyId}`);
-    res.status(200).json({ success: true, count: timetable.length, data: timetable });
+    
+    // Disable caching to ensure fresh data
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+    
+    res.status(200).json({
+      success: true,
+      count: timetable.length,
+      timetable: timetable
+    });
   } catch (err) {
-    console.error('[TIMETABLE] getFacultyTimetable error:', err && err.stack ? err.stack : err);
-    return next(new ErrorResponse('Failed to fetch faculty timetable', 500));
+    console.error('[TIMETABLE] getFacultyTimetable error:', err);
+    return next(new ErrorResponse(`Failed to fetch faculty timetable: ${err.message}`, 500));
   }
 });
 
@@ -708,6 +761,96 @@ export const getTimetableByDepartmentAndYear = asyncHandler(async (req, res, nex
   } catch (err) {
     console.error('[TIMETABLE] getTimetableByDepartmentAndYear error:', err);
     return next(new ErrorResponse('Failed to fetch timetable', 500));
+  }
+});
+
+// @desc      Get department timetable for logged-in department admin
+// @route     GET /api/v1/timetable/department/me
+// @access    Private/DepartmentAdmin
+export const getDepartmentTimetable = asyncHandler(async (req, res, next) => {
+  const { academicYear } = req.query;
+
+  try {
+    // Get user's department
+    let departmentId = req.user.department_id || req.user.departmentId;
+    
+    console.log('[TIMETABLE] getDepartmentTimetable - User info:', {
+      userId: req.user.id,
+      department_id: req.user.department_id,
+      departmentId: req.user.departmentId,
+      resolvedDepartmentId: departmentId
+    });
+
+    if (!departmentId) {
+      return next(new ErrorResponse('No department associated with your account', 400));
+    }
+
+    // Use raw SQL query to fetch timetable data
+    // Fixed: subject_name, d.short_name (not d.code), and proper table references
+    let sql = `
+      SELECT 
+        s.id,
+        s.day,
+        p.period_number as hour,
+        COALESCE(sub.subject_name, 'Unknown') as subject,
+        c.section,
+        d.short_name as department,
+        CEIL(c.semester / 2) as year,
+        tm.academic_year as academicYear,
+        COALESCE(f.Name, '') as faculty_name,
+        s.session_type as sessionType,
+        s.room
+      FROM timetable_master_slots s
+      INNER JOIN timetable_master tm ON s.master_id = tm.id
+      INNER JOIN classes c ON tm.class_id = c.id
+      INNER JOIN departments d ON tm.department_id = d.id
+      LEFT JOIN subjects sub ON s.subject_id = sub.id
+      LEFT JOIN period_slots p ON s.period_slot_id = p.id
+      LEFT JOIN faculty_profiles f ON s.faculty_id = f.faculty_id
+      WHERE tm.department_id = ?
+      AND tm.status = 'active'
+    `;
+
+    let params = [departmentId];
+
+    if (academicYear) {
+      sql += ` AND tm.academic_year = ?`;
+      params.push(academicYear);
+    }
+
+    sql += ` 
+      ORDER BY c.semester ASC, 
+        CASE s.day 
+          WHEN 'Monday' THEN 1 
+          WHEN 'Tuesday' THEN 2 
+          WHEN 'Wednesday' THEN 3 
+          WHEN 'Thursday' THEN 4 
+          WHEN 'Friday' THEN 5 
+          WHEN 'Saturday' THEN 6 
+        END ASC,
+        s.period_slot_id ASC
+    `;
+
+    console.log('[TIMETABLE] Executing SQL:', sql);
+    console.log('[TIMETABLE] With params:', params);
+
+    const timetable = await sequelize.query(sql, {
+      replacements: params,
+      type: QueryTypes.SELECT
+    });
+
+    console.log('[TIMETABLE] Query returned', timetable.length, 'rows');
+
+    res.status(200).json({
+      success: true,
+      count: timetable.length,
+      timetable: timetable,
+      message: timetable.length === 0 ? 'No active timetables found for your department' : undefined
+    });
+  } catch (err) {
+    console.error('[TIMETABLE] getDepartmentTimetable error:', err);
+    console.error('[TIMETABLE] Error stack:', err.stack);
+    return next(new ErrorResponse(`Failed to fetch department timetable: ${err.message}`, 500));
   }
 });
 

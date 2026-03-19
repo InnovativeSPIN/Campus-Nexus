@@ -69,6 +69,11 @@ export const getAllFaculty = asyncHandler(async (req, res, next) => {
     return obj;
   });
 
+  // Disable caching for API responses
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
+
   res.status(200).json({
     success: true,
     count: facultyData.length,

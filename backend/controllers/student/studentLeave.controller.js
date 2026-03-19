@@ -222,37 +222,24 @@ export const applyLeave = asyncHandler(async (req, res, next) => {
 });
 
 // @desc   Get leaves for class in-charge
+// @desc   Get leaves for class incharge (pending or specific status)
 // @route  GET /api/v1/student-leaves/class-incharge
 // @access Private/Faculty
 export const getClassInchargeLeaves = asyncHandler(async (req, res, next) => {
-    // Get faculty ID from user
+    const { StudentLeave, Student } = models;
     const facultyId = req.user.faculty_id;
 
     if (!facultyId) {
         return next(new ErrorResponse('Faculty ID not found', 400));
     }
 
-    // Check if faculty is class coordinator or assistant coordinator in an active timetable
-    const timetable = await TimetableMaster.findOne({
-        where: {
-            status: { [Op.in]: ['draft', 'active'] },
-            [Op.or]: [
-                { class_coordinator_id: facultyId },
-                { asst_coordinator_id: facultyId }
-            ]
-        },
-        attributes: ['class_id']
-    });
+    // Get the approval status filter from query (default to 'pending')
+    const approvalStatus = req.query.status || 'pending';
 
-    if (!timetable) {
-        return next(new ErrorResponse('User is not assigned as a class in-charge', 403));
-    }
-
-    const classId = timetable.class_id;
-    const { status } = req.query;
-
-    const where = { classId };
-    if (status) where.class_incharge_approval_status = status;
+    const where = {
+        class_incharge_id: facultyId,
+        class_incharge_approval_status: approvalStatus
+    };
 
     const leaves = await StudentLeave.findAll({
         where,
@@ -278,6 +265,7 @@ export const getClassInchargeLeaves = asyncHandler(async (req, res, next) => {
 // @route  PUT /api/v1/student-leaves/:id
 // @access Private/Student
 export const updateLeave = asyncHandler(async (req, res, next) => {
+    const { StudentLeave } = models;
     const studentId = req.user.id;
 
     const leave = await StudentLeave.findOne({ where: { id: req.params.id, studentId } });
@@ -287,7 +275,13 @@ export const updateLeave = asyncHandler(async (req, res, next) => {
         return next(new ErrorResponse('Cannot update leave that is already processed', 400));
     }
 
-    // Prevent student from manually setting approval fields
+    // Allow status change to 'cancelled' for pending leaves
+    if (req.body.overall_status === 'cancelled') {
+        await leave.update({ overall_status: 'cancelled' });
+        return res.status(200).json({ success: true, data: leave, message: 'Leave application cancelled' });
+    }
+
+    // Prevent student from manually setting approval fields or other statuses
     delete req.body.class_incharge_approval_status;
     delete req.body.class_incharge_id;
     delete req.body.class_incharge_remarks;

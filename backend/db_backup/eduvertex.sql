@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Mar 18, 2026 at 06:42 AM
+-- Generation Time: Mar 19, 2026 at 06:10 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -959,6 +959,13 @@ CREATE TABLE `student_certifications` (
   `updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `student_certifications`
+--
+
+INSERT INTO `student_certifications` (`id`, `studentId`, `name`, `issuer`, `issueDate`, `expiryDate`, `credentialId`, `credentialUrl`, `skills`, `documentUrl`, `approvalStatus`, `approvedById`, `approvalRemarks`, `approvalDate`, `createdAt`, `updatedAt`) VALUES
+(2, 3975, 'claude code in action', 'anthrophic', '2026-03-19', '2026-03-20', 'Anthrophic-784', 'https://verify.skilljar.com/c/ybbipj9wpv68', '\"[\\\"mcp\\\"]\"', 'documentUrl-1773860315571-608046220.pdf', 'pending', NULL, NULL, NULL, '2026-03-18 18:58:35', '2026-03-18 18:58:35');
+
 -- --------------------------------------------------------
 
 --
@@ -1014,7 +1021,7 @@ CREATE TABLE `student_internal_marks` (
 CREATE TABLE `student_leaves` (
   `id` int(11) NOT NULL,
   `studentId` int(11) NOT NULL,
-  `leaveType` enum('Medical','Casual','On-Duty','Special','Other') NOT NULL DEFAULT 'Casual',
+  `leaveType` enum('Medical','Casual','On-Duty','Special','Other','Leave','Personal','Earned') NOT NULL DEFAULT 'Casual',
   `startDate` date NOT NULL,
   `endDate` date NOT NULL,
   `totalDays` decimal(4,1) NOT NULL,
@@ -1036,15 +1043,19 @@ CREATE TABLE `student_leaves` (
   `department_admin_remarks` text DEFAULT NULL,
   `department_admin_approval_date` datetime DEFAULT NULL,
   `leaveSubType` varchar(100) DEFAULT NULL,
-  `attachment` varchar(255) DEFAULT NULL
+  `attachment` varchar(255) DEFAULT NULL,
+  `submitted_to` enum('Class Incharge','Faculty Advisor','HOD') NOT NULL DEFAULT 'Class Incharge'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `student_leaves`
 --
 
-INSERT INTO `student_leaves` (`id`, `studentId`, `leaveType`, `startDate`, `endDate`, `totalDays`, `reason`, `status`, `approvedById`, `approvalRemarks`, `approvalDate`, `createdAt`, `updatedAt`, `classId`, `overall_status`, `class_incharge_approval_status`, `class_incharge_id`, `class_incharge_remarks`, `class_incharge_approval_date`, `department_admin_approval_status`, `department_admin_id`, `department_admin_remarks`, `department_admin_approval_date`, `leaveSubType`, `attachment`) VALUES
-(4, 3975, '', '2026-03-16', '2026-03-17', 2.0, 'asdfjkl;', 'pending', NULL, NULL, NULL, '2026-03-16 05:08:23', '2026-03-16 05:08:23', 21, 'pending', 'pending', NULL, NULL, NULL, 'pending', NULL, NULL, NULL, 'Personal Leave', NULL);
+INSERT INTO `student_leaves` (`id`, `studentId`, `leaveType`, `startDate`, `endDate`, `totalDays`, `reason`, `status`, `approvedById`, `approvalRemarks`, `approvalDate`, `createdAt`, `updatedAt`, `classId`, `overall_status`, `class_incharge_approval_status`, `class_incharge_id`, `class_incharge_remarks`, `class_incharge_approval_date`, `department_admin_approval_status`, `department_admin_id`, `department_admin_remarks`, `department_admin_approval_date`, `leaveSubType`, `attachment`, `submitted_to`) VALUES
+(4, 3975, '', '2026-03-16', '2026-03-17', 2.0, 'asdfjkl;', 'pending', NULL, NULL, NULL, '2026-03-16 05:08:23', '2026-03-16 05:08:23', 21, 'pending', 'pending', NULL, NULL, NULL, 'pending', NULL, NULL, NULL, 'Personal Leave', NULL, 'Class Incharge'),
+(5, 3975, 'Medical', '2026-03-20', '2026-03-21', 2.0, 'Test after fix', 'pending', NULL, NULL, NULL, '2026-03-18 06:08:49', '2026-03-18 06:08:49', 21, 'pending', 'pending', NULL, NULL, NULL, 'pending', NULL, NULL, NULL, 'Sick', 'test-doc.pdf', 'Class Incharge'),
+(6, 3975, 'Personal', '2026-03-18', '2026-03-19', 2.0, 'personal', 'pending', NULL, NULL, NULL, '2026-03-18 06:09:33', '2026-03-18 18:04:20', 21, 'rejected', 'rejected', 406, NULL, '2026-03-18 18:04:20', 'pending', 435, NULL, NULL, 'Personal Leave', NULL, 'Class Incharge'),
+(7, 3975, 'Personal', '2026-03-18', '2026-03-19', 2.0, 'personal', 'pending', NULL, NULL, NULL, '2026-03-18 07:18:57', '2026-03-18 08:39:18', 21, 'approved', 'approved', 406, NULL, '2026-03-18 08:38:47', 'approved', 435, NULL, '2026-03-18 08:39:18', 'Personal Leave', 'attachment-1773818337550-804097791.pdf', 'Class Incharge');
 
 -- --------------------------------------------------------
 
@@ -1092,6 +1103,20 @@ CREATE TABLE `student_notifications` (
   `createdAt` datetime NOT NULL DEFAULT current_timestamp(),
   `updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `student_notifications`
+--
+
+INSERT INTO `student_notifications` (`id`, `studentId`, `title`, `message`, `type`, `priority`, `referenceId`, `referenceType`, `actionUrl`, `isRead`, `readAt`, `expiresAt`, `createdAt`, `updatedAt`) VALUES
+(1, 3975, 'Leave Application Submitted', 'Your Personal leave application for 2 days has been submitted.', 'leave', 'low', 6, 'StudentLeave', NULL, 0, NULL, NULL, '2026-03-18 06:09:33', '2026-03-18 06:09:33'),
+(2, 3975, 'Leave Application Submitted', 'Your Personal leave application for 2 days has been submitted.', 'leave', 'low', 7, 'StudentLeave', NULL, 0, NULL, NULL, '2026-03-18 07:18:57', '2026-03-18 07:18:57'),
+(3, 3975, 'Class Incharge Approved', 'Your leave has been approved by NAGAJOTHI P. Awaiting department admin approval.', 'leave', 'low', 7, 'StudentLeave', NULL, 0, NULL, NULL, '2026-03-18 08:38:47', '2026-03-18 08:38:47'),
+(4, 3975, 'Leave Approved', 'Your Personal leave has been approved by all required authorities.', 'leave', 'low', 7, 'StudentLeave', NULL, 0, NULL, NULL, '2026-03-18 08:39:18', '2026-03-18 08:39:18'),
+(5, 3975, 'Leave Rejected', 'Your Personal leave has been rejected. Reason: Not specified', 'leave', 'low', 6, 'StudentLeave', NULL, 0, NULL, NULL, '2026-03-18 18:04:20', '2026-03-18 18:04:20'),
+(6, 3975, 'Sport Approved', 'Your sport \"WWE\" has been approved. ', 'approval', 'medium', 1, 'sport', '/student/portfolio/sports', 0, NULL, NULL, '2026-03-18 18:30:43', '2026-03-18 18:30:43'),
+(7, 3975, 'Certification Approved', 'Your certification \"claude code action\" has been approved. ', 'approval', 'medium', 1, 'certification', '/student/portfolio/certifications', 0, NULL, NULL, '2026-03-18 18:52:14', '2026-03-18 18:52:14'),
+(8, 3975, 'Sport Approved', 'Your sport \"WWE\" has been approved. ', 'approval', 'medium', 1, 'sport', '/student/portfolio/sports', 0, NULL, NULL, '2026-03-18 18:52:21', '2026-03-18 18:52:21');
 
 -- --------------------------------------------------------
 
@@ -2086,6 +2111,44 @@ ALTER TABLE `timetable_slot_assignments`
 ALTER TABLE `users`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `email` (`email`),
+  ADD UNIQUE KEY `email_2` (`email`),
+  ADD UNIQUE KEY `email_3` (`email`),
+  ADD UNIQUE KEY `email_4` (`email`),
+  ADD UNIQUE KEY `email_5` (`email`),
+  ADD UNIQUE KEY `email_6` (`email`),
+  ADD UNIQUE KEY `email_7` (`email`),
+  ADD UNIQUE KEY `email_8` (`email`),
+  ADD UNIQUE KEY `email_9` (`email`),
+  ADD UNIQUE KEY `email_10` (`email`),
+  ADD UNIQUE KEY `email_11` (`email`),
+  ADD UNIQUE KEY `email_12` (`email`),
+  ADD UNIQUE KEY `email_13` (`email`),
+  ADD UNIQUE KEY `email_14` (`email`),
+  ADD UNIQUE KEY `email_15` (`email`),
+  ADD UNIQUE KEY `email_16` (`email`),
+  ADD UNIQUE KEY `email_17` (`email`),
+  ADD UNIQUE KEY `email_18` (`email`),
+  ADD UNIQUE KEY `email_19` (`email`),
+  ADD UNIQUE KEY `email_20` (`email`),
+  ADD UNIQUE KEY `email_21` (`email`),
+  ADD UNIQUE KEY `email_22` (`email`),
+  ADD UNIQUE KEY `email_23` (`email`),
+  ADD UNIQUE KEY `email_24` (`email`),
+  ADD UNIQUE KEY `email_25` (`email`),
+  ADD UNIQUE KEY `email_26` (`email`),
+  ADD UNIQUE KEY `email_27` (`email`),
+  ADD UNIQUE KEY `email_28` (`email`),
+  ADD UNIQUE KEY `email_29` (`email`),
+  ADD UNIQUE KEY `email_30` (`email`),
+  ADD UNIQUE KEY `email_31` (`email`),
+  ADD UNIQUE KEY `email_32` (`email`),
+  ADD UNIQUE KEY `email_33` (`email`),
+  ADD UNIQUE KEY `email_34` (`email`),
+  ADD UNIQUE KEY `email_35` (`email`),
+  ADD UNIQUE KEY `email_36` (`email`),
+  ADD UNIQUE KEY `email_37` (`email`),
+  ADD UNIQUE KEY `email_38` (`email`),
+  ADD UNIQUE KEY `email_39` (`email`),
   ADD KEY `fk_users_role_id` (`role_id`);
 
 --
@@ -2204,7 +2267,7 @@ ALTER TABLE `leave_balance_v2`
 -- AUTO_INCREMENT for table `leave_notifications_v2`
 --
 ALTER TABLE `leave_notifications_v2`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `leave_requests`
@@ -2264,7 +2327,7 @@ ALTER TABLE `student_bio`
 -- AUTO_INCREMENT for table `student_certifications`
 --
 ALTER TABLE `student_certifications`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `student_events`
@@ -2282,7 +2345,7 @@ ALTER TABLE `student_internal_marks`
 -- AUTO_INCREMENT for table `student_leaves`
 --
 ALTER TABLE `student_leaves`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `student_marks`
@@ -2294,7 +2357,7 @@ ALTER TABLE `student_marks`
 -- AUTO_INCREMENT for table `student_notifications`
 --
 ALTER TABLE `student_notifications`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `student_profile`
@@ -2312,7 +2375,7 @@ ALTER TABLE `student_projects`
 -- AUTO_INCREMENT for table `student_sports`
 --
 ALTER TABLE `student_sports`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `subjects`
@@ -2529,14 +2592,14 @@ ALTER TABLE `student_bio`
 -- Constraints for table `student_certifications`
 --
 ALTER TABLE `student_certifications`
-  ADD CONSTRAINT `fk_cert_approver` FOREIGN KEY (`approvedById`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `fk_cert_approver` FOREIGN KEY (`approvedById`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE SET NULL,
   ADD CONSTRAINT `fk_cert_student` FOREIGN KEY (`studentId`) REFERENCES `student_profile` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `student_events`
 --
 ALTER TABLE `student_events`
-  ADD CONSTRAINT `fk_event_approver` FOREIGN KEY (`approvedById`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `fk_event_approver` FOREIGN KEY (`approvedById`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE SET NULL,
   ADD CONSTRAINT `fk_event_student` FOREIGN KEY (`studentId`) REFERENCES `student_profile` (`id`) ON DELETE CASCADE;
 
 --
@@ -2585,7 +2648,7 @@ ALTER TABLE `student_projects`
 -- Constraints for table `student_sports`
 --
 ALTER TABLE `student_sports`
-  ADD CONSTRAINT `fk_sport_approver` FOREIGN KEY (`approvedById`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `fk_sport_approver` FOREIGN KEY (`approvedById`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE SET NULL,
   ADD CONSTRAINT `fk_sport_student` FOREIGN KEY (`studentId`) REFERENCES `student_profile` (`id`) ON DELETE CASCADE;
 
 --

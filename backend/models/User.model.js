@@ -74,9 +74,14 @@ const User = (sequelize) => {
   };
 
   UserModel.prototype.getSignedJwtToken = function () {
-    return jwt.sign({ id: this.id }, process.env.JWT_SECRET, {
-      expiresIn: process.env.JWT_EXPIRE
-    });
+    return jwt.sign(
+      { 
+        id: this.id,
+        department_id: this.department_id
+      }, 
+      process.env.JWT_SECRET, 
+      { expiresIn: process.env.JWT_EXPIRE }
+    );
   };
 
   UserModel.associate = (models) => {

@@ -25,6 +25,7 @@ import SubjectAllocation from './pages/SubjectAllocation';
 import TimetableMasterManagement from './pages/TimetableMasterManagement';
 import TimetableSlotsManagement from './pages/TimetableSlotsManagement';
 import LeaveWithAlteration from './pages/LeaveWithAlteration';
+import Timetable from './pages/Timetable';
 import './department-admin.css';
 
 const queryClient = new QueryClient();
@@ -58,6 +59,7 @@ const DepartmentAdminRoutes = () => (
               <Route path="timetable-master" element={<TimetableMasterManagement />} />
               <Route path="timetable-master/:masterId/slots" element={<TimetableSlotsManagement />} />
               <Route path="leave-with-alteration" element={<LeaveWithAlteration />} />
+              <Route path="timetable" element={<Timetable />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </div>

@@ -71,13 +71,13 @@ const hours = [1, 2, 3, 4, 5, 6, 7];
 // Helper to convert hour number to display time
 const formatHourForDisplay = (hour: number): string => {
   const timeMap: { [key: number]: string } = {
-    1: "09:00 - 10:00",
-    2: "10:00 - 11:00",
-    3: "11:00 - 12:00",
-    4: "12:00 - 13:00",
-    5: "14:00 - 15:00",
-    6: "15:00 - 16:00",
-    7: "16:00 - 17:00"
+    1: "9:00 AM - 10:00 AM",
+    2: "10:00 AM - 11:00 AM",
+    3: "11:00 AM - 12:00 PM",
+    4: "12:00 PM - 1:00 PM",
+    5: "2:00 PM - 3:00 PM",
+    6: "3:00 PM - 4:00 PM",
+    7: "4:00 PM - 5:00 PM"
   };
   return timeMap[hour] || `Hour ${hour}`;
 };

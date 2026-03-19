@@ -81,6 +81,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           token: result.token
         };
         console.log('Login successful:', userObj.name, userObj.role);
+        
+        // Extract department_id from JWT token immediately
+        try {
+          if (result.token) {
+            const parts = result.token.split('.');
+            if (parts.length === 3) {
+              const payload = JSON.parse(atob(parts[1]));
+              console.log('[AUTH] JWT payload:', payload);
+              
+              if (payload.department_id) {
+                userObj.department_id = payload.department_id;
+                console.log('[AUTH] Set department_id from JWT token:', payload.department_id);
+              }
+            }
+          }
+        } catch (err) {
+          console.warn('[AUTH] Failed to decode JWT token:', err);
+        }
+        
         // If this user is a department-admin, prefer faculty profile details
         if (userObj.role === 'department-admin') {
           try {
@@ -106,7 +125,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 userObj.email = prof.email || userObj.email;
                 userObj.avatar = normalizeImageUrl(prof.avatar || prof.profile_image_url || userObj.avatar) || '';
                 userObj.designation = prof.designation || userObj.designation;
-                // Normalize department to a short string to avoid rendering objects
+                
+                console.log('[AUTH] Faculty profile received:', {
+                  has_department_id: !!prof.department_id,
+                  department_id: prof.department_id,
+                  has_department: !!prof.department,
+                  department: prof.department
+                });
+                
+                // Store department_id for API calls - try multiple names
+                if (prof.department_id) {
+                  userObj.department_id = prof.department_id;
+                  console.log('[AUTH] Set department_id from prof.department_id:', prof.department_id);
+                } else if (prof.departmentId) {
+                  userObj.department_id = prof.departmentId;
+                  console.log('[AUTH] Set department_id from prof.departmentId:', prof.departmentId);
+                }
+                
+                // Also normalize department to a short string to avoid rendering objects
                 if (prof.department) {
                   userObj.department = typeof prof.department === 'object'
                     ? (prof.department.short_name || prof.department.full_name)

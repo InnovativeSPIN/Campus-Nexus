@@ -25,6 +25,8 @@ export interface User {
 	role: UserRole;
 	avatar?: string;
 	department?: Department | string;
+	department_id?: number;
+	departmentId?: number;
 	designation?: string;
 	rollNo?: string;
 	year?: number;
