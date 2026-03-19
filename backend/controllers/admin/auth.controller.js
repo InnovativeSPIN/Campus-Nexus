@@ -470,7 +470,11 @@ export const getFacultyDetails = asyncHandler(async (req, res, next) => {
   });
 
   if (!faculty) {
-    return next(new ErrorResponse('Faculty not found', 404));
+    return res.status(200).json({
+      success: false,
+      message: 'Faculty not found',
+      data: null,
+    });
   }
 
   res.status(200).json({

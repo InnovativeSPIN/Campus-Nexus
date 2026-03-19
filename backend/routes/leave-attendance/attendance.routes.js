@@ -43,12 +43,13 @@ router.get('/department-admin/classes/:date', authorize('department-admin'), get
 
 // Main routes
 router.route('/')
-  .get(authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin', 'faculty'), getAllAttendance)
-  .post(authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin', 'faculty'), markAttendance);
+  .get(authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin', 'department-admin', 'faculty'), getAllAttendance)
+  .post(authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin', 'department-admin', 'faculty'), markAttendance)
+  .put(authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin', 'department-admin', 'faculty'), markAttendance);
 
 router.route('/:id')
   .get(getAttendance)
-  .put(authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin', 'faculty'), updateAttendance)
-  .delete(authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin'), deleteAttendance);
+  .put(authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin', 'department-admin', 'faculty'), updateAttendance)
+  .delete(authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin', 'department-admin'), deleteAttendance);
 
 export default router;

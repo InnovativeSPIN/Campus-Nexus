@@ -1,61 +1,170 @@
 import ErrorResponse from '../../utils/errorResponse.js';
 import asyncHandler from '../../middleware/async.js';
 import { models } from '../../models/index.js';
-const { Attendance, FacultyAttendance, Student, AttendanceStudent, Class: ClassModel, Subject, Faculty } = models;
+const { Attendance, FacultyAttendance, Student, StudentAttendance, Class: ClassModel, Subject, Faculty, FacultySubjectAssignment } = models;
 import { Op } from 'sequelize';
+
+// Teaching period slot IDs (breaks should not be marked)
+const TEACHING_PERIODS = [1, 2, 4, 6, 7, 9, 10];
+const PERIOD_NUMBER_BY_SLOT = {
+  1: 1,
+  2: 2,
+  4: 3,
+  6: 4,
+  7: 5,
+  9: 6,
+  10: 7,
+};
+
+const normalizeAttendanceStatus = (status) => {
+  if (!status) return 'absent';
+  const norm = status.toString().trim().toLowerCase();
+  switch (norm) {
+    case 'present':
+      return 'present';
+    case 'absent':
+      return 'absent';
+    case 'late':
+      return 'late';
+    case 'od':
+    case 'on-duty':
+    case 'on duty':
+      return 'od';
+    case 'medical_leave':
+    case 'medical leave':
+      return 'medical_leave';
+    case 'duty_leave':
+    case 'duty leave':
+      return 'duty_leave';
+    case 'leave':
+    case 'on-leave':
+    case 'on leave':
+      return 'absent';
+    default:
+      return 'absent';
+  }
+};
 
 // @desc      Get all attendance records
 // @route     GET /api/v1/attendance
 // @access    Private
 export const getAllAttendance = asyncHandler(async (req, res, next) => {
+  // When class + date are provided, treat it as a student attendance lookup
+  // (used by the faculty attendance UI).
+  if (req.query.class && req.query.date) {
+    const classId = parseInt(req.query.class, 10);
+    const attendanceDate = new Date(req.query.date);
+    const attendanceDateStr = attendanceDate.toISOString().slice(0, 10); // YYYY-MM-DD
+
+    const where = {
+      class_id: classId,
+      attendance_date: attendanceDateStr
+    };
+
+    if (req.query.subject) {
+      where.subject_id = parseInt(req.query.subject, 10);
+    }
+
+    if (req.query.period) {
+      where.period_slot_id = parseInt(req.query.period, 10);
+    }
+
+    if (req.query.faculty) {
+      where.faculty_id = parseInt(req.query.faculty, 10);
+    }
+
+    const records = await StudentAttendance.findAll({
+      where,
+      include: [
+        {
+          model: Student,
+          as: 'student',
+          attributes: ['id', 'studentId', 'firstName', 'lastName', 'rollNumber']
+        }
+      ],
+      order: [['period_number', 'ASC'], ['student_id', 'ASC']]
+    });
+
+    // Group records by period + subject (one session = one attendance sheet)
+    const sessions = {};
+    records.forEach((record) => {
+      const key = `${record.subject_id}_${record.period_slot_id}`;
+      if (!sessions[key]) {
+        sessions[key] = {
+          classId: record.class_id,
+          subjectId: record.subject_id,
+          facultyId: record.faculty_id,
+          period: record.period_slot_id,
+          periodNumber: record.period_number,
+          attendanceDate: record.attendance_date,
+          academicYear: record.academic_year,
+          semester: record.semester,
+          isLabSession: record.is_lab_session,
+          labGroup: record.lab_group,
+          sessionType: record.session_type,
+          remarks: record.remarks,
+          students: []
+        };
+      }
+
+      sessions[key].students.push({
+        studentId: record.student_id,
+        status: record.status,
+        remarks: record.remarks
+      });
+    });
+
+    return res.status(200).json({
+      success: true,
+      count: Object.keys(sessions).length,
+      data: Object.values(sessions)
+    });
+  }
+
+  // Fallback: return a flat list of student attendance entries (paginated)
   const page = parseInt(req.query.page, 10) || 1;
   const limit = parseInt(req.query.limit, 10) || 25;
   const startIndex = (page - 1) * limit;
 
-  let where = {};
+  const where = {};
 
   if (req.query.class) {
-    where.classId = req.query.class;
+    where.class_id = parseInt(req.query.class, 10);
   }
 
   if (req.query.subject) {
-    where.subjectId = req.query.subject;
+    where.subject_id = parseInt(req.query.subject, 10);
   }
 
   if (req.query.faculty) {
-    where.facultyId = req.query.faculty;
+    where.faculty_id = parseInt(req.query.faculty, 10);
   }
 
   if (req.query.date) {
     const date = new Date(req.query.date);
-    const nextDate = new Date(date);
-    nextDate.setDate(nextDate.getDate() + 1);
-    where.date = { [Op.gte]: date, [Op.lt]: nextDate };
+    const dateStr = date.toISOString().slice(0, 10);
+    where.attendance_date = dateStr;
   }
 
   if (req.query.startDate && req.query.endDate) {
-    where.date = {
-      [Op.gte]: new Date(req.query.startDate),
-      [Op.lte]: new Date(req.query.endDate)
+    where.attendance_date = {
+      [Op.gte]: new Date(req.query.startDate).toISOString().slice(0, 10),
+      [Op.lte]: new Date(req.query.endDate).toISOString().slice(0, 10)
     };
   }
 
-  const total = await Attendance.count({ where });
-  const attendance = await Attendance.findAll({
+  const total = await StudentAttendance.count({ where });
+  const attendance = await StudentAttendance.findAll({
     where,
     include: [
-      { model: ClassModel, as: 'class', attributes: ['name'] },
-      { model: Subject, as: 'subject', attributes: ['name', 'code'] },
-      { model: Faculty, as: 'faculty', attributes: ['firstName', 'lastName'] },
-      {
-        model: AttendanceStudent,
-        as: 'students',
-        include: [{ model: Student, as: 'student', attributes: ['firstName', 'lastName', 'rollNumber'] }]
-      }
+      { model: Student, as: 'student', attributes: ['id', 'studentId', 'firstName', 'lastName', 'rollNumber'] },
+      { model: Subject, as: 'subject', attributes: ['subject_name', 'subject_code'] },
+      { model: ClassModel, as: 'class', attributes: ['id', 'name', 'section'] },
+      { model: Faculty, as: 'faculty', attributes: ['Name'] }
     ],
     offset: startIndex,
     limit,
-    order: [['date', 'DESC']]
+    order: [['attendance_date', 'DESC']]
   });
 
   res.status(200).json({
@@ -78,8 +187,8 @@ export const getAttendance = asyncHandler(async (req, res, next) => {
   const attendance = await Attendance.findByPk(req.params.id, {
     include: [
       { model: ClassModel, as: 'class', attributes: ['name'] },
-      { model: Subject, as: 'subject', attributes: ['name', 'code'] },
-      { model: Faculty, as: 'faculty', attributes: ['firstName', 'lastName'] },
+      { model: Subject, as: 'subject', attributes: ['subject_name', 'subject_code'] },
+      { model: Faculty, as: 'faculty', attributes: ['Name'] },
       {
         model: AttendanceStudent,
         as: 'students',
@@ -98,67 +207,123 @@ export const getAttendance = asyncHandler(async (req, res, next) => {
   });
 });
 
-// @desc      Mark attendance
+// @desc      Mark attendance (create or update per student)
 // @route     POST /api/v1/attendance
 // @access    Private/Faculty
 export const markAttendance = asyncHandler(async (req, res, next) => {
-  req.body.markedById = req.user.id;
+  const classId = parseInt(req.body.classId ?? req.body.class, 10);
+  const subjectId = parseInt(req.body.subjectId ?? req.body.subject, 10);
+  const facultyId = parseInt(req.body.facultyId ?? req.body.faculty, 10) || req.user.facultyId || req.user.id;
+  const periodSlotId = parseInt(req.body.periodSlotId ?? req.body.period, 10);
+  const periodNumber = parseInt(req.body.periodNumber, 10) || PERIOD_NUMBER_BY_SLOT[periodSlotId] || periodSlotId;
+  const attendanceDate = req.body.attendanceDate ?? req.body.date;
+  const students = Array.isArray(req.body.students) ? req.body.students : [];
+  const masterSlotId = req.body.masterSlotId ? parseInt(req.body.masterSlotId, 10) : null;
+  const markedBy = req.user.facultyId || req.user.id;
 
-  // Check if attendance already marked for this class, subject, date, and period
-  const startOfDay = new Date(new Date(req.body.date).setHours(0, 0, 0, 0));
-  const endOfDay = new Date(new Date(req.body.date).setHours(23, 59, 59, 999));
-
-  const existingAttendance = await Attendance.findOne({
-    where: {
-      classId: req.body.class,
-      subjectId: req.body.subject,
-      date: {
-        [Op.gte]: startOfDay,
-        [Op.lt]: endOfDay
-      },
-      period: req.body.period
-    }
-  });
-
-  if (existingAttendance) {
-    return next(new ErrorResponse('Attendance already marked for this class, subject, date, and period', 400));
+  if (!classId || !subjectId || !periodSlotId || !attendanceDate || !students.length) {
+    return next(new ErrorResponse('Missing required fields', 400));
   }
 
-  const students = Array.isArray(req.body.students) ? req.body.students : [];
-  const totals = students.reduce(
-    (acc, s) => {
-      if (s.status === 'present') acc.totalPresent += 1;
-      else if (s.status === 'absent') acc.totalAbsent += 1;
-      else if (s.status === 'late') acc.totalLate += 1;
-      else if (s.status === 'excused') acc.totalExcused += 1;
-      return acc;
-    },
-    { totalPresent: 0, totalAbsent: 0, totalLate: 0, totalExcused: 0 }
-  );
+  if (!TEACHING_PERIODS.includes(periodSlotId)) {
+    return next(new ErrorResponse('Cannot mark attendance for a non-teaching period', 400));
+  }
 
-  const attendance = await Attendance.create({
-    classId: req.body.class,
-    subjectId: req.body.subject,
-    facultyId: req.body.faculty,
-    date: req.body.date,
-    period: req.body.period,
-    markedById: req.body.markedById,
-    ...totals
+  const classRow = await ClassModel.findByPk(classId, {
+    attributes: ['id', 'academic_year', 'semester']
   });
 
-  if (students.length > 0) {
-    const rows = students.map((student) => ({
-      attendanceId: attendance.id,
-      studentId: student.student,
-      status: student.status || 'absent',
-      remarks: student.remarks
-    }));
-    await AttendanceStudent.bulkCreate(rows);
+  if (!classRow) {
+    return next(new ErrorResponse('Class not found', 404));
+  }
+
+  const academicYear = (req.body.academicYear || classRow.academic_year || '').toString();
+  const semester = parseInt(req.body.semester, 10) || parseInt(classRow.semester, 10);
+
+  if (!academicYear || !semester) {
+    return next(new ErrorResponse('academic_year and semester are required for attendance', 400));
+  }
+
+  const facultyAssignment = await FacultySubjectAssignment.findOne({
+    where: {
+      faculty_id: facultyId,
+      subject_id: subjectId,
+      class_id: classId,
+      status: 'active',
+    },
+    attributes: ['id'],
+  });
+
+  if (!facultyAssignment) {
+    return next(new ErrorResponse('Faculty is not assigned to this subject and class', 403));
+  }
+
+  const sessionType = req.body.sessionType || 'theory';
+  const isLabSession = Number(req.body.isLabSession) ? 1 : 0;
+  const labGroup = req.body.labGroup || null;
+
+  // Normalize date to YYYY-MM-DD (database stores DATE only)
+  const attendanceDateStr = new Date(attendanceDate).toISOString().slice(0, 10);
+
+  // Upsert each student's attendance record (matching unique key on student/date/period/subject)
+  const results = [];
+  for (const student of students) {
+    const studentId = parseInt(student.studentId ?? student.student ?? student.id, 10);
+    if (!studentId) continue;
+
+    const status = normalizeAttendanceStatus(student.status);
+
+    const existing = await StudentAttendance.findOne({
+      where: {
+        student_id: studentId,
+        attendance_date: attendanceDateStr,
+        period_slot_id: periodSlotId,
+        subject_id: subjectId,
+      },
+      attributes: ['id'],
+    });
+
+    const payload = {
+      student_id: studentId,
+      class_id: classId,
+      subject_id: subjectId,
+      faculty_id: facultyId,
+      master_slot_id: masterSlotId,
+      attendance_date: attendanceDateStr,
+      period_slot_id: periodSlotId,
+      period_number: periodNumber,
+      academic_year: academicYear,
+      semester,
+      status,
+      is_lab_session: isLabSession,
+      lab_group: labGroup,
+      session_type: sessionType,
+      marked_by: markedBy,
+      marked_at: new Date(),
+      remarks: student.remarks || null,
+    };
+
+    if (existing) {
+      payload.is_modified = 1;
+      payload.modified_by = markedBy;
+      payload.modified_at = new Date();
+    }
+
+    await StudentAttendance.upsert(payload);
+
+    results.push({ studentId, status, created: !existing });
   }
 
   res.status(201).json({
     success: true,
-    data: attendance
+    message: 'Attendance saved',
+    data: {
+      attendanceDate: attendanceDateStr,
+      classId,
+      subjectId,
+      period: periodSlotId,
+      records: results
+    }
   });
 });
 
@@ -260,8 +425,8 @@ export const getAttendanceByClass = asyncHandler(async (req, res, next) => {
   const attendance = await Attendance.findAll({
     where,
     include: [
-      { model: Subject, as: 'subject', attributes: ['name', 'code'] },
-      { model: Faculty, as: 'faculty', attributes: ['firstName', 'lastName'] },
+      { model: Subject, as: 'subject', attributes: ['subject_name', 'subject_code'] },
+      { model: Faculty, as: 'faculty', attributes: ['Name'] },
       {
         model: AttendanceStudent,
         as: 'students',
@@ -298,8 +463,8 @@ export const getStudentAttendance = asyncHandler(async (req, res, next) => {
   const attendance = await Attendance.findAll({
     where: attendanceWhere,
     include: [
-      { model: Subject, as: 'subject', attributes: ['name', 'code'] },
-      { model: Faculty, as: 'faculty', attributes: ['firstName', 'lastName'] },
+      { model: Subject, as: 'subject', attributes: ['subject_name', 'subject_code'] },
+      { model: Faculty, as: 'faculty', attributes: ['Name'] },
       {
         model: AttendanceStudent,
         as: 'students',
@@ -368,8 +533,8 @@ export const getMyAttendance = asyncHandler(async (req, res, next) => {
   const attendance = await Attendance.findAll({
     where: attendanceWhere,
     include: [
-      { model: Subject, as: 'subject', attributes: ['name', 'code'] },
-      { model: Faculty, as: 'faculty', attributes: ['firstName', 'lastName'] },
+      { model: Subject, as: 'subject', attributes: ['subject_name', 'subject_code'] },
+      { model: Faculty, as: 'faculty', attributes: ['Name'] },
       {
         model: AttendanceStudent,
         as: 'students',
@@ -469,7 +634,7 @@ export const getFacultyAttendance = asyncHandler(async (req, res, next) => {
 
   const attendance = await FacultyAttendance.findAll({
     where,
-    include: [{ model: Faculty, as: 'faculty', attributes: ['firstName', 'lastName', 'employeeId'] }],
+    include: [{ model: Faculty, as: 'faculty', attributes: ['Name', 'faculty_college_code'] }],
     order: [['date', 'DESC']]
   });
 
@@ -568,12 +733,20 @@ export const getFacultyTimetableSlots = asyncHandler(async (req, res, next) => {
         {
           model: TimetableMaster,
           as: 'master',
+          where: { status: 'active' },
+          required: true,
           include: [
             { model: ClassModel, as: 'class', attributes: ['id', 'name', 'section'] }
           ]
         },
         { model: Subject, as: 'subject', attributes: ['id', 'subject_code', 'subject_name'] },
-        { model: PeriodSlot, as: 'period', attributes: ['id', 'period_label', 'start_time', 'end_time'] },
+        { 
+          model: PeriodSlot, 
+          as: 'period', 
+          attributes: ['id', 'period_label', 'start_time', 'end_time', 'slot_type'],
+          where: { slot_type: 'teaching' },
+          required: true
+        },
       ],
       raw: false,
     });
@@ -583,19 +756,27 @@ export const getFacultyTimetableSlots = asyncHandler(async (req, res, next) => {
     const classStudents = {};
     
     timetableSlots.forEach(slot => {
-      const key = `${slot.subject_id}_${slot.period_slot_id}`;
-      if (!uniqueSlots[key] && slot.master && slot.master.class) {
+      // Use slot.id as the unique key so each timetable slot row is distinct
+      const key = slot.id;
+      if (!uniqueSlots[key] && slot.master && slot.master.class && slot.period) {
         const classId = slot.master.class_id;
         
         uniqueSlots[key] = {
-          slotId: `${slot.subject_id}_${slot.period_slot_id}`,
+          slotId: slot.id,
+          masterSlotId: slot.id,
           classSectionId: classId,
           className: slot.master.class?.name || '',
           classSection: slot.master.class?.section || '',
           academicYear: slot.master.academic_year,
+          semester: slot.master.semester,
+          batch: slot.master.batch,
+          facultyId: facultyId,
           subjectId: slot.subject?.id,
           subjectCode: slot.subject?.subject_code,
           subjectName: slot.subject?.subject_name,
+          sessionType: slot.session_type,
+          isLabSession: slot.is_lab_session,
+          labGroup: slot.lab_group,
           periodId: slot.period?.id,
           periodLabel: slot.period?.period_label,
           startTime: slot.period?.start_time,
@@ -613,9 +794,9 @@ export const getFacultyTimetableSlots = asyncHandler(async (req, res, next) => {
     // Fetch students for each unique class section
     for (const classId of Object.keys(classStudents)) {
       const students = await Student.findAll({
-        where: { class_id: parseInt(classId) },
-        attributes: ['id', 'student_id', 'first_name', 'last_name', 'roll_number', 'photo_path'],
-        order: [['roll_number', 'ASC']],
+        where: { classId: parseInt(classId) },
+        attributes: ['id', 'studentId', 'firstName', 'lastName', 'rollNumber', 'photo'],
+        order: [['rollNumber', 'ASC']],
         raw: true,
       });
       classStudents[classId] = students;
@@ -714,9 +895,9 @@ export const getDepartmentAdminClassSlots = asyncHandler(async (req, res, next) 
     
     for (const classId of uniqueClasses) {
       const students = await Student.findAll({
-        where: { class_id: classId },
-        attributes: ['id', 'student_id', 'first_name', 'last_name', 'roll_number', 'photo_path'],
-        order: [['roll_number', 'ASC']],
+        where: { classId: classId },
+        attributes: ['id', 'studentId', 'firstName', 'lastName', 'rollNumber', 'photo'],
+        order: [['rollNumber', 'ASC']],
         raw: true,
       });
       classStudents[classId] = students;

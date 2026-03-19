@@ -22,6 +22,7 @@ import LeaveBalance from './LeaveBalance.model.js';
 import Attendance from './Attendance.model.js';
 import FacultyAttendance from './FacultyAttendance.model.js';
 import AttendanceStudent from './AttendanceStudent.model.js';
+import StudentAttendance from './StudentAttendance.model.js';
 import Announcement from './Announcement.model.js';
 import YearBreakTiming from './YearBreakTiming.model.js';
 import TimetableSlotAssignment from './TimetableSlotAssignment.model.js';
@@ -77,6 +78,7 @@ const models = {
   Attendance: Attendance(sequelize),
   FacultyAttendance: FacultyAttendance(sequelize),
   AttendanceStudent: AttendanceStudent(sequelize),
+  StudentAttendance: StudentAttendance(sequelize),
   Announcement: Announcement(sequelize),
   YearBreakTiming: YearBreakTiming(sequelize),
   TimetableSlotAssignment: TimetableSlotAssignment(sequelize),
