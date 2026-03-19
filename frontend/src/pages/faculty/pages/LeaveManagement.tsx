@@ -11,7 +11,7 @@ import {
   Calendar, User, Trash2, Wallet, Users, CheckIcon, XIcon, RefreshCw
 } from "lucide-react";
 import { cn } from "@/pages/faculty/lib/utils";
-import { toast } from "sonner";
+import { toast } from '@/components/ui/sonner';
 import { Select as ShadSelect, SelectContent as ShadSelectContent, SelectItem as ShadSelectItem, SelectTrigger as ShadSelectTrigger, SelectValue as ShadSelectValue } from "@/components/ui/select";
 
 interface Faculty {

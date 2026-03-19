@@ -2,7 +2,7 @@
 import { MainLayout } from "@/pages/faculty/components/layout/MainLayout";
 import { motion } from "framer-motion";
 import { Loader2, Calendar as CalendarIcon } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from '@/components/ui/sonner';
 import { useAuth } from "@/contexts/AuthContext";
 
 const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];

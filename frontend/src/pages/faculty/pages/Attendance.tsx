@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { MainLayout } from "@/pages/faculty/components/layout/MainLayout";
 import { motion } from "framer-motion";
 import { Button } from "@/pages/faculty/components/ui/button";
@@ -25,8 +25,9 @@ import {
   Save,
   History,
   Filter,
+  Download,
 } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/sonner";
 import { cn } from "@/pages/faculty/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -40,31 +41,21 @@ interface Student {
   attendance?: "present" | "absent" | "leave" | "od";
 }
 
-interface TimetableSlot {
-  slotId: string;
-  classSectionId: number;
-  className: string;
-  classSection: string;
-  academicYear: string;
-  subjectId: number;
-  subjectCode: string;
-  subjectName: string;
-  periodId: number;
-  periodLabel: string;
-  startTime: string;
-  endTime: string;
-  dayOfWeek: string;
+interface AttendanceHistoryRecord {
+  id: string;
+  date: string;
+  subject: string;
+  section: string;
+  classId: number;
+  present: number;
+  absent: number;
+  leave: number;
+  od: number;
+  total: number;
 }
 
-const attendanceHistory = [
-  { id: "1", date: "2024-01-15", subject: "Data Structures", section: "CSE-A", present: 58, absent: 4, leave: 2 },
-  { id: "2", date: "2024-01-14", subject: "Data Structures", section: "CSE-A", present: 60, absent: 2, leave: 2 },
-  { id: "3", date: "2024-01-13", subject: "OOP", section: "CSE-B", present: 55, absent: 3, leave: 0 },
-  { id: "4", date: "2024-01-12", subject: "Algorithms", section: "CSE-C", present: 52, absent: 6, leave: 2 },
-];
-
 export default function Attendance() {
-  const { authToken } = useAuth();
+  const { authToken, user } = useAuth();
   const [attendanceData, setAttendanceData] = useState<Record<string, string>>({});
   const [markAllPresent, setMarkAllPresent] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -73,17 +64,28 @@ export default function Attendance() {
   const [bulkError, setBulkError] = useState("");
   const [bulkSuccess, setBulkSuccess] = useState("");
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split("T")[0]);
-  const [timetableSlots, setTimetableSlots] = useState<TimetableSlot[]>([]);
-  const [selectedSlot, setSelectedSlot] = useState("");
+  
+  const [rawSlots, setRawSlots] = useState<any[]>([]);
+  const [studentsByClass, setStudentsByClass] = useState<any>({});
+
+  const [selectedSubjectId, setSelectedSubjectId] = useState("");
+  const [selectedPeriodId, setSelectedPeriodId] = useState("");
+  
   const [slotStudents, setSlotStudents] = useState<Student[]>([]);
 
   const [locked, setLocked] = useState(false);
-  const [digitSearch, setDigitSearch] = useState("");
+  const [digitSearch] = useState("");
   const [showAttendanceSummary, setShowAttendanceSummary] = useState(false);
   const [topicCovered, setTopicCovered] = useState("");
   const [currentPage, setCurrentPage] = useState(0);
   const itemsPerPage = 10;
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyError, setHistoryError] = useState("");
+  const [attendanceHistory, setAttendanceHistory] = useState<AttendanceHistoryRecord[]>([]);
+  const [historyClassFilter, setHistoryClassFilter] = useState<string>("all");
+  const [historyDateFrom, setHistoryDateFrom] = useState("");
+  const [historyDateTo, setHistoryDateTo] = useState("");
 
   const today = new Date().toISOString().split("T")[0];
   const isToday = selectedDate === today;
@@ -93,88 +95,122 @@ export default function Attendance() {
     return () => clearInterval(timer);
   }, []);
 
-  // Fetch Timetable Slots for selected date
   useEffect(() => {
-    const fetchTimetableSlots = async () => {
-      try {
-        const response = await fetch(`/api/v1/attendance/faculty/timetable/${selectedDate}`, {
-          headers: { 'Authorization': `Bearer ${authToken}` }
-        });
-        const result = await response.json();
-        if (result.success && result.data?.slots) {
-          setTimetableSlots(result.data.slots);
-          if (result.data.slots.length > 0) {
-            setSelectedSlot(result.data.slots[0].slotId);
-            // Store students data for later use
-            (window as any).__timetableStudentData = result.data.studentsByClass;
-          } else {
-            setSelectedSlot("");
-          }
+    if (!selectedDate) return;
+    fetch(`/api/v1/attendance/faculty/timetable/${selectedDate}`, { headers: { 'Authorization': `Bearer ${authToken}` } })
+      .then(r => r.json())
+      .then(data => { 
+        if (data.success && data.data) { 
+          setRawSlots(data.data.slots || []); 
+          setStudentsByClass(data.data.studentsByClass || {});
+          setSelectedSubjectId("");
+          setSelectedPeriodId("");
         } else {
-          setTimetableSlots([]);
-          setSelectedSlot("");
+          setRawSlots([]);
+          setStudentsByClass({});
         }
-      } catch (err) {
-        console.error('Failed to fetch timetable slots', err);
-        toast.error('Failed to load timetable slots');
-        setTimetableSlots([]);
-      }
-    };
-    if (authToken) fetchTimetableSlots();
-  }, [authToken, selectedDate]);
+      })
+      .catch(console.error);
+  }, [selectedDate, authToken]);
 
-  // Fetch Students for selected slot
+  // Unique subjects for this day (derived from rawSlots)
+  const subjects = useMemo(() => {
+    const unique = new Map();
+    rawSlots.forEach(s => {
+      if (s.subjectId && !unique.has(s.subjectId)) {
+        unique.set(s.subjectId, {
+          id: s.subjectId,
+          name: s.subjectName,
+          code: s.subjectCode
+        });
+      }
+    });
+    return Array.from(unique.values());
+  }, [rawSlots]);
+
+  // Periods for the selected subject on this day
+  const periods = useMemo(() => {
+    if (!selectedSubjectId) return [];
+    return rawSlots
+      .filter(s => s.subjectId?.toString() === selectedSubjectId.toString())
+      .map(s => ({
+        id: s.periodId,
+        label: s.periodLabel,
+        startTime: s.startTime,
+        endTime: s.endTime,
+        classSectionId: s.classSectionId,
+        className: s.className,
+        classSection: s.classSection,
+        slotId: s.slotId
+      }));
+  }, [selectedSubjectId, rawSlots]);
+
+  // Active slot — determined by subject + period
+  const slotInfo = useMemo(() => {
+    if (!selectedSubjectId || !selectedPeriodId) return null;
+    return rawSlots.find(s =>
+      s.subjectId?.toString() === selectedSubjectId.toString() &&
+      s.periodId?.toString() === selectedPeriodId.toString()
+    ) || null;
+  }, [selectedSubjectId, selectedPeriodId, rawSlots]);
+
+  // Reset period when subject changes
   useEffect(() => {
-    if (!selectedSlot || timetableSlots.length === 0) {
+    setSelectedPeriodId("");
+  }, [selectedSubjectId]);
+
+  useEffect(() => {
+    if (slotInfo) {
+      const classId = slotInfo.classSectionId;
+      const students = studentsByClass[classId] || [];
+      setSlotStudents(students.map((s: any) => ({
+        id: s.id.toString(),
+        studentId: s.studentId || s.student_id || "",
+        firstName: s.firstName || s.first_name || s.name || "",
+        lastName: s.lastName || s.last_name || "",
+        rollNumber: s.rollNumber || s.roll_number || "",
+        photo: s.photo || s.photo_path || ""
+      })));
+
+      // Load existing attendance for this date + class + period
+      const attendanceQuery = new URLSearchParams({
+        class: String(classId),
+        date: selectedDate,
+        subject: String(slotInfo.subjectId),
+        period: String(slotInfo.periodId),
+      });
+
+      fetch(`/api/v1/attendance?${attendanceQuery.toString()}`, { headers: { 'Authorization': `Bearer ${authToken}` } })
+        .then(r => r.json())
+        .then(response => {
+          if (response.success && response.data) {
+            const attendanceRecord = response.data.find((r: any) =>
+              r.period === slotInfo.periodId ||
+              r.period === slotInfo.periodId?.toString() ||
+              r.subjectId === slotInfo.subjectId
+            );
+            if (attendanceRecord && attendanceRecord.students) {
+              const marks: Record<string, string> = {};
+              attendanceRecord.students.forEach((m: any) => {
+                marks[m.studentId?.toString()] = m.status;
+              });
+              setAttendanceData(marks);
+              setTopicCovered(attendanceRecord.remarks || "");
+              setLocked(true);
+              return;
+            }
+          }
+          setAttendanceData({});
+          setTopicCovered("");
+          setLocked(!isToday);
+        })
+        .catch(console.error);
+    } else {
       setSlotStudents([]);
       setAttendanceData({});
-      return;
-    }
-
-    const slot = timetableSlots.find(s => s.slotId === selectedSlot);
-    if (slot) {
-      const studentData = (window as any).__timetableStudentData;
-      const classStudents = studentData?.[slot.classSectionId] || [];
-      const formattedStudents: Student[] = classStudents.map((s: any) => ({
-        id: s.id,
-        studentId: s.student_id,
-        firstName: s.first_name,
-        lastName: s.last_name,
-        rollNumber: s.roll_number,
-        photo: s.photo_path,
-      }));
-      setSlotStudents(formattedStudents);
-    }
-    setAttendanceData({});
-  }, [selectedSlot, timetableSlots]);
-
-  useEffect(() => {
-    const key = `attendance_${selectedDate}_${selectedSlot}`;
-    const raw = localStorage.getItem(key);
-    if (raw) {
-      try {
-        const parsed = JSON.parse(raw);
-        if (parsed.attendance) {
-          setAttendanceData(parsed.attendance);
-          setTopicCovered(parsed.topicCovered || "");
-        } else {
-          setAttendanceData(parsed);
-          setTopicCovered("");
-        }
-        setLocked(true);
-      } catch (e) {
-        setAttendanceData({});
-        setTopicCovered("");
-        setLocked(!isToday);
-      }
-    } else {
-      setAttendanceData({});
-      setTopicCovered("");
       setLocked(!isToday);
     }
-    setMarkAllPresent(false);
-    setDigitSearch("");
-  }, [selectedDate, isToday, selectedSlot]);
+  }, [slotInfo, studentsByClass, selectedDate, authToken, isToday]);
 
   const formatDate = (date: Date) => {
     return date.toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
@@ -184,19 +220,49 @@ export default function Attendance() {
     return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   };
 
-  const handleSave = (showSummary = false) => {
-    if (!isToday) return;
-    const key = `attendance_${selectedDate}_${selectedSlot}`;
-    const dataToSave = {
-      attendance: attendanceData,
-      topicCovered,
-    };
-    localStorage.setItem(key, JSON.stringify(dataToSave));
-    setLocked(true);
-    if (showSummary) {
-      setShowAttendanceSummary(true);
+  const handleSave = async (showSummary = false) => {
+    if (!slotInfo) return;
+
+    const studentsArray = slotStudents.map(student => ({
+      studentId: parseInt(student.id),
+      status: attendanceData[student.id] || 'absent',
+      remarks: topicCovered
+    }));
+
+    try {
+      const response = await fetch('/api/v1/attendance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+        body: JSON.stringify({
+          classId: slotInfo.classSectionId,
+          subjectId: slotInfo.subjectId,
+          facultyId: slotInfo.facultyId,
+          attendanceDate: selectedDate,
+          periodSlotId: slotInfo.periodId,
+          periodNumber: Number(slotInfo.periodLabel),
+          masterSlotId: slotInfo.masterSlotId,
+          academicYear: slotInfo.academicYear,
+          semester: slotInfo.semester,
+          sessionType: slotInfo.sessionType || 'theory',
+          isLabSession: Boolean(slotInfo.isLabSession),
+          labGroup: slotInfo.labGroup || null,
+          students: studentsArray
+        })
+      });
+      const result = await response.json();
+      if (response.ok && result.success) {
+        setLocked(true);
+        if (showSummary) {
+          setShowAttendanceSummary(true);
+        }
+        toast.success("Attendance marked successfully!");
+      } else {
+        toast.error(result.message || "Failed to save attendance");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Network error while saving attendance");
     }
-    toast.success("Attendance marked successfully!");
   };
 
   const handleMarkAll = (checked: boolean) => {
@@ -291,6 +357,163 @@ export default function Attendance() {
   const leaveCount = Object.values(attendanceData).filter((v) => v === "leave").length;
   const odCount = Object.values(attendanceData).filter((v) => v === "od").length;
 
+  const fetchAttendanceHistory = async () => {
+    if (!authToken) return;
+
+    setHistoryLoading(true);
+    setHistoryError("");
+
+    try {
+      const params = new URLSearchParams();
+      const facultyId = Number(user?.id);
+
+      if (Number.isFinite(facultyId) && facultyId > 0) {
+        params.set("faculty", String(facultyId));
+      }
+
+      if (historyClassFilter !== "all") {
+        params.set("class", historyClassFilter);
+      }
+
+      if (historyDateFrom) {
+        params.set("startDate", historyDateFrom);
+      }
+
+      if (historyDateTo) {
+        params.set("endDate", historyDateTo);
+      }
+
+      params.set("limit", "500");
+
+      const response = await fetch(`/api/v1/attendance?${params.toString()}`, {
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || "Failed to load attendance history");
+      }
+
+      const rows = Array.isArray(result.data) ? result.data : [];
+      const grouped = new Map<string, AttendanceHistoryRecord>();
+
+      rows.forEach((row: any) => {
+        const key = [
+          row.class_id,
+          row.subject_id,
+          row.period_slot_id,
+          row.attendance_date,
+        ].join("|");
+
+        const className = row.class?.name || `Class ${row.class_id}`;
+        const classSection = row.class?.section ? `-${row.class.section}` : "";
+
+        if (!grouped.has(key)) {
+          grouped.set(key, {
+            id: key,
+            date: row.attendance_date,
+            subject: row.subject?.subject_name || `Subject ${row.subject_id}`,
+            section: `${className}${classSection}`,
+            classId: Number(row.class_id),
+            present: 0,
+            absent: 0,
+            leave: 0,
+            od: 0,
+            total: 0,
+          });
+        }
+
+        const entry = grouped.get(key)!;
+        const status = String(row.status || "").toLowerCase();
+
+        if (status === "present" || status === "late") {
+          entry.present += 1;
+        } else if (status === "od") {
+          entry.od += 1;
+        } else if (status === "medical_leave" || status === "duty_leave") {
+          entry.leave += 1;
+        } else {
+          entry.absent += 1;
+        }
+
+        entry.total += 1;
+      });
+
+      const records = Array.from(grouped.values()).sort((a, b) => {
+        return new Date(b.date).getTime() - new Date(a.date).getTime();
+      });
+
+      setAttendanceHistory(records);
+    } catch (error: any) {
+      setHistoryError(error?.message || "Failed to load attendance history");
+      setAttendanceHistory([]);
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAttendanceHistory();
+  }, [authToken, user?.id, historyClassFilter, historyDateFrom, historyDateTo]);
+
+  const historyClassOptions = useMemo(() => {
+    const map = new Map<string, string>();
+    attendanceHistory.forEach((r) => {
+      map.set(String(r.classId), r.section);
+    });
+    return Array.from(map.entries()).map(([id, label]) => ({ id, label }));
+  }, [attendanceHistory]);
+
+  const downloadHistoryReport = () => {
+    if (attendanceHistory.length === 0) {
+      toast.error("No attendance history available to download");
+      return;
+    }
+
+    const headers = [
+      "Date",
+      "Class",
+      "Subject",
+      "Present",
+      "OD",
+      "Absent",
+      "Leave",
+      "Total",
+      "Attendance %",
+    ];
+
+    const csvRows = attendanceHistory.map((row) => {
+      const attendancePct = row.total > 0 ? (((row.present + row.od) * 100) / row.total).toFixed(2) : "0.00";
+      return [
+        row.date,
+        row.section,
+        row.subject,
+        row.present,
+        row.od,
+        row.absent,
+        row.leave,
+        row.total,
+        attendancePct,
+      ];
+    });
+
+    const csv = [headers, ...csvRows]
+      .map((line) => line.map((value) => `"${String(value).replace(/"/g, '""')}"`).join(","))
+      .join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `attendance-history-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    toast.success("Attendance report downloaded");
+  };
+
   return (
     <MainLayout hideHeader={true}>
       <motion.div
@@ -339,7 +562,9 @@ export default function Attendance() {
             transition={{ delay: 0.1 }}
             className="widget-card mb-6"
           >
+            {/* Row 1: Date + Subject */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Date */}
               <div className="space-y-2">
                 <Label>Date</Label>
                 <Input
@@ -347,57 +572,126 @@ export default function Attendance() {
                   value={selectedDate}
                   onChange={(e) => setSelectedDate(e.target.value)}
                 />
+                {selectedDate && (
+                  <p className="text-xs text-muted-foreground">
+                    {new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                  </p>
+                )}
               </div>
+
+              {/* Subject (auto-filtered by day from rawSlots) */}
               <div className="space-y-2">
-                <Label>Timetable Slot</Label>
-                <Select value={selectedSlot} onValueChange={setSelectedSlot}>
+                <Label>Subject</Label>
+                {rawSlots.length > 0 && subjects.length === 0 ? (
+                  <p className="text-sm text-destructive pt-2 font-medium">No subjects scheduled on this day</p>
+                ) : (
+                  <Select value={selectedSubjectId} onValueChange={setSelectedSubjectId} disabled={subjects.length === 0}>
+                    <SelectTrigger>
+                      <SelectValue placeholder={subjects.length === 0 ? "No classes this day" : "Select subject"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {subjects.map((sub) => (
+                        <SelectItem key={sub.id} value={sub.id.toString()}>
+                          {sub.code ? `[${sub.code}] ` : ''}{sub.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+            </div>
+
+            {/* Row 2: Class (auto) + Period (filtered by subject) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+              {/* Class — auto-populated from selected subject, read-only */}
+              <div className="space-y-2">
+                <Label>Class</Label>
+                {selectedSubjectId && periods.length > 0 ? (
+                  <div className="flex h-10 w-full rounded-md border border-input bg-muted/40 px-3 py-2 text-sm items-center gap-2">
+                    {selectedPeriodId ? (
+                      <>                        
+                        <span className="font-medium text-foreground">
+                          {slotInfo?.className || periods[0]?.className}
+                          {(slotInfo?.classSection || periods[0]?.classSection) ? ` — ${slotInfo?.classSection || periods[0]?.classSection}` : ''}
+                        </span>
+                        {slotInfo?.semester && (
+                          <span className="ml-auto text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+                            Sem {slotInfo.semester}
+                          </span>
+                        )}
+                      </>
+                    ) : (
+                      <span className="text-muted-foreground">
+                        {/* show all unique classes for this subject */}
+                        {[...new Set(periods.map(p => `${p.className}${p.classSection ? ` - ${p.classSection}` : ''}`))].join(', ')}
+                      </span>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex h-10 w-full rounded-md border border-input bg-muted/20 px-3 py-2 text-sm items-center text-muted-foreground">
+                    Auto-filled from subject
+                  </div>
+                )}
+              </div>
+
+              {/* Period */}
+              <div className="space-y-2">
+                <Label>Period</Label>
+                <Select
+                  value={selectedPeriodId}
+                  onValueChange={setSelectedPeriodId}
+                  disabled={periods.length === 0}
+                >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select a class slot" />
+                    <SelectValue placeholder={selectedSubjectId ? "Select period" : "Select subject first"} />
                   </SelectTrigger>
                   <SelectContent>
-                    {timetableSlots.length > 0 ? (
-                      timetableSlots.map((slot) => (
-                        <SelectItem key={slot.slotId} value={slot.slotId}>
-                          {slot.className} - {slot.subjectCode} ({slot.periodLabel}) {slot.startTime}-{slot.endTime}
-                        </SelectItem>
-                      ))
-                    ) : (
-                      <SelectItem value="none" disabled>
-                        No timetable slots available for this date
+                    {periods.map((p) => (
+                      <SelectItem key={p.id} value={p.id.toString()}>
+                        Period {p.label} — {p.startTime} to {p.endTime}
                       </SelectItem>
-                    )}
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
             </div>
 
-            {/* Current Slot Information */}
-            {selectedSlot && timetableSlots.length > 0 && (
+            {/* Active Slot Info Banner */}
+            {slotInfo && (
               <div className="mt-4 p-4 bg-info/5 border border-info/20 rounded-lg">
-                {(() => {
-                  const currentSlot = timetableSlots.find((s) => s.slotId === selectedSlot);
-                  if (!currentSlot) return null;
-                  return (
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                      <div>
-                        <p className="text-muted-foreground font-semibold">Class</p>
-                        <p className="text-foreground">{currentSlot.className}</p>
-                      </div>
-                      <div>
-                        <p className="text-muted-foreground font-semibold">Subject</p>
-                        <p className="text-foreground">{currentSlot.subjectCode} - {currentSlot.subjectName}</p>
-                      </div>
-                      <div>
-                        <p className="text-muted-foreground font-semibold">Period</p>
-                        <p className="text-foreground">{currentSlot.periodLabel}</p>
-                      </div>
-                      <div>
-                        <p className="text-muted-foreground font-semibold">Time</p>
-                        <p className="text-foreground">{currentSlot.startTime} - {currentSlot.endTime}</p>
-                      </div>
-                    </div>
-                  );
-                })()}
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 text-sm">
+                  <div>
+                    <p className="text-muted-foreground font-semibold text-xs uppercase tracking-wide">Subject</p>
+                    <p className="text-foreground font-medium mt-0.5">{slotInfo.subjectName}</p>
+                    {slotInfo.subjectCode && <p className="text-xs text-muted-foreground">{slotInfo.subjectCode}</p>}
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground font-semibold text-xs uppercase tracking-wide">Class</p>
+                    <p className="text-foreground font-medium mt-0.5">{slotInfo.className}{slotInfo.classSection ? ` - ${slotInfo.classSection}` : ''}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground font-semibold text-xs uppercase tracking-wide">Semester</p>
+                    <p className="text-foreground font-medium mt-0.5">{slotInfo.semester ? `Semester ${slotInfo.semester}` : 'N/A'}</p>
+                    {slotInfo.batch && <p className="text-xs text-muted-foreground">Batch {slotInfo.batch}</p>}
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground font-semibold text-xs uppercase tracking-wide">Period</p>
+                    <p className="text-foreground font-medium mt-0.5">{slotInfo.periodLabel}</p>
+                    <p className="text-xs text-muted-foreground">{slotInfo.startTime} – {slotInfo.endTime}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground font-semibold text-xs uppercase tracking-wide">Session</p>
+                    <p className="text-foreground font-medium mt-0.5 capitalize">{slotInfo.sessionType || 'theory'}</p>
+                    {slotInfo.isLabSession && slotInfo.labGroup && (
+                      <p className="text-xs text-muted-foreground">Group {slotInfo.labGroup}</p>
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground font-semibold text-xs uppercase tracking-wide">Date</p>
+                    <p className="text-foreground font-medium mt-0.5">{new Date(selectedDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
+                    <p className="text-xs text-muted-foreground">{new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long' })}</p>
+                  </div>
+                </div>
               </div>
             )}
           </motion.div>
@@ -790,11 +1084,70 @@ export default function Attendance() {
                 <History className="w-5 h-5 text-primary" />
                 Recent Attendance Records
               </h3>
-              <Button variant="outline" size="sm">
-                <Filter className="w-4 h-4 mr-2" />
-                Filter
+              <Button variant="outline" size="sm" onClick={downloadHistoryReport}>
+                <Download className="w-4 h-4 mr-2" />
+                Download Report
               </Button>
             </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+              <div className="space-y-2">
+                <Label>Class</Label>
+                <Select value={historyClassFilter} onValueChange={setHistoryClassFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All classes" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All classes</SelectItem>
+                    {historyClassOptions.map((option) => (
+                      <SelectItem key={option.id} value={option.id}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>From Date</Label>
+                <Input
+                  type="date"
+                  value={historyDateFrom}
+                  onChange={(e) => setHistoryDateFrom(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>To Date</Label>
+                <Input
+                  type="date"
+                  value={historyDateTo}
+                  onChange={(e) => setHistoryDateTo(e.target.value)}
+                />
+              </div>
+
+              <div className="flex items-end">
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => {
+                    setHistoryClassFilter("all");
+                    setHistoryDateFrom("");
+                    setHistoryDateTo("");
+                  }}
+                >
+                  <Filter className="w-4 h-4 mr-2" />
+                  Reset Filters
+                </Button>
+              </div>
+            </div>
+
+            {historyError && (
+              <div className="mb-4 rounded-md border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+                {historyError}
+              </div>
+            )}
+
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
@@ -803,13 +1156,23 @@ export default function Attendance() {
                     <th className="text-left p-3 text-sm font-semibold text-muted-foreground">Subject</th>
                     <th className="text-left p-3 text-sm font-semibold text-muted-foreground">Section</th>
                     <th className="text-center p-3 text-sm font-semibold text-success">Present</th>
+                    <th className="text-center p-3 text-sm font-semibold text-info">OD</th>
                     <th className="text-center p-3 text-sm font-semibold text-destructive">Absent</th>
                     <th className="text-center p-3 text-sm font-semibold text-warning">Leave</th>
-                    <th className="text-right p-3 text-sm font-semibold text-muted-foreground">Actions</th>
+                    <th className="text-center p-3 text-sm font-semibold text-muted-foreground">Total</th>
+                    <th className="text-center p-3 text-sm font-semibold text-muted-foreground">Attendance %</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {attendanceHistory.map((record, index) => (
+                  {historyLoading ? (
+                    <tr>
+                      <td colSpan={9} className="p-6 text-center text-sm text-muted-foreground">Loading attendance history...</td>
+                    </tr>
+                  ) : attendanceHistory.length === 0 ? (
+                    <tr>
+                      <td colSpan={9} className="p-6 text-center text-sm text-muted-foreground">No attendance records found for selected filters.</td>
+                    </tr>
+                  ) : attendanceHistory.map((record, index) => (
                     <motion.tr
                       key={record.date + record.subject}
                       initial={{ opacity: 0, y: 10 }}
@@ -826,6 +1189,11 @@ export default function Attendance() {
                         </span>
                       </td>
                       <td className="p-3 text-center">
+                        <span className="px-2 py-1 bg-info/10 text-info rounded-full text-sm">
+                          {record.od}
+                        </span>
+                      </td>
+                      <td className="p-3 text-center">
                         <span className="px-2 py-1 bg-destructive/10 text-destructive rounded-full text-sm">
                           {record.absent}
                         </span>
@@ -835,10 +1203,9 @@ export default function Attendance() {
                           {record.leave}
                         </span>
                       </td>
-                      <td className="p-3 text-right">
-                        <Button variant="ghost" size="sm">
-                          Edit
-                        </Button>
+                      <td className="p-3 text-center text-sm font-medium">{record.total}</td>
+                      <td className="p-3 text-center text-sm font-semibold">
+                        {record.total > 0 ? (((record.present + record.od) * 100) / record.total).toFixed(1) : "0.0"}%
                       </td>
                     </motion.tr>
                   ))}

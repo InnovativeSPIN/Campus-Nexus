@@ -25,41 +25,38 @@ const Toaster = ({ ...props }: ToasterProps) => {
 };
 
 // Wrap the original toast to defer invocations so they don't cause state updates
-// during the render phase of other components (avoids React warning).
+// during the render phase of other components (avoids React warning). This ensures
+// that even methods like `toast.success` are deferred, regardless of whether they
+// are enumerable properties on the toast function.
 function createDeferredToast() {
-  const wrapped: any = (...args: any[]) => {
-    setTimeout(() => {
-      try {
-        (originalToast as any)(...args);
-      } catch (e) {
-        console.error('Deferred toast error', e);
-      }
-    }, 0);
-  };
-
-  // Copy all callable properties from originalToast (like .success/.error)
-  Object.keys(originalToast).forEach((key) => {
-    try {
-      const val = (originalToast as any)[key];
-      if (typeof val === 'function') {
-        wrapped[key] = (...args: any[]) => {
+  const handler: ProxyHandler<typeof originalToast> = {
+    apply(target, thisArg, args) {
+      setTimeout(() => {
+        try {
+          target.apply(thisArg, args);
+        } catch (e) {
+          console.error('Deferred toast error', e);
+        }
+      }, 0);
+    },
+    get(target, prop) {
+      const value = (target as any)[prop];
+      if (typeof value === 'function') {
+        return (...args: any[]) => {
           setTimeout(() => {
             try {
-              (val as any)(...args);
+              value.apply(target, args);
             } catch (e) {
               console.error('Deferred toast method error', e);
             }
           }, 0);
         };
-      } else {
-        wrapped[key] = val;
       }
-    } catch (e) {
-      // ignore any non-enumerable properties
-    }
-  });
+      return value;
+    },
+  };
 
-  return wrapped;
+  return new Proxy(originalToast, handler) as typeof originalToast;
 }
 
 const toast = createDeferredToast();

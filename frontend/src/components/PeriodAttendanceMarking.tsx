@@ -6,7 +6,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/sonner';
 import { CheckCircle2, Clock, Calendar, Save } from 'lucide-react';
 import { getTeachingPeriodsOptions, formatPeriodDisplay } from '@/utils/periodConfiguration';
 import { cn } from '@/lib/utils';

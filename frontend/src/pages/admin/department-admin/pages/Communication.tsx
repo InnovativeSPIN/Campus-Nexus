@@ -18,7 +18,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { cn } from "@/pages/admin/department-admin/lib/utils";
-import { toast } from "sonner";
+import { toast } from '@/components/ui/sonner';
 import { useAuth } from "@/contexts/AuthContext";
 
 interface Announcement {

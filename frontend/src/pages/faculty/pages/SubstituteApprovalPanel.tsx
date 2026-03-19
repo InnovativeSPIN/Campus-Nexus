@@ -10,7 +10,7 @@ import {
   RefreshCw, CheckIcon, ThumbsUp, ThumbsDown
 } from "lucide-react";
 import { cn } from "@/pages/faculty/lib/utils";
-import { toast } from "sonner";
+import { toast } from '@/components/ui/sonner';
 
 interface Faculty {
   faculty_id: number;

@@ -9,24 +9,24 @@ const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"
 const hours = [1, 2, 3, 4, 5, 6, 7];
 
 const formatHourForDisplay = (hour: number | string): string => {
-  if (hour === 'break') return 'BREAK';
+  if (hour === 'break1' || hour === 'break2') return 'BREAK';
   if (hour === 'lunch') return 'LUNCH';
   const timeMap: { [key: number]: string } = {
-    1: "9:00 AM - 10:00 AM",
-    2: "10:00 AM - 11:00 AM",
-    3: "11:00 AM - 12:00 PM",
-    4: "12:00 PM - 1:00 PM",
-    5: "2:00 PM - 3:00 PM",
-    6: "3:00 PM - 4:00 PM",
-    7: "4:00 PM - 5:00 PM",
+    1: "9:30 AM - 10:20 AM",
+    2: "10:20 AM - 11:10 AM",
+    3: "11:30 AM - 12:25 PM",
+    4: "1:10 PM - 2:00 PM",
+    5: "2:00 PM - 2:50 PM",
+    6: "3:15 PM - 4:00 PM",
+    7: "4:00 PM - 4:45 PM",
   };
   return timeMap[hour as number] || `Hour ${hour}`;
 };
 
 const getHoursArray = (showBreak: boolean = false): (number | string)[] => {
   if (showBreak) {
-    // Include both morning break (after hour 2) and lunch break (after hour 4)
-    return [1, 2, 'break', 3, 4, 'lunch', 5, 6, 7];
+    // Include morning break, lunch break, and afternoon break
+    return [1, 2, 'break1', 3, 'lunch', 4, 5, 'break2', 6, 7];
   }
   return hours;
 };
@@ -73,7 +73,7 @@ const TimetableTable = ({
 }) => {
   const displayHours = getHoursArray(showBreak);
   const hasTimetableData = days.some((day) =>
-    displayHours.some((hour) => hour !== 'break' && hour !== 'lunch' && data[day]?.[hour as number]?.length > 0)
+    displayHours.some((hour) => !(typeof hour === 'string' && (hour.startsWith('break') || hour === 'lunch')) && data[day]?.[hour as number]?.length > 0)
   );
 
   if (loading) {
@@ -120,11 +120,11 @@ const TimetableTable = ({
               <th
                 key={hour}
                 className={`border p-3 text-center font-semibold min-w-[140px] ${
-                  hour === 'break' ? 'bg-amber-100/50' : hour === 'lunch' ? 'bg-orange-100/50' : ''
+                  typeof hour === 'string' && hour.startsWith('break') ? 'bg-amber-100/50' : hour === 'lunch' ? 'bg-orange-100/50' : ''
                 }`}
               >
                 <div className="flex flex-col">
-                  {hour === 'break' ? (
+                  {typeof hour === 'string' && hour.startsWith('break') ? (
                     <span className="font-bold text-amber-700">BREAK</span>
                   ) : hour === 'lunch' ? (
                     <span className="font-bold text-orange-700">LUNCH</span>
@@ -149,10 +149,10 @@ const TimetableTable = ({
               </td>
 
               {displayHours.map((hour) => {
-                if (hour === 'break') {
+                if (typeof hour === 'string' && hour.startsWith('break')) {
                   return (
                     <td
-                      key={`${day}-break`}
+                      key={`${day}-${hour}`}
                       className="border p-2 min-h-[80px] bg-amber-50"
                     >
                       <div className="h-full flex items-center justify-center">

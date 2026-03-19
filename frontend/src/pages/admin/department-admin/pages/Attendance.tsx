@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { MainLayout } from "@/pages/admin/department-admin/components/layout/MainLayout";
 import { motion } from "framer-motion";
 import { Button } from "@/pages/admin/department-admin/components/ui/button";
@@ -26,8 +26,9 @@ import {
   History,
   Filter,
 } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from '@/components/ui/sonner';
 import { cn } from "@/pages/admin/department-admin/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Student {
   id: string;
@@ -98,6 +99,7 @@ const attendanceHistory = [
 ];
 
 export default function Attendance() {
+  const { authToken } = useAuth();
   const [attendanceData, setAttendanceData] = useState<Record<string, string>>({});
   const [markAllPresent, setMarkAllPresent] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -112,90 +114,142 @@ export default function Attendance() {
   const [topicCovered, setTopicCovered] = useState("");
   const [currentPage, setCurrentPage] = useState(0);
   const itemsPerPage = 10;
-  const [timetableSlots, setTimetableSlots] = useState<Array<any>>([]);
-  const [selectedSlot, setSelectedSlot] = useState("");
+  
+  const [rawSlots, setRawSlots] = useState<any[]>([]);
+  const [studentsByClass, setStudentsByClass] = useState<any>({});
+
+  const [selectedClassId, setSelectedClassId] = useState("");
+  const [selectedPeriodId, setSelectedPeriodId] = useState("");
+  
   const [slotStudents, setSlotStudents] = useState<Student[]>([]);
 
   const today = new Date().toISOString().split("T")[0];
   const isToday = selectedDate === today;
 
   useEffect(() => {
-    const key = `attendance_${selectedDate}${selectedSlot ? `_${selectedSlot}` : ""}`;
-    const raw = localStorage.getItem(key);
-    if (raw) {
-      try {
-        const parsed = JSON.parse(raw);
-        if (parsed.attendance) {
-          setAttendanceData(parsed.attendance);
-          setTopicCovered(parsed.topicCovered || "");
+    if (!selectedDate) return;
+    fetch(`/api/v1/attendance/department-admin/classes/${selectedDate}`, { headers: { 'Authorization': `Bearer ${authToken}` } })
+      .then(r => r.json())
+      .then(data => { 
+        if (data.success && data.data) { 
+          setRawSlots(data.data.slots || []); 
+          setStudentsByClass(data.data.studentsByClass || {});
+          setSelectedClassId("");
+          setSelectedPeriodId("");
         } else {
-          setAttendanceData(parsed);
-          setTopicCovered("");
+          setRawSlots([]);
+          setStudentsByClass({});
         }
-        setLocked(true);
-      } catch (e) {
-        setAttendanceData({});
-        setTopicCovered("");
-        setLocked(!isToday);
-      }
+      })
+      .catch(console.error);
+  }, [selectedDate, authToken]);
+
+  const classes = useMemo(() => {
+    const unique = new Map();
+    rawSlots.forEach(s => {
+      unique.set(s.classSectionId, { id: s.classSectionId, name: s.className, section: s.classSection });
+    });
+    return Array.from(unique.values());
+  }, [rawSlots]);
+
+  const periods = useMemo(() => {
+    if (!selectedClassId) return [];
+    return rawSlots
+      .filter(s => s.classSectionId.toString() === selectedClassId.toString())
+      .map(s => ({
+        id: s.periodId,
+        label: s.periodLabel,
+        startTime: s.startTime,
+        endTime: s.endTime,
+        subjectId: s.subjectId,
+        subjectName: s.subjectName
+      }));
+  }, [selectedClassId, rawSlots]);
+
+  const slotInfo = useMemo(() => {
+    if (!selectedClassId || !selectedPeriodId) return null;
+    return rawSlots.find(s => s.classSectionId.toString() === selectedClassId.toString() && s.periodId.toString() === selectedPeriodId.toString()) || null;
+  }, [selectedClassId, selectedPeriodId, rawSlots]);
+
+  useEffect(() => {
+    if (slotInfo && selectedClassId) {
+      const students = studentsByClass[selectedClassId] || [];
+      setSlotStudents(students.map((s: any) => ({
+        id: s.id.toString(),
+        studentId: s.studentId || s.student_id || "",
+        firstName: s.firstName || s.first_name || s.name || "",
+        lastName: s.lastName || s.last_name || "",
+        rollNumber: s.rollNumber || s.roll_number || "",
+        photo: s.photo || s.photo_path || "",
+        name: s.firstName ? `${s.firstName} ${s.lastName || ""}` : (s.name || `Student ${s.id}`)
+      })));
+
+      fetch(`/api/v1/attendance?class=${selectedClassId}&date=${selectedDate}`, { headers: { 'Authorization': `Bearer ${authToken}` } })
+        .then(r => r.json())
+        .then(response => {
+          if (response.success && response.data) {
+            const attendanceRecord = response.data.find((r: any) => r.period === slotInfo.periodId || r.period === slotInfo.periodId.toString() || r.period === slotInfo.periodLabel);
+            if (attendanceRecord && attendanceRecord.students) {
+              const marks: Record<string, string> = {};
+              attendanceRecord.students.forEach((m: any) => {
+                marks[m.studentId?.toString()] = m.status;
+              });
+              setAttendanceData(marks);
+              setTopicCovered(attendanceRecord.remarks || "");
+              setLocked(true);
+              return;
+            }
+          }
+          setAttendanceData({});
+          setTopicCovered("");
+          setLocked(!isToday);
+        })
+        .catch(console.error);
     } else {
+      setSlotStudents([]);
       setAttendanceData({});
-      setTopicCovered("");
       setLocked(!isToday);
     }
-    setMarkAllPresent(false);
-    setDigitSearch("");
-  }, [selectedDate, selectedSlot, isToday]);
+  }, [slotInfo, selectedClassId, studentsByClass, selectedDate, authToken, isToday]);
 
-  // Fetch timetable slots for the selected date
-  useEffect(() => {
-    const fetchTimetableSlots = async () => {
-      try {
-        const response = await fetch(`/api/v1/attendance/department-admin/classes/${selectedDate}`);
-        if (response.ok) {
-          const data = await response.json();
-          setTimetableSlots(data.data?.slots || []);
-          // Store students data globally for later use
-          window.__timetableStudentData = data.data?.studentsByClass || {};
-          setSelectedSlot("");
-          setSlotStudents([]);
+  // Empty content or preserve needed functions since earlier chunk replaced to line 148
+
+  const handleSave = async (showSummary = false) => {
+    if (!slotInfo) return;
+    
+    const studentsArray = Object.keys(attendanceData).map(studentId => ({
+      student: parseInt(studentId),
+      status: attendanceData[studentId],
+      remarks: topicCovered
+    }));
+    
+    try {
+      const response = await fetch('/api/v1/attendance', {
+        method: locked ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+        body: JSON.stringify({
+          class: slotInfo.classSectionId,
+          subject: slotInfo.subjectId,
+          faculty: slotInfo.facultyId,
+          date: selectedDate,
+          period: slotInfo.periodId,
+          students: studentsArray
+        })
+      });
+      const result = await response.json();
+      if (response.ok && result.success) {
+        setLocked(true);
+        if (showSummary) {
+          setShowAttendanceSummary(true);
         }
-      } catch (error) {
-        console.error("Failed to fetch timetable slots:", error);
-        setTimetableSlots([]);
-        setSlotStudents([]);
+        toast.success("Attendance marked successfully!");
+      } else {
+        toast.error(result.message || "Failed to save attendance");
       }
-    };
-
-    if (selectedDate) {
-      fetchTimetableSlots();
+    } catch (err) {
+      console.error(err);
+      toast.error("Network error while saving attendance");
     }
-  }, [selectedDate]);
-
-  // Load students for selected slot
-  useEffect(() => {
-    if (selectedSlot && window.__timetableStudentData) {
-      const slot = timetableSlots.find((s) => s.slotId === selectedSlot);
-      if (slot && window.__timetableStudentData[slot.classSectionId]) {
-        const studentsData = window.__timetableStudentData[slot.classSectionId];
-        setSlotStudents(studentsData);
-      }
-    }
-  }, [selectedSlot, timetableSlots]);
-
-  const handleSave = (showSummary = false) => {
-    if (!isToday) return;
-    const key = `attendance_${selectedDate}${selectedSlot ? `_${selectedSlot}` : ""}`;
-    const dataToSave = {
-      attendance: attendanceData,
-      topicCovered
-    };
-    localStorage.setItem(key, JSON.stringify(dataToSave));
-    setLocked(true);
-    if (showSummary) {
-      setShowAttendanceSummary(true);
-    }
-    toast.success("Attendance and coverage details saved successfully!");
   };
 
   const handleMarkAll = (checked: boolean) => {
@@ -331,7 +385,22 @@ export default function Attendance() {
             transition={{ delay: 0.1 }}
             className="widget-card mb-6"
           >
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label>Class</Label>
+                <Select value={selectedClassId} onValueChange={setSelectedClassId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a class" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {classes.map((cls) => (
+                      <SelectItem key={cls.id} value={cls.id.toString()}>
+                        {cls.name} {cls.section ? `- ${cls.section}` : ''}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="space-y-2">
                 <Label>Date</Label>
                 <Input
@@ -341,55 +410,35 @@ export default function Attendance() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Timetable Slot</Label>
-                <Select value={selectedSlot} onValueChange={setSelectedSlot}>
+                <Label>Period</Label>
+                <Select value={selectedPeriodId} onValueChange={setSelectedPeriodId}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select a class slot" />
+                    <SelectValue placeholder="Select a period" />
                   </SelectTrigger>
                   <SelectContent>
-                    {timetableSlots.length > 0 ? (
-                      timetableSlots.map((slot) => (
-                        <SelectItem key={slot.slotId} value={slot.slotId}>
-                          {slot.className} - {slot.subjectCode} ({slot.periodLabel}) {slot.startTime}-{slot.endTime}
-                        </SelectItem>
-                      ))
-                    ) : (
-                      <SelectItem value="none" disabled>
-                        No timetable slots available for this date
+                    {periods.map((p) => (
+                      <SelectItem key={p.id} value={p.id.toString()}>
+                        {p.label} ({p.startTime}-{p.endTime})
                       </SelectItem>
-                    )}
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
             </div>
 
             {/* Current Slot Information */}
-            {selectedSlot && timetableSlots.length > 0 && (
+            {slotInfo && (
               <div className="mt-4 p-4 bg-info/5 border border-info/20 rounded-lg">
-                {(() => {
-                  const currentSlot = timetableSlots.find((s) => s.slotId === selectedSlot);
-                  if (!currentSlot) return null;
-                  return (
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                      <div>
-                        <p className="text-muted-foreground font-semibold">Class</p>
-                        <p className="text-foreground">{currentSlot.className}</p>
-                      </div>
-                      <div>
-                        <p className="text-muted-foreground font-semibold">Subject</p>
-                        <p className="text-foreground">{currentSlot.subjectCode} - {currentSlot.subjectName}</p>
-                      </div>
-                      <div>
-                        <p className="text-muted-foreground font-semibold">Period</p>
-                        <p className="text-foreground">{currentSlot.periodLabel}</p>
-                      </div>
-                      <div>
-                        <p className="text-muted-foreground font-semibold">Time</p>
-                        <p className="text-foreground">{currentSlot.startTime} - {currentSlot.endTime}</p>
-                      </div>
-                    </div>
-                  );
-                })()}
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="text-muted-foreground font-semibold">Subject</p>
+                    <p className="text-foreground">{slotInfo.subjectName || `Subject ID ${slotInfo.subjectId}`}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground font-semibold">Session</p>
+                    <p className="text-foreground">{slotInfo.periodLabel} ({slotInfo.startTime} - {slotInfo.endTime})</p>
+                  </div>
+                </div>
               </div>
             )}
           </motion.div>

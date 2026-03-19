@@ -73,7 +73,7 @@ export default function Login() {
       setIsFetchingDetails(true);
       try {
         if (role === 'student') {
-          const response = await fetch(`/api/v1/auth/student-details/${email.trim()}`);
+          const response = await fetch(`/api/v1/auth/student-details/${encodeURIComponent(email.trim())}`);
           const result = await response.json();
           if (result.success && result.data) {
             setUserDetails(result.data);
@@ -81,7 +81,7 @@ export default function Login() {
             setUserDetails(null);
           }
         } else if (role === 'faculty') {
-          const response = await fetch(`/api/v1/auth/faculty-details/${email.trim()}`);
+          const response = await fetch(`/api/v1/auth/faculty-details/${encodeURIComponent(email.trim())}`);
           const result = await response.json();
           if (result.success && result.data) {
             // If the returned faculty record is actually a department-admin

@@ -60,16 +60,16 @@ interface Faculty {
 
 const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 const periods = [
-  { id: 1, label: "I", time: "9:30 AM–10:20 AM" },
-  { id: 2, label: "II", time: "10:20 AM–11:10 AM" },
-  { id: 3, label: "III", time: "11:10 AM–11:30 AM" },
-  { id: 4, label: "IV", time: "11:30 AM–12:25 PM" },
-  { id: 5, label: "V", time: "12:25 PM–1:10 PM" },
-  { id: 6, label: "VI", time: "1:10 PM–2:00 PM" },
-  { id: 7, label: "VII", time: "2:00 PM–2:50 PM" },
-  { id: 8, label: "VIII", time: "2:50 PM–3:10 PM" },
-  { id: 9, label: "IX", time: "3:10 PM–4:00 PM" },
-  { id: 10, label: "X", time: "4:00 PM–4:45 PM" },
+  { id: 1, label: "I", time: "09:30 AM - 10:20 AM" },
+  { id: 2, label: "II", time: "10:20 AM - 11:10 AM" },
+  { id: 3, label: "Break", time: "11:10 AM - 11:30 AM" },
+  { id: 4, label: "III", time: "11:30 AM - 12:25 PM" },
+  { id: 5, label: "Lunch", time: "12:25 PM - 01:10 PM" },
+  { id: 6, label: "IV", time: "01:10 PM - 02:00 PM" },
+  { id: 7, label: "V", time: "02:00 PM - 02:50 PM" },
+  { id: 8, label: "Break", time: "02:50 PM - 03:10 PM" },
+  { id: 9, label: "VI", time: "03:10 PM - 04:00 PM" },
+  { id: 10, label: "VII", time: "04:00 PM - 04:45 PM" },
 ];
 
 const sessionTypes = ["theory", "lab", "tutorial", "activity", "project", "break", "free"];
@@ -282,6 +282,8 @@ export default function TimetableSlotsManagement() {
             Authorization: `Bearer ${authToken}`,
           },
           body: JSON.stringify({
+            day: formData.day,
+            period_slot_id: parseInt(formData.period_slot_id),
             subject_id: formData.subject_id && formData.subject_id !== "none" ? parseInt(formData.subject_id) : null,
             faculty_id: formData.faculty_id ? parseInt(formData.faculty_id) : null,
             session_type: formData.session_type,
