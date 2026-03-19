@@ -87,7 +87,8 @@ export function AppSidebar() {
   };
 
   const getInitials = (name: string) => {
-    return name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'F';
+    if (!name) return 'F';
+    return name.split(' ').map(n => n[0]).join('').toUpperCase() || 'F';
   };
 
   return (

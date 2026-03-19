@@ -86,7 +86,7 @@ export default function Sidebar({ isCollapsed: collapsed, onToggle: setCollapsed
                 <span className="font-serif font-bold text-white text-lg whitespace-nowrap">
                   {user?.name || 'Dummy Student'}
                 </span>
-                <span className="text-[10px] text-white/70 uppercase tracking-widest font-semibold">
+                <span className="text-[10px] text-white/70 uppercase tracking-widest font-semibold hidden">
                   {user?.rollNo || 'NSC21CS001'}
                 </span>
               </motion.div>
