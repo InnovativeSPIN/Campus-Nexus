@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Mar 19, 2026 at 06:10 AM
+-- Generation Time: Mar 19, 2026 at 04:06 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -20,83 +20,6 @@ SET time_zone = "+00:00";
 --
 -- Database: `eduvertex`
 --
-
-DELIMITER $$
---
--- Procedures
---
-CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_create_overlay_for_leave` (IN `p_leave_id` INT, IN `p_faculty_id` INT, IN `p_from_date` DATE, IN `p_to_date` DATE, IN `p_reason` VARCHAR(255), IN `p_created_by` INT)   BEGIN
-  DECLARE v_date DATE DEFAULT p_from_date;
-  WHILE v_date <= p_to_date DO
-    IF DAYNAME(v_date) != 'Sunday' THEN
-      INSERT IGNORE INTO timetable_overlay
-        (master_id,overlay_date,period_slot_id,original_faculty_id,
-         substitute_faculty_id,original_subject_id,reason,leave_request_id,created_by,status)
-      SELECT tms.master_id, v_date, tms.period_slot_id, p_faculty_id,
-             NULL, tms.subject_id, p_reason, p_leave_id, p_created_by, 'active'
-      FROM timetable_master_slots tms
-      JOIN timetable_master tm ON tm.id = tms.master_id AND tm.status = 'active'
-      WHERE tms.faculty_id = p_faculty_id AND tms.day = DAYNAME(v_date);
-    END IF;
-    SET v_date = DATE_ADD(v_date, INTERVAL 1 DAY);
-  END WHILE;
-END$$
-
-CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_init_leave_approvals` (IN `p_leave_id` INT, IN `p_app_type` VARCHAR(10), IN `p_dept_id` INT, IN `p_class_id` INT)   BEGIN
-  DECLARE v_ci_id  INT DEFAULT 0;
-  DECLARE v_hod_id INT DEFAULT 0;
-
-  IF p_app_type = 'student' AND p_class_id IS NOT NULL THEN
-    SELECT faculty_id INTO v_ci_id
-    FROM class_incharges
-    WHERE class_id = p_class_id AND status = 'active'
-    LIMIT 1;
-  END IF;
-
-  SELECT faculty_id INTO v_hod_id
-  FROM faculty_profiles
-  WHERE department_id = p_dept_id AND designation LIKE '%HEAD%' AND status = 'active'
-  LIMIT 1;
-
-  IF p_app_type = 'student' THEN
-    INSERT IGNORE INTO leave_approvals (leave_request_id,level_number,approver_role,approver_id,status)
-    VALUES (p_leave_id,1,'class_incharge',v_ci_id,'pending'),
-           (p_leave_id,2,'hod',v_hod_id,'pending');
-  ELSE
-    INSERT IGNORE INTO leave_approvals (leave_request_id,level_number,approver_role,approver_id,status)
-    VALUES (p_leave_id,1,'hod',v_hod_id,'pending'),
-           (p_leave_id,2,'principal',0,'pending');
-  END IF;
-END$$
-
-CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_process_leave_approval` (IN `p_leave_id` INT, IN `p_approver_id` INT, IN `p_level` TINYINT, IN `p_action` VARCHAR(20), IN `p_remarks` TEXT)   BEGIN
-  DECLARE v_total    INT DEFAULT 0;
-  DECLARE v_approved INT DEFAULT 0;
-
-  UPDATE leave_approvals
-  SET status = p_action, action_date = NOW(), remarks = p_remarks
-  WHERE leave_request_id = p_leave_id AND level_number = p_level;
-
-  IF p_action = 'rejected' THEN
-    UPDATE leave_requests SET overall_status = 'rejected' WHERE id = p_leave_id;
-  ELSE
-    SELECT COUNT(*) INTO v_total   FROM leave_approvals WHERE leave_request_id = p_leave_id;
-    SELECT COUNT(*) INTO v_approved FROM leave_approvals
-      WHERE leave_request_id = p_leave_id AND status = 'approved';
-    IF v_approved = v_total THEN
-      UPDATE leave_requests SET overall_status = 'approved' WHERE id = p_leave_id;
-      UPDATE leave_balance_v2 lb
-      JOIN leave_requests lr ON lr.id = p_leave_id
-      SET lb.total_used    = lb.total_used    + lr.total_days,
-          lb.total_pending = GREATEST(lb.total_pending - lr.total_days, 0)
-      WHERE lb.applicant_id   = lr.applicant_id
-        AND lb.applicant_type = lr.applicant_type
-        AND lb.leave_type_id  = lr.leave_type_id;
-    END IF;
-  END IF;
-END$$
-
-DELIMITER ;
 
 -- --------------------------------------------------------
 
@@ -897,6 +820,23 @@ CREATE TABLE `student_attendance` (
   `remarks` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Dumping data for table `student_attendance`
+--
+
+INSERT INTO `student_attendance` (`id`, `student_id`, `class_id`, `subject_id`, `faculty_id`, `master_slot_id`, `attendance_date`, `period_slot_id`, `period_number`, `academic_year`, `semester`, `status`, `is_lab_session`, `lab_group`, `session_type`, `marked_by`, `marked_at`, `is_modified`, `modified_by`, `modified_at`, `remarks`) VALUES
+(1, 4159, 21, 98, 406, 350, '2026-03-19', 1, 1, '2025-2026', 6, 'present', 0, NULL, 'theory', 406, '2026-03-19 10:34:47', 0, NULL, NULL, NULL),
+(2, 3967, 21, 98, 406, 350, '2026-03-19', 1, 1, '2025-2026', 6, 'present', 0, NULL, 'theory', 406, '2026-03-19 10:34:48', 0, NULL, NULL, NULL),
+(3, 3968, 21, 98, 406, 350, '2026-03-19', 1, 1, '2025-2026', 6, 'od', 0, NULL, 'theory', 406, '2026-03-19 10:34:48', 0, NULL, NULL, NULL),
+(4, 3969, 21, 98, 406, 350, '2026-03-19', 1, 1, '2025-2026', 6, 'present', 0, NULL, 'theory', 406, '2026-03-19 10:34:48', 0, NULL, NULL, NULL),
+(5, 3970, 21, 98, 406, 350, '2026-03-19', 1, 1, '2025-2026', 6, 'present', 0, NULL, 'theory', 406, '2026-03-19 10:34:48', 0, NULL, NULL, NULL),
+(6, 3971, 21, 98, 406, 350, '2026-03-19', 1, 1, '2025-2026', 6, 'present', 0, NULL, 'theory', 406, '2026-03-19 10:34:48', 0, NULL, NULL, NULL),
+(7, 3972, 21, 98, 406, 350, '2026-03-19', 1, 1, '2025-2026', 6, 'present', 0, NULL, 'theory', 406, '2026-03-19 10:34:48', 0, NULL, NULL, NULL),
+(8, 3973, 21, 98, 406, 350, '2026-03-19', 1, 1, '2025-2026', 6, 'present', 0, NULL, 'theory', 406, '2026-03-19 10:34:48', 0, NULL, NULL, NULL),
+(9, 3974, 21, 98, 406, 350, '2026-03-19', 1, 1, '2025-2026', 6, 'absent', 0, NULL, 'theory', 406, '2026-03-19 10:34:48', 0, NULL, NULL, NULL),
+(10, 3975, 21, 98, 406, 350, '2026-03-19', 1, 1, '2025-2026', 6, 'absent', 0, NULL, 'theory', 406, '2026-03-19 10:34:48', 0, NULL, NULL, NULL),
+(11, 3976, 21, 98, 406, 350, '2026-03-19', 1, 1, '2025-2026', 6, 'present', 0, NULL, 'theory', 406, '2026-03-19 10:34:48', 0, NULL, NULL, NULL);
+
 -- --------------------------------------------------------
 
 --
@@ -964,7 +904,7 @@ CREATE TABLE `student_certifications` (
 --
 
 INSERT INTO `student_certifications` (`id`, `studentId`, `name`, `issuer`, `issueDate`, `expiryDate`, `credentialId`, `credentialUrl`, `skills`, `documentUrl`, `approvalStatus`, `approvedById`, `approvalRemarks`, `approvalDate`, `createdAt`, `updatedAt`) VALUES
-(2, 3975, 'claude code in action', 'anthrophic', '2026-03-19', '2026-03-20', 'Anthrophic-784', 'https://verify.skilljar.com/c/ybbipj9wpv68', '\"[\\\"mcp\\\"]\"', 'documentUrl-1773860315571-608046220.pdf', 'pending', NULL, NULL, NULL, '2026-03-18 18:58:35', '2026-03-18 18:58:35');
+(2, 3975, 'claude code in action', 'anthrophic', '2026-03-19', '2026-03-20', 'Anthrophic-784', 'https://verify.skilljar.com/c/ybbipj9wpv68', '\"[\\\"mcp\\\"]\"', 'documentUrl-1773860315571-608046220.pdf', 'approved', 406, 'keep going lokesh', '2026-03-19 05:18:18', '2026-03-18 18:58:35', '2026-03-19 05:18:18');
 
 -- --------------------------------------------------------
 
@@ -1053,9 +993,10 @@ CREATE TABLE `student_leaves` (
 
 INSERT INTO `student_leaves` (`id`, `studentId`, `leaveType`, `startDate`, `endDate`, `totalDays`, `reason`, `status`, `approvedById`, `approvalRemarks`, `approvalDate`, `createdAt`, `updatedAt`, `classId`, `overall_status`, `class_incharge_approval_status`, `class_incharge_id`, `class_incharge_remarks`, `class_incharge_approval_date`, `department_admin_approval_status`, `department_admin_id`, `department_admin_remarks`, `department_admin_approval_date`, `leaveSubType`, `attachment`, `submitted_to`) VALUES
 (4, 3975, '', '2026-03-16', '2026-03-17', 2.0, 'asdfjkl;', 'pending', NULL, NULL, NULL, '2026-03-16 05:08:23', '2026-03-16 05:08:23', 21, 'pending', 'pending', NULL, NULL, NULL, 'pending', NULL, NULL, NULL, 'Personal Leave', NULL, 'Class Incharge'),
-(5, 3975, 'Medical', '2026-03-20', '2026-03-21', 2.0, 'Test after fix', 'pending', NULL, NULL, NULL, '2026-03-18 06:08:49', '2026-03-18 06:08:49', 21, 'pending', 'pending', NULL, NULL, NULL, 'pending', NULL, NULL, NULL, 'Sick', 'test-doc.pdf', 'Class Incharge'),
+(5, 3975, 'Medical', '2026-03-20', '2026-03-21', 2.0, 'Test after fix', 'pending', NULL, NULL, NULL, '2026-03-18 06:08:49', '2026-03-19 05:16:59', 21, 'cancelled', 'pending', NULL, NULL, NULL, 'pending', NULL, NULL, NULL, 'Sick', 'test-doc.pdf', 'Class Incharge'),
 (6, 3975, 'Personal', '2026-03-18', '2026-03-19', 2.0, 'personal', 'pending', NULL, NULL, NULL, '2026-03-18 06:09:33', '2026-03-18 18:04:20', 21, 'rejected', 'rejected', 406, NULL, '2026-03-18 18:04:20', 'pending', 435, NULL, NULL, 'Personal Leave', NULL, 'Class Incharge'),
-(7, 3975, 'Personal', '2026-03-18', '2026-03-19', 2.0, 'personal', 'pending', NULL, NULL, NULL, '2026-03-18 07:18:57', '2026-03-18 08:39:18', 21, 'approved', 'approved', 406, NULL, '2026-03-18 08:38:47', 'approved', 435, NULL, '2026-03-18 08:39:18', 'Personal Leave', 'attachment-1773818337550-804097791.pdf', 'Class Incharge');
+(7, 3975, 'Personal', '2026-03-18', '2026-03-19', 2.0, 'personal', 'pending', NULL, NULL, NULL, '2026-03-18 07:18:57', '2026-03-18 08:39:18', 21, 'approved', 'approved', 406, NULL, '2026-03-18 08:38:47', 'approved', 435, NULL, '2026-03-18 08:39:18', 'Personal Leave', 'attachment-1773818337550-804097791.pdf', 'Class Incharge'),
+(8, 3975, 'On-Duty', '2026-03-19', '2026-03-19', 1.0, 'leave for workshop', 'pending', NULL, NULL, NULL, '2026-03-19 05:17:34', '2026-03-19 05:19:10', 21, 'approved', 'approved', 406, 'ok', '2026-03-19 05:18:32', 'approved', 435, 'ok', '2026-03-19 05:19:10', 'Workshop', 'attachment-1773897454516-392030487.png', 'Class Incharge');
 
 -- --------------------------------------------------------
 
@@ -1116,7 +1057,11 @@ INSERT INTO `student_notifications` (`id`, `studentId`, `title`, `message`, `typ
 (5, 3975, 'Leave Rejected', 'Your Personal leave has been rejected. Reason: Not specified', 'leave', 'low', 6, 'StudentLeave', NULL, 0, NULL, NULL, '2026-03-18 18:04:20', '2026-03-18 18:04:20'),
 (6, 3975, 'Sport Approved', 'Your sport \"WWE\" has been approved. ', 'approval', 'medium', 1, 'sport', '/student/portfolio/sports', 0, NULL, NULL, '2026-03-18 18:30:43', '2026-03-18 18:30:43'),
 (7, 3975, 'Certification Approved', 'Your certification \"claude code action\" has been approved. ', 'approval', 'medium', 1, 'certification', '/student/portfolio/certifications', 0, NULL, NULL, '2026-03-18 18:52:14', '2026-03-18 18:52:14'),
-(8, 3975, 'Sport Approved', 'Your sport \"WWE\" has been approved. ', 'approval', 'medium', 1, 'sport', '/student/portfolio/sports', 0, NULL, NULL, '2026-03-18 18:52:21', '2026-03-18 18:52:21');
+(8, 3975, 'Sport Approved', 'Your sport \"WWE\" has been approved. ', 'approval', 'medium', 1, 'sport', '/student/portfolio/sports', 0, NULL, NULL, '2026-03-18 18:52:21', '2026-03-18 18:52:21'),
+(9, 3975, 'Leave Application Submitted', 'Your On-Duty leave application for 1 days has been submitted.', 'leave', 'low', 8, 'StudentLeave', NULL, 0, NULL, NULL, '2026-03-19 05:17:34', '2026-03-19 05:17:34'),
+(10, 3975, 'Certification Approved', 'Your certification \"claude code in action\" has been approved. Remarks: keep going lokesh', 'approval', 'medium', 2, 'certification', '/student/portfolio/certifications', 0, NULL, NULL, '2026-03-19 05:18:18', '2026-03-19 05:18:18'),
+(11, 3975, 'Class Incharge Approved', 'Your leave has been approved by NAGAJOTHI P. Awaiting department admin approval.', 'leave', 'low', 8, 'StudentLeave', NULL, 0, NULL, NULL, '2026-03-19 05:18:32', '2026-03-19 05:18:32'),
+(12, 3975, 'Leave Approved', 'Your On-Duty leave has been approved by all required authorities.', 'leave', 'low', 8, 'StudentLeave', NULL, 0, NULL, NULL, '2026-03-19 05:19:10', '2026-03-19 05:19:10');
 
 -- --------------------------------------------------------
 
@@ -1400,7 +1345,7 @@ INSERT INTO `timetable_master_slots` (`id`, `master_id`, `day`, `period_slot_id`
 (351, 1, 'Thursday', 2, 90, 435, 'theory', 0, NULL, NULL, 'CR-15', 'PPL', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
 (352, 1, 'Thursday', 4, 102, 507, 'theory', 0, NULL, NULL, 'CR-15', 'ESIOT', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
 (353, 1, 'Thursday', 6, 94, 496, 'theory', 0, NULL, NULL, 'CR-15', 'APP', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
-(354, 1, 'Thursday', 7, 100, 435, 'theory', 0, NULL, NULL, 'CR-15', 'GT', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
+(354, 1, 'Thursday', 7, 100, 436, 'theory', 0, NULL, NULL, 'CR-15', 'GT', '2026-03-15 14:48:29', '2026-03-19 06:51:00'),
 (355, 1, 'Thursday', 9, 98, 406, 'lab', 0, NULL, NULL, NULL, 'DM LAB', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
 (356, 1, 'Thursday', 10, 98, 406, 'lab', 0, NULL, NULL, NULL, 'DM LAB', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
 (357, 1, 'Friday', 1, 95, 406, 'project', 0, NULL, NULL, NULL, 'NM', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
@@ -2149,6 +2094,29 @@ ALTER TABLE `users`
   ADD UNIQUE KEY `email_37` (`email`),
   ADD UNIQUE KEY `email_38` (`email`),
   ADD UNIQUE KEY `email_39` (`email`),
+  ADD UNIQUE KEY `email_40` (`email`),
+  ADD UNIQUE KEY `email_41` (`email`),
+  ADD UNIQUE KEY `email_42` (`email`),
+  ADD UNIQUE KEY `email_43` (`email`),
+  ADD UNIQUE KEY `email_44` (`email`),
+  ADD UNIQUE KEY `email_45` (`email`),
+  ADD UNIQUE KEY `email_46` (`email`),
+  ADD UNIQUE KEY `email_47` (`email`),
+  ADD UNIQUE KEY `email_48` (`email`),
+  ADD UNIQUE KEY `email_49` (`email`),
+  ADD UNIQUE KEY `email_50` (`email`),
+  ADD UNIQUE KEY `email_51` (`email`),
+  ADD UNIQUE KEY `email_52` (`email`),
+  ADD UNIQUE KEY `email_53` (`email`),
+  ADD UNIQUE KEY `email_54` (`email`),
+  ADD UNIQUE KEY `email_55` (`email`),
+  ADD UNIQUE KEY `email_56` (`email`),
+  ADD UNIQUE KEY `email_57` (`email`),
+  ADD UNIQUE KEY `email_58` (`email`),
+  ADD UNIQUE KEY `email_59` (`email`),
+  ADD UNIQUE KEY `email_60` (`email`),
+  ADD UNIQUE KEY `email_61` (`email`),
+  ADD UNIQUE KEY `email_62` (`email`),
   ADD KEY `fk_users_role_id` (`role_id`);
 
 --
@@ -2267,7 +2235,7 @@ ALTER TABLE `leave_balance_v2`
 -- AUTO_INCREMENT for table `leave_notifications_v2`
 --
 ALTER TABLE `leave_notifications_v2`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `leave_requests`
@@ -2315,7 +2283,7 @@ ALTER TABLE `staff_period_attendance`
 -- AUTO_INCREMENT for table `student_attendance`
 --
 ALTER TABLE `student_attendance`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT for table `student_bio`
@@ -2345,7 +2313,7 @@ ALTER TABLE `student_internal_marks`
 -- AUTO_INCREMENT for table `student_leaves`
 --
 ALTER TABLE `student_leaves`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `student_marks`
@@ -2357,7 +2325,7 @@ ALTER TABLE `student_marks`
 -- AUTO_INCREMENT for table `student_notifications`
 --
 ALTER TABLE `student_notifications`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT for table `student_profile`
