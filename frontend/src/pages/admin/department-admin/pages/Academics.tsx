@@ -143,14 +143,9 @@ const mapAllocationsToCredits = (allocations: any[]): SemesterCredits[] => {
   return Array.from(map.values());
 };
 
-// Classes handled by the faculty
-const classesHandled: ClassSubject[] = [
-  { id: "1", program: "B.E - CSE", semester: "3", section: "A", subject: "Data Structures & Algorithms", subjectCode: "CS3301" },
-  { id: "2", program: "B.Tech - AI&DS", semester: "4", section: "A", subject: "Computer Networks", subjectCode: "CS3591" },
-  { id: "3", program: "B.Tech - IT", semester: "4", section: "B", subject: "Web Technology", subjectCode: "IT3401" },
-  { id: "4", program: "B.E - CSE", semester: "5", section: "B", subject: "Machine Learning", subjectCode: "CS3501" },
-  { id: "5", program: "B.Tech - AI&DS", semester: "6", section: "A", subject: "Deep Learning", subjectCode: "AD3601" },
-];
+// Classes and subjects will be fetched from API
+let classesHandled: ClassSubject[] = [];
+let creditsData: SemesterCredits[] = [];
 
 // Syllabus data per class
 const syllabusDataByClass: Record<string, Topic[]> = {
@@ -290,11 +285,45 @@ const typeIcons = {
 };
 
 export default function Academics() {
-  const [selectedClassId, setSelectedClassId] = useState(classesHandled[0].id);
+  const [fetchedClassesHandled, setFetchedClassesHandled] = useState<ClassSubject[]>([]);
+  const [selectedClassId, setSelectedClassId] = useState<string>("");
   const [topicsData, setTopicsData] = useState<Record<string, Topic[]>>(syllabusDataByClass);
   const [materialsData, setMaterialsData] = useState<Record<string, Material[]>>(materialsDataByClass);
   const [marksData, setMarksData] = useState<Record<string, StudentMark[]>>(studentMarksDataByClass);
   const [lockedClasses, setLockedClasses] = useState<Record<string, boolean>>({});
+
+  // Initialize selectedClassId when classes data is loaded
+  useEffect(() => {
+    if (fetchedClassesHandled.length > 0 && !selectedClassId) {
+      setSelectedClassId(fetchedClassesHandled[0].id);
+    }
+  }, [fetchedClassesHandled, selectedClassId]);
+
+  // Fetch department subjects
+  useEffect(() => {
+    const fetchDepartmentSubjects = async () => {
+      try {
+        const res = await apiFetch('/api/v1/department-admin/subjects');
+        if (res?.success && Array.isArray(res.data)) {
+          // Transform subjects to ClassSubject format for display in class selector
+          const subjects: ClassSubject[] = res.data.map((subject: any, index: number) => ({
+            id: subject.id.toString(),
+            program: subject.department?.short_name || 'Unknown',
+            semester: subject.semester?.toString() || '1',
+            section: 'A',
+            subject: subject.name || subject.subject_name,
+            subjectCode: subject.code || subject.subject_code
+          }));
+          setFetchedClassesHandled(subjects);
+        }
+      } catch (error) {
+        console.error('Error fetching department subjects:', error);
+        setFetchedClassesHandled([]);
+      }
+    };
+
+    fetchDepartmentSubjects();
+  }, []);
 
   // Dynamic credits data (based on allocated subjects)
   const [creditsData, setCreditsData] = useState<SemesterCredits[]>([]);
@@ -373,7 +402,7 @@ export default function Academics() {
   });
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  const selectedClass = classesHandled.find(c => c.id === selectedClassId)!;
+  const selectedClass = fetchedClassesHandled.find(c => c.id === selectedClassId) || (fetchedClassesHandled.length > 0 ? fetchedClassesHandled[0] : { id: "", program: "", semester: "", section: "", subject: "", subjectCode: "" });
   const topics = topicsData[selectedClassId] || [];
   const materials = materialsData[selectedClassId] || [];
   const allMarks = marksData[selectedClassId] || [];
@@ -543,7 +572,7 @@ export default function Academics() {
                 <SelectValue placeholder="Select a class" />
               </SelectTrigger>
               <SelectContent>
-                {classesHandled.map((cls) => (
+                {(fetchedClassesHandled.length > 0 ? fetchedClassesHandled : classesHandled).map((cls) => (
                   <SelectItem key={cls.id} value={cls.id}>
                     <div className="flex items-center gap-2">
                       <GraduationCap className="w-4 h-4 text-secondary" />

@@ -97,72 +97,26 @@ interface SemesterCredits {
   subjects: Subject[];
 }
 
-// Credits data organized by semester, department, and year
-const creditsData: SemesterCredits[] = [
-  {
-    semester: 5,
-    year: 3,
-    department: "CSE",
-    subjects: [
-      { id: "1", code: "CS3452", name: "Theory of Computation", category: "PCC", lectureHours: 3, tutorialHours: 0, practicalHours: 0, totalHours: 3, credits: 3 },
-      { id: "2", code: "CS3491", name: "Artificial Intelligence and Machine Learning", category: "PCC", lectureHours: 3, tutorialHours: 0, practicalHours: 2, totalHours: 5, credits: 4 },
-      { id: "3", code: "CS3492", name: "Database Management Systems", category: "PCC", lectureHours: 3, tutorialHours: 0, practicalHours: 0, totalHours: 3, credits: 3 },
-      { id: "4", code: "IT3401", name: "Web Essentials", category: "PCC", lectureHours: 3, tutorialHours: 0, practicalHours: 2, totalHours: 5, credits: 4 },
-      { id: "5", code: "CS3451", name: "Introduction to Operating Systems", category: "PCC", lectureHours: 3, tutorialHours: 0, practicalHours: 0, totalHours: 3, credits: 3 },
-      { id: "6", code: "GE3451", name: "Environmental Sciences and Sustainability", category: "BSC", lectureHours: 2, tutorialHours: 0, practicalHours: 0, totalHours: 2, credits: 2 },
-    ],
-  },
-  {
-    semester: 4,
-    year: 2,
-    department: "CSE",
-    subjects: [
-      { id: "1", code: "CS3401", name: "Algorithms", category: "PCC", lectureHours: 3, tutorialHours: 1, practicalHours: 0, totalHours: 4, credits: 4 },
-      { id: "2", code: "CS3402", name: "Database Systems", category: "PCC", lectureHours: 3, tutorialHours: 0, practicalHours: 2, totalHours: 5, credits: 4 },
-      { id: "3", code: "CS3403", name: "Operating Systems", category: "PCC", lectureHours: 3, tutorialHours: 0, practicalHours: 0, totalHours: 3, credits: 3 },
-      { id: "4", code: "MA3401", name: "Probability and Statistics", category: "BSC", lectureHours: 3, tutorialHours: 1, practicalHours: 0, totalHours: 4, credits: 4 },
-    ],
-  },
-  {
-    semester: 3,
-    year: 2,
-    department: "CSE",
-    subjects: [
-      { id: "1", code: "CS3301", name: "Data Structures", category: "PCC", lectureHours: 3, tutorialHours: 0, practicalHours: 2, totalHours: 5, credits: 4 },
-      { id: "2", code: "CS3302", name: "Digital Logic Design", category: "PCC", lectureHours: 3, tutorialHours: 0, practicalHours: 0, totalHours: 3, credits: 3 },
-      { id: "3", code: "CS3303", name: "Object Oriented Programming", category: "PCC", lectureHours: 3, tutorialHours: 0, practicalHours: 2, totalHours: 5, credits: 4 },
-    ],
-  },
-  {
-    semester: 5,
-    year: 3,
-    department: "AI&DS",
-    subjects: [
-      { id: "1", code: "AD3501", name: "Deep Learning", category: "PCC", lectureHours: 3, tutorialHours: 0, practicalHours: 2, totalHours: 5, credits: 4 },
-      { id: "2", code: "AD3502", name: "Natural Language Processing", category: "PCC", lectureHours: 3, tutorialHours: 0, practicalHours: 2, totalHours: 5, credits: 4 },
-      { id: "3", code: "AD3503", name: "Computer Vision", category: "PCC", lectureHours: 3, tutorialHours: 0, practicalHours: 2, totalHours: 5, credits: 4 },
-    ],
-  },
-  {
-    semester: 4,
-    year: 2,
-    department: "IT",
-    subjects: [
-      { id: "1", code: "IT3401", name: "Web Technology", category: "PCC", lectureHours: 3, tutorialHours: 0, practicalHours: 2, totalHours: 5, credits: 4 },
-      { id: "2", code: "IT3402", name: "Software Engineering", category: "PCC", lectureHours: 3, tutorialHours: 0, practicalHours: 0, totalHours: 3, credits: 3 },
-      { id: "3", code: "IT3403", name: "Computer Networks", category: "PCC", lectureHours: 3, tutorialHours: 0, practicalHours: 2, totalHours: 5, credits: 4 },
-    ],
-  },
-];
+// API fetch helper
+const apiFetch = async (url: string, options?: RequestInit) => {
+  const token = localStorage.getItem('authToken');
+  const res = await fetch(url, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(options?.headers ?? {}),
+    },
+  });
+  if (!res.ok) throw new Error(`API Error: ${res.statusText}`);
+  return res.json();
+};
 
-// Classes handled by the faculty
-const classesHandled: ClassSubject[] = [
-  { id: "1", program: "B.E - CSE", semester: "3", section: "A", subject: "Data Structures & Algorithms", subjectCode: "CS3301" },
-  { id: "2", program: "B.Tech - AI&DS", semester: "4", section: "A", subject: "Computer Networks", subjectCode: "CS3591" },
-  { id: "3", program: "B.Tech - IT", semester: "4", section: "B", subject: "Web Technology", subjectCode: "IT3401" },
-  { id: "4", program: "B.E - CSE", semester: "5", section: "B", subject: "Machine Learning", subjectCode: "CS3501" },
-  { id: "5", program: "B.Tech - AI&DS", semester: "6", section: "A", subject: "Deep Learning", subjectCode: "AD3601" },
-];
+// Credits data - will be fetched from API
+let creditsData: SemesterCredits[] = [];
+
+// Classes handled by the faculty - will be fetched from API
+let classesHandled: ClassSubject[] = [];
 
 // Syllabus data per class
 const syllabusDataByClass: Record<string, Topic[]> = {
@@ -303,6 +257,40 @@ const typeIcons = {
 
 export default function Academics() {
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [fetchedCreditsData, setFetchedCreditsData] = useState<SemesterCredits[]>([]);
+  const [fetchedClassesHandled, setFetchedClassesHandled] = useState<ClassSubject[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch faculty's assigned subjects and classes
+  useEffect(() => {
+    const fetchAcademicsData = async () => {
+      try {
+        setIsLoading(true);
+        // Fetch subjects and classes data
+        const [subjectsRes, classesRes] = await Promise.all([
+          apiFetch('/api/v1/faculty/academics/my-subjects'),
+          apiFetch('/api/v1/faculty/academics/my-classes')
+        ]);
+
+        if (subjectsRes.success && subjectsRes.grouped) {
+          setFetchedCreditsData(subjectsRes.grouped);
+        }
+
+        if (classesRes.success && classesRes.data) {
+          setFetchedClassesHandled(classesRes.data);
+        }
+      } catch (error) {
+        console.error('Error fetching academics data:', error);
+        // Fallback to empty data if API fails
+        setFetchedCreditsData([]);
+        setFetchedClassesHandled([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchAcademicsData();
+  }, []);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -317,16 +305,33 @@ export default function Academics() {
     return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   };
 
-  const [selectedClassId, setSelectedClassId] = useState(classesHandled[0].id);
+  const [selectedClassId, setSelectedClassId] = useState<string>("");
+  
+  // Initialize selectedClassId when classes data is loaded
+  useEffect(() => {
+    if (fetchedClassesHandled.length > 0 && !selectedClassId) {
+      setSelectedClassId(fetchedClassesHandled[0].id);
+    }
+  }, [fetchedClassesHandled, selectedClassId]);
   const [topicsData, setTopicsData] = useState<Record<string, Topic[]>>(syllabusDataByClass);
   const [materialsData, setMaterialsData] = useState<Record<string, Material[]>>(materialsDataByClass);
   const [marksData, setMarksData] = useState<Record<string, StudentMark[]>>(studentMarksDataByClass);
   const [lockedClasses, setLockedClasses] = useState<Record<string, boolean>>({});
 
-  // Credits filter states
-  const [creditsDepartment, setCreditsDepartment] = useState<string>("CSE");
-  const [creditsYear, setCreditsYear] = useState<string>("3");
-  const [creditsSemester, setCreditsSemester] = useState<string>("5");
+  // Credits filter states - Initialize based on fetched data
+  const [creditsDepartment, setCreditsDepartment] = useState<string>("");
+  const [creditsYear, setCreditsYear] = useState<string>("");
+  const [creditsSemester, setCreditsSemester] = useState<string>("");
+
+  // Initialize filter states when fetched data changes
+  useEffect(() => {
+    if (fetchedCreditsData.length > 0 && !creditsDepartment) {
+      const firstDept = fetchedCreditsData[0];
+      setCreditsDepartment(firstDept.department);
+      setCreditsYear(firstDept.year.toString());
+      setCreditsSemester(firstDept.semester.toString());
+    }
+  }, [fetchedCreditsData, creditsDepartment]);
 
   // Course file states
   const [courseFile, setCourseFile] = useState<File | null>(null);
@@ -348,19 +353,19 @@ export default function Academics() {
   });
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  const selectedClass = classesHandled.find(c => c.id === selectedClassId)!;
+  const selectedClass = fetchedClassesHandled.find(c => c.id === selectedClassId) || (fetchedClassesHandled.length > 0 ? fetchedClassesHandled[0] : { id: "", program: "", semester: "", section: "", subject: "", subjectCode: "" });
   const topics = topicsData[selectedClassId] || [];
   const materials = materialsData[selectedClassId] || [];
   const allMarks = marksData[selectedClassId] || [];
   const marks = allMarks;
   const isLocked = lockedClasses[selectedClassId] || false;
 
-  // Get filtered credits data
-  const filteredCredits = creditsData.find(
+  // Get filtered credits data using fetched data
+  const filteredCredits = fetchedCreditsData.find(
     (c) => c.department === creditsDepartment && c.year === parseInt(creditsYear) && c.semester === parseInt(creditsSemester)
   );
-  const totalCredits = filteredCredits?.subjects.reduce((acc, s) => acc + s.credits, 0) || 0;
-  const totalContactHours = filteredCredits?.subjects.reduce((acc, s) => acc + s.totalHours, 0) || 0;
+  const totalCredits = filteredCredits?.subjects.reduce((acc, s) => acc + (s.credits || 0), 0) || 0;
+  const totalContactHours = filteredCredits?.subjects.reduce((acc, s) => acc + (s.totalHours || 0), 0) || 0;
 
   const completedTopics = topics.filter((t) => t.completed).length;
   const totalHours = topics.reduce((acc, t) => acc + t.hours, 0);
@@ -541,7 +546,7 @@ export default function Academics() {
                 <SelectValue placeholder="Select a class" />
               </SelectTrigger>
               <SelectContent>
-                {classesHandled.map((cls) => (
+                {(fetchedClassesHandled.length > 0 ? fetchedClassesHandled : classesHandled).map((cls) => (
                   <SelectItem key={cls.id} value={cls.id}>
                     <div className="flex items-center gap-2">
                       <GraduationCap className="w-4 h-4 text-secondary" />
