@@ -26,7 +26,7 @@ const StudentCertification = (sequelize) => {
 
     StudentCertificationModel.associate = (models) => {
         StudentCertificationModel.belongsTo(models.Student, { foreignKey: 'studentId', as: 'student' });
-        StudentCertificationModel.belongsTo(models.Faculty, { foreignKey: 'approvedById', as: 'approvedBy' });
+        StudentCertificationModel.belongsTo(models.Faculty, { foreignKey: 'approvedById', as: 'approvedBy', targetKey: 'faculty_id' });
     };
 
     return StudentCertificationModel;

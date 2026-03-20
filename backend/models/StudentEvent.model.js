@@ -35,7 +35,7 @@ const StudentEvent = (sequelize) => {
 
     StudentEventModel.associate = (models) => {
         StudentEventModel.belongsTo(models.Student, { foreignKey: 'studentId', as: 'student' });
-        StudentEventModel.belongsTo(models.Faculty, { foreignKey: 'approvedById', as: 'approvedBy' });
+        StudentEventModel.belongsTo(models.Faculty, { foreignKey: 'approvedById', as: 'approvedBy', targetKey: 'faculty_id' });
     };
 
     return StudentEventModel;

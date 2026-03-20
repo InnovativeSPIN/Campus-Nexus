@@ -1,0 +1,110 @@
+
+LEAVES:
+CREATE TABLE `student_leaves` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `studentId` int(11) NOT NULL,
+  `leaveType` enum('Medical','Casual','On-Duty','Special','Other','Leave','Personal','Earned') NOT NULL DEFAULT 'Casual',
+  `startDate` date NOT NULL,
+  `endDate` date NOT NULL,
+  `totalDays` decimal(4,1) NOT NULL,
+  `reason` text NOT NULL,
+  `status` enum('pending','approved','rejected','cancelled') NOT NULL DEFAULT 'pending',
+  `approvedById` int(11) DEFAULT NULL,
+  `approvalRemarks` varchar(500) DEFAULT NULL,
+  `approvalDate` datetime DEFAULT NULL,
+  `createdAt` datetime NOT NULL DEFAULT current_timestamp(),
+  `updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `classId` int(11) DEFAULT NULL,
+  `overall_status` enum('pending','approved','rejected','cancelled') NOT NULL DEFAULT 'pending',
+  `class_incharge_approval_status` enum('pending','approved','rejected') NOT NULL DEFAULT 'pending',
+  `class_incharge_id` int(11) DEFAULT NULL,
+  `class_incharge_remarks` text DEFAULT NULL,
+  `class_incharge_approval_date` datetime DEFAULT NULL,
+  `department_admin_approval_status` enum('pending','approved','rejected') NOT NULL DEFAULT 'pending',
+  `department_admin_id` int(11) DEFAULT NULL,
+  `department_admin_remarks` text DEFAULT NULL,
+  `department_admin_approval_date` datetime DEFAULT NULL,
+  `leaveSubType` varchar(100) DEFAULT NULL,
+  `attachment` varchar(255) DEFAULT NULL,
+  `submitted_to` enum('Class Incharge','Faculty Advisor','HOD') NOT NULL DEFAULT 'Class Incharge',
+  PRIMARY KEY (`id`),
+  KEY `idx_student` (`studentId`),
+  KEY `fk_leave_approver` (`approvedById`),
+  CONSTRAINT `fk_sleave_approver` FOREIGN KEY (`approvedById`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_sleave_student` FOREIGN KEY (`studentId`) REFERENCES `student_profile` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
+
+SPORTS:
+CREATE TABLE `student_sports` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `studentId` int(11) NOT NULL,
+  `name` varchar(100) NOT NULL,
+  `category` enum('Team Sports','Individual Sports','Aquatics','Combat Sports','Other') NOT NULL DEFAULT 'Other',
+  `joinedDate` date NOT NULL,
+  `status` enum('active','inactive') DEFAULT 'active',
+  `achievements` varchar(500) DEFAULT NULL,
+  `level` enum('college','district','state','national','international') NOT NULL DEFAULT 'college',
+  `documentUrl` varchar(500) DEFAULT NULL,
+  `approvalStatus` enum('pending','approved','rejected') DEFAULT 'pending',
+  `approvedById` int(11) DEFAULT NULL,
+  `approvalRemarks` varchar(500) DEFAULT NULL,
+  `approvalDate` datetime DEFAULT NULL,
+  `createdAt` datetime NOT NULL DEFAULT current_timestamp(),
+  `updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_student` (`studentId`),
+  KEY `fk_sport_approver` (`approvedById`),
+  CONSTRAINT `fk_sport_approver` FOREIGN KEY (`approvedById`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_sport_student` FOREIGN KEY (`studentId`) REFERENCES `student_profile` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
+
+CERTS:
+CREATE TABLE `student_certifications` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `studentId` int(11) NOT NULL,
+  `name` varchar(200) NOT NULL,
+  `issuer` varchar(150) NOT NULL,
+  `issueDate` date NOT NULL,
+  `expiryDate` date DEFAULT NULL,
+  `credentialId` varchar(100) DEFAULT NULL,
+  `credentialUrl` varchar(500) DEFAULT NULL,
+  `skills` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`skills`)),
+  `documentUrl` varchar(500) DEFAULT NULL,
+  `approvalStatus` enum('pending','approved','rejected') DEFAULT 'pending',
+  `approvedById` int(11) DEFAULT NULL,
+  `approvalRemarks` varchar(500) DEFAULT NULL,
+  `approvalDate` datetime DEFAULT NULL,
+  `createdAt` datetime NOT NULL DEFAULT current_timestamp(),
+  `updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_student` (`studentId`),
+  KEY `fk_cert_approver` (`approvedById`),
+  CONSTRAINT `fk_cert_approver` FOREIGN KEY (`approvedById`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_cert_student` FOREIGN KEY (`studentId`) REFERENCES `student_profile` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
+
+EVENTS:
+CREATE TABLE `student_events` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `studentId` int(11) NOT NULL,
+  `eventName` varchar(200) NOT NULL,
+  `eventType` enum('cultural','technical','sports','social','workshop','seminar','other') NOT NULL DEFAULT 'other',
+  `organizer` varchar(150) DEFAULT NULL,
+  `eventDate` date NOT NULL,
+  `role` enum('participant','organizer','volunteer','speaker','judge','other') NOT NULL DEFAULT 'participant',
+  `achievement` varchar(300) DEFAULT NULL,
+  `level` enum('college','district','state','national','international') NOT NULL DEFAULT 'college',
+  `certificateUrl` varchar(500) DEFAULT NULL,
+  `approvalStatus` enum('pending','approved','rejected') DEFAULT 'pending',
+  `approvedById` int(11) DEFAULT NULL,
+  `approvalRemarks` varchar(500) DEFAULT NULL,
+  `approvalDate` datetime DEFAULT NULL,
+  `createdAt` datetime NOT NULL DEFAULT current_timestamp(),
+  `updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_student` (`studentId`),
+  KEY `fk_event_approver` (`approvedById`),
+  CONSTRAINT `fk_event_approver` FOREIGN KEY (`approvedById`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_event_student` FOREIGN KEY (`studentId`) REFERENCES `student_profile` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
+  

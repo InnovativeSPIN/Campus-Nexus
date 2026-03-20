@@ -9,7 +9,6 @@ interface PortfolioNavItem {
 }
 
 const portfolioNavItems: PortfolioNavItem[] = [
-    { path: '/student/portfolio/summary', label: 'Summary', icon: <FolderKanban className="w-4 h-4" /> },
     { path: '/student/portfolio/sports', label: 'Sports', icon: <Trophy className="w-4 h-4" /> },
     { path: '/student/portfolio/events', label: 'Events', icon: <Calendar className="w-4 h-4" /> },
     { path: '/student/portfolio/certifications', label: 'Certifications', icon: <Award className="w-4 h-4" /> },

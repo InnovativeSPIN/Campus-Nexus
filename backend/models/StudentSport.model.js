@@ -34,7 +34,7 @@ const StudentSport = (sequelize) => {
 
     StudentSportModel.associate = (models) => {
         StudentSportModel.belongsTo(models.Student, { foreignKey: 'studentId', as: 'student' });
-        StudentSportModel.belongsTo(models.Faculty, { foreignKey: 'approvedById', as: 'approvedBy' });
+        StudentSportModel.belongsTo(models.Faculty, { foreignKey: 'approvedById', as: 'approvedBy', targetKey: 'faculty_id' });
     };
 
     return StudentSportModel;

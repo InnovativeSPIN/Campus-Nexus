@@ -31,6 +31,7 @@ const PortfolioNotification = (sequelize) => {
         PortfolioNotificationModel.belongsTo(models.Faculty, {
             foreignKey: 'recipientId',
             as: 'recipient',
+            targetKey: 'faculty_id'
         });
         PortfolioNotificationModel.belongsTo(models.Student, {
             foreignKey: 'senderId',

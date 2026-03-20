@@ -7,7 +7,6 @@ import Sports from './Sports';
 import Events from './Events';
 import Certifications from './Certifications';
 import Projects from './Projects';
-import Summary from './Summary';
 
 export default function StudentPortfolio() {
     const location = useLocation();
@@ -27,11 +26,8 @@ export default function StudentPortfolio() {
         if (location.pathname === '/student/portfolio/projects') {
             return <Projects onPendingChange={setHasPendingChanges} />;
         }
-        if (location.pathname === '/student/portfolio/summary') {
-            return <Summary />;
-        }
-        // Default to Summary if at /portfolio
-        return <Summary />;
+        // Default to Sports if at /portfolio
+        return <Sports onPendingChange={setHasPendingChanges} />;
     };
 
     return (
@@ -41,7 +37,7 @@ export default function StudentPortfolio() {
                     title="Student Portfolio"
                     subtitle="Manage your activities, achievements, and projects"
                     breadcrumbs={[
-                        { label: 'Portfolio', path: '/student/portfolio/summary' },
+                        { label: 'Portfolio', path: '/student/portfolio/sports' },
                     ]}
                 />
             </div>
