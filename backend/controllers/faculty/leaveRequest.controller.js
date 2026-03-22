@@ -405,6 +405,227 @@ export const getPendingAlterationsForIncharge = asyncHandler(async (req, res, ne
 });
 
 /**
+ * @desc    Get all periods for faculty between two dates (for new leave flow)
+ * @route   GET /api/v1/faculty/leave-request/periods-for-dates
+ * @access  Private (Faculty)
+ */
+export const getPeriodsForDateRange = asyncHandler(async (req, res, next) => {
+  const { startDate, endDate } = req.query;
+  const facultyId = req.user.faculty_id;
+  const departmentId = req.user.department_id;
+
+  if (!startDate || !endDate) {
+    return next(new ErrorResponse('Please provide startDate and endDate', 400));
+  }
+
+  try {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    // Get active timetable
+    const activeTimetable = await TimetableMaster.findOne({
+      where: {
+        department_id: departmentId,
+        status: 'active',
+      },
+      attributes: ['id', 'class_id', 'academic_year', 'semester'],
+    });
+
+    if (!activeTimetable) {
+      return res.status(200).json({
+        success: true,
+        data: [],
+        message: 'No active timetable found',
+      });
+    }
+
+    // Generate all dates in range
+    const dates = [];
+    const current = new Date(start);
+    while (current <= end) {
+      const dayOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][
+        current.getDay()
+      ];
+      dates.push({
+        date: new Date(current),
+        dateString: current.toISOString().split('T')[0],
+        dayOfWeek,
+      });
+      current.setDate(current.getDate() + 1);
+    }
+
+    // Query all slots for faculty in this range
+    const periods = await TimetableSlot.findAll({
+      where: {
+        timetable_id: activeTimetable.id,
+        faculty_id: facultyId,
+      },
+      include: [
+        {
+          model: Subject,
+          as: 'subject',
+          attributes: ['id', 'subject_code', 'subject_name'],
+        },
+        {
+          model: ClassModel,
+          as: 'class',
+          attributes: ['id', 'class_name', 'semester'],
+        },
+      ],
+      attributes: [
+        'id',
+        'timetable_id',
+        'day',
+        'period_number',
+        'start_time',
+        'end_time',
+        'subject_id',
+        'faculty_id',
+        'class_id',
+        'room',
+        'type',
+      ],
+      raw: false,
+    });
+
+    // Filter periods to only those in the date range by day of week
+    const daysInRange = [...new Set(dates.map((d) => d.dayOfWeek))];
+    const filteredPeriods = periods.filter((p) => daysInRange.includes(p.day));
+
+    // Enrich with actual dates
+    const enrichedPeriods = [];
+    for (const period of filteredPeriods) {
+      for (const dateInfo of dates) {
+        if (dateInfo.dayOfWeek === period.day) {
+          enrichedPeriods.push({
+            id: period.id,
+            date: dateInfo.dateString,
+            day: period.day,
+            period_number: period.period_number,
+            start_time: period.start_time,
+            end_time: period.end_time,
+            type: period.type,
+            room: period.room,
+            subject: period.subject
+              ? {
+                  id: period.subject.id,
+                  code: period.subject.subject_code,
+                  name: period.subject.subject_name,
+                }
+              : null,
+            class: period.class
+              ? {
+                  id: period.class.id,
+                  name: period.class.class_name,
+                  semester: period.class.semester,
+                }
+              : null,
+            academic_year: activeTimetable.academic_year,
+            semester: activeTimetable.semester,
+          });
+        }
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      count: enrichedPeriods.length,
+      data: enrichedPeriods,
+    });
+  } catch (error) {
+    console.error('[getPeriodsForDateRange] Error:', error.message);
+    return next(new ErrorResponse(`Error fetching periods: ${error.message}`, 500));
+  }
+});
+
+/**
+ * @desc    Get alternative faculty for a set of periods
+ * @route   POST /api/v1/faculty/leave-request/alternative-faculty
+ * @access  Private (Faculty)
+ */
+export const getAlternativeFacultyForPeriods = asyncHandler(async (req, res, next) => {
+  const { periods } = req.body; // Array of period objects with class_id, subject_id, semester, academic_year
+  const facultyId = req.user.faculty_id;
+  const departmentId = req.user.department_id;
+
+  if (!periods || !Array.isArray(periods) || periods.length === 0) {
+    return next(new ErrorResponse('Please provide periods array', 400));
+  }
+
+  try {
+    const periodAltFaculty = [];
+
+    for (const period of periods) {
+      const { class_id, subject_id, semester, academic_year } = period;
+
+      if (!class_id || !subject_id) continue;
+
+      // Find faculty who teach this subject in this class
+      const alternativeFaculty = await FacultySubjectAssignment.findAll({
+        where: {
+          class_id,
+          subject_id,
+          status: 'active',
+          faculty_id: { [Op.ne]: facultyId }, // Exclude current faculty
+          ...(semester ? { semester } : {}),
+          ...(academic_year ? { academic_year } : {}),
+        },
+        include: [
+          {
+            model: Faculty,
+            as: 'faculty',
+            attributes: ['faculty_id', 'Name', 'email', 'phone_number', 'designation', 'department_id'],
+            required: true,
+            where: {
+              status: 'active',
+            },
+          },
+        ],
+        attributes: ['faculty_id'],
+        raw: false,
+      });
+
+      // Get unique faculty
+      const uniqueFaculty = [];
+      const seenIds = new Set();
+      for (const record of alternativeFaculty) {
+        if (!seenIds.has(record.faculty.faculty_id)) {
+          seenIds.add(record.faculty.faculty_id);
+          uniqueFaculty.push({
+            faculty_id: record.faculty.faculty_id,
+            name: record.faculty.Name,
+            email: record.faculty.email,
+            phone_number: record.faculty.phone_number,
+            designation: record.faculty.designation,
+            department_id: record.faculty.department_id,
+          });
+        }
+      }
+
+      periodAltFaculty.push({
+        period: {
+          id: period.id,
+          date: period.date,
+          period_number: period.period_number,
+          class_id,
+          subject_id,
+        },
+        alternative_faculty: uniqueFaculty,
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      count: periodAltFaculty.length,
+      data: periodAltFaculty,
+    });
+  } catch (error) {
+    console.error('[getAlternativeFacultyForPeriods] Error:', error.message);
+    return next(new ErrorResponse(`Error fetching alternative faculty: ${error.message}`, 500));
+  }
+});
+
+/**
  * @desc    Get slot details for a specific date and period
  * @route   GET /api/v1/faculty/leave-request/slot-details
  * @access  Private (Faculty)
@@ -483,6 +704,8 @@ export const getSlotDetails = asyncHandler(async (req, res, next) => {
           name: slotDetails.class.class_name,
           semester: slotDetails.class.semester,
         } : null,
+        academic_year: activeTimetable.academic_year,
+        semester: activeTimetable.semester,
       } : null,
       message: slotDetails ? 'Slot details found' : 'No slot found for this day and period',
     });

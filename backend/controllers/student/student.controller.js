@@ -2,7 +2,7 @@ import ErrorResponse from '../../utils/errorResponse.js';
 import asyncHandler from '../../middleware/async.js';
 import { models } from '../../models/index.js';
 import path from 'path';
-const { Student, Department, Class: ClassModel, Subject, StudentBio } = models;
+const { Student, Department, Class: ClassModel, Subject, StudentBio, CourseLessonPlan, Faculty } = models;
 import { Op, Sequelize } from 'sequelize';
 
 // @desc      Get all students
@@ -841,5 +841,107 @@ export const bulkUploadStudents = asyncHandler(async (req, res, next) => {
   } catch (error) {
     console.error('Bulk upload error:', error);
     return next(new ErrorResponse(`Error processing file: ${error.message}`, 400));
+  }
+});
+
+// @desc      Get student syllabus (approved course plans)
+// @route     GET /api/v1/student/syllabus
+// @access    Private/Student
+export const getStudentSyllabus = asyncHandler(async (req, res, next) => {
+  const studentId = req.user.id;
+  const { semester: querySemester } = req.query;
+
+  try {
+    // Get student with their class info
+    const student = await Student.findOne({
+      where: { id: studentId },
+      include: [
+        {
+          model: ClassModel,
+          as: 'class',
+          attributes: ['id', 'name', 'section', 'batch', 'semester']
+        }
+      ]
+    });
+
+    if (!student || !student.class) {
+      return next(new ErrorResponse('Student or class information not found', 404));
+    }
+
+    // Determine which semester to fetch
+    const semesterVal = querySemester ? parseInt(querySemester, 10) : student.class.semester || 6;
+
+    // Get approved course plans for the student's class and semester
+    const coursePlans = await CourseLessonPlan.findAll({
+      where: {
+        class_id: student.class.id,
+        semester: semesterVal,
+        approval_status: 'approved' // Only approved topics
+      },
+      include: [
+        {
+          model: Faculty,
+          as: 'faculty',
+          attributes: ['faculty_id', 'Name', 'faculty_college_code', 'email']
+        },
+        {
+          model: Subject,
+          as: 'subject',
+          attributes: ['id', 'subject_name', 'subject_code']
+        },
+        {
+          model: ClassModel,
+          as: 'class',
+          attributes: ['id', 'name', 'section']
+        }
+      ],
+      order: [['subject_id', 'ASC'], ['sno', 'ASC']],
+      raw: false
+    });
+
+    // Group topics by subject and faculty
+    const groupedBySubject = {};
+    
+    coursePlans.forEach(plan => {
+      const subjectId = plan.subject.id;
+      
+      if (!groupedBySubject[subjectId]) {
+        groupedBySubject[subjectId] = {
+          id: plan.id,
+          subject: plan.subject,
+          faculty: plan.faculty,
+          class: plan.class,
+          academic_year: plan.academic_year,
+          semester: plan.semester,
+          topics: []
+        };
+      }
+
+      groupedBySubject[subjectId].topics.push({
+        id: plan.id,
+        sno: plan.sno,
+        unit_number: plan.unit_number,
+        unit_label: plan.unit_label,
+        topic: plan.topic,
+        co_number: plan.co_number,
+        btl: plan.btl,
+        delivery_mode: plan.delivery_mode,
+        reference_book: plan.reference_book,
+        periods_required: plan.periods_required,
+        approval_status: plan.approval_status
+      });
+    });
+
+    const syllabusData = Object.values(groupedBySubject);
+
+    res.status(200).json({
+      success: true,
+      count: syllabusData.length,
+      totalTopics: coursePlans.length,
+      data: syllabusData
+    });
+  } catch (error) {
+    console.error('[getStudentSyllabus] Error:', error);
+    return next(new ErrorResponse(`Error fetching syllabus: ${error.message}`, 500));
   }
 });

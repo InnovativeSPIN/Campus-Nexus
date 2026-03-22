@@ -1,7 +1,7 @@
 import ErrorResponse from '../../utils/errorResponse.js';
 import asyncHandler from '../../middleware/async.js';
 import { models } from '../../models/index.js';
-const { Attendance, FacultyAttendance, Student, StudentAttendance, Class: ClassModel, Subject, Faculty, FacultySubjectAssignment } = models;
+const { Attendance, FacultyAttendance, Student, StudentAttendance, Class: ClassModel, Subject, Faculty, FacultySubjectAssignment, PeriodTopicLog } = models;
 import { Op } from 'sequelize';
 
 // Teaching period slot IDs (breaks should not be marked)
@@ -57,9 +57,12 @@ export const getAllAttendance = asyncHandler(async (req, res, next) => {
     const attendanceDateStr = attendanceDate.toISOString().slice(0, 10); // YYYY-MM-DD
 
     const where = {
-      class_id: classId,
       attendance_date: attendanceDateStr
     };
+
+    if (!Number.isNaN(classId)) {
+      where.class_id = classId;
+    }
 
     if (req.query.subject) {
       where.subject_id = parseInt(req.query.subject, 10);
@@ -103,6 +106,7 @@ export const getAllAttendance = asyncHandler(async (req, res, next) => {
           labGroup: record.lab_group,
           sessionType: record.session_type,
           remarks: record.remarks,
+          lesson_plan_id: record.lesson_plan_id,
           students: []
         };
       }
@@ -129,11 +133,17 @@ export const getAllAttendance = asyncHandler(async (req, res, next) => {
   const where = {};
 
   if (req.query.class) {
-    where.class_id = parseInt(req.query.class, 10);
+    const classId = parseInt(req.query.class, 10);
+    if (!Number.isNaN(classId)) {
+      where.class_id = classId;
+    }
   }
 
   if (req.query.subject) {
-    where.subject_id = parseInt(req.query.subject, 10);
+    const subjectId = parseInt(req.query.subject, 10);
+    if (!Number.isNaN(subjectId)) {
+      where.subject_id = subjectId;
+    }
   }
 
   if (req.query.faculty) {
@@ -219,6 +229,7 @@ export const markAttendance = asyncHandler(async (req, res, next) => {
   const attendanceDate = req.body.attendanceDate ?? req.body.date;
   const students = Array.isArray(req.body.students) ? req.body.students : [];
   const masterSlotId = req.body.masterSlotId ? parseInt(req.body.masterSlotId, 10) : null;
+  const lessonPlanId = req.body.lesson_plan_id ? parseInt(req.body.lesson_plan_id, 10) : null;
   const markedBy = req.user.facultyId || req.user.id;
 
   if (!classId || !subjectId || !periodSlotId || !attendanceDate || !students.length) {
@@ -265,6 +276,26 @@ export const markAttendance = asyncHandler(async (req, res, next) => {
   // Normalize date to YYYY-MM-DD (database stores DATE only)
   const attendanceDateStr = new Date(attendanceDate).toISOString().slice(0, 10);
 
+  // If lesson_plan_id is provided, create a period_topic_log entry
+  if (lessonPlanId) {
+    try {
+      await PeriodTopicLog.upsert({
+        attendance_date: attendanceDateStr,
+        period_slot_id: periodSlotId,
+        faculty_id: facultyId,
+        class_id: classId,
+        subject_id: subjectId,
+        lesson_plan_id: lessonPlanId,
+        is_deviation: 0,
+        deviation_note: null,
+        master_slot_id: masterSlotId,
+      });
+    } catch (err) {
+      console.warn('Could not create period_topic_log:', err);
+      // Don't fail the entire request if period_topic_log fails
+    }
+  }
+
   // Upsert each student's attendance record (matching unique key on student/date/period/subject)
   const results = [];
   for (const student of students) {
@@ -301,6 +332,7 @@ export const markAttendance = asyncHandler(async (req, res, next) => {
       marked_by: markedBy,
       marked_at: new Date(),
       remarks: student.remarks || null,
+      lesson_plan_id: lessonPlanId,
     };
 
     if (existing) {
