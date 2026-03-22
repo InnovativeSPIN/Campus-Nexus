@@ -12,8 +12,15 @@ const BREAK_PERIOD_IDS = [3, 5, 8];
 // Teaching period IDs (only these can be marked for attendance)
 const TEACHING_PERIOD_IDS = [1, 2, 4, 6, 7, 9, 10];
 
+interface PeriodInfo {
+  label: string;
+  startTime: string;
+  endTime: string;
+  type: 'teaching' | 'break';
+}
+
 // Period configuration with labels and times
-export const PERIOD_CONFIG = {
+export const PERIOD_CONFIG: Record<number, PeriodInfo> = {
   1: { label: 'I', startTime: '09:30', endTime: '10:20', type: 'teaching' },
   2: { label: 'II', startTime: '10:20', endTime: '11:10', type: 'teaching' },
   3: { label: 'Tea Break', startTime: '11:10', endTime: '11:30', type: 'break' },
@@ -29,14 +36,14 @@ export const PERIOD_CONFIG = {
 /**
  * Check if a period ID is a teaching period
  */
-export const isTeachingPeriod = (periodId) => {
+export const isTeachingPeriod = (periodId: number) => {
   return TEACHING_PERIOD_IDS.includes(periodId);
 };
 
 /**
  * Check if a period ID is a break period
  */
-export const isBreakPeriod = (periodId) => {
+export const isBreakPeriod = (periodId: number) => {
   return BREAK_PERIOD_IDS.includes(periodId);
 };
 
@@ -53,14 +60,14 @@ export const getTeachingPeriods = () => {
 /**
  * Get period label
  */
-export const getPeriodLabel = (periodId) => {
+export const getPeriodLabel = (periodId: number) => {
   return PERIOD_CONFIG[periodId]?.label || `Period ${periodId}`;
 };
 
 /**
  * Get period time
  */
-export const getPeriodTime = (periodId) => {
+export const getPeriodTime = (periodId: number) => {
   const config = PERIOD_CONFIG[periodId];
   return config ? `${config.startTime} - ${config.endTime}` : 'N/A';
 };
@@ -68,7 +75,7 @@ export const getPeriodTime = (periodId) => {
 /**
  * Format period for display
  */
-export const formatPeriodDisplay = (periodId) => {
+export const formatPeriodDisplay = (periodId: number) => {
   const config = PERIOD_CONFIG[periodId];
   if (!config) return `Unknown Period ${periodId}`;
   return `${config.label} (${config.startTime} - ${config.endTime})`;

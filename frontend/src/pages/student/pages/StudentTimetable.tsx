@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/pages/student/components/ui/card';
 import { Alert, AlertDescription } from '@/pages/student/components/ui/alert';
-import { Loader2, AlertCircle, Calendar, User, Download } from 'lucide-react';
+import { Loader2, AlertCircle, User, Download } from 'lucide-react';
 import { toast } from '@/pages/student/hooks/use-toast';
 
 interface Period {
@@ -47,6 +47,7 @@ interface TimetableMaster {
   roomNo: string;
   effectiveFrom: string;
   classCoordinator: Faculty;
+  assistantCoordinator?: Faculty;
   timetableIncharge: Faculty;
 }
 
