@@ -234,6 +234,7 @@ export const createUser = asyncHandler(async (req, res, next) => {
       pan_number: req.body.pan_number || null,
       perm_address: req.body.perm_address || null,
       curr_address: req.body.curr_address || null,
+      linkedin_url: req.body.linkedin_url || req.body.linkedinUrl || null,
     };
 
     const faculty = await Faculty.create(facultyPayload);
