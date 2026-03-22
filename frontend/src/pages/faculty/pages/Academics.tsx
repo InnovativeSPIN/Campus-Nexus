@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from "react";
+﻿import { useState, useEffect, useRef } from "react";
 import { IntegratedNotificationBell } from "@/components/common/IntegratedNotificationBell";
 import { MainLayout } from "@/pages/faculty/components/layout/MainLayout";
 import { motion } from "framer-motion";
@@ -16,6 +16,8 @@ import {
   ClipboardList,
   Check,
   Upload,
+  Download,
+  Plus,
   Eye,
   EyeOff,
   Trash2,
@@ -27,10 +29,11 @@ import {
   GraduationCap,
   Send,
   RefreshCw,
-  FileIcon,
   X,
   Clock,
   Calendar,
+  ChevronDown,
+  ChevronRight,
 } from "lucide-react";
 import { cn } from "@/pages/faculty/lib/utils";
 import {
@@ -43,11 +46,17 @@ import {
 
 interface ClassSubject {
   id: string;
+  assignment_id: number;
+  faculty_id: number;
+  subject_id: number;
+  class_id: number;
   program: string;
   semester: string;
   section: string;
   subject: string;
   subjectCode: string;
+  className: string;
+  batch: string;
 }
 
 interface Topic {
@@ -55,6 +64,7 @@ interface Topic {
   name: string;
   hours: number;
   completed: boolean;
+  unit_label?: string;
 }
 
 interface Material {
@@ -97,6 +107,26 @@ interface SemesterCredits {
   subjects: Subject[];
 }
 
+interface CourseLessonPlan {
+  id: number;
+  sno: number;
+  unit_label?: string;
+  topic: string;
+  co_number?: string;
+  btl?: string;
+  delivery_mode?: string;
+  reference_book?: string;
+  periods_required: number;
+  periods_taken: number;
+  cumulative_periods: number;
+  is_completed: boolean;
+  tentative_date?: string;
+  approval_status?: 'pending' | 'approved' | 'rejected' | 'revision_requested';
+  approved_by?: number;
+  approved_date?: string;
+  approval_remarks?: string;
+}
+
 // API fetch helper
 const apiFetch = async (url: string, options?: RequestInit) => {
   const token = localStorage.getItem('authToken');
@@ -112,143 +142,6 @@ const apiFetch = async (url: string, options?: RequestInit) => {
   return res.json();
 };
 
-// Credits data - will be fetched from API
-let creditsData: SemesterCredits[] = [];
-
-// Classes handled by the faculty - will be fetched from API
-let classesHandled: ClassSubject[] = [];
-
-// Syllabus data per class
-const syllabusDataByClass: Record<string, Topic[]> = {
-  "1": [
-    { id: "1", name: "Introduction to Data Structures", hours: 3, completed: true },
-    { id: "2", name: "Arrays and Linked Lists", hours: 6, completed: true },
-    { id: "3", name: "Stacks and Queues", hours: 5, completed: true },
-    { id: "4", name: "Trees and Binary Trees", hours: 8, completed: false },
-    { id: "5", name: "Graphs and Traversals", hours: 8, completed: false },
-    { id: "6", name: "Sorting Algorithms", hours: 6, completed: false },
-  ],
-  "2": [
-    { id: "1", name: "Introduction to Networks", hours: 4, completed: true },
-    { id: "2", name: "Physical Layer", hours: 5, completed: true },
-    { id: "3", name: "Data Link Layer", hours: 6, completed: false },
-    { id: "4", name: "Network Layer", hours: 8, completed: false },
-    { id: "5", name: "Transport Layer", hours: 6, completed: false },
-  ],
-  "3": [
-    { id: "1", name: "HTML5 & CSS3", hours: 6, completed: true },
-    { id: "2", name: "JavaScript Fundamentals", hours: 8, completed: true },
-    { id: "3", name: "React.js Basics", hours: 8, completed: true },
-    { id: "4", name: "Node.js Backend", hours: 6, completed: false },
-    { id: "5", name: "Database Integration", hours: 6, completed: false },
-  ],
-  "4": [
-    { id: "1", name: "Introduction to ML", hours: 4, completed: true },
-    { id: "2", name: "Supervised Learning", hours: 8, completed: false },
-    { id: "3", name: "Unsupervised Learning", hours: 6, completed: false },
-    { id: "4", name: "Neural Networks", hours: 8, completed: false },
-  ],
-  "5": [
-    { id: "1", name: "Deep Learning Fundamentals", hours: 4, completed: true },
-    { id: "2", name: "Convolutional Neural Networks", hours: 8, completed: false },
-    { id: "3", name: "Recurrent Neural Networks", hours: 6, completed: false },
-    { id: "4", name: "Transformers & Attention", hours: 8, completed: false },
-  ],
-};
-
-// Materials data per class
-const materialsDataByClass: Record<string, Material[]> = {
-  "1": [
-    { id: "1", name: "Data Structures Introduction.pdf", type: "pdf", size: "2.3 MB", visible: true, uploadDate: "2024-01-10" },
-    { id: "2", name: "Arrays Deep Dive.ppt", type: "ppt", size: "5.1 MB", visible: true, uploadDate: "2024-01-12" },
-    { id: "3", name: "Linked List Tutorial", type: "video", size: "45 MB", visible: false, uploadDate: "2024-01-14" },
-  ],
-  "2": [
-    { id: "1", name: "Network Basics.pdf", type: "pdf", size: "3.2 MB", visible: true, uploadDate: "2024-01-08" },
-    { id: "2", name: "OSI Model.ppt", type: "ppt", size: "4.5 MB", visible: true, uploadDate: "2024-01-10" },
-  ],
-  "3": [
-    { id: "1", name: "HTML5 Guide.pdf", type: "pdf", size: "2.1 MB", visible: true, uploadDate: "2024-01-05" },
-    { id: "2", name: "React Tutorial", type: "video", size: "120 MB", visible: true, uploadDate: "2024-01-15" },
-  ],
-  "4": [
-    { id: "1", name: "ML Introduction.pdf", type: "pdf", size: "4.2 MB", visible: true, uploadDate: "2024-01-12" },
-  ],
-  "5": [
-    { id: "1", name: "Deep Learning Basics.pdf", type: "pdf", size: "5.5 MB", visible: true, uploadDate: "2024-01-18" },
-  ],
-};
-
-// Student marks data per class
-const studentMarksDataByClass: Record<string, StudentMark[]> = {
-  "1": [
-    { id: "1", registerNo: "CSE001", name: "Aditya Kumar", subject: "Data Structures", internalMarks: 45, assignmentMarks: 35, totalMarks: 80, passPercentage: 80, examStatus: 'Pass' },
-    { id: "2", registerNo: "CSE002", name: "Priya Sharma", subject: "Data Structures", internalMarks: 55, assignmentMarks: 38, totalMarks: 93, passPercentage: 93, examStatus: 'Pass' },
-    { id: "3", registerNo: "CSE003", name: "Rahul Verma", subject: "Data Structures", internalMarks: 35, assignmentMarks: 25, totalMarks: 60, passPercentage: 60, examStatus: 'Pass' },
-    { id: "4", registerNo: "CSE004", name: "Karan Malhotra", subject: "Data Structures", internalMarks: 48, assignmentMarks: 36, totalMarks: 84, passPercentage: 84, examStatus: 'Pass' },
-    { id: "5", registerNo: "CSE005", name: "Neha Sharma", subject: "Data Structures", internalMarks: 52, assignmentMarks: 39, totalMarks: 91, passPercentage: 91, examStatus: 'Pass' },
-    { id: "6", registerNo: "CSE006", name: "Amit Patel", subject: "Data Structures", internalMarks: 40, assignmentMarks: 32, totalMarks: 72, passPercentage: 72, examStatus: 'Pass' },
-    { id: "7", registerNo: "CSE007", name: "Zara Khan", subject: "Data Structures", internalMarks: 58, assignmentMarks: 40, totalMarks: 98, passPercentage: 98, examStatus: 'Pass' },
-    { id: "8", registerNo: "CSE008", name: "Vikram Singh", subject: "Data Structures", internalMarks: 44, assignmentMarks: 34, totalMarks: 78, passPercentage: 78, examStatus: 'Pass' },
-    { id: "9", registerNo: "CSE009", name: "Sneha Desai", subject: "Data Structures", internalMarks: 50, assignmentMarks: 37, totalMarks: 87, passPercentage: 87, examStatus: 'Pass' },
-    { id: "10", registerNo: "CSE010", name: "Rohit Kapoor", subject: "Data Structures", internalMarks: 46, assignmentMarks: 35, totalMarks: 81, passPercentage: 81, examStatus: 'Pass' },
-    { id: "11", registerNo: "CSE011", name: "Anjali Gupta", subject: "Data Structures", internalMarks: 54, assignmentMarks: 39, totalMarks: 93, passPercentage: 93, examStatus: 'Pass' },
-    { id: "12", registerNo: "CSE012", name: "Divya Menon", subject: "Data Structures", internalMarks: 49, assignmentMarks: 36, totalMarks: 85, passPercentage: 85, examStatus: 'Pass' },
-    { id: "13", registerNo: "CSE013", name: "Arjun Nair", subject: "Data Structures", internalMarks: 41, assignmentMarks: 31, totalMarks: 72, passPercentage: 72, examStatus: 'Pass' },
-    { id: "14", registerNo: "CSE014", name: "Pooja Singh", subject: "Data Structures", internalMarks: 53, assignmentMarks: 38, totalMarks: 91, passPercentage: 91, examStatus: 'Pass' },
-    { id: "15", registerNo: "CSE015", name: "Nikhil Reddy", subject: "Data Structures", internalMarks: 47, assignmentMarks: 35, totalMarks: 82, passPercentage: 82, examStatus: 'Pass' },
-    { id: "16", registerNo: "CSE016", name: "Swati Iyer", subject: "Data Structures", internalMarks: 56, assignmentMarks: 40, totalMarks: 96, passPercentage: 96, examStatus: 'Pass' },
-    { id: "17", registerNo: "CSE017", name: "Harsh Verma", subject: "Data Structures", internalMarks: 38, assignmentMarks: 30, totalMarks: 68, passPercentage: 68, examStatus: 'Pass' },
-    { id: "18", registerNo: "CSE018", name: "Sakshi Bhat", subject: "Data Structures", internalMarks: 51, assignmentMarks: 37, totalMarks: 88, passPercentage: 88, examStatus: 'Pass' },
-    { id: "19", registerNo: "CSE019", name: "Siddharth Roy", subject: "Data Structures", internalMarks: 45, assignmentMarks: 34, totalMarks: 79, passPercentage: 79, examStatus: 'Pass' },
-    { id: "20", registerNo: "CSE020", name: "Isha Pandey", subject: "Data Structures", internalMarks: 57, assignmentMarks: 39, totalMarks: 96, passPercentage: 96, examStatus: 'Pass' },
-    { id: "21", registerNo: "CSE021", name: "Yash Agarwal", subject: "Data Structures", internalMarks: 42, assignmentMarks: 33, totalMarks: 75, passPercentage: 75, examStatus: 'Pass' },
-    { id: "22", registerNo: "CSE022", name: "Priya Nair", subject: "Data Structures", internalMarks: 55, assignmentMarks: 38, totalMarks: 93, passPercentage: 93, examStatus: 'Pass' },
-    { id: "23", registerNo: "CSE023", name: "Aryan Sharma", subject: "Data Structures", internalMarks: 48, assignmentMarks: 36, totalMarks: 84, passPercentage: 84, examStatus: 'Pass' },
-    { id: "24", registerNo: "CSE024", name: "Ritika Jain", subject: "Data Structures", internalMarks: 50, assignmentMarks: 37, totalMarks: 87, passPercentage: 87, examStatus: 'Pass' },
-    { id: "25", registerNo: "CSE025", name: "Varun Chopra", subject: "Data Structures", internalMarks: 47, assignmentMarks: 35, totalMarks: 82, passPercentage: 82, examStatus: 'Pass' },
-    { id: "26", registerNo: "CSE026", name: "Anushka Roy", subject: "Data Structures", internalMarks: 54, assignmentMarks: 39, totalMarks: 93, passPercentage: 93, examStatus: 'Pass' },
-    { id: "27", registerNo: "CSE027", name: "Dhruv Patel", subject: "Data Structures", internalMarks: 43, assignmentMarks: 33, totalMarks: 76, passPercentage: 76, examStatus: 'Pass' },
-    { id: "28", registerNo: "CSE028", name: "Mehira Singh", subject: "Data Structures", internalMarks: 52, assignmentMarks: 38, totalMarks: 90, passPercentage: 90, examStatus: 'Pass' },
-    { id: "29", registerNo: "CSE029", name: "Kabir Malhotra", subject: "Data Structures", internalMarks: 46, assignmentMarks: 34, totalMarks: 80, passPercentage: 80, examStatus: 'Pass' },
-    { id: "30", registerNo: "CSE030", name: "Sarika Desai", subject: "Data Structures", internalMarks: 58, assignmentMarks: 40, totalMarks: 98, passPercentage: 98, examStatus: 'Pass' },
-    { id: "31", registerNo: "CSE031", name: "Tanvi Kapoor", subject: "Data Structures", internalMarks: 44, assignmentMarks: 34, totalMarks: 78, passPercentage: 78, examStatus: 'Pass' },
-    { id: "32", registerNo: "CSE032", name: "Manish Gupta", subject: "Data Structures", internalMarks: 49, assignmentMarks: 36, totalMarks: 85, passPercentage: 85, examStatus: 'Pass' },
-    { id: "33", registerNo: "CSE033", name: "Avni Reddy", subject: "Data Structures", internalMarks: 51, assignmentMarks: 37, totalMarks: 88, passPercentage: 88, examStatus: 'Pass' },
-    { id: "34", registerNo: "CSE034", name: "Sanjay Iyer", subject: "Data Structures", internalMarks: 47, assignmentMarks: 35, totalMarks: 82, passPercentage: 82, examStatus: 'Pass' },
-    { id: "35", registerNo: "CSE035", name: "Nisha Verma", subject: "Data Structures", internalMarks: 55, assignmentMarks: 39, totalMarks: 94, passPercentage: 94, examStatus: 'Pass' },
-    { id: "36", registerNo: "CSE036", name: "Ravi Bhat", subject: "Data Structures", internalMarks: 40, assignmentMarks: 32, totalMarks: 72, passPercentage: 72, examStatus: 'Pass' },
-    { id: "37", registerNo: "CSE037", name: "Kavya Singh", subject: "Data Structures", internalMarks: 53, assignmentMarks: 38, totalMarks: 91, passPercentage: 91, examStatus: 'Pass' },
-    { id: "38", registerNo: "CSE038", name: "Aman Chopra", subject: "Data Structures", internalMarks: 48, assignmentMarks: 36, totalMarks: 84, passPercentage: 84, examStatus: 'Pass' },
-    { id: "39", registerNo: "CSE039", name: "Diya Pandey", subject: "Data Structures", internalMarks: 56, assignmentMarks: 39, totalMarks: 95, passPercentage: 95, examStatus: 'Pass' },
-    { id: "40", registerNo: "CSE040", name: "Vikrant Roy", subject: "Data Structures", internalMarks: 45, assignmentMarks: 34, totalMarks: 79, passPercentage: 79, examStatus: 'Pass' },
-    { id: "41", registerNo: "CSE041", name: "Shreya Agarwal", subject: "Data Structures", internalMarks: 50, assignmentMarks: 37, totalMarks: 87, passPercentage: 87, examStatus: 'Pass' },
-    { id: "42", registerNo: "CSE042", name: "Nitin Jain", subject: "Data Structures", internalMarks: 47, assignmentMarks: 35, totalMarks: 82, passPercentage: 82, examStatus: 'Pass' },
-    { id: "43", registerNo: "CSE043", name: "Esha Nair", subject: "Data Structures", internalMarks: 54, assignmentMarks: 39, totalMarks: 93, passPercentage: 93, examStatus: 'Pass' },
-    { id: "44", registerNo: "CSE044", name: "Vivek Sharma", subject: "Data Structures", internalMarks: 41, assignmentMarks: 31, totalMarks: 72, passPercentage: 72, examStatus: 'Pass' },
-    { id: "45", registerNo: "CSE045", name: "Mira Kapoor", subject: "Data Structures", internalMarks: 52, assignmentMarks: 38, totalMarks: 90, passPercentage: 90, examStatus: 'Pass' },
-    { id: "46", registerNo: "CSE046", name: "Ashok Patel", subject: "Data Structures", internalMarks: 46, assignmentMarks: 34, totalMarks: 80, passPercentage: 80, examStatus: 'Pass' },
-    { id: "47", registerNo: "CSE047", name: "Sarita Desai", subject: "Data Structures", internalMarks: 57, assignmentMarks: 40, totalMarks: 97, passPercentage: 97, examStatus: 'Pass' },
-    { id: "48", registerNo: "CSE048", name: "Gaurav Gupta", subject: "Data Structures", internalMarks: 44, assignmentMarks: 33, totalMarks: 77, passPercentage: 77, examStatus: 'Pass' },
-    { id: "49", registerNo: "CSE049", name: "Olivia D'Souza", subject: "Data Structures", internalMarks: 49, assignmentMarks: 36, totalMarks: 85, passPercentage: 85, examStatus: 'Pass' },
-    { id: "50", registerNo: "CSE050", name: "Fahad Rahman", subject: "Data Structures", internalMarks: 56, assignmentMarks: 40, totalMarks: 96, passPercentage: 96, examStatus: 'Pass' },
-  ],
-  "2": [
-    { id: "1", registerNo: "AD001", name: "Sneha Patel", subject: "DBMS", internalMarks: 50, assignmentMarks: 32, totalMarks: 82, passPercentage: 82, examStatus: 'Pass' },
-    { id: "2", registerNo: "AD002", name: "Vikram Singh", subject: "DBMS", internalMarks: 40, assignmentMarks: 25, totalMarks: 65, passPercentage: 65, examStatus: 'Pass' },
-  ],
-  "3": [
-    { id: "1", registerNo: "IT001", name: "Ananya Rao", subject: "Algorithms", internalMarks: 58, assignmentMarks: 38, totalMarks: 96, passPercentage: 96, examStatus: 'Pass' },
-    { id: "2", registerNo: "IT002", name: "Karthik Nair", subject: "Algorithms", internalMarks: 35, assignmentMarks: 28, totalMarks: 63, passPercentage: 63, examStatus: 'Pass' },
-  ],
-  "4": [
-    { id: "1", registerNo: "CSE101", name: "Meera Iyer", subject: "Introduction to Operating Systems", internalMarks: 48, assignmentMarks: 35, totalMarks: 83, passPercentage: 83, examStatus: 'Pass' },
-  ],
-  "5": [
-    { id: "1", registerNo: "AD101", name: "Arjun Menon", subject: "Theory of Computation & Discrete Mathematics", internalMarks: 49, assignmentMarks: 36, totalMarks: 85, passPercentage: 85, examStatus: 'Pass' },
-  ],
-};
-
 const typeIcons = {
   pdf: FileText,
   ppt: Presentation,
@@ -260,6 +153,7 @@ export default function Academics() {
   const [fetchedCreditsData, setFetchedCreditsData] = useState<SemesterCredits[]>([]);
   const [fetchedClassesHandled, setFetchedClassesHandled] = useState<ClassSubject[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
 
   // Fetch faculty's assigned subjects and classes
   useEffect(() => {
@@ -305,6 +199,30 @@ export default function Academics() {
     return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   };
 
+  const groupTopicsByUnit = (topics: Topic[]) => {
+    const grouped: { [key: string]: Topic[] } = {};
+    topics.forEach(topic => {
+      const unitLabel = topic.unit_label || 'Unassigned';
+      if (!grouped[unitLabel]) {
+        grouped[unitLabel] = [];
+      }
+      grouped[unitLabel].push(topic);
+    });
+    return Object.entries(grouped).sort((a, b) => {
+      const aNum = parseInt(a[0].match(/\d+/)?.[0] || '999');
+      const bNum = parseInt(b[0].match(/\d+/)?.[0] || '999');
+      return aNum - bNum;
+    });
+  };
+
+  const toggleUnit = (classId: string, unit: string) => {
+    const key = `${classId}-${unit}`;
+    setExpandedUnits(prev => ({
+      ...prev,
+      [key]: !prev[key]
+    }));
+  };
+
   const [selectedClassId, setSelectedClassId] = useState<string>("");
   
   // Initialize selectedClassId when classes data is loaded
@@ -313,10 +231,11 @@ export default function Academics() {
       setSelectedClassId(fetchedClassesHandled[0].id);
     }
   }, [fetchedClassesHandled, selectedClassId]);
-  const [topicsData, setTopicsData] = useState<Record<string, Topic[]>>(syllabusDataByClass);
-  const [materialsData, setMaterialsData] = useState<Record<string, Material[]>>(materialsDataByClass);
-  const [marksData, setMarksData] = useState<Record<string, StudentMark[]>>(studentMarksDataByClass);
+  const [topicsData, setTopicsData] = useState<Record<string, Topic[]>>({});
+  const [materialsData, setMaterialsData] = useState<Record<string, Material[]>>({});
+  const [marksData, setMarksData] = useState<Record<string, StudentMark[]>>({});
   const [lockedClasses, setLockedClasses] = useState<Record<string, boolean>>({});
+  const [expandedUnits, setExpandedUnits] = useState<{ [key: string]: boolean }>({});
 
   // Credits filter states - Initialize based on fetched data
   const [creditsDepartment, setCreditsDepartment] = useState<string>("");
@@ -333,10 +252,368 @@ export default function Academics() {
     }
   }, [fetchedCreditsData, creditsDepartment]);
 
-  // Course file states
-  const [courseFile, setCourseFile] = useState<File | null>(null);
-  const [courseFileUrl, setCourseFileUrl] = useState<string | null>(null);
+  // Compute selectedClass from selectedClassId early (before useEffect that uses it)
+  const selectedClass = (fetchedClassesHandled.find(c => c.id === selectedClassId) || fetchedClassesHandled[0] || {
+    id: "",
+    assignment_id: 0,
+    faculty_id: 0,
+    subject_id: 0,
+    class_id: 0,
+    program: "",
+    semester: "",
+    section: "",
+    subject: "",
+    subjectCode: "",
+    className: "",
+    batch: ""
+  }) as ClassSubject;
+
+  // Helper function to get the default academic year (consistent with backend)
+  const getDefaultAcademicYear = (): string => {
+    // If selectedClass has a batch, use it
+    if (selectedClass?.batch) {
+      return selectedClass.batch;
+    }
+    // Otherwise generate based on current year
+    const currentYear = new Date().getFullYear();
+    return `${currentYear}-${currentYear + 1}`;
+  };
+
+  // Load course lesson plans when class is selected
+  const loadCoursePlans = async () => {
+    if (!selectedClassId || !selectedClass?.id) return;    
+
+    try {
+      setLoadingPlans(true);
+      // Ensure semester is a number, not a string
+      const semesterParam = parseInt(String(selectedClass.semester || 1), 10);
+      const academicYearParam = getDefaultAcademicYear();
+      
+      // Faculty can see their own pending + approved plans
+      const url = `/api/v1/faculty/academics/course-plans?subjectId=${selectedClass.subject_id}&classId=${selectedClass.class_id}&facultyId=${selectedClass.faculty_id}&academicYear=${encodeURIComponent(academicYearParam)}&semester=${semesterParam}&includePending=true`;
+      
+      console.log('📚 Loading course plans with:', {
+        subjectId: selectedClass.subject_id,
+        classId: selectedClass.class_id,
+        facultyId: selectedClass.faculty_id,
+        academicYear: academicYearParam,
+        semester: semesterParam,
+        includePending: true,
+        url
+      });
+      
+      const response = await apiFetch(url);
+
+      console.log('📚 Course plans response:', response);
+
+      if (response.success && response.data && Array.isArray(response.data)) {
+        console.log('✅ Found', response.data.length, 'course plans');
+        setCoursePlans(response.data);
+
+        // Sync with Syllabus Topics (for highlights/ticks)
+        // But only show APPROVED topics in the main syllabus display
+        const syllabusTopics = response.data
+          .filter((plan: CourseLessonPlan) => plan.approval_status === 'approved')
+          .map((plan: CourseLessonPlan) => ({
+            id: `${plan.id}`,
+            name: plan.topic,
+            hours: plan.periods_required || 1,
+            completed: plan.is_completed || false,
+            unit_label: plan.unit_label || 'Unassigned'
+          }));
+        
+        setTopicsData(prev => ({ ...prev, [selectedClassId]: syllabusTopics }));
+        
+        // Initialize expanded units state - expand all units by default
+        const uniqueUnits = [...new Set(syllabusTopics.map(t => t.unit_label))];
+        const newExpandedUnits: { [key: string]: boolean } = {};
+        uniqueUnits.forEach(unit => {
+          newExpandedUnits[`${selectedClassId}-${unit}`] = true;
+        });
+        setExpandedUnits(prev => ({ ...prev, ...newExpandedUnits }));
+
+        // Log approval status breakdown
+        const pendingCount = response.data.filter((p: CourseLessonPlan) => p.approval_status === 'pending').length;
+        const approvedCount = response.data.filter((p: CourseLessonPlan) => p.approval_status === 'approved').length;
+        if (pendingCount > 0) {
+          console.warn(`⏳ ${pendingCount} topics pending approval, ${approvedCount} approved`);
+        }
+
+        // Load progress info (only from approved plans)
+        const progressUrl = `/api/v1/faculty/academics/course-plans/progress?subjectId=${selectedClass.subject_id}&classId=${selectedClass.class_id}&facultyId=${selectedClass.faculty_id}&academicYear=${encodeURIComponent(academicYearParam)}&semester=${semesterParam}`;
+        const progressResponse = await apiFetch(progressUrl);
+        if (progressResponse.success && progressResponse.data?.summary) {
+          setPlanProgress(progressResponse.data.summary);
+        }
+      } else {
+        console.warn('❌ No course plans data found or invalid response:', response);
+        setCoursePlans([]);
+        setTopicsData(prev => ({ ...prev, [selectedClassId]: [] }));
+        setPlanProgress({
+          totalTopics: 0,
+          totalPeriodsPlanned: 0,
+          totalPeriodsTaught: 0,
+          topicsCompleted: 0,
+          completionPercentage: 0,
+        });
+      }
+    } catch (error) {
+      console.error('❌ Error loading course plans:', error);
+      setCoursePlans([]);
+      setTopicsData(prev => ({ ...prev, [selectedClassId]: [] }));
+      setPlanProgress({
+        totalTopics: 0,
+        totalPeriodsPlanned: 0,
+        totalPeriodsTaught: 0,
+        topicsCompleted: 0,
+        completionPercentage: 0,
+      });
+    } finally {
+      setLoadingPlans(false);
+    }
+  };
+
+  useEffect(() => {
+    loadCoursePlans();
+  }, [selectedClassId, selectedClass?.id]);
+
   const [isFileSent, setIsFileSent] = useState<boolean>(false);
+  const [isUploading, setIsUploading] = useState<boolean>(false);
+
+  // Course Plan Manual Entry States
+  const [coursePlanUnits, setCoursePlanUnits] = useState<any[]>([
+    { unit_label: "", topics: [{ topic: "", co_number: "", btl: "", delivery_mode: "", reference_book: "", periods_required: 1, tentative_date: "" }] }
+  ]);
+  const [csvUploadError, setCsvUploadError] = useState<string | null>(null);
+  const [csvPreviewRows, setCsvPreviewRows] = useState<number>(0);
+  const csvFileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const handleAddUnit = () => {
+    setCoursePlanUnits([
+      ...coursePlanUnits,
+      { unit_label: "", topics: [{ topic: "", co_number: "", btl: "", delivery_mode: "", reference_book: "", periods_required: 1, tentative_date: "" }] }
+    ]);
+  };
+
+  const handleRemoveUnit = (unitIdx: number) => {
+    setCoursePlanUnits(coursePlanUnits.filter((_, idx) => idx !== unitIdx));
+  };
+
+  const handleUnitChange = (unitIdx: number, field: string, value: any) => {
+    const updated = [...coursePlanUnits];
+    updated[unitIdx][field] = value;
+    setCoursePlanUnits(updated);
+  };
+
+  const handleAddTopic = (unitIdx: number) => {
+    const updated = [...coursePlanUnits];
+    updated[unitIdx].topics.push({
+      topic: "",
+      co_number: "",
+      btl: "",
+      delivery_mode: "",
+      reference_book: "",
+      periods_required: 1,
+      tentative_date: ""
+    });
+    setCoursePlanUnits(updated);
+  };
+
+  const handleRemoveTopic = (unitIdx: number, topicIdx: number) => {
+    const updated = [...coursePlanUnits];
+    updated[unitIdx].topics = updated[unitIdx].topics.filter((__topic: any, idx: number) => idx !== topicIdx);
+    setCoursePlanUnits(updated);
+  };
+
+  const handleTopicChange = (unitIdx: number, topicIdx: number, field: string, value: any) => {
+    const updated = [...coursePlanUnits];
+    updated[unitIdx].topics[topicIdx][field] = field === 'tentative_date' ? normalizeDateString(value) : value;
+    setCoursePlanUnits(updated);
+  };
+
+  const normalizeDateString = (value: string): string => {
+    if (!value) return "";
+
+    const trimmed = value.trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
+    if (/^\d{2}-\d{2}-\d{4}$/.test(trimmed)) {
+      const [d, m, y] = trimmed.split('-');
+      return `${y}-${m}-${d}`;
+    }
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(trimmed)) {
+      const [d, m, y] = trimmed.split('/');
+      return `${y}-${m}-${d}`;
+    }
+
+    const iso = new Date(trimmed);
+    if (!isNaN(iso.getTime())) {
+      return iso.toISOString().slice(0, 10);
+    }
+
+    return "";
+  };
+
+  const parseCsvToUnits = (csvText: string) => {
+    const lines = csvText.trim().split(/\r?\n/).filter(Boolean);
+    if (lines.length < 2) throw new Error('CSV must include header and at least one data row');
+
+    const header = lines[0].split(',').map(h => h.trim().toLowerCase());
+    const lookups = {
+      unit_number: header.indexOf('unit_number'),
+      unit_label: header.indexOf('unit_label'),
+      sno: header.indexOf('sno'),
+      tentative_date: header.indexOf('tentative_date'),
+      topic: header.indexOf('topic'),
+      co_number: header.indexOf('co_number'),
+      btl: header.indexOf('btl'),
+      delivery_mode: header.indexOf('delivery_mode'),
+      reference_book: header.indexOf('reference_book'),
+      periods_required: header.indexOf('periods_required'),
+    };
+
+    if (lookups.topic === -1) throw new Error('CSV must include topic column');
+    if (lookups.unit_label === -1 && lookups.unit_number === -1) throw new Error('CSV must include unit_label or unit_number column');
+
+    const unitsMap: Record<string, any> = {};
+
+    for (let i = 1; i < lines.length; i++) {
+      const row = lines[i].split(',').map(c => c.trim());
+      const unitLabel = lookups.unit_label >= 0 ? row[lookups.unit_label] || '' : `Unit ${row[lookups.unit_number] || '1'}`;
+      const unitKey = unitLabel || `unit-${row[lookups.unit_number] || '1'}`;
+      const topicRow = {
+        tentative_date: normalizeDateString(lookups.tentative_date >= 0 ? row[lookups.tentative_date] || '' : ''),
+        topic: row[lookups.topic] || '',
+        co_number: lookups.co_number >= 0 ? row[lookups.co_number] || '' : '',
+        btl: lookups.btl >= 0 ? row[lookups.btl] || '' : '',
+        delivery_mode: lookups.delivery_mode >= 0 ? row[lookups.delivery_mode] || '' : '',
+        reference_book: lookups.reference_book >= 0 ? row[lookups.reference_book] || '' : '',
+        periods_required: parseInt(row[lookups.periods_required] || '1', 10) || 1,
+      };
+
+      if (!unitsMap[unitKey]) {
+        unitsMap[unitKey] = {
+          unit_label: unitLabel,
+          topics: []
+        };
+      }
+      unitsMap[unitKey].topics.push(topicRow);
+    }
+
+    return Object.values(unitsMap);
+  };
+
+  const handleCsvUpload = async (file: File) => {
+    setCsvUploadError(null);
+    if (file.type !== 'text/csv' && !file.name.toLowerCase().endsWith('.csv')) {
+      setCsvUploadError('Only CSV files are allowed');
+      return;
+    }
+
+    const text = await file.text();
+    try {
+      const parsedUnits = parseCsvToUnits(text);
+      const topicsCount = parsedUnits.reduce((sum, u) => sum + (u.topics?.length || 0), 0);
+      setCoursePlanUnits(parsedUnits);
+      setCsvPreviewRows(topicsCount);
+      alert(`CSV loaded: ${parsedUnits.length} units, ${topicsCount} topics`);
+    } catch (err: any) {
+      setCsvUploadError(err.message || 'Failed to parse CSV');
+    }
+  };
+
+  const handleSaveCoursePlan = async () => {
+    if (!selectedClass) {
+      alert('Please select a class first');
+      return;
+    }
+
+    // Validate data
+    const allTopics: any[] = [];
+    let sno = 1;
+    let cumulativePeriods = 0;
+
+    for (let unitIdx = 0; unitIdx < coursePlanUnits.length; unitIdx++) {
+      const unit = coursePlanUnits[unitIdx];
+      if (!unit.unit_label?.trim()) {
+        alert(`Unit ${unitIdx + 1} name is required`);
+        return;
+      }
+
+      for (let topicIdx = 0; topicIdx < unit.topics.length; topicIdx++) {
+        const topic = unit.topics[topicIdx];
+        if (!topic.topic?.trim()) {
+          alert(`Unit ${unitIdx + 1}, Topic ${topicIdx + 1}: Topic name is required`);
+          return;
+        }
+
+        cumulativePeriods += (topic.periods_required || 1);
+        allTopics.push({
+          sno,
+          unit_number: unitIdx + 1,
+          unit_label: unit.unit_label,
+          topic: topic.topic,
+          co_number: topic.co_number,
+          btl: topic.btl,
+          delivery_mode: topic.delivery_mode,
+          reference_book: topic.reference_book,
+          periods_required: topic.periods_required || 1,
+          cumulative_periods: cumulativePeriods,
+          tentative_date: normalizeDateString(topic.tentative_date || '') || null
+        });
+        sno++;
+      }
+    }
+
+    if (allTopics.length === 0) {
+      alert('Please add at least one topic');
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      // Ensure semester is sent as an integer
+      const semesterToSend = parseInt(String(selectedClass.semester || 1), 10);
+      const academicYearToSend = getDefaultAcademicYear();
+
+      const payload = {
+        subjectId: selectedClass.subject_id,
+        classId: selectedClass.class_id,
+        academic_year: academicYearToSend,
+        semester: semesterToSend,
+        topics: allTopics
+      };
+
+      console.log('📤 Uploading course plan with payload:', payload);
+
+      const response = await fetch('/api/v1/faculty/academics/course-plans/bulk', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to save course plan');
+      }
+
+      const result = await response.json();
+      console.log('✅ Upload successful:', result);
+      setIsFileSent(true);
+      alert(`✓ Course plan saved successfully! ${result.data?.count || allTopics.length} topics created.\n\n⏳ Your course plan has been submitted to the department admin for approval. Once approved, it will be visible in the Syllabus section. You can still view and edit your pending topics above.`);
+
+      // Refresh course plans for the selected class/subject to show updated syllabus (including pending)
+      console.log('🔄 Refreshing course plans after upload (showing pending)...');
+      await loadCoursePlans();
+    } catch (error: any) {
+      console.error('Error saving course plan:', error);
+      alert(error.message || 'An error occurred while saving the course plan.');
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   // Share to external platforms states
   const [showGoogleModal, setShowGoogleModal] = useState(false);
@@ -353,18 +630,35 @@ export default function Academics() {
   });
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  const selectedClass = fetchedClassesHandled.find(c => c.id === selectedClassId) || (fetchedClassesHandled.length > 0 ? fetchedClassesHandled[0] : { id: "", program: "", semester: "", section: "", subject: "", subjectCode: "" });
+  // Course Lesson Plan states
+  const [coursePlans, setCoursePlans] = useState<CourseLessonPlan[]>([]);
+  const [loadingPlans, setLoadingPlans] = useState(false);
+  const [planProgress, setPlanProgress] = useState({
+    totalTopics: 0,
+    totalPeriodsPlanned: 0,
+    totalPeriodsTaught: 0,
+    topicsCompleted: 0,
+    completionPercentage: 0,
+  });
+
   const topics = topicsData[selectedClassId] || [];
   const materials = materialsData[selectedClassId] || [];
   const allMarks = marksData[selectedClassId] || [];
   const marks = allMarks;
   const isLocked = lockedClasses[selectedClassId] || false;
 
+  if (isLoading) {
+    return (
+      <MainLayout hideHeader={true}>
+        <div className="p-8 text-center text-lg font-medium">Loading academic information...</div>
+      </MainLayout>
+    );
+  }
+
   // Get filtered credits data using fetched data
   const filteredCredits = fetchedCreditsData.find(
     (c) => c.department === creditsDepartment && c.year === parseInt(creditsYear) && c.semester === parseInt(creditsSemester)
   );
-  const totalCredits = filteredCredits?.subjects.reduce((acc, s) => acc + (s.credits || 0), 0) || 0;
   const totalContactHours = filteredCredits?.subjects.reduce((acc, s) => acc + (s.totalHours || 0), 0) || 0;
 
   const completedTopics = topics.filter((t) => t.completed).length;
@@ -463,14 +757,6 @@ export default function Academics() {
     setTimeout(() => setSuccessMessage(null), 4000);
   };
 
-  const calculateInternal100 = (student: StudentMark) => {
-    return student.internalMarks + student.assignmentMarks;
-  };
-
-  const calculateExamStatus = (student: StudentMark) => {
-    return student.totalMarks >= student.passPercentage ? 'Pass' : 'Fail';
-  };
-
   const updateStudentMark = (studentId: string, field: keyof StudentMark, value: string | number) => {
     setMarksData(prev => ({
       ...prev,
@@ -546,7 +832,7 @@ export default function Academics() {
                 <SelectValue placeholder="Select a class" />
               </SelectTrigger>
               <SelectContent>
-                {(fetchedClassesHandled.length > 0 ? fetchedClassesHandled : classesHandled).map((cls) => (
+                {fetchedClassesHandled.map((cls) => (
                   <SelectItem key={cls.id} value={cls.id}>
                     <div className="flex items-center gap-2">
                       <GraduationCap className="w-4 h-4 text-secondary" />
@@ -594,9 +880,14 @@ export default function Academics() {
             Study Materials
           </TabsTrigger>
 
-          <TabsTrigger value="coursefile" className="flex items-center gap-2">
+          <TabsTrigger value="courseplan" className="flex items-center gap-2">
             <ClipboardList className="w-4 h-4" />
-            Course File
+            Course Plan
+          </TabsTrigger>
+
+          <TabsTrigger value="coursefile" className="flex items-center gap-2">
+            <FileUp className="w-4 h-4" />
+            Course Plan Upload
           </TabsTrigger>
           <TabsTrigger value="credits" className="flex items-center gap-2">
             <GraduationCap className="w-4 h-4" />
@@ -810,39 +1101,99 @@ export default function Academics() {
             transition={{ delay: 0.1 }}
             className="widget-card"
           >
-            <h3 className="section-title">Syllabus Topics</h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="section-title">Syllabus Topics</h3>
+              {coursePlans && coursePlans.length > 0 && coursePlans.some(p => p.approval_status === 'pending') && (
+                <Badge className="bg-amber-500/20 text-amber-700 border-amber-500/30">
+                  ⏳ {coursePlans.filter(p => p.approval_status === 'pending').length} Pending Approval
+                </Badge>
+              )}
+            </div>
+            
+            {/* Show pending topics alert if any */}
+            {coursePlans && coursePlans.some(p => p.approval_status === 'pending') && (
+              <motion.div
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-4 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg"
+              >
+                <p className="text-sm text-amber-700 font-medium">
+                  ⏳ Your course plan has been submitted to the department for approval. Once approved by the department admin, the topics below will be available for students.
+                </p>
+              </motion.div>
+            )}
+
+            {/* Topics by Unit */}
             <div className="space-y-3">
-              {topics.map((topic, index) => (
-                <motion.div
-                  key={topic.id}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.1 + index * 0.05 }}
-                  className={cn(
-                    "flex items-center justify-between p-4 rounded-lg border transition-all cursor-pointer",
-                    topic.completed
-                      ? "bg-success/5 border-success/30"
-                      : "bg-muted/30 border-border hover:border-primary/30"
-                  )}
-                  onClick={() => toggleTopic(topic.id)}
-                >
-                  <div className="flex items-center gap-4">
-                    <Checkbox checked={topic.completed} />
-                    <div>
-                      <p className={cn(
-                        "font-medium",
-                        topic.completed && "text-success"
-                      )}>
-                        {topic.name}
-                      </p>
-                      <p className="text-xs text-muted-foreground">{topic.hours} hours</p>
-                    </div>
+              {groupTopicsByUnit(topics).map(([unit, unitTopics], unitIndex) => {
+                const unitKey = `${selectedClassId}-${unit}`;
+                const isExpanded = expandedUnits[unitKey] ?? true;
+                const unitCompletedCount = unitTopics.filter(t => t.completed).length;
+
+                return (
+                  <div key={unit} className="border border-border rounded-lg overflow-hidden">
+                    {/* Unit Header */}
+                    <button
+                      onClick={() => toggleUnit(selectedClassId, unit)}
+                      className="w-full px-4 py-3 bg-primary/5 hover:bg-primary/10 transition-colors flex items-center justify-between border-b border-border"
+                    >
+                      <div className="flex items-center gap-3 text-left">
+                        {isExpanded ? (
+                          <ChevronDown className="w-5 h-5 text-primary" />
+                        ) : (
+                          <ChevronRight className="w-5 h-5 text-primary" />
+                        )}
+                        <div>
+                          <h4 className="font-semibold text-foreground">{unit}</h4>
+                          <p className="text-xs text-muted-foreground">
+                            {unitCompletedCount} of {unitTopics.length} completed
+                          </p>
+                        </div>
+                      </div>
+                      <Badge variant="secondary" className="text-xs">
+                        {unitCompletedCount}/{unitTopics.length}
+                      </Badge>
+                    </button>
+
+                    {/* Topics under Unit */}
+                    {isExpanded && (
+                      <div className="p-4 space-y-2 bg-muted/20">
+                        {unitTopics.map((topic, index) => (
+                          <motion.div
+                            key={topic.id}
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: 0.05 + index * 0.02 }}
+                            className={cn(
+                              "flex items-center justify-between p-3 rounded-lg border transition-all cursor-pointer",
+                              topic.completed
+                                ? "bg-success/5 border-success/30"
+                                : "bg-background border-border hover:border-primary/30"
+                            )}
+                            onClick={() => toggleTopic(topic.id)}
+                          >
+                            <div className="flex items-center gap-3">
+                              <Checkbox checked={topic.completed} />
+                              <div>
+                                <p className={cn(
+                                  "font-medium text-sm",
+                                  topic.completed && "text-success"
+                                )}>
+                                  {topic.name}
+                                </p>
+                                <p className="text-xs text-muted-foreground">{topic.hours} periods</p>
+                              </div>
+                            </div>
+                            {topic.completed && (
+                              <Check className="w-4 h-4 text-success" />
+                            )}
+                          </motion.div>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                  {topic.completed && (
-                    <Check className="w-5 h-5 text-success" />
-                  )}
-                </motion.div>
-              ))}
+                );
+              })}
             </div>
           </motion.div>
         </TabsContent>
@@ -1327,6 +1678,102 @@ export default function Academics() {
           </motion.div>
         </TabsContent>
 
+        <TabsContent value="courseplan">
+          {/* Course Plan Section */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="widget-card"
+          >
+            <h3 className="section-title mb-6">Course Lesson Plan (Section X)</h3>
+
+            {/* Progress Summary */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+              <div className="p-4 bg-primary/5 rounded-xl border border-primary/10">
+                <p className="text-2xl font-bold text-primary mb-1">{planProgress.topicsCompleted}</p>
+                <p className="text-xs text-muted-foreground uppercase tracking-wider">Topics Completed</p>
+              </div>
+              <div className="p-4 bg-secondary/5 rounded-xl border border-secondary/10">
+                <p className="text-2xl font-bold text-secondary mb-1">{planProgress.totalTopics}</p>
+                <p className="text-xs text-muted-foreground uppercase tracking-wider">Total Topics</p>
+              </div>
+              <div className="p-4 bg-muted/50 rounded-xl border border-border">
+                <p className="text-2xl font-bold text-muted-foreground mb-1">{planProgress.totalPeriodsTaught}</p>
+                <p className="text-xs text-muted-foreground uppercase tracking-wider">Periods Taught</p>
+              </div>
+              <div className="p-4 bg-muted/50 rounded-xl border border-border">
+                <p className="text-2xl font-bold text-muted-foreground mb-1">{planProgress.completionPercentage?.toFixed(1)}%</p>
+                <p className="text-xs text-muted-foreground uppercase tracking-wider">Completion</p>
+              </div>
+            </div>
+
+            {/* Progress Bar */}
+            <div className="mb-6">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-sm font-medium text-foreground">Overall Completion</span>
+                <span className="text-sm text-muted-foreground">{planProgress.totalPeriodsTaught}/{planProgress.totalPeriodsPlanned} periods</span>
+              </div>
+              <Progress 
+                value={planProgress.totalPeriodsPlanned > 0 ? (planProgress.totalPeriodsTaught / planProgress.totalPeriodsPlanned) * 100 : 0}
+                className="h-2"
+              />
+            </div>
+
+            {/* Course Plan Table */}
+            {loadingPlans ? (
+              <div className="flex items-center justify-center py-12">
+                <RefreshCw className="w-5 h-5 animate-spin text-primary" />
+              </div>
+            ) : coursePlans.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="border-b border-border bg-muted/50">
+                    <tr>
+                      <th className="text-left p-3 font-semibold">S.No</th>
+                      <th className="text-left p-3 font-semibold">Topic</th>
+                      <th className="text-left p-3 font-semibold">CO</th>
+                      <th className="text-left p-3 font-semibold">BTL</th>
+                      <th className="text-left p-3 font-semibold">Periods</th>
+                      <th className="text-left p-3 font-semibold">Taken</th>
+                      <th className="text-left p-3 font-semibold">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {coursePlans.map((plan) => (
+                      <tr key={plan.id} className="border-b border-border hover:bg-muted/30 transition-colors">
+                        <td className="p-3 text-muted-foreground font-medium">{plan.sno}</td>
+                        <td className="p-3 text-foreground font-medium max-w-xs truncate">{plan.topic}</td>
+                        <td className="p-3 text-muted-foreground text-xs">{plan.co_number || "—"}</td>
+                        <td className="p-3 text-muted-foreground text-xs">{plan.btl || "—"}</td>
+                        <td className="p-3 text-center font-medium text-foreground">{plan.periods_required}</td>
+                        <td className="p-3 text-center font-medium text-secondary">{plan.periods_taken}</td>
+                        <td className="p-3">
+                          {plan.is_completed ? (
+                            <Badge className="bg-green-500/20 text-green-700 border-green-500/30 flex items-center gap-1 w-fit">
+                              <Check className="w-3 h-3" />
+                              Covered
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-amber-600 border-amber-500/30">
+                              Pending
+                            </Badge>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <BookOpen className="w-12 h-12 text-muted-foreground mx-auto mb-3 opacity-50" />
+                <p className="text-muted-foreground">No course plan created yet.</p>
+                <p className="text-sm text-muted-foreground mt-1">Create a lesson plan to track topics covered in class.</p>
+              </div>
+            )}
+          </motion.div>
+        </TabsContent>
+
         <TabsContent value="marks">
           {/* Lock Banner */}
           {isLocked && (
@@ -1447,7 +1894,7 @@ export default function Academics() {
         </TabsContent>
 
         <TabsContent value="coursefile">
-          {/* Course File Upload Section */}
+          {/* Course Plan Manual Entry Section */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -1456,148 +1903,260 @@ export default function Academics() {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-primary/10 rounded-lg">
-                  <FileText className="w-5 h-5 text-primary" />
+                  <ClipboardList className="w-5 h-5 text-primary" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-foreground">Course File</h3>
+                  <h3 className="text-lg font-semibold text-foreground">Course Plan (Section X)</h3>
                   <p className="text-sm text-muted-foreground">
-                    Upload and manage course file for {selectedClass.subject}
+                    Enter course plan details for {selectedClass.subject}
                   </p>
                 </div>
               </div>
-              {isFileSent && (
-                <Badge className="bg-success/10 text-success border-success/30">
-                  <Check className="w-3 h-3 mr-1" /> Sent to HOD
-                </Badge>
+              <div className="flex gap-2">
+                {coursePlans && coursePlans.length > 0 && (
+                  <>
+                    {coursePlans.some(p => p.approval_status === 'pending') ? (
+                      <Badge className="bg-amber-500/20 text-amber-700 border-amber-500/30">
+                        <Clock className="w-3 h-3 mr-1" /> Pending Approval
+                      </Badge>
+                    ) : coursePlans.some(p => p.approval_status === 'approved') ? (
+                      <Badge className="bg-success/20 text-success border-success/30">
+                        <Check className="w-3 h-3 mr-1" /> Approved
+                      </Badge>
+                    ) : null}
+                  </>
+                )}
+                {isFileSent && (
+                  <Badge className="bg-success/10 text-success border-success/30">
+                    <Check className="w-3 h-3 mr-1" /> Saved
+                  </Badge>
+                )}
+              </div>
+            </div>
+
+            {/* Course Plan Form */}
+            <div className="space-y-4">
+              <div className="flex flex-col md:flex-row gap-3 items-start">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    const link = document.createElement('a');
+                    link.href = '/api/v1/faculty/academics/course-plans/template/download-csv';
+                    link.download = 'Course-Plan-Template.csv';
+                    link.click();
+                  }}
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Download CSV Template
+                </Button>
+
+                <input
+                  ref={csvFileInputRef}
+                  type="file"
+                  accept=".csv,text/csv"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      handleCsvUpload(file);
+                    }
+                    if (e.target) e.target.value = '';
+                  }}
+                />
+                <Button
+                  variant="outline"
+                  className="w-full md:w-auto"
+                  onClick={() => csvFileInputRef.current?.click()}
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  Upload CSV
+                </Button>
+              </div>
+
+              {csvUploadError && (
+                <p className="text-sm text-destructive">CSV error: {csvUploadError}</p>
+              )}
+
+              {csvPreviewRows > 0 && (
+                <p className="text-sm text-success">CSV loaded: {coursePlanUnits.length} units and {csvPreviewRows} topics.</p>
               )}
             </div>
 
-            {!courseFile ? (
-              /* Upload Area */
-              <div className="border-2 border-dashed border-border rounded-xl p-8 text-center hover:border-primary/50 transition-colors">
-                <FileIcon className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                <p className="font-medium text-foreground mb-2">
-                  Upload Course File (PDF)
-                </p>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Drag and drop your PDF file here or click to browse
-                </p>
-                <label className="cursor-pointer">
-                  <input
-                    type="file"
-                    accept=".pdf,application/pdf"
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file && file.type === "application/pdf") {
-                        setCourseFile(file);
-                        setCourseFileUrl(URL.createObjectURL(file));
-                        setIsFileSent(false);
-                      }
-                    }}
-                  />
-                  <Button variant="outline" className="pointer-events-none">
-                    <Upload className="w-4 h-4 mr-2" />
-                    Select PDF File
-                  </Button>
-                </label>
-              </div>
-            ) : (
-              /* PDF Viewer and Actions */
+            <div className="space-y-6">
+              {/* Units Container */}
               <div className="space-y-4">
-                {/* File Info Bar */}
-                <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg border border-border">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-destructive/10 rounded-lg">
-                      <FileText className="w-5 h-5 text-destructive" />
+                {(coursePlanUnits || []).map((unit, unitIdx) => (
+                  <div key={unitIdx} className="border border-border rounded-lg p-4 bg-muted/30">
+                    {/* Unit Header */}
+                    <div className="flex items-center justify-between mb-4 pb-3 border-b border-border">
+                      <div className="flex items-center gap-3 flex-1">
+                        <span className="text-sm font-semibold text-muted-foreground">UNIT {unitIdx + 1}</span>
+                        <Input
+                          placeholder="Unit name (e.g., INTRODUCTION TO ONLINE MARKET)"
+                          value={unit.unit_label || ""}
+                          onChange={(e) => handleUnitChange(unitIdx, "unit_label", e.target.value)}
+                          className="flex-1"
+                        />
+                      </div>
+                      {(coursePlanUnits || []).length > 1 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleRemoveUnit(unitIdx)}
+                          className="text-destructive hover:bg-destructive/10"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      )}
                     </div>
-                    <div>
-                      <p className="font-medium text-foreground">{courseFile.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {(courseFile.size / (1024 * 1024)).toFixed(2)} MB
-                      </p>
+
+                    {/* Topics Table */}
+                    <div className="overflow-x-auto mb-4">
+                      <table className="w-full text-sm">
+                        <thead className="bg-muted/50 border-b border-border">
+                          <tr>
+                            <th className="px-3 py-2 text-left font-semibold">S. No</th>
+                            <th className="px-3 py-2 text-left font-semibold">Tentative Date</th>
+                            <th className="px-3 py-2 text-left font-semibold">Topic</th>
+                            <th className="px-3 py-2 text-left font-semibold">CO</th>
+                            <th className="px-3 py-2 text-left font-semibold">BTL</th>
+                            <th className="px-3 py-2 text-left font-semibold">Delivery Mode</th>
+                            <th className="px-3 py-2 text-left font-semibold">Reference</th>
+                            <th className="px-3 py-2 text-center font-semibold">Periods</th>
+                            <th className="px-3 py-2 text-center font-semibold">Action</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {unit.topics?.map((topic: any, topicIdx: number) => (
+                            <tr key={topicIdx} className="border-b border-border hover:bg-muted/20 transition-colors">
+                              <td className="px-3 py-2 text-muted-foreground font-medium">{topicIdx + 1}</td>
+                              <td className="px-3 py-2">
+                                <Input
+                                  type="date"
+                                  value={topic.tentative_date || ""}
+                                  onChange={(e) => handleTopicChange(unitIdx, topicIdx, "tentative_date", e.target.value)}
+                                  className="h-8 text-xs"
+                                />
+                              </td>
+                              <td className="px-3 py-2">
+                                <Input
+                                  placeholder="Topic name"
+                                  value={topic.topic || ""}
+                                  onChange={(e) => handleTopicChange(unitIdx, topicIdx, "topic", e.target.value)}
+                                  className="h-8 text-xs"
+                                />
+                              </td>
+                              <td className="px-3 py-2">
+                                <Input
+                                  placeholder="CO1"
+                                  value={topic.co_number || ""}
+                                  onChange={(e) => handleTopicChange(unitIdx, topicIdx, "co_number", e.target.value)}
+                                  className="h-8 text-xs"
+                                />
+                              </td>
+                              <td className="px-3 py-2">
+                                <Input
+                                  placeholder="BT2"
+                                  value={topic.btl || ""}
+                                  onChange={(e) => handleTopicChange(unitIdx, topicIdx, "btl", e.target.value)}
+                                  className="h-8 text-xs"
+                                />
+                              </td>
+                              <td className="px-3 py-2">
+                                <Input
+                                  placeholder="PPT, BB"
+                                  value={topic.delivery_mode || ""}
+                                  onChange={(e) => handleTopicChange(unitIdx, topicIdx, "delivery_mode", e.target.value)}
+                                  className="h-8 text-xs"
+                                />
+                              </td>
+                              <td className="px-3 py-2">
+                                <Input
+                                  placeholder="T1-03"
+                                  value={topic.reference_book || ""}
+                                  onChange={(e) => handleTopicChange(unitIdx, topicIdx, "reference_book", e.target.value)}
+                                  className="h-8 text-xs"
+                                />
+                              </td>
+                              <td className="px-3 py-2">
+                                <Input
+                                  type="number"
+                                  min="1"
+                                  value={topic.periods_required || 1}
+                                  onChange={(e) => handleTopicChange(unitIdx, topicIdx, "periods_required", parseInt(e.target.value) || 1)}
+                                  className="h-8 text-xs text-center"
+                                />
+                              </td>
+                              <td className="px-3 py-2 text-center">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleRemoveTopic(unitIdx, topicIdx)}
+                                  className="text-destructive hover:bg-destructive/10"
+                                >
+                                  <X className="w-4 h-4" />
+                                </Button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <label className="cursor-pointer">
-                      <input
-                        type="file"
-                        accept=".pdf,application/pdf"
-                        className="hidden"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file && file.type === "application/pdf") {
-                            if (courseFileUrl) URL.revokeObjectURL(courseFileUrl);
-                            setCourseFile(file);
-                            setCourseFileUrl(URL.createObjectURL(file));
-                            setIsFileSent(false);
-                          }
-                        }}
-                      />
-                      <Button variant="outline" size="sm" className="pointer-events-none">
-                        <RefreshCw className="w-4 h-4 mr-2" />
-                        Update
-                      </Button>
-                    </label>
+
+                    {/* Add Topic Button */}
                     <Button
-                      variant="ghost"
+                      variant="outline"
                       size="sm"
-                      onClick={() => {
-                        if (courseFileUrl) URL.revokeObjectURL(courseFileUrl);
-                        setCourseFile(null);
-                        setCourseFileUrl(null);
-                        setIsFileSent(false);
-                      }}
+                      onClick={() => handleAddTopic(unitIdx)}
+                      className="w-full text-xs"
                     >
-                      <X className="w-4 h-4 text-muted-foreground hover:text-destructive" />
+                      <Plus className="w-3 h-3 mr-2" />
+                      Add Topic
                     </Button>
                   </div>
-                </div>
-
-                {/* PDF Viewer */}
-                <div className="border border-border rounded-lg overflow-hidden bg-muted/30">
-                  <div className="bg-muted/50 px-4 py-2 border-b border-border flex items-center gap-2">
-                    <Eye className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-sm font-medium text-foreground">PDF Preview</span>
-                  </div>
-                  <div className="h-[500px]">
-                    {courseFileUrl && (
-                      <iframe
-                        src={courseFileUrl}
-                        className="w-full h-full"
-                        title="Course File PDF Preview"
-                      />
-                    )}
-                  </div>
-                </div>
-
-                {/* Send Button */}
-                <div className="flex justify-end pt-4">
-                  <Button
-                    className={cn(
-                      "min-w-[140px]",
-                      isFileSent
-                        ? "bg-success hover:bg-success/90"
-                        : "bg-primary hover:bg-primary/90"
-                    )}
-                    onClick={() => setIsFileSent(true)}
-                    disabled={isFileSent}
-                  >
-                    {isFileSent ? (
-                      <>
-                        <Check className="w-4 h-4 mr-2" />
-                        Sent
-                      </>
-                    ) : (
-                      <>
-                        <Send className="w-4 h-4 mr-2" />
-                        Send to HOD
-                      </>
-                    )}
-                  </Button>
-                </div>
+                ))}
               </div>
-            )}
+
+              {/* Add Unit Button */}
+              <Button
+                variant="default"
+                onClick={handleAddUnit}
+                className="w-full"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add Unit
+              </Button>
+
+              {/* Submit Button */}
+              <div className="flex justify-end gap-3 pt-4 border-t border-border">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setCoursePlanUnits([{ unit_label: "", topics: [{ topic: "", co_number: "", btl: "", delivery_mode: "", reference_book: "", periods_required: 1, tentative_date: "" }] }]);
+                    setIsFileSent(false);
+                  }}
+                >
+                  Reset
+                </Button>
+                <Button
+                  className="bg-primary hover:bg-primary/90"
+                  onClick={handleSaveCoursePlan}
+                  disabled={isUploading}
+                >
+                  {isUploading ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-4 h-4 mr-2" />
+                      Save Course Plan
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
           </motion.div>
         </TabsContent>
 

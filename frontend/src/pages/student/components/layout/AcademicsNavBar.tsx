@@ -9,6 +9,7 @@ interface AcademicsNavItem {
 const academicsNavItems: AcademicsNavItem[] = [
   { path: '/student/academics/attendance', label: 'Attendance' },
   { path: '/student/academics/marks', label: 'Marks' },
+  { path: '/student/academics/syllabus', label: 'Syllabus' },
 ];
 
 export default function AcademicsNavBar() {

@@ -8,7 +8,7 @@ import { Textarea } from "@/pages/faculty/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/pages/faculty/components/ui/tabs";
 import {
   CalendarDays, PlusCircle, Clock, CheckCircle2, XCircle, AlertCircle, FileText,
-  Calendar, User, Trash2, Wallet, Users, CheckIcon, XIcon, RefreshCw
+  Calendar, Trash2, Wallet, Users, CheckIcon, XIcon, RefreshCw, Search
 } from "lucide-react";
 import { cn } from "@/pages/faculty/lib/utils";
 import { toast } from '@/components/ui/sonner';
@@ -16,16 +16,11 @@ import { Select as ShadSelect, SelectContent as ShadSelectContent, SelectItem as
 
 interface Faculty {
   faculty_id: number;
-  Name: string;
+  name: string;
   email: string;
   phone_number?: string;
   designation?: string;
-  matching_subjects?: number;
-  subjects?: Array<{
-    subject_id: number;
-    subject_name: string;
-    subject_code: string;
-  }>;
+  department_id?: number;
 }
 
 interface LeaveRequest {
@@ -50,13 +45,32 @@ interface LeaveRequest {
   affected_periods?: any[];
 }
 
-interface AffectedPeriod {
+interface Period {
+  id: number;
   date: string;
-  period_slot_id: number;
-  class_id?: number;
-  subject_id?: number;
-  master_id?: number;
-  requested_substitute_faculty_id?: number;
+  day: string;
+  period_number: number;
+  start_time: string;
+  end_time: string;
+  type: string;
+  subject?: {
+    id: number;
+    code: string;
+    name: string;
+  };
+  class?: {
+    id: number;
+    name: string;
+    semester: number;
+  };
+  academic_year: string;
+  semester: number;
+}
+
+interface PeriodWithFaculty {
+  period: Period;
+  alternative_faculty: Faculty[];
+  selected_faculty_id?: number;
 }
 
 const statusConfig = {
@@ -77,11 +91,8 @@ const leaveTypes = ["Medical", "Casual", "Earned", "On-Duty", "Personal", "Mater
 export default function FacultyLeaveManagement() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [myLeaves, setMyLeaves] = useState<LeaveRequest[]>([]);
-  const [colleagues, setColleagues] = useState<Faculty[]>([]);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [slotDetailsLoading, setSlotDetailsLoading] = useState<{[key: number]: boolean}>({});
-  const [slotDetails, setSlotDetails] = useState<{[key: number]: any}>({});
   const [activeTab, setActiveTab] = useState("apply");
 
   const [form, setForm] = useState({
@@ -89,9 +100,10 @@ export default function FacultyLeaveManagement() {
     startDate: "",
     endDate: "",
     reason: "",
-    substitute_faculty_id: "",
-    affected_periods: [] as AffectedPeriod[],
   });
+
+  const [periodsWithFaculty, setPeriodsWithFaculty] = useState<PeriodWithFaculty[]>([]);
+  const [fetchingPeriods, setFetchingPeriods] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -100,7 +112,6 @@ export default function FacultyLeaveManagement() {
 
   useEffect(() => {
     fetchMyLeaves();
-    fetchColleagues();
   }, []);
 
   const fetchMyLeaves = async () => {
@@ -122,105 +133,9 @@ export default function FacultyLeaveManagement() {
     }
   };
 
-  const fetchColleagues = async () => {
-    try {
-      const token = localStorage.getItem("authToken");
-      console.log('[fetchColleagues] Starting fetch with token:', !!token);
-      const res = await fetch("/api/v1/faculty/leave-management/colleagues?debug=true", {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-      console.log('[fetchColleagues] Response status:', res.status);
-      const result = await res.json();
-      console.log('[fetchColleagues] Response data:', result);
-      if (result.success) {
-        console.log('[fetchColleagues] Setting colleagues:', result.data);
-        setColleagues(result.data || []);
-      } else {
-        console.warn('[fetchColleagues] Success is false:', result);
-      }
-    } catch (error) {
-      console.error("Error fetching colleagues:", error);
-      toast.error("Failed to load substitute faculty");
-    }
-  };
-
-  const fetchSlotDetailsForPeriod = async (index: number, date: string, periodSlotId: number) => {
-    if (!date || !periodSlotId) return;
-
-    try {
-      setSlotDetailsLoading({ ...slotDetailsLoading, [index]: true });
-      const token = localStorage.getItem("authToken");
-      const res = await fetch(`/api/v1/faculty/leave-request/slot-details?date=${date}&period_slot_id=${periodSlotId}`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-      const result = await res.json();
-      if (result.success && result.data) {
-        setSlotDetails({ ...slotDetails, [index]: result.data });
-      } else if (result.success && !result.data) {
-        setSlotDetails({ ...slotDetails, [index]: null });
-      }
-    } catch (error) {
-      console.error("Error fetching slot details:", error);
-      toast.error("Failed to fetch slot details");
-    } finally {
-      setSlotDetailsLoading({ ...slotDetailsLoading, [index]: false });
-    }
-  };
-
-  const handleCalculateTotalDays = () => {
-    const start = new Date(form.startDate);
-    const end = new Date(form.endDate);
-    if (start && end && end >= start) {
-      const diffTime = Math.abs(end.getTime() - start.getTime());
-      const totalDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-      return totalDays.toString();
-    }
-    return "0";
-  };
-
-  const handleAddAffectedPeriod = () => {
-    const newPeriod: AffectedPeriod = {
-      date: "",
-      period_slot_id: 0,
-      class_id: 0,
-      subject_id: 0,
-      master_id: 0,
-      requested_substitute_faculty_id: parseInt(form.substitute_faculty_id),
-    };
-    setForm({
-      ...form,
-      affected_periods: [...form.affected_periods, newPeriod],
-    });
-  };
-
-  const handleUpdateAffectedPeriod = (index: number, field: string, value: any) => {
-    const updated = [...form.affected_periods];
-    updated[index] = { ...updated[index], [field]: value };
-    setForm({ ...form, affected_periods: updated });
-
-    // Fetch slot details if date or period is changed
-    if ((field === 'date' || field === 'period_slot_id') && updated[index].date && updated[index].period_slot_id) {
-      fetchSlotDetailsForPeriod(index, updated[index].date, updated[index].period_slot_id);
-    }
-  };
-
-  const handleRemoveAffectedPeriod = (index: number) => {
-    setForm({
-      ...form,
-      affected_periods: form.affected_periods.filter((_, i) => i !== index),
-    });
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!form.leaveType || !form.startDate || !form.endDate || !form.reason || !form.substitute_faculty_id) {
-      toast.error("Please fill in all required fields");
-      return;
-    }
-
-    if (form.affected_periods.length === 0) {
-      toast.error("Please specify at least one affected period");
+  const fetchPeriodsForDateRange = async () => {
+    if (!form.startDate || !form.endDate) {
+      toast.error("Please select both start and end dates");
       return;
     }
 
@@ -230,16 +145,105 @@ export default function FacultyLeaveManagement() {
     }
 
     try {
+      setFetchingPeriods(true);
+      const token = localStorage.getItem("authToken");
+      const response = await fetch(
+        `/api/v1/faculty/leave-request/periods-for-dates?startDate=${form.startDate}&endDate=${form.endDate}`,
+        { headers: token ? { Authorization: `Bearer ${token}` } : {} }
+      );
+      const result = await response.json();
+
+      if (result.success && result.data.length > 0) {
+        // Fetch alternative faculty for these periods
+        await fetchAlternativeFaculty(result.data);
+        toast.success(`Found ${result.data.length} class periods`);
+      } else {
+        toast.error("No class periods found for the selected date range");
+        setPeriodsWithFaculty([]);
+      }
+    } catch (error) {
+      console.error("Error fetching periods:", error);
+      toast.error("Failed to fetch class periods");
+    } finally {
+      setFetchingPeriods(false);
+    }
+  };
+
+  const fetchAlternativeFaculty = async (periods: Period[]) => {
+    try {
+      const token = localStorage.getItem("authToken");
+      const response = await fetch("/api/v1/faculty/leave-request/alternative-faculty", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ periods }),
+      });
+      const result = await response.json();
+
+      if (result.success) {
+        setPeriodsWithFaculty(result.data || []);
+      } else {
+        toast.error("Failed to fetch alternative faculty");
+      }
+    } catch (error) {
+      console.error("Error fetching alternative faculty:", error);
+      toast.error("Failed to fetch alternative faculty");
+    }
+  };
+
+  const handleSelectFaculty = (periodIndex: number, facultyId: number) => {
+    const updated = [...periodsWithFaculty];
+    updated[periodIndex].selected_faculty_id = facultyId;
+    setPeriodsWithFaculty(updated);
+  };
+
+  const calculateTotalDays = () => {
+    if (!form.startDate || !form.endDate) return "0";
+    const start = new Date(form.startDate);
+    const end = new Date(form.endDate);
+    const diffTime = Math.abs(end.getTime() - start.getTime());
+    const totalDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+    return totalDays.toString();
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!form.leaveType || !form.startDate || !form.endDate || !form.reason) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    // Check if all periods have selected faculty
+    const unselected = periodsWithFaculty.filter(p => !p.selected_faculty_id);
+    if (unselected.length > 0) {
+      toast.error("Please select alternative faculty for all periods");
+      return;
+    }
+
+    try {
       setSubmitting(true);
       const token = localStorage.getItem("authToken");
+
+      // Prepare affected_periods with selected faculty
+      const affected_periods = periodsWithFaculty.map(p => ({
+        date: p.period.date,
+        period_slot_id: p.period.period_number,
+        class_id: p.period.class?.id,
+        subject_id: p.period.subject?.id,
+        master_id: p.period.id,
+        requested_substitute_faculty_id: p.selected_faculty_id,
+      }));
 
       const payload = {
         leaveType: form.leaveType,
         startDate: form.startDate,
         endDate: form.endDate,
         reason: form.reason,
-        substitute_faculty_id: parseInt(form.substitute_faculty_id),
-        affected_periods: form.affected_periods,
+        substitute_faculty_id: periodsWithFaculty[0]?.selected_faculty_id, // Use first selected faculty
+        affected_periods,
       };
 
       const response = await fetch("/api/v1/faculty/leave-request/submit", {
@@ -253,15 +257,14 @@ export default function FacultyLeaveManagement() {
 
       const result = await response.json();
       if (result.success) {
-        toast.success("Leave request submitted! Waiting for substitute faculty approval.");
+        toast.success("Leave request submitted successfully!");
         setForm({
           leaveType: "",
           startDate: "",
           endDate: "",
           reason: "",
-          substitute_faculty_id: "",
-          affected_periods: [],
         });
+        setPeriodsWithFaculty([]);
         setActiveTab("status");
         fetchMyLeaves();
       } else {
@@ -301,6 +304,11 @@ export default function FacultyLeaveManagement() {
   const formatDate = (dateString: string) =>
     new Date(dateString).toLocaleDateString("en-IN", { year: "numeric", month: "short", day: "numeric" });
 
+  const formatTime = (time: string) => {
+    if (!time) return "";
+    return time.substring(0, 5); // HH:MM format
+  };
+
   const getStatusConfig = (status: string) => statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
 
   return (
@@ -313,7 +321,7 @@ export default function FacultyLeaveManagement() {
         <div className="flex items-start justify-between mb-6">
           <div>
             <h1 className="text-3xl font-bold font-serif">Leave Management</h1>
-            <p className="text-muted-foreground">Apply for leave with timetable alteration</p>
+            <p className="text-muted-foreground">Apply for leave with automatic alternative faculty assignment</p>
           </div>
           <div className="text-right">
             <p className="text-sm font-medium flex items-center gap-2">
@@ -341,7 +349,7 @@ export default function FacultyLeaveManagement() {
                 <div className="mb-8">
                   <h2 className="text-xl font-semibold mb-2">New Leave Request</h2>
                   <p className="text-sm text-muted-foreground">
-                    Submit a leave request with timetable alteration request for a substitute faculty
+                    Enter your leave dates, and we'll automatically assign alternative faculty to cover your classes
                   </p>
                 </div>
 
@@ -366,43 +374,23 @@ export default function FacultyLeaveManagement() {
                     </ShadSelect>
                   </div>
 
-                  {/* Substitute Faculty */}
-                  <div className="space-y-2">
-                    <Label className="font-medium flex items-center gap-2">
-                      <User className="w-4 h-4" />
-                      Substitute Faculty *
-                    </Label>
-                    <ShadSelect value={form.substitute_faculty_id} onValueChange={(value) => setForm({ ...form, substitute_faculty_id: value })}>
-                      <ShadSelectTrigger>
-                        <ShadSelectValue placeholder="Select substitute faculty" />
-                      </ShadSelectTrigger>
-                      <ShadSelectContent>
-                        {colleagues.length === 0 ? (
-                          <div className="px-2 py-1.5 text-sm text-muted-foreground">
-                            No matching faculty found for your assigned classes
-                          </div>
-                        ) : (
-                          colleagues.map((colleague) => (
-                            <ShadSelectItem key={colleague.faculty_id} value={colleague.faculty_id.toString()}>
-                              <div className="flex items-center gap-2">
-                                <span>{colleague.Name}</span>
-                                {colleague.matching_subjects && colleague.matching_subjects > 0 && (
-                                  <span className="text-xs bg-primary/20 text-primary px-2 py-0.5 rounded">
-                                    {colleague.matching_subjects} {colleague.matching_subjects === 1 ? 'subject' : 'subjects'}
-                                  </span>
-                                )}
-                              </div>
-                            </ShadSelectItem>
-                          ))
+                  {/* Total Days Info */}
+                  {form.startDate && form.endDate && (
+                    <div className="space-y-2">
+                      <Label className="font-medium flex items-center gap-2">
+                        <Wallet className="w-4 h-4" />
+                        Total Days
+                      </Label>
+                      <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 flex items-center gap-3">
+                        <p className="font-semibold text-primary">{calculateTotalDays()} days</p>
+                        {parseInt(calculateTotalDays()) > 2 && (
+                          <p className="text-xs text-primary/70">
+                            Requires executive admin approval
+                          </p>
                         )}
-                      </ShadSelectContent>
-                    </ShadSelect>
-                    {colleagues.length > 0 && (
-                      <p className="text-xs text-muted-foreground">
-                        Showing faculty who teach your assigned classes
-                      </p>
-                    )}
-                  </div>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Start Date */}
                   <div className="space-y-2">
@@ -413,7 +401,10 @@ export default function FacultyLeaveManagement() {
                     <Input
                       type="date"
                       value={form.startDate}
-                      onChange={(e) => setForm({ ...form, startDate: e.target.value })}
+                      onChange={(e) => {
+                        setForm({ ...form, startDate: e.target.value });
+                        setPeriodsWithFaculty([]);
+                      }}
                     />
                   </div>
 
@@ -426,25 +417,13 @@ export default function FacultyLeaveManagement() {
                     <Input
                       type="date"
                       value={form.endDate}
-                      onChange={(e) => setForm({ ...form, endDate: e.target.value })}
+                      onChange={(e) => {
+                        setForm({ ...form, endDate: e.target.value });
+                        setPeriodsWithFaculty([]);
+                      }}
                     />
                   </div>
                 </div>
-
-                {/* Total Days Info */}
-                {form.startDate && form.endDate && (
-                  <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 flex items-center gap-3">
-                    <Wallet className="w-5 h-5 text-primary" />
-                    <div>
-                      <p className="font-semibold text-primary">Total Days: {handleCalculateTotalDays()} days</p>
-                      {parseInt(handleCalculateTotalDays()) > 2 && (
-                        <p className="text-sm text-primary/70">
-                          This leave requires executive admin approval (more than 2 days)
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                )}
 
                 {/* Reason */}
                 <div className="space-y-2">
@@ -457,139 +436,146 @@ export default function FacultyLeaveManagement() {
                   />
                 </div>
 
-                {/* Affected Periods */}
-                <div className="space-y-4 bg-secondary/5 border border-secondary/20 rounded-lg p-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-semibold text-lg flex items-center gap-2">
-                      <Users className="w-5 h-5" />
-                      Affected Periods *
-                    </h3>
+                {/* Fetch Periods Button */}
+                {form.startDate && form.endDate && !fetchingPeriods && periodsWithFaculty.length === 0 && (
+                  <div className="flex justify-center pt-4">
                     <Button
                       type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={handleAddAffectedPeriod}
-                      disabled={form.affected_periods.length >= 10}
+                      onClick={fetchPeriodsForDateRange}
+                      className="gap-2"
                     >
-                      <PlusCircle className="w-4 h-4 mr-2" />
-                      Add Period
+                      <Search className="w-4 h-4" />
+                      Find Classes & Alternative Faculty
                     </Button>
                   </div>
+                )}
 
-                  {form.affected_periods.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <p>No periods added yet. Click "Add Period" to specify affected class periods.</p>
+                {fetchingPeriods && (
+                  <div className="text-center py-8">
+                    <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-primary" />
+                    <p className="text-muted-foreground">Fetching your classes and finding alternative faculty...</p>
+                  </div>
+                )}
+
+                {/* Periods with Faculty Selection */}
+                {periodsWithFaculty.length > 0 && (
+                  <div className="space-y-4 bg-secondary/5 border border-secondary/20 rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="font-semibold text-lg flex items-center gap-2">
+                        <Users className="w-5 h-5" />
+                        Select Alternative Faculty ({periodsWithFaculty.length} classes)
+                      </h3>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setPeriodsWithFaculty([]);
+                          setForm({ ...form, startDate: "", endDate: "" });
+                        }}
+                      >
+                        Change Dates
+                      </Button>
                     </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {form.affected_periods.map((period, index) => (
+
+                    <div className="space-y-4">
+                      {periodsWithFaculty.map((item, index) => (
                         <motion.div
                           key={index}
-                          initial={{ opacity: 0, x: -10 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          className="bg-card p-4 rounded-lg border border-border space-y-3"
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="bg-card border border-border rounded-lg p-4 space-y-3"
                         >
-                          <div className="flex items-end gap-3">
-                            <div className="flex-1">
-                              <Label className="text-xs">Date</Label>
-                              <Input
-                                type="date"
-                                value={period.date}
-                                onChange={(e) => handleUpdateAffectedPeriod(index, "date", e.target.value)}
-                                className="mt-1"
-                              />
+                          {/* Period Info */}
+                          <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-sm">
+                            <div>
+                              <p className="text-muted-foreground text-xs">Date</p>
+                              <p className="font-medium">{formatDate(item.period.date)}</p>
                             </div>
-                            <div className="flex-1">
-                              <Label className="text-xs">Period Slot ID</Label>
-                              <Input
-                                type="number"
-                                min="1"
-                                max="10"
-                                value={period.period_slot_id || ""}
-                                onChange={(e) => {
-                                  const val = e.target.value ? parseInt(e.target.value) : 0;
-                                  handleUpdateAffectedPeriod(index, "period_slot_id", val);
-                                }}
-                                className="mt-1"
-                                placeholder="1-10"
-                              />
+                            <div>
+                              <p className="text-muted-foreground text-xs">Period</p>
+                              <p className="font-medium">{formatTime(item.period.start_time)}</p>
                             </div>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleRemoveAffectedPeriod(index)}
-                              className="text-destructive hover:bg-destructive/10"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
+                            <div>
+                              <p className="text-muted-foreground text-xs">Subject</p>
+                              <p className="font-medium">{item.period.subject?.name || "—"}</p>
+                            </div>
+                            <div>
+                              <p className="text-muted-foreground text-xs">Class</p>
+                              <p className="font-medium">{item.period.class?.name || "—"}</p>
+                            </div>
+                            <div>
+                              <p className="text-muted-foreground text-xs">Room</p>
+                              <p className="font-medium">{item.period.type || "—"}</p>
+                            </div>
                           </div>
 
-                          {/* Slot Details Section */}
-                          {slotDetailsLoading[index] && (
-                            <div className="bg-primary/5 border border-primary/20 rounded p-3 flex items-center gap-2">
-                              <RefreshCw className="w-4 h-4 animate-spin text-primary" />
-                              <span className="text-sm text-primary">Loading slot details...</span>
-                            </div>
-                          )}
-
-                          {!slotDetailsLoading[index] && slotDetails[index] && (
-                            <div className="bg-success/5 border border-success/20 rounded p-3 space-y-2">
-                              <div className="grid grid-cols-2 gap-3 text-sm">
-                                <div>
-                                  <p className="text-muted-foreground text-xs">Subject</p>
-                                  <p className="font-medium">{slotDetails[index].subject?.name || "N/A"}</p>
-                                  {slotDetails[index].subject?.code && (
-                                    <p className="text-xs text-muted-foreground">{slotDetails[index].subject.code}</p>
-                                  )}
-                                </div>
-                                <div>
-                                  <p className="text-muted-foreground text-xs">Class</p>
-                                  <p className="font-medium">{slotDetails[index].class?.name || "N/A"}</p>
-                                </div>
-                                <div>
-                                  <p className="text-muted-foreground text-xs">Time</p>
-                                  <p className="font-medium">{slotDetails[index].start_time} - {slotDetails[index].end_time}</p>
-                                </div>
-                                <div>
-                                  <p className="text-muted-foreground text-xs">Room</p>
-                                  <p className="font-medium">{slotDetails[index].room || "N/A"}</p>
-                                </div>
+                          {/* Faculty Selection */}
+                          <div className="space-y-2">
+                            <Label className="text-sm font-medium">Select Alternative Faculty *</Label>
+                            {item.alternative_faculty.length === 0 ? (
+                              <div className="bg-warning/10 border border-warning/30 rounded p-3 text-sm">
+                                <p className="text-warning">No alternative faculty available for this subject-class combination</p>
                               </div>
-                            </div>
-                          )}
+                            ) : (
+                              <ShadSelect
+                                value={item.selected_faculty_id?.toString() || ""}
+                                onValueChange={(value) => handleSelectFaculty(index, parseInt(value))}
+                              >
+                                <ShadSelectTrigger>
+                                  <ShadSelectValue placeholder="Select a faculty member" />
+                                </ShadSelectTrigger>
+                                <ShadSelectContent>
+                                  {item.alternative_faculty.map((faculty) => (
+                                    <ShadSelectItem key={faculty.faculty_id} value={faculty.faculty_id.toString()}>
+                                      <div className="flex items-center gap-2">
+                                        <span>{faculty.name}</span>
+                                        {faculty.designation && (
+                                          <span className="text-xs text-muted-foreground">({faculty.designation})</span>
+                                        )}
+                                      </div>
+                                    </ShadSelectItem>
+                                  ))}
+                                </ShadSelectContent>
+                              </ShadSelect>
+                            )}
+                          </div>
 
-                          {!slotDetailsLoading[index] && slotDetails[index] === null && period.date && period.period_slot_id && (
-                            <div className="bg-warning/5 border border-warning/20 rounded p-3 flex items-center gap-2">
-                              <AlertCircle className="w-4 h-4 text-warning" />
-                              <span className="text-sm text-warning">No slot found for this day and period</span>
+                          {/* Selected Faculty Info */}
+                          {item.selected_faculty_id && (
+                            <div className="bg-success/10 border border-success/20 rounded p-3 flex items-center gap-2">
+                              <CheckIcon className="w-4 h-4 text-success" />
+                              <span className="text-sm text-success font-medium">
+                                {item.alternative_faculty.find(f => f.faculty_id === item.selected_faculty_id)?.name} selected
+                              </span>
                             </div>
                           )}
                         </motion.div>
                       ))}
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
 
                 {/* Submit Button */}
                 <div className="flex gap-3 justify-end pt-4">
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => setForm({
-                      leaveType: "",
-                      startDate: "",
-                      endDate: "",
-                      reason: "",
-                      substitute_faculty_id: "",
-                      affected_periods: [],
-                    })}
+                    onClick={() => {
+                      setForm({
+                        leaveType: "",
+                        startDate: "",
+                        endDate: "",
+                        reason: "",
+                      });
+                      setPeriodsWithFaculty([]);
+                    }}
                   >
                     Clear Form
                   </Button>
                   <Button
                     type="submit"
-                    disabled={submitting}
+                    disabled={submitting || periodsWithFaculty.length === 0}
                     className="gap-2"
                   >
                     {submitting ? (
@@ -667,8 +653,8 @@ export default function FacultyLeaveManagement() {
                           <p className="font-medium">{leave.totalDays}</p>
                         </div>
                         <div>
-                          <p className="text-muted-foreground">Substitute</p>
-                          <p className="font-medium">{leave.substituteFaculty?.Name || "—"}</p>
+                          <p className="text-muted-foreground">Assigned Faculty</p>
+                      <p className="font-medium">{leave.substituteFaculty?.name || "—"}</p>
                         </div>
                       </div>
 
@@ -683,7 +669,7 @@ export default function FacultyLeaveManagement() {
                                 <Clock className="w-4 h-4 text-warning" />
                               )}
                               <span>
-                                Substitute Faculty {leave.substitute_approval_status === 'approved' ? '✓ Approved' : leave.substitute_approval_status === 'rejected' ? '✗ Rejected' : '- Pending'}
+                                Alternative Faculty {leave.substitute_approval_status === 'approved' ? '✓ Approved' : leave.substitute_approval_status === 'rejected' ? '✗ Rejected' : '- Pending'}
                               </span>
                             </div>
 
@@ -721,7 +707,7 @@ export default function FacultyLeaveManagement() {
                       {/* Rejection Reasons */}
                       {leave.substitute_rejection_reason && (
                         <div className="bg-destructive/10 border border-destructive/30 rounded p-3 mb-4 text-sm">
-                          <p className="font-medium text-destructive">Substitute Rejection Reason:</p>
+                          <p className="font-medium text-destructive">Alternative Faculty Rejection Reason:</p>
                           <p className="text-destructive/80">{leave.substitute_rejection_reason}</p>
                         </div>
                       )}

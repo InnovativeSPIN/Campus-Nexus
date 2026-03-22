@@ -18,17 +18,30 @@ import { Textarea } from "@/pages/admin/department-admin/components/ui/textarea"
 import {
   ClipboardCheck,
   Search,
-  Users,
   CheckCircle2,
-  XCircle,
-  Clock,
   Save,
   History,
-  Filter,
 } from "lucide-react";
 import { toast } from '@/components/ui/sonner';
 import { cn } from "@/pages/admin/department-admin/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
+
+const apiFetch = async (url: string, options?: RequestInit) => {
+  const token = localStorage.getItem('authToken');
+  const res = await fetch(url, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(options?.headers ?? {}),
+    },
+  });
+  if (!res.ok) {
+    const json = await res.json().catch(() => null);
+    throw new Error(json?.message || `API Error: ${res.statusText}`);
+  }
+  return res.json();
+};
 
 interface Student {
   id: string;
@@ -38,68 +51,7 @@ interface Student {
   attendance?: "present" | "absent" | "leave" | "od";
 }
 
-const students: Student[] = [
-  { id: "1", rollNo: "CSE001", name: "Aditya Kumar", photo: "AK" },
-  { id: "2", rollNo: "CSE002", name: "Priya Sharma", photo: "PS" },
-  { id: "3", rollNo: "CSE003", name: "Rahul Verma", photo: "RV" },
-  { id: "4", rollNo: "CSE004", name: "Sneha Patel", photo: "SP" },
-  { id: "5", rollNo: "CSE005", name: "Vikram Singh", photo: "VS" },
-  { id: "6", rollNo: "CSE006", name: "Ananya Gupta", photo: "AG" },
-  { id: "7", rollNo: "CSE007", name: "Arjun Reddy", photo: "AR" },
-  { id: "8", rollNo: "CSE008", name: "Kavya Nair", photo: "KN" },
-  { id: "9", rollNo: "CSE009", name: "Rohit Joshi", photo: "RJ" },
-  { id: "10", rollNo: "CSE010", name: "Meera Krishnan", photo: "MK" },
-  { id: "11", rollNo: "CSE011", name: "Sanjay Rao", photo: "SR" },
-  { id: "12", rollNo: "CSE012", name: "Divya Menon", photo: "DM" },
-  { id: "13", rollNo: "CSE013", name: "Karan Malhotra", photo: "KM" },
-  { id: "14", rollNo: "CSE014", name: "Neha Sharma", photo: "NS" },
-  { id: "15", rollNo: "CSE015", name: "Amit Patel", photo: "AP" },
-  { id: "16", rollNo: "CSE016", name: "Zara Khan", photo: "ZK" },
-  { id: "17", rollNo: "CSE017", name: "Varun Singhal", photo: "VS" },
-  { id: "18", rollNo: "CSE018", name: "Ishita Desai", photo: "ID" },
-  { id: "19", rollNo: "CSE019", name: "Ravi Shankar", photo: "RS" },
-  { id: "20", rollNo: "CSE020", name: "Pooja Mehta", photo: "PM" },
-  { id: "21", rollNo: "CSE021", name: "Nikhil Yadav", photo: "NY" },
-  { id: "22", rollNo: "CSE022", name: "Shreya Mishra", photo: "SM" },
-  { id: "23", rollNo: "CSE023", name: "Siddharth Kumar", photo: "SK" },
-  { id: "24", rollNo: "CSE024", name: "Anushka Sinha", photo: "AS" },
-  { id: "25", rollNo: "CSE025", name: "Aryan Gupta", photo: "AG" },
-  { id: "26", rollNo: "CSE026", name: "Diya Singh", photo: "DS" },
-  { id: "27", rollNo: "CSE027", name: "Harshit Verma", photo: "HV" },
-  { id: "28", rollNo: "CSE028", name: "Isha Pandey", photo: "IP" },
-  { id: "29", rollNo: "CSE029", name: "Jatin Kapoor", photo: "JK" },
-  { id: "30", rollNo: "CSE030", name: "Kriti Nair", photo: "KN" },
-  { id: "31", rollNo: "CSE031", name: "Lakshay Sharma", photo: "LS" },
-  { id: "32", rollNo: "CSE032", name: "Manya Chopra", photo: "MC" },
-  { id: "33", rollNo: "CSE033", name: "Nakul Dwivedi", photo: "ND" },
-  { id: "34", rollNo: "CSE034", name: "Olivia Desai", photo: "OD" },
-  { id: "35", rollNo: "CSE035", name: "Pranav Rao", photo: "PR" },
-  { id: "36", rollNo: "CSE036", name: "Radhika Iyer", photo: "RI" },
-  { id: "37", rollNo: "CSE037", name: "Sahil Bhat", photo: "SB" },
-  { id: "38", rollNo: "CSE038", name: "Tanvi Sharma", photo: "TS" },
-  { id: "39", rollNo: "CSE039", name: "Udaan Patel", photo: "UP" },
-  { id: "40", rollNo: "CSE040", name: "Vedant Kumar", photo: "VK" },
-  { id: "41", rollNo: "CSE041", name: "Wanda Singh", photo: "WS" },
-  { id: "42", rollNo: "CSE042", name: "Xavier Menon", photo: "XM" },
-  { id: "43", rollNo: "CSE043", name: "Yasmin Khan", photo: "YK" },
-  { id: "44", rollNo: "CSE044", name: "Zainab Mirza", photo: "ZM" },
-  { id: "45", rollNo: "CSE045", name: "Aarav Saxena", photo: "AS" },
-  { id: "46", rollNo: "CSE046", name: "Bhavna Trivedi", photo: "BT" },
-  { id: "47", rollNo: "CSE047", name: "Chirag Verma", photo: "CV" },
-  { id: "48", rollNo: "CSE048", name: "Deepika Nair", photo: "DN" },
-  { id: "49", rollNo: "CSE049", name: "Esha Gupta", photo: "EG" },
-  { id: "50", rollNo: "CSE050", name: "Fahad Rahman", photo: "FR" },
-];
-
-const attendanceHistory = [
-  { date: "2024-01-15", subject: "Data Structures", section: "CSE-A", present: 58, absent: 4, leave: 2 },
-  { date: "2024-01-14", subject: "Data Structures", section: "CSE-A", present: 60, absent: 2, leave: 2 },
-  { date: "2024-01-13", subject: "OOP", section: "CSE-B", present: 55, absent: 3, leave: 0 },
-  { date: "2024-01-12", subject: "Algorithms", section: "CSE-C", present: 52, absent: 6, leave: 2 },
-];
-
-export default function Attendance() {
-  const { authToken } = useAuth();
+export default function Attendance() {  const { authToken, user } = useAuth();
   const [attendanceData, setAttendanceData] = useState<Record<string, string>>({});
   const [markAllPresent, setMarkAllPresent] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -109,7 +61,8 @@ export default function Attendance() {
   const [bulkSuccess, setBulkSuccess] = useState("");
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split("T")[0]);
   const [locked, setLocked] = useState(false);
-  const [digitSearch, setDigitSearch] = useState("");
+  const [previouslyMarkedBy, setPreviouslyMarkedBy] = useState<string | null>(null);
+  const [digitSearch] = useState("");
   const [showAttendanceSummary, setShowAttendanceSummary] = useState(false);
   const [topicCovered, setTopicCovered] = useState("");
   const [currentPage, setCurrentPage] = useState(0);
@@ -122,9 +75,378 @@ export default function Attendance() {
   const [selectedPeriodId, setSelectedPeriodId] = useState("");
   
   const [slotStudents, setSlotStudents] = useState<Student[]>([]);
+  const [attendanceHistory, setAttendanceHistory] = useState<any[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyClassFilter, setHistoryClassFilter] = useState<string>("all");
+  const [historySubjectFilter, setHistorySubjectFilter] = useState<string>("all");
+  const [activeTab, setActiveTab] = useState<'mark' | 'history'>('mark');
+  const [attendanceReportLoading, setAttendanceReportLoading] = useState(false);
 
   const today = new Date().toISOString().split("T")[0];
+  const [historyStartDate, setHistoryStartDate] = useState<string>(new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0]);
+  const [historyEndDate, setHistoryEndDate] = useState<string>(today);
+
   const isToday = selectedDate === today;
+  const userRole = user?.role || 'faculty';
+  const isDepartmentAdmin = userRole === 'department-admin';
+
+  const renderHistoryRows = () => {
+    if (historyLoading) {
+      return (
+        <tr>
+          <td colSpan={7} className="p-4 text-center">
+            Loading attendance history...
+          </td>
+        </tr>
+      );
+    }
+
+    if (attendanceHistory.length === 0) {
+      return (
+        <tr>
+          <td colSpan={7} className="p-4 text-center">
+            No attendance history found for selected filters.
+          </td>
+        </tr>
+      );
+    }
+
+    return attendanceHistory.map((record, index) => (
+      <motion.tr
+        key={`${record.date}-${record.subject}-${record.className}-${record.period || 'na'}`}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: index * 0.05 }}
+        className="border-b hover:bg-muted/50 transition-colors"
+      >
+        <td className="p-3 text-sm font-medium">{record.date}</td>
+        <td className="p-3 text-sm">{record.subject}</td>
+        <td className="p-3 text-sm">{record.section}</td>
+        <td className="p-3 text-center">
+          <span className="px-2 py-1 bg-success/10 text-success rounded-full text-sm">
+            {record.present}
+          </span>
+        </td>
+        <td className="p-3 text-center">
+          <span className="px-2 py-1 bg-destructive/10 text-destructive rounded-full text-sm">
+            {record.absent}
+          </span>
+        </td>
+        <td className="p-3 text-center">
+          <span className="px-2 py-1 bg-warning/10 text-warning rounded-full text-sm">
+            {record.leave}
+          </span>
+        </td>
+        <td className="p-3 text-right">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleEditHistoryRow(record)}
+          >
+            Edit
+          </Button>
+        </td>
+      </motion.tr>
+    ));
+  };
+
+  const handleEditHistoryRow = (record: any) => {
+    if (!record.classId || !record.period) {
+      toast.error('Cannot edit this record (missing class or period info). Please refine filters.');
+      return;
+    }
+
+    setSelectedDate(record.date);
+    setSelectedClassId(record.classId.toString());
+    setSelectedPeriodId(record.period.toString());
+    setActiveTab('mark');
+    setLocked(false);
+    setPreviouslyMarkedBy(null);
+
+    toast.success('Loaded historical session into Attendance tab for editing.');
+  };
+
+  const downloadAttendanceReport = async (overall = false) => {
+    setAttendanceReportLoading(true);
+    try {
+      let reportUrl = `/api/v1/attendance?limit=10000`;
+      const classFilter = overall ? 'all' : historyClassFilter;
+      const subjectFilter = overall ? 'all' : historySubjectFilter;
+
+      if (classFilter && classFilter !== 'all') reportUrl += `&class=${classFilter}`;
+      if (subjectFilter && subjectFilter !== 'all') reportUrl += `&subject=${subjectFilter}`;
+      if (historyStartDate && historyEndDate) reportUrl += `&startDate=${historyStartDate}&endDate=${historyEndDate}`;
+
+      const result = await apiFetch(reportUrl);
+      if (!result.success) {
+        toast.error(result.message || 'Failed to fetch report data');
+        return;
+      }
+
+      const entries = result.data || [];
+      if (!entries.length) {
+        toast.error('No data available for this report');
+        return;
+      }
+
+      const pivot: Record<string, any> = {};
+      entries.forEach((item: any) => {
+        const student = item.student || item.studentData || {};
+        const studentKey = student.id || `${item.student_id}-${item.rollNumber}`;
+        if (!pivot[studentKey]) {
+          pivot[studentKey] = {
+            register: student.rollNumber || student.studentId || 'N/A',
+            name: `${student.firstName || ''} ${student.lastName || ''}`.trim() || 'N/A',
+            department: student.department || item.class?.name || item.class_name || 'N/A',
+            year: item.class?.academic_year || item.academic_year || 'N/A',
+            present: 0,
+            absent: 0,
+          };
+        }
+
+        const status = (item.status || '').toLowerCase();
+        if (status === 'present' || status === 'late' || status === 'od') pivot[studentKey].present += 1;
+        else pivot[studentKey].absent += 1;
+      });
+
+      const rows = [
+        ['Register Number', 'Name', 'Department', 'Year', 'Present', 'Absent'],
+        ...Object.values(pivot).map((record: any) => [record.register, record.name, record.department, record.year, record.present, record.absent])
+      ];
+      const csvContent = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+
+      const filenameSuffix = overall ? 'overall' : `${classFilter}-${subjectFilter}`;
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const downloadUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = downloadUrl;
+      a.download = `attendance-report-${filenameSuffix}-${historyStartDate}-${historyEndDate}.csv`;
+      a.click();
+      URL.revokeObjectURL(downloadUrl);
+
+      toast.success('Attendance report downloaded successfully');
+    } catch (error) {
+      console.error('downloadAttendanceReport error', error);
+      toast.error('Error generating attendance report');
+    } finally {
+      setAttendanceReportLoading(false);
+    }
+  };
+
+  const downloadAttendanceReportPdf = async (overall = false) => {
+    setAttendanceReportLoading(true);
+    try {
+      let reportUrl = `/api/v1/attendance?limit=10000`;
+      const classFilter = overall ? 'all' : historyClassFilter;
+      const subjectFilter = overall ? 'all' : historySubjectFilter;
+
+      if (classFilter && classFilter !== 'all') reportUrl += `&class=${classFilter}`;
+      if (subjectFilter && subjectFilter !== 'all') reportUrl += `&subject=${subjectFilter}`;
+      if (historyStartDate && historyEndDate) reportUrl += `&startDate=${historyStartDate}&endDate=${historyEndDate}`;
+
+      const result = await apiFetch(reportUrl);
+      if (!result.success) {
+        toast.error(result.message || 'Failed to fetch report data');
+        return;
+      }
+
+      const entries = result.data || [];
+      if (!entries.length) {
+        toast.error('No data available for this report');
+        return;
+      }
+
+      const pivot: Record<string, any> = {};
+      entries.forEach((item: any) => {
+        const student = item.student || item.studentData || {};
+        const studentKey = student.id || `${item.student_id}-${item.rollNumber}`;
+        if (!pivot[studentKey]) {
+          pivot[studentKey] = {
+            register: student.rollNumber || student.studentId || 'N/A',
+            name: `${student.firstName || ''} ${student.lastName || ''}`.trim() || 'N/A',
+            department: student.department || item.class?.name || item.class_name || 'N/A',
+            year: item.class?.academic_year || item.academic_year || 'N/A',
+            present: 0,
+            absent: 0,
+          };
+        }
+
+        const status = (item.status || '').toLowerCase();
+        if (status === 'present' || status === 'late' || status === 'od') pivot[studentKey].present += 1;
+        else pivot[studentKey].absent += 1;
+      });
+
+      const container = document.createElement('div');
+      container.style.position = 'absolute';
+      container.style.left = '0';
+      container.style.top = '0';
+      container.style.width = '900px';
+      container.style.background = '#fff';
+      container.style.color = '#000';
+      container.style.padding = '20px';
+      container.style.fontFamily = 'Arial, sans-serif';
+      container.style.opacity = '1';
+      container.style.zIndex = '9999';
+
+      const header = document.createElement('div');
+      header.style.display = 'block';
+      header.style.textAlign = 'center';
+      header.style.marginBottom = '14px';
+
+      const titleHeader = document.createElement('div');
+      titleHeader.style.fontSize = '18px';
+      titleHeader.style.fontWeight = '700';
+      titleHeader.textContent = 'Nadar Saraswathi College of Engineering & Technology';
+      header.appendChild(titleHeader);
+
+      const subtitle = document.createElement('div');
+      subtitle.style.fontSize = '12px';
+      subtitle.style.color = '#555';
+      subtitle.textContent = 'Approved by AICTE, New Delhi | Affiliated to Anna University, Chennai';
+      header.appendChild(subtitle);
+
+      const address = document.createElement('div');
+      address.style.fontSize = '11px';
+      address.style.color = '#555';
+      address.textContent = 'Vadapudupatti, Annanji (PO), Theni - 625 531';
+      header.appendChild(address);
+
+      container.appendChild(header);
+
+      const title = document.createElement('h1');
+      title.textContent = 'Attendance Report';
+      title.style.fontSize = '16px';
+      title.style.marginBottom = '6px';
+      container.appendChild(title);
+
+      const subheader = document.createElement('p');
+      subheader.style.fontSize = '11px';
+      subheader.style.marginBottom = '10px';
+      subheader.innerHTML = `Class filter: <strong>${classFilter === 'all' ? 'All' : classFilter}</strong><br/>Subject filter: <strong>${subjectFilter === 'all' ? 'All' : subjectFilter}</strong><br/>Date range: <strong>${historyStartDate}</strong> - <strong>${historyEndDate}</strong>`;
+      container.appendChild(subheader);
+
+      const table = document.createElement('table');
+      table.style.width = '100%';
+      table.style.borderCollapse = 'collapse';
+
+      const headerRow = document.createElement('tr');
+      ['Register Number', 'Name', 'Department', 'Year', 'Present', 'Absent'].forEach((col) => {
+        const th = document.createElement('th');
+        th.style.border = '1px solid #444';
+        th.style.padding = '6px';
+        th.style.fontSize = '11px';
+        th.style.background = '#f2f2f2';
+        th.textContent = col;
+        headerRow.appendChild(th);
+      });
+      table.appendChild(headerRow);
+
+      Object.values(pivot).forEach((record: any) => {
+        const row = document.createElement('tr');
+        [record.register, record.name, record.department, record.year, record.present, record.absent].forEach((value) => {
+          const td = document.createElement('td');
+          td.style.border = '1px solid #444';
+          td.style.padding = '6px';
+          td.style.fontSize = '10px';
+          td.textContent = String(value);
+          row.appendChild(td);
+        });
+        table.appendChild(row);
+      });
+
+      container.appendChild(table);
+      document.body.appendChild(container);
+
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+      script.onload = () => {
+        const jsPDF = (window as any).jspdf?.jsPDF || (window as any).jsPDF;
+        if (!jsPDF) {
+          toast.error('PDF generator not available');
+          document.body.removeChild(container);
+          document.body.removeChild(script);
+          setAttendanceReportLoading(false);
+          return;
+        }
+
+        const doc = new jsPDF('p', 'mm', 'a4');
+        const pageWidth = doc.internal.pageSize.getWidth();
+        let y = 10;
+
+        doc.setFontSize(16);
+        doc.text('Nadar Saraswathi College of Engineering & Technology', pageWidth / 2, y, { align: 'center' });
+        y += 8;
+
+        doc.setFontSize(10);
+        doc.text('Approved by AICTE, New Delhi | Affiliated to Anna University, Chennai', pageWidth / 2, y, { align: 'center' });
+        y += 6;
+        doc.text('Vadapudupatti, Annanji (PO), Theni - 625 531', pageWidth / 2, y, { align: 'center' });
+        y += 10;
+
+        doc.setFontSize(12);
+        doc.text('Attendance Report', 14, y);
+        y += 6;
+        doc.setFontSize(10);
+        doc.text(`Class filter: ${historyClassFilter === 'all' ? 'All' : historyClassFilter}`, 14, y);
+        y += 4;
+        doc.text(`Date range: ${historyStartDate} to ${historyEndDate}`, 14, y);
+        y += 8;
+
+        const headers = ['Register', 'Name', 'Dept', 'Year', 'Present', 'Absent'];
+        const columnWidths = [30, 50, 40, 20, 20, 20];
+
+        const drawTableRow = (values: string[], isHeader = false) => {
+          let x = 14;
+          const rowHeight = 6;
+          if (y + rowHeight > doc.internal.pageSize.getHeight() - 20) {
+            doc.addPage();
+            y = 20;
+          }
+
+          values.forEach((text, index) => {
+            doc.setFontSize(isHeader ? 10 : 9);
+            doc.setFont('helvetica', isHeader ? 'bold' : 'normal');
+            doc.text(String(text), x + 1, y + 4, { maxWidth: columnWidths[index] - 2 });
+            x += columnWidths[index];
+          });
+
+          y += rowHeight;
+        };
+
+        drawTableRow(headers, true);
+
+        Object.values(pivot).forEach((record: any) => {
+          drawTableRow([
+            record.register,
+            record.name,
+            record.department,
+            record.year,
+            record.present.toString(),
+            record.absent.toString(),
+          ]);
+        });
+
+        const pdfFilenameSuffix = overall ? 'overall' : `${classFilter}-${subjectFilter}`;
+        doc.save(`attendance-report-${pdfFilenameSuffix}-${historyStartDate}-${historyEndDate}.pdf`);
+
+        document.body.removeChild(container);
+        document.body.removeChild(script);
+        setAttendanceReportLoading(false);
+      };
+      script.onerror = () => {
+        toast.error('Failed to load PDF library');
+        document.body.removeChild(container);
+        document.body.removeChild(script);
+        setAttendanceReportLoading(false);
+      };
+
+      document.body.appendChild(script);
+    } catch (error) {
+      console.error('downloadAttendanceReportPdf error', error);
+      toast.error('Error generating PDF report');
+      setAttendanceReportLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (!selectedDate) return;
@@ -166,10 +488,83 @@ export default function Attendance() {
       }));
   }, [selectedClassId, rawSlots]);
 
+  const subjects = useMemo(() => {
+    const map = new Map<string, string>();
+    rawSlots.forEach((s) => {
+      if (s.subjectId && s.subjectName) {
+        map.set(s.subjectId.toString(), s.subjectName);
+      }
+    });
+    return Array.from(map.entries()).map(([id, name]) => ({ id, name }));
+  }, [rawSlots]);
+
   const slotInfo = useMemo(() => {
     if (!selectedClassId || !selectedPeriodId) return null;
     return rawSlots.find(s => s.classSectionId.toString() === selectedClassId.toString() && s.periodId.toString() === selectedPeriodId.toString()) || null;
   }, [selectedClassId, selectedPeriodId, rawSlots]);
+
+  const fetchAttendanceHistory = async () => {
+    setHistoryLoading(true);
+    try {
+      let url = `/api/v1/attendance?limit=500`;
+      if (historyClassFilter && historyClassFilter !== 'all') url += `&class=${historyClassFilter}`;
+      if (historyStartDate && historyEndDate) url += `&startDate=${historyStartDate}&endDate=${historyEndDate}`;
+
+      const response = await apiFetch(url);
+      if (!response.success) {
+        toast.error(response.message || 'Failed to load attendance history');
+        setAttendanceHistory([]);
+        return;
+      }
+
+      const history = response.data || [];
+      const grouped: Record<string, any> = {};
+
+      history.forEach((item: any) => {
+        const date = item.attendance_date || item.date || '';
+        const subjectId = item.subject_id || item.subject?.id;
+        const subject = item.subject?.subject_name || item.subject_name || 'Unknown';
+        const classId = item.class_id || item.class?.id;
+        const clazz = item.class?.name || item.class?.section || 'Unknown';
+        const section = item.class?.section || item.class?.name || 'N/A';
+        const period = item.period_slot_id || item.period;
+        const key = `${date}_${subject}_${clazz}_${period}`;
+
+        if (!grouped[key]) {
+          grouped[key] = {
+            date,
+            subject,
+            section,
+            className: clazz,
+            classId,
+            subjectId,
+            period,
+            present: 0,
+            absent: 0,
+            leave: 0,
+            updatedBy: item.faculty?.Name || item.faculty?.name || 'N/A'
+          };
+        }
+
+        const status = (item.status || '').toLowerCase();
+        if (status === 'present' || status === 'late' || status === 'od') grouped[key].present += 1;
+        else if (status === 'leave' || status === 'medical_leave' || status === 'duty_leave') grouped[key].leave += 1;
+        else grouped[key].absent += 1;
+      });
+
+      setAttendanceHistory(Object.values(grouped));
+    } catch (error) {
+      console.error('[AttendanceHistory] Error loading history', error);
+      toast.error('Unexpected error while loading attendance history');
+      setAttendanceHistory([]);
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAttendanceHistory();
+  }, [historyClassFilter, historyStartDate, historyEndDate]);
 
   useEffect(() => {
     if (slotInfo && selectedClassId) {
@@ -196,26 +591,36 @@ export default function Attendance() {
               });
               setAttendanceData(marks);
               setTopicCovered(attendanceRecord.remarks || "");
-              setLocked(true);
+              // Department admins can always override, faculty can only mark on today or if not already marked
+              const markedByFaculty = !isDepartmentAdmin && !isToday;
+              setPreviouslyMarkedBy(markedByFaculty ? 'Faculty' : null);
+              setLocked(markedByFaculty);
               return;
             }
           }
           setAttendanceData({});
           setTopicCovered("");
-          setLocked(!isToday);
+          setPreviouslyMarkedBy(null);
+          // Department admins can always edit, faculty can only edit on today
+          setLocked(!isDepartmentAdmin && !isToday);
         })
         .catch(console.error);
     } else {
       setSlotStudents([]);
       setAttendanceData({});
-      setLocked(!isToday);
+      setPreviouslyMarkedBy(null);
+      setLocked(!isDepartmentAdmin && !isToday);
     }
-  }, [slotInfo, selectedClassId, studentsByClass, selectedDate, authToken, isToday]);
+  }, [slotInfo, selectedClassId, studentsByClass, selectedDate, authToken, isToday, isDepartmentAdmin]);
 
   // Empty content or preserve needed functions since earlier chunk replaced to line 148
 
   const handleSave = async (showSummary = false) => {
     if (!slotInfo) return;
+
+    if (!window.confirm('You are about to overwrite attendance for this date. Are you sure?')) {
+      return;
+    }
     
     const studentsArray = Object.keys(attendanceData).map(studentId => ({
       student: parseInt(studentId),
@@ -347,7 +752,7 @@ export default function Attendance() {
   const getRollNumbersByStatus = (status: string) => {
     return Object.entries(attendanceData)
       .filter(([, v]) => v === status)
-      .map(([sid]) => students.find((s) => s.id === sid)?.rollNo)
+      .map(([sid]) => slotStudents.find((s) => s.id === sid)?.rollNo)
       .filter(Boolean)
       .join(", ") || "-";
   };
@@ -365,7 +770,20 @@ export default function Attendance() {
         </p>
       </motion.div>
 
-      <Tabs defaultValue="mark" className="w-full">
+      {previouslyMarkedBy && isDepartmentAdmin && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg"
+        >
+          <p className="text-sm text-blue-800 dark:text-blue-200">
+            <strong>Note:</strong> Attendance for this slot was previously marked by {previouslyMarkedBy}. 
+            You are overriding their marks as Department Admin.
+          </p>
+        </motion.div>
+      )}
+
+      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'mark'|'history')} className="w-full">
         <TabsList className="mb-6">
           <TabsTrigger value="mark" className="flex items-center gap-2">
             <ClipboardCheck className="w-4 h-4" />
@@ -484,7 +902,7 @@ export default function Attendance() {
               <Button
                 className="bg-primary hover:bg-primary/90"
                 onClick={() => handleSave(true)}
-                disabled={locked || !isToday}
+                disabled={locked && !isDepartmentAdmin}
               >
                 <Save className="w-4 h-4 mr-2" />
                 Save Attendance
@@ -810,7 +1228,7 @@ export default function Attendance() {
             <div className="mt-6 flex justify-end">
               <Button
                 onClick={() => handleSave(false)}
-                disabled={locked || !isToday || !topicCovered.trim()}
+                disabled={(locked && !isDepartmentAdmin) || !topicCovered.trim()}
                 className="bg-primary hover:bg-primary/90 min-w-[200px]"
               >
                 <Save className="w-4 h-4 mr-2" />
@@ -826,15 +1244,53 @@ export default function Attendance() {
             animate={{ opacity: 1, y: 0 }}
             className="widget-card"
           >
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex flex-wrap items-center justify-between mb-6 gap-3">
               <h3 className="section-title flex items-center gap-2 mb-0">
                 <History className="w-5 h-5 text-primary" />
                 Recent Attendance Records
               </h3>
-              <Button variant="outline" size="sm">
-                <Filter className="w-4 h-4 mr-2" />
-                Filter
-              </Button>
+
+              <div className="flex flex-wrap gap-2 items-center">
+                <Select value={historyClassFilter} onValueChange={setHistoryClassFilter}>
+                  <SelectTrigger className="min-w-[170px]">
+                    <SelectValue placeholder="All classes" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All classes</SelectItem>
+                    {classes.map(c => (
+                      <SelectItem key={c.id} value={c.id.toString()}>{`${c.name} ${c.section ? `- ${c.section}` : ''}`}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Select value={historySubjectFilter} onValueChange={setHistorySubjectFilter}>
+                  <SelectTrigger className="min-w-[170px]">
+                    <SelectValue placeholder="All subjects" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All subjects</SelectItem>
+                    {subjects.map((sub) => (
+                      <SelectItem key={sub.id} value={sub.id}>{sub.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Input type="date" value={historyStartDate} onChange={e => setHistoryStartDate(e.target.value)} />
+                <Input type="date" value={historyEndDate} onChange={e => setHistoryEndDate(e.target.value)} />
+                <Button size="sm" onClick={fetchAttendanceHistory}>Apply</Button>
+                <Button size="sm" onClick={() => downloadAttendanceReport(false)} disabled={attendanceReportLoading}>
+                  {attendanceReportLoading ? 'Generating...' : 'Download CSV'}
+                </Button>
+                <Button size="sm" onClick={() => downloadAttendanceReportPdf(false)} disabled={attendanceReportLoading}>
+                  {attendanceReportLoading ? 'Generating...' : 'Download PDF'}
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => downloadAttendanceReport(true)} disabled={attendanceReportLoading}>
+                  Download Overall CSV
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => downloadAttendanceReportPdf(true)} disabled={attendanceReportLoading}>
+                  Download Overall PDF
+                </Button>
+              </div>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -850,39 +1306,7 @@ export default function Attendance() {
                   </tr>
                 </thead>
                 <tbody>
-                  {attendanceHistory.map((record, index) => (
-                    <motion.tr
-                      key={record.date + record.subject}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                      className="border-b hover:bg-muted/50 transition-colors"
-                    >
-                      <td className="p-3 text-sm font-medium">{record.date}</td>
-                      <td className="p-3 text-sm">{record.subject}</td>
-                      <td className="p-3 text-sm">{record.section}</td>
-                      <td className="p-3 text-center">
-                        <span className="px-2 py-1 bg-success/10 text-success rounded-full text-sm">
-                          {record.present}
-                        </span>
-                      </td>
-                      <td className="p-3 text-center">
-                        <span className="px-2 py-1 bg-destructive/10 text-destructive rounded-full text-sm">
-                          {record.absent}
-                        </span>
-                      </td>
-                      <td className="p-3 text-center">
-                        <span className="px-2 py-1 bg-warning/10 text-warning rounded-full text-sm">
-                          {record.leave}
-                        </span>
-                      </td>
-                      <td className="p-3 text-right">
-                        <Button variant="ghost" size="sm">
-                          Edit
-                        </Button>
-                      </td>
-                    </motion.tr>
-                  ))}
+                  {renderHistoryRows()}
                 </tbody>
               </table>
             </div>

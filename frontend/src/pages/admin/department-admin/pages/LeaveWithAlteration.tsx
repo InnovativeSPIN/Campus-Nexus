@@ -12,13 +12,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/pages/admin/department-admin/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/pages/admin/department-admin/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/pages/admin/department-admin/components/ui/tabs";
 import {
   Card,
@@ -29,7 +22,7 @@ import {
 } from "@/pages/admin/department-admin/components/ui/card";
 import {
   CalendarDays,
-  Plus,
+  PlusCircle,
   Clock,
   CheckCircle2,
   XCircle,
@@ -37,180 +30,299 @@ import {
   User,
   FileText,
   ArrowRight,
+  Wallet,
+  Trash2,
+  Search,
+  RefreshCw,
+  Users,
 } from "lucide-react";
 import { cn } from "@/pages/admin/department-admin/lib/utils";
 import { toast } from "@/pages/admin/department-admin/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 
-interface LeaveRequest {
-  id: number;
-  start_date: string;
-  end_date: string;
-  total_days: number;
-  reason: string;
-  overall_status: "pending" | "approved" | "rejected" | "cancelled";
-  leave_type: string;
-  applicant_id: number;
-  class_id: number;
-  affected_periods: string; // JSON string
-  substitute_faculty_id: number;
-  created_at: string;
-}
-
 interface Faculty {
   faculty_id: number;
-  Name: string;
+  name: string;
   email: string;
-  department_id: number;
+  phone_number?: string;
+  designation?: string;
+  department_id?: number;
 }
 
-interface Class {
+interface LeaveRequest {
   id: number;
-  name: string;
+  leaveType: string;
+  startDate: string;
+  endDate: string;
+  totalDays: number;
+  reason: string;
+  overall_status: string;
+  substitute_faculty_id?: number;
+  substitute_approval_status?: string;
+  timetable_incharge_approval_status?: string;
+  executive_admin_approval_status?: string;
+  createdAt: string;
+  substituteFaculty?: Faculty;
+}
+
+interface Period {
+  id: number;
+  date: string;
+  day: string;
+  period_number: number;
+  start_time: string;
+  end_time: string;
+  type: string;
+  subject?: {
+    id: number;
+    code: string;
+    name: string;
+  };
+  class?: {
+    id: number;
+    name: string;
+    semester: number;
+  };
+  academic_year: string;
   semester: number;
 }
 
-const leaveTypes = ["Medical", "Casual", "Earned", "On-Duty", "Personal", "Maternity"];
+interface PeriodWithFaculty {
+  period: Period;
+  alternative_faculty: Faculty[];
+  selected_faculty_id?: number;
+}
+
+const leaveTypes = ["Medical", "Casual", "Earned", "On-Duty", "Personal", "Maternity", "Comp-Off"];
 
 const statusConfig = {
-  pending: {
-    label: "Pending",
-    icon: Clock,
-    color: "text-yellow-600",
-    bg: "bg-yellow-50",
-    border: "border-yellow-200",
-  },
-  approved: {
-    label: "Approved",
-    icon: CheckCircle2,
-    color: "text-green-600",
-    bg: "bg-green-50",
-    border: "border-green-200",
-  },
-  rejected: {
-    label: "Rejected",
-    icon: XCircle,
-    color: "text-red-600",
-    bg: "bg-red-50",
-    border: "border-red-200",
-  },
-  cancelled: {
-    label: "Cancelled",
-    icon: XCircle,
-    color: "text-gray-600",
-    bg: "bg-gray-50",
-    border: "border-gray-200",
-  },
+  pending: { label: "Pending", icon: Clock, color: "text-yellow-600", bg: "bg-yellow-50", border: "border-yellow-200" },
+  substitute_pending: { label: "Pending", icon: Clock, color: "text-yellow-600", bg: "bg-yellow-50", border: "border-yellow-200" },
+  substitute_approved: { label: "Substitute Approved", icon: CheckCircle2, color: "text-blue-600", bg: "bg-blue-50", border: "border-blue-200" },
+  substitute_rejected: { label: "Substitute Rejected", icon: XCircle, color: "text-red-600", bg: "bg-red-50", border: "border-red-200" },
+  timetable_pending: { label: "Pending Timetable", icon: Clock, color: "text-yellow-600", bg: "bg-yellow-50", border: "border-yellow-200" },
+  timetable_approved: { label: "Timetable Applied", icon: CheckCircle2, color: "text-green-600", bg: "bg-green-50", border: "border-green-200" },
+  executive_pending: { label: "Pending Executive", icon: Clock, color: "text-yellow-600", bg: "bg-yellow-50", border: "border-yellow-200" },
+  approved: { label: "Approved", icon: CheckCircle2, color: "text-green-600", bg: "bg-green-50", border: "border-green-200" },
+  rejected: { label: "Rejected", icon: XCircle, color: "text-red-600", bg: "bg-red-50", border: "border-red-200" },
+  cancelled: { label: "Cancelled", icon: AlertCircle, color: "text-gray-600", bg: "bg-gray-50", border: "border-gray-200" },
 };
 
 export default function LeaveManagementWithAlteration() {
-  const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
-  const [faculties, setFaculties] = useState<Faculty[]>([]);
-  const [classes, setClasses] = useState<Class[]>([]);
+  const [myLeaves, setMyLeaves] = useState<LeaveRequest[]>([]);
   const [loading, setLoading] = useState(false);
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [activeTab, setActiveTab] = useState("apply");
   const { authToken } = useAuth();
 
-  const [formData, setFormData] = useState({
-    class_id: "",
-    leave_type: "Medical",
-    start_date: "",
-    end_date: "",
+  const [form, setForm] = useState({
+    leaveType: "",
+    startDate: "",
+    endDate: "",
     reason: "",
-    affected_periods: "[]",
-    substitute_faculty_id: "",
   });
 
-  // Fetch data on mount
+  const [periodsWithFaculty, setPeriodsWithFaculty] = useState<PeriodWithFaculty[]>([]);
+  const [fetchingPeriods, setFetchingPeriods] = useState(false);
+
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        // Fetch leave requests
-        const leaveResponse = await fetch("/api/v1/leave", {
-          headers: { Authorization: `Bearer ${authToken}` },
-        });
-        if (leaveResponse.ok) {
-          const leaveData = await leaveResponse.json();
-          setLeaveRequests(leaveData.data || []);
-        }
-
-        // Fetch faculties
-        const facResponse = await fetch("/api/v1/faculty", {
-          headers: { Authorization: `Bearer ${authToken}` },
-        });
-        if (facResponse.ok) {
-          const facData = await facResponse.json();
-          setFaculties(facData.data || []);
-        }
-
-        // Fetch classes
-        const classResponse = await fetch("/api/v1/classes", {
-          headers: { Authorization: `Bearer ${authToken}` },
-        });
-        if (classResponse.ok) {
-          const classData = await classResponse.json();
-          setClasses(classData.data || []);
-        }
-      } catch (error) {
-        console.error("Error fetching data:", error);
-        toast({
-          title: "Error",
-          description: "Failed to load data",
-          variant: "destructive",
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
+    fetchMyLeaves();
   }, [authToken]);
 
-  const calculateTotalDays = (start: string, end: string) => {
-    if (!start || !end) return 0;
-    const startDate = new Date(start);
-    const endDate = new Date(end);
-    const timeDiff = Math.abs(endDate.getTime() - startDate.getTime());
-    return Math.ceil(timeDiff / (1000 * 3600 * 24)) + 1;
-  };
-
-  const handleSubmitLeaveWithAlteration = async () => {
+  const fetchMyLeaves = async () => {
     try {
       setLoading(true);
+      const response = await fetch("/api/v1/faculty/leave-request/my-applications", {
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
+      const result = await response.json();
+      if (result.success) {
+        setMyLeaves(result.data || []);
+      }
+    } catch (error) {
+      console.error("Error fetching leaves:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load leave applications",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      // Calculate total days
-      const totalDays = calculateTotalDays(formData.start_date, formData.end_date);
+  const fetchPeriodsForDateRange = async () => {
+    if (!form.startDate || !form.endDate) {
+      toast({
+        title: "Error",
+        description: "Please select both start and end dates",
+        variant: "destructive",
+      });
+      return;
+    }
 
-      const response = await fetch("/api/v1/alteration/request", {
+    if (new Date(form.endDate) < new Date(form.startDate)) {
+      toast({
+        title: "Error",
+        description: "End date cannot be before start date",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setFetchingPeriods(true);
+      const response = await fetch(
+        `/api/v1/faculty/leave-request/periods-for-dates?startDate=${form.startDate}&endDate=${form.endDate}`,
+        { headers: { Authorization: `Bearer ${authToken}` } }
+      );
+      const result = await response.json();
+
+      if (result.success && result.data.length > 0) {
+        await fetchAlternativeFaculty(result.data);
+        toast({
+          title: "Success",
+          description: `Found ${result.data.length} class periods`,
+        });
+      } else {
+        toast({
+          title: "No Results",
+          description: "No class periods found for the selected date range",
+          variant: "destructive",
+        });
+        setPeriodsWithFaculty([]);
+      }
+    } catch (error) {
+      console.error("Error fetching periods:", error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch class periods",
+        variant: "destructive",
+      });
+    } finally {
+      setFetchingPeriods(false);
+    }
+  };
+
+  const fetchAlternativeFaculty = async (periods: Period[]) => {
+    try {
+      const response = await fetch("/api/v1/faculty/leave-request/alternative-faculty", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${authToken}`,
         },
-        body: JSON.stringify({
-          class_id: parseInt(formData.class_id),
-          leave_type_id: formData.leave_type,
-          start_date: formData.start_date,
-          end_date: formData.end_date,
-          total_days: totalDays,
-          reason: formData.reason,
-          affected_periods: JSON.parse(formData.affected_periods || "[]"),
-          substitute_faculty_id: parseInt(formData.substitute_faculty_id),
-        }),
+        body: JSON.stringify({ periods }),
+      });
+      const result = await response.json();
+
+      if (result.success) {
+        setPeriodsWithFaculty(result.data || []);
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to fetch alternative faculty",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching alternative faculty:", error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch alternative faculty",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleSelectFaculty = (periodIndex: number, facultyId: number) => {
+    const updated = [...periodsWithFaculty];
+    updated[periodIndex].selected_faculty_id = facultyId;
+    setPeriodsWithFaculty(updated);
+  };
+
+  const calculateTotalDays = () => {
+    if (!form.startDate || !form.endDate) return "0";
+    const start = new Date(form.startDate);
+    const end = new Date(form.endDate);
+    const diffTime = Math.abs(end.getTime() - start.getTime());
+    const totalDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+    return totalDays.toString();
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!form.leaveType || !form.startDate || !form.endDate || !form.reason) {
+      toast({
+        title: "Error",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const unselected = periodsWithFaculty.filter(p => !p.selected_faculty_id);
+    if (unselected.length > 0) {
+      toast({
+        title: "Error",
+        description: "Please select alternative faculty for all periods",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+
+      const affected_periods = periodsWithFaculty.map(p => ({
+        date: p.period.date,
+        period_slot_id: p.period.period_number,
+        class_id: p.period.class?.id,
+        subject_id: p.period.subject?.id,
+        master_id: p.period.id,
+        requested_substitute_faculty_id: p.selected_faculty_id,
+      }));
+
+      const payload = {
+        leaveType: form.leaveType,
+        startDate: form.startDate,
+        endDate: form.endDate,
+        reason: form.reason,
+        substitute_faculty_id: periodsWithFaculty[0]?.selected_faculty_id,
+        affected_periods,
+      };
+
+      const response = await fetch("/api/v1/faculty/leave-request/submit", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify(payload),
       });
 
-      if (response.ok) {
-        const result = await response.json();
-        setLeaveRequests((prev) => [result.data, ...prev]);
-        setIsCreateDialogOpen(false);
-        resetForm();
+      const result = await response.json();
+      if (result.success) {
         toast({
           title: "Success",
-          description: "Leave request submitted with alteration",
+          description: "Leave request submitted successfully",
         });
+        setForm({
+          leaveType: "",
+          startDate: "",
+          endDate: "",
+          reason: "",
+        });
+        setPeriodsWithFaculty([]);
+        setActiveTab("status");
+        fetchMyLeaves();
       } else {
-        throw new Error("Failed to submit leave request");
+        toast({
+          title: "Error",
+          description: result.error || "Failed to submit leave request",
+          variant: "destructive",
+        });
       }
     } catch (error) {
       console.error("Error submitting leave:", error);
@@ -220,33 +332,54 @@ export default function LeaveManagementWithAlteration() {
         variant: "destructive",
       });
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   };
 
-  const resetForm = () => {
-    setFormData({
-      class_id: "",
-      leave_type: "Medical",
-      start_date: "",
-      end_date: "",
-      reason: "",
-      affected_periods: "[]",
-      substitute_faculty_id: "",
-    });
+  const handleWithdraw = async (leaveId: number) => {
+    if (!confirm("Are you sure you want to withdraw this request?")) return;
+
+    try {
+      const response = await fetch(`/api/v1/faculty/leave-request/${leaveId}/withdraw`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        toast({
+          title: "Success",
+          description: "Leave request withdrawn",
+        });
+        fetchMyLeaves();
+      } else {
+        toast({
+          title: "Error",
+          description: result.error || "Failed to withdraw request",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error withdrawing request:", error);
+      toast({
+        title: "Error",
+        description: "Failed to withdraw request",
+        variant: "destructive",
+      });
+    }
   };
 
-  const StatusIcon = statusConfig[
-    Object.keys(statusConfig).includes(
-      leaveRequests.length > 0
-        ? (leaveRequests[0].overall_status as keyof typeof statusConfig)
-        : "pending"
-    )
-      ? (leaveRequests.length > 0
-          ? (leaveRequests[0].overall_status as keyof typeof statusConfig)
-          : "pending")
-      : "pending"
-  ]?.icon || Clock;
+  const formatDate = (dateString: string) => {
+    if (!dateString) return "";
+    return new Date(dateString).toLocaleDateString("en-IN", { year: "numeric", month: "short", day: "numeric" });
+  };
+
+  const formatTime = (time: string) => {
+    if (!time) return "";
+    return time.substring(0, 5);
+  };
+
+  const getStatusConfig = (status: string) => statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
 
   return (
     <MainLayout>
@@ -258,271 +391,356 @@ export default function LeaveManagementWithAlteration() {
         <div>
           <h1 className="page-header font-serif">Leave Management & Alteration</h1>
           <p className="text-muted-foreground -mt-4">
-            Submit leave requests with class coverage arrangements
+            Submit leave requests with automatic alternative faculty assignment
           </p>
         </div>
-
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="w-fit bg-blue-600 hover:bg-blue-700">
-              <Plus className="w-4 h-4 mr-2" />
-              New Leave Request
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Submit Leave Request with Alteration</DialogTitle>
-            </DialogHeader>
-            <Tabs defaultValue="details" className="space-y-4">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="details">Leave Details</TabsTrigger>
-                <TabsTrigger value="substitute">Substitute Faculty</TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="details" className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label>Leave Type *</Label>
-                    <Select
-                      value={formData.leave_type}
-                      onValueChange={(v) => setFormData({ ...formData, leave_type: v })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {leaveTypes.map((type) => (
-                          <SelectItem key={type} value={type}>
-                            {type}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <Label>Class *</Label>
-                    <Select
-                      value={formData.class_id}
-                      onValueChange={(v) => setFormData({ ...formData, class_id: v })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select class" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {classes.map((cls) => (
-                          <SelectItem key={cls.id} value={cls.id.toString()}>
-                            {cls.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <Label>Start Date *</Label>
-                    <Input
-                      type="date"
-                      value={formData.start_date}
-                      onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-                    />
-                  </div>
-
-                  <div>
-                    <Label>End Date *</Label>
-                    <Input
-                      type="date"
-                      value={formData.end_date}
-                      onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
-                    />
-                  </div>
-
-                  {formData.start_date && formData.end_date && (
-                    <div>
-                      <Label>Total Days</Label>
-                      <div className="p-2 border border-dashed rounded bg-muted text-sm font-semibold">
-                        {calculateTotalDays(formData.start_date, formData.end_date)} days
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div>
-                  <Label>Reason *</Label>
-                  <Textarea
-                    value={formData.reason}
-                    onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
-                    placeholder="Provide reason for leave"
-                    rows={3}
-                  />
-                </div>
-              </TabsContent>
-
-              <TabsContent value="substitute" className="space-y-4">
-                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                  <p className="text-sm text-blue-800">
-                    <AlertCircle className="w-4 h-4 inline mr-2" />
-                    Select a faculty member to cover your classes during the leave period. They will
-                    receive a request for confirmation.
-                  </p>
-                </div>
-
-                <div>
-                  <Label>Request Substitute Faculty *</Label>
-                  <Select
-                    value={formData.substitute_faculty_id}
-                    onValueChange={(v) => setFormData({ ...formData, substitute_faculty_id: v })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select faculty to request" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {faculties.map((fac) => (
-                        <SelectItem key={fac.faculty_id} value={fac.faculty_id.toString()}>
-                          {fac.Name} ({fac.email})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="p-3 bg-amber-50 border border-amber-200 rounded text-sm text-amber-800">
-                  <p className="font-semibold mb-1">Workflow:</p>
-                  <ol className="list-decimal list-inside space-y-1">
-                    <li>You request a substitute faculty</li>
-                    <li>Substitute accepts or rejects your request</li>
-                    <li>Timetable incharge applies the alteration</li>
-                    <li>Department admin is notified of the change</li>
-                  </ol>
-                </div>
-              </TabsContent>
-            </Tabs>
-
-            <div className="flex gap-2 pt-4">
-              <Button
-                onClick={handleSubmitLeaveWithAlteration}
-                disabled={loading || !formData.class_id || !formData.start_date || !formData.end_date || !formData.substitute_faculty_id}
-              >
-                Submit Leave Request
-              </Button>
-              <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
-                Cancel
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
       </motion.div>
 
-      {/* Leave Requests List */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="space-y-4"
-      >
-        {leaveRequests.length === 0 ? (
-          <Card className="text-center py-12">
-            <CalendarDays className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">No leave requests yet</p>
-          </Card>
-        ) : (
-          leaveRequests.map((leave) => {
-            const status = statusConfig[leave.overall_status as keyof typeof statusConfig];
-            const StatusIconComponent = status?.icon || Clock;
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="apply">Apply Leave</TabsTrigger>
+          <TabsTrigger value="status">My Applications</TabsTrigger>
+        </TabsList>
 
-            return (
-              <Card key={leave.id} className={cn("border", status?.border)}>
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <CardTitle className="flex items-center gap-2">
+        {/* Apply Leave Tab */}
+        <TabsContent value="apply" className="mt-6 space-y-6">
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <Card>
+              <CardHeader>
+                <CardTitle>Submit New Leave Request</CardTitle>
+                <CardDescription>
+                  Enter your leave dates, and we'll automatically assign alternative faculty to cover your classes
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Leave Type */}
+                    <div className="space-y-2">
+                      <Label className="font-medium flex items-center gap-2">
+                        <FileText className="w-4 h-4" />
+                        Leave Type *
+                      </Label>
+                      <Select value={form.leaveType} onValueChange={(value) => setForm({ ...form, leaveType: value })}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select leave type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {leaveTypes.map((type) => (
+                            <SelectItem key={type} value={type}>
+                              {type}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Total Days Info */}
+                    {form.startDate && form.endDate && (
+                      <div className="space-y-2">
+                        <Label className="font-medium flex items-center gap-2">
+                          <Wallet className="w-4 h-4" />
+                          Total Days
+                        </Label>
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-center gap-3">
+                          <p className="font-semibold text-blue-600">{calculateTotalDays()} days</p>
+                          {parseInt(calculateTotalDays()) > 2 && (
+                            <p className="text-xs text-blue-600">
+                              Requires executive admin approval
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Start Date */}
+                    <div className="space-y-2">
+                      <Label className="font-medium flex items-center gap-2">
                         <CalendarDays className="w-4 h-4" />
-                        {leave.leave_type} Leave
-                      </CardTitle>
-                      <CardDescription>
-                        {new Date(leave.start_date).toLocaleDateString()} to{" "}
-                        {new Date(leave.end_date).toLocaleDateString()} ({leave.total_days} days)
-                      </CardDescription>
+                        Start Date *
+                      </Label>
+                      <Input
+                        type="date"
+                        value={form.startDate}
+                        onChange={(e) => {
+                          setForm({ ...form, startDate: e.target.value });
+                          setPeriodsWithFaculty([]);
+                        }}
+                      />
                     </div>
-                    <div className={cn(
-                      "px-3 py-1 rounded-full text-xs font-semibold border flex items-center gap-1",
-                      status?.bg,
-                      status?.border
-                    )}>
-                      <StatusIconComponent className="w-3 h-3" />
-                      {status?.label}
+
+                    {/* End Date */}
+                    <div className="space-y-2">
+                      <Label className="font-medium flex items-center gap-2">
+                        <CalendarDays className="w-4 h-4" />
+                        End Date *
+                      </Label>
+                      <Input
+                        type="date"
+                        value={form.endDate}
+                        onChange={(e) => {
+                          setForm({ ...form, endDate: e.target.value });
+                          setPeriodsWithFaculty([]);
+                        }}
+                      />
                     </div>
                   </div>
-                </CardHeader>
 
-                <CardContent className="space-y-4">
                   {/* Reason */}
-                  <div className="p-3 bg-muted/50 rounded-lg">
-                    <p className="text-xs text-muted-foreground font-semibold mb-1">Reason</p>
-                    <p className="text-sm">{leave.reason}</p>
-                  </div>
-
-                  {/* Timeline */}
                   <div className="space-y-2">
-                    <p className="text-xs font-semibold text-muted-foreground">Workflow Timeline</p>
-                    <div className="flex items-center gap-3 text-sm">
-                      <div className="flex flex-cols gap-1 items-center">
-                        <div className="w-2 h-2 rounded-full bg-green-500" />
-                        <span className="text-muted-foreground">Request Submitted</span>
-                      </div>
-                      <ArrowRight className="w-4 h-4 text-gray-300" />
-                      <div className="flex flex-cols gap-1 items-center">
-                        <div className={cn(
-                          "w-2 h-2 rounded-full",
-                          leave.overall_status !== "pending" ? "bg-green-500" : "bg-gray-300"
-                        )} />
-                        <span className="text-muted-foreground">Substitute Accepts</span>
-                      </div>
-                      <ArrowRight className="w-4 h-4 text-gray-300" />
-                      <div className="flex flex-cols gap-1 items-center">
-                        <div className={cn(
-                          "w-2 h-2 rounded-full",
-                          leave.overall_status === "approved" ? "bg-green-500" : "bg-gray-300"
-                        )} />
-                        <span className="text-muted-foreground">Timetable Applied</span>
-                      </div>
-                    </div>
+                    <Label className="font-medium">Reason for Leave *</Label>
+                    <Textarea
+                      placeholder="Explain the reason for your leave"
+                      value={form.reason}
+                      onChange={(e) => setForm({ ...form, reason: e.target.value })}
+                      rows={3}
+                    />
                   </div>
 
-                  {/* Substitute Faculty Info */}
-                  <div className="grid grid-cols-2 gap-3 p-3 bg-muted/50 rounded-lg">
-                    <div>
-                      <p className="text-xs text-muted-foreground">Substitute Faculty</p>
-                      <p className="text-sm font-medium">
-                        {faculties.find((f) => f.faculty_id === leave.substitute_faculty_id)?.Name || "Unknown"}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Class</p>
-                      <p className="text-sm font-medium">
-                        {classes.find((c) => c.id === leave.class_id)?.name || "Unknown"}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Actions */}
-                  {leave.overall_status === "pending" && (
-                    <div className="flex gap-2 pt-2 border-t">
+                  {/* Fetch Periods Button */}
+                  {form.startDate && form.endDate && !fetchingPeriods && periodsWithFaculty.length === 0 && (
+                    <div className="flex justify-center pt-4">
                       <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-red-600 hover:text-red-700"
+                        type="button"
+                        onClick={fetchPeriodsForDateRange}
+                        className="gap-2"
                       >
-                        <XCircle className="w-4 h-4 mr-2" />
-                        Cancel Request
+                        <Search className="w-4 h-4" />
+                        Find Classes & Alternative Faculty
                       </Button>
                     </div>
                   )}
-                </CardContent>
-              </Card>
-            );
-          })
-        )}
-      </motion.div>
+
+                  {fetchingPeriods && (
+                    <div className="text-center py-8">
+                      <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-blue-600" />
+                      <p className="text-muted-foreground">Fetching your classes and finding alternative faculty...</p>
+                    </div>
+                  )}
+
+                  {/* Periods withFaculty Selection */}
+                  {periodsWithFaculty.length > 0 && (
+                    <div className="space-y-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-semibold text-lg flex items-center gap-2">
+                          <Users className="w-5 h-5" />
+                          Select Alternative Faculty ({periodsWithFaculty.length} classes)
+                        </h3>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setPeriodsWithFaculty([]);
+                            setForm({ ...form, startDate: "", endDate: "" });
+                          }}
+                        >
+                          Change Dates
+                        </Button>
+                      </div>
+
+                      <div className="space-y-4">
+                        {periodsWithFaculty.map((item, index) => (
+                          <motion.div
+                            key={index}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="bg-white border border-gray-200 rounded-lg p-4 space-y-3"
+                          >
+                            <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-sm">
+                              <div>
+                                <p className="text-xs text-muted-foreground">Date</p>
+                                <p className="font-medium">{formatDate(item.period.date)}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-muted-foreground">Period</p>
+                                <p className="font-medium">{formatTime(item.period.start_time)}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-muted-foreground">Subject</p>
+                                <p className="font-medium">{item.period.subject?.name || "—"}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-muted-foreground">Class</p>
+                                <p className="font-medium">{item.period.class?.name || "—"}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-muted-foreground">Room</p>
+                                <p className="font-medium">{item.period.type || "—"}</p>
+                              </div>
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label className="text-sm font-medium">Select Alternative Faculty *</Label>
+                              {item.alternative_faculty.length === 0 ? (
+                                <div className="bg-yellow-50 border border-yellow-200 rounded p-3 text-sm">
+                                  <p className="text-yellow-800">No alternative faculty available for this subject-class</p>
+                                </div>
+                              ) : (
+                                <Select
+                                  value={item.selected_faculty_id?.toString() || ""}
+                                  onValueChange={(value) => handleSelectFaculty(index, parseInt(value))}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select a faculty member" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {item.alternative_faculty.map((faculty) => (
+                                      <SelectItem key={faculty.faculty_id} value={faculty.faculty_id.toString()}>
+                                        <div className="flex items-center gap-2">
+                                          <span>{faculty.name}</span>
+                                          {faculty.designation && (
+                                            <span className="text-xs text-muted-foreground">({faculty.designation})</span>
+                                          )}
+                                        </div>
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              )}
+                            </div>
+
+                            {item.selected_faculty_id && (
+                              <div className="bg-green-50 border border-green-200 rounded p-3 flex items-center gap-2">
+                                <CheckCircle2 className="w-4 h-4 text-green-600" />
+                                <span className="text-sm text-green-600 font-medium">
+                                  {item.alternative_faculty.find(f => f.faculty_id === item.selected_faculty_id)?.name} selected
+                                </span>
+                              </div>
+                            )}
+                          </motion.div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex gap-3 justify-end pt-4">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setForm({
+                          leaveType: "",
+                          startDate: "",
+                          endDate: "",
+                          reason: "",
+                        });
+                        setPeriodsWithFaculty([]);
+                      }}
+                    >
+                      Clear Form
+                    </Button>
+                    <Button
+                      type="submit"
+                      disabled={submitting || periodsWithFaculty.length === 0}
+                      className="gap-2"
+                    >
+                      {submitting ? (
+                        <>
+                          <RefreshCw className="w-4 h-4 animate-spin" />
+                          Submitting...
+                        </>
+                      ) : (
+                        <>
+                          <PlusCircle className="w-4 h-4" />
+                          Submit Leave Request
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </TabsContent>
+
+        {/* My Applications Tab */}
+        <TabsContent value="status" className="mt-6">
+          {loading ? (
+            <div className="text-center py-12">
+              <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2" />
+              <p className="text-muted-foreground">Loading applications...</p>
+            </div>
+          ) : myLeaves.length === 0 ? (
+            <Card className="text-center py-12">
+              <FileText className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+              <p className="text-muted-foreground mb-3">No leave applications yet</p>
+              <Button onClick={() => setActiveTab("apply")} variant="outline" size="sm">
+                Apply for Leave
+              </Button>
+            </Card>
+          ) : (
+            <div className="grid gap-4">
+              {myLeaves.map((leave) => {
+                const config = getStatusConfig(leave.overall_status);
+                const StatusIcon = config.icon;
+
+                return (
+                  <motion.div
+                    key={leave.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                  >
+                    <Card className={cn("border", config.border)}>
+                      <CardHeader className="pb-3">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <CardTitle className="flex items-center gap-2">
+                              <StatusIcon className="w-4 h-4" />
+                              {leave.leaveType} Leave
+                            </CardTitle>
+                            <CardDescription>
+                              {formatDate(leave.startDate)} to {formatDate(leave.endDate)} ({leave.totalDays} days)
+                            </CardDescription>
+                          </div>
+                          <div className={cn(
+                            "px-3 py-1 rounded-full text-xs font-semibold border",
+                            config.bg,
+                            config.border
+                          )}>
+                            {config.label}
+                          </div>
+                        </div>
+                      </CardHeader>
+
+                      <CardContent className="space-y-4">
+                        <div className="p-3 bg-muted/50 rounded-lg">
+                          <p className="text-xs text-muted-foreground font-semibold mb-1">Reason</p>
+                          <p className="text-sm">{leave.reason}</p>
+                        </div>
+
+                        {leave.substituteFaculty && (
+                          <div className="p-3 bg-muted/50 rounded-lg">
+                            <p className="text-xs text-muted-foreground font-semibold mb-1">Assigned Faculty</p>
+                            <p className="text-sm font-medium">{leave.substituteFaculty.name}</p>
+                          </div>
+                        )}
+
+                        {['pending', 'substitute_pending'].includes(leave.overall_status) && (
+                          <div className="flex justify-end pt-2 border-t">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-red-600 hover:text-red-700"
+                              onClick={() => handleWithdraw(leave.id)}
+                            >
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              Withdraw
+                            </Button>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                );
+              })}
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
     </MainLayout>
   );
 }

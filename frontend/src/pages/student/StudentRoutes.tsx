@@ -16,10 +16,12 @@ import Photos from './pages/profile/Photos';
 import ChangePassword from './pages/profile/ChangePassword';
 
 // Academics
+import Academics from './pages/academics';
 import Attendance from './pages/academics/Attendance';
 import Marks from './pages/academics/Marks';
 import StudentTimetable from './pages/StudentTimetable';
 import Leave from './pages/academics/Leave';
+import Syllabus from './pages/academics/Syllabus';
 
 // Records
 // Portfolio (combines Records and Extra-curricular)
@@ -66,10 +68,13 @@ const StudentRoutes = () => {
           <Route path="profile/change-password" element={<ChangePassword />} />
 
           {/* Academics */}
+          <Route path="academics" element={<Navigate to="academics-main" replace />} />
+          <Route path="academics-main" element={<Academics />} />
           <Route path="academics/attendance" element={<Attendance />} />
           <Route path="academics/marks" element={<Marks />} />
           <Route path="academics/timetable" element={<StudentTimetable />} />
           <Route path="academics/leave" element={<Leave />} />
+          <Route path="academics/syllabus" element={<Syllabus />} />
 
           {/* Portfolio (combines Records and Extra-curricular) */}
           <Route path="portfolio" element={<Navigate to="summary" replace />} />

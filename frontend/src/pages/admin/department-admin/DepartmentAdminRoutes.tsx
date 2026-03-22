@@ -26,6 +26,7 @@ import TimetableMasterManagement from './pages/TimetableMasterManagement';
 import TimetableSlotsManagement from './pages/TimetableSlotsManagement';
 import LeaveWithAlteration from './pages/LeaveWithAlteration';
 import Timetable from './pages/Timetable';
+import CourseLessonPlanApprovalsPage from './pages/CourseLessonPlanApprovalsPage';
 import './department-admin.css';
 
 const queryClient = new QueryClient();
@@ -49,6 +50,8 @@ const DepartmentAdminRoutes = () => (
               <Route path="attendance" element={<Attendance />} />
               <Route path="academics" element={<Academics />} />
               <Route path="leave" element={<Leave />} />
+           
+              <Route path="course-plan-approvals" element={<CourseLessonPlanApprovalsPage />} />
               <Route path="assessments" element={<Assessments />} />
               <Route path="communication" element={<Communication />} />
               <Route path="counseling" element={<Counseling />} />

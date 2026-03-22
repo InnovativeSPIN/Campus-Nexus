@@ -21,9 +21,9 @@ import { cn } from '@/pages/student/lib/utils';
 const menuItems = [
   { title: "Dashboard", url: "/student/dashboard", icon: LayoutDashboard },
   { title: "Profile", url: "/student/profile/personal", icon: User },
+  { title: "Academics", url: "/student/academics-main", icon: BookOpen },
   { title: "Attendance", url: "/student/academics/attendance", icon: ClipboardCheck },
   { title: "Timetable", url: "/student/academics/timetable", icon: Calendar },
-  { title: "Marks", url: "/student/academics/marks", icon: BookOpen },
   { title: "Leave", url: "/student/academics/leave", icon: FileText },
   { title: "Change Password", url: "/student/profile/change-password", icon: Lock },
   { title: "Portfolio", url: "/student/portfolio/sports", icon: Award },

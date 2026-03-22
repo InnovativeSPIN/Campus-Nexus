@@ -26,6 +26,10 @@ import {
   History,
   Filter,
   Download,
+  ChevronDown,
+  ChevronRight,
+  BookOpen,
+  Loader2,
 } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
 import { cn } from "@/pages/faculty/lib/utils";
@@ -52,6 +56,16 @@ interface AttendanceHistoryRecord {
   leave: number;
   od: number;
   total: number;
+}
+
+interface PendingTopic {
+  id: number;
+  sno: number;
+  topic: string;
+  periods_required: number;
+  periods_taken: number;
+  co_number?: string;
+  btl?: string;
 }
 
 export default function Attendance() {
@@ -86,6 +100,22 @@ export default function Attendance() {
   const [historyClassFilter, setHistoryClassFilter] = useState<string>("all");
   const [historyDateFrom, setHistoryDateFrom] = useState("");
   const [historyDateTo, setHistoryDateTo] = useState("");
+  const [pendingTopics, setPendingTopics] = useState<PendingTopic[]>([]);
+  const [loadingTopics, setLoadingTopics] = useState(false);
+  const [selectedLessonPlanId, setSelectedLessonPlanId] = useState<string>("");
+
+  // Coverage Tracking states
+  const [coverageSubjectId, setCoverageSubjectId] = useState<string>("");
+  const [coverageTopics, setCoverageTopics] = useState<any[]>([]);
+  const [selectedTopicId, setSelectedTopicId] = useState<string>("");
+  const [coverageStatus, setCoverageStatus] = useState<"completed" | "deviation" | "">("");
+  const [deviationReason, setDeviationReason] = useState("");
+  const [coverageDate, setCoverageDate] = useState<string>(new Date().toISOString().split("T")[0]);
+  const [coverageNotes, setCoverageNotes] = useState("");
+  const [coverageSubmitting, setCoverageSubmitting] = useState(false);
+  const [coverageSuccess, setCoverageSuccess] = useState("");
+  const [selectedTopic, setSelectedTopic] = useState<any>(null);
+  const [expandedUnits, setExpandedUnits] = useState<{ [key: string]: boolean }>({});
 
   const today = new Date().toISOString().split("T")[0];
   const isToday = selectedDate === today;
@@ -172,6 +202,38 @@ export default function Attendance() {
         photo: s.photo || s.photo_path || ""
       })));
 
+      // Fetch pending topics for this subject and class
+      const loadPendingTopics = async () => {
+        try {
+          setLoadingTopics(true);
+          const response = await fetch(
+            `/api/v1/faculty/academics/course-plans/pending?subjectId=${slotInfo.subjectId}&classId=${classId}`,
+            { headers: { 'Authorization': `Bearer ${authToken}` } }
+          );
+          const topicsData = await response.json();
+          if (topicsData.success && Array.isArray(topicsData.data)) {
+            setPendingTopics(topicsData.data);
+            // Auto-select first pending topic if available
+            if (topicsData.data.length > 0) {
+              setSelectedLessonPlanId(topicsData.data[0].id.toString());
+            } else {
+              setSelectedLessonPlanId("");
+            }
+          } else {
+            setPendingTopics([]);
+            setSelectedLessonPlanId("");
+          }
+        } catch (err) {
+          console.warn('Could not load pending topics:', err);
+          setPendingTopics([]);
+          setSelectedLessonPlanId("");
+        } finally {
+          setLoadingTopics(false);
+        }
+      };
+
+      loadPendingTopics();
+
       // Load existing attendance for this date + class + period
       const attendanceQuery = new URLSearchParams({
         class: String(classId),
@@ -196,6 +258,10 @@ export default function Attendance() {
               });
               setAttendanceData(marks);
               setTopicCovered(attendanceRecord.remarks || "");
+              // If this record has a lesson_plan_id, select it
+              if (attendanceRecord.lesson_plan_id) {
+                setSelectedLessonPlanId(attendanceRecord.lesson_plan_id.toString());
+              }
               setLocked(true);
               return;
             }
@@ -208,6 +274,8 @@ export default function Attendance() {
     } else {
       setSlotStudents([]);
       setAttendanceData({});
+      setPendingTopics([]);
+      setSelectedLessonPlanId("");
       setLocked(!isToday);
     }
   }, [slotInfo, studentsByClass, selectedDate, authToken, isToday]);
@@ -246,6 +314,7 @@ export default function Attendance() {
           sessionType: slotInfo.sessionType || 'theory',
           isLabSession: Boolean(slotInfo.isLabSession),
           labGroup: slotInfo.labGroup || null,
+          lesson_plan_id: selectedLessonPlanId ? parseInt(selectedLessonPlanId) : null,
           students: studentsArray
         })
       });
@@ -453,6 +522,122 @@ export default function Attendance() {
     }
   };
 
+  const loadCoverageTopics = async (subjectId: string) => {
+    if (!subjectId || !authToken) return;
+    
+    try {
+      // Fetch approved course plans for the selected subject
+      const response = await fetch(
+        `/api/v1/faculty/academics/course-plans?subjectId=${subjectId}&includePending=false`,
+        { headers: { Authorization: `Bearer ${authToken}` } }
+      );
+      const result = await response.json();
+      
+      if (result.success && Array.isArray(result.data)) {
+        const topicsWithUnits = result.data.map((plan: any) => ({
+          id: plan.id,
+          topic: plan.topic,
+          unit_label: plan.unit_label || 'Unassigned',
+          periods_required: plan.periods_required || 1,
+          periods_taken: plan.periods_taken || 0,
+          co_number: plan.co_number,
+          btl: plan.btl
+        }));
+        setCoverageTopics(topicsWithUnits);
+        
+        // Initialize expanded units - expand all by default
+        const uniqueUnits = [...new Set(topicsWithUnits.map((t: any) => t.unit_label))];
+        const newExpandedUnits: { [key: string]: boolean } = {};
+        uniqueUnits.forEach(unit => {
+          newExpandedUnits[unit] = true;
+        });
+        setExpandedUnits(newExpandedUnits);
+      }
+    } catch (error) {
+      console.error('Error loading coverage topics:', error);
+      toast.error('Failed to load course topics');
+    }
+  };
+
+  const groupTopicsByUnit = (topics: any[]) => {
+    const grouped: { [key: string]: any[] } = {};
+    topics.forEach(topic => {
+      const unitLabel = topic.unit_label || 'Unassigned';
+      if (!grouped[unitLabel]) {
+        grouped[unitLabel] = [];
+      }
+      grouped[unitLabel].push(topic);
+    });
+    return Object.entries(grouped).sort((a, b) => {
+      const aNum = parseInt(a[0].match(/\d+/)?.[0] || '999');
+      const bNum = parseInt(b[0].match(/\d+/)?.[0] || '999');
+      return aNum - bNum;
+    });
+  };
+
+  const toggleUnit = (unit: string) => {
+    setExpandedUnits(prev => ({
+      ...prev,
+      [unit]: !prev[unit]
+    }));
+  };
+
+  const handleCoverageSubmit = async () => {
+    if (!selectedTopicId || !coverageStatus || !coverageDate) {
+      toast.error("Please fill all required fields");
+      return;
+    }
+
+    setCoverageSubmitting(true);
+    try {
+      const topic = coverageTopics.find(t => t.id.toString() === selectedTopicId);
+      let periodsDelta = 0;
+      
+      if (coverageStatus === 'completed') {
+        periodsDelta = -(topic.periods_required - topic.periods_taken); // Reduce remaining periods
+      }
+      // If deviation, no period reduction
+
+      const response = await fetch('/api/v1/faculty/academics/coverage-tracking', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`
+        },
+        body: JSON.stringify({
+          lesson_plan_id: selectedTopicId,
+          status: coverageStatus,
+          coverage_date: coverageDate,
+          deviation_reason: coverageStatus === 'deviation' ? deviationReason : null,
+          periods_delta: periodsDelta,
+          additional_notes: coverageNotes
+        })
+      });
+
+      const result = await response.json();
+      
+      if (response.ok && result.success) {
+        setCoverageSuccess(`Topic coverage recorded successfully!`);
+        // Reset form
+        setSelectedTopicId("");
+        setCoverageStatus("");
+        setDeviationReason("");
+        setCoverageNotes("");
+        setCoverageDate(new Date().toISOString().split("T")[0]);
+        
+        setTimeout(() => setCoverageSuccess(""), 3000);
+        toast.success("Coverage data submitted!");
+      } else {
+        toast.error(result.message || "Failed to submit coverage data");
+      }
+    } catch (error) {
+      console.error('Error submitting coverage:', error);
+      toast.error("Error submitting coverage data");
+    } finally {
+      setCoverageSubmitting(false);
+    }
+  };
+
   useEffect(() => {
     fetchAttendanceHistory();
   }, [authToken, user?.id, historyClassFilter, historyDateFrom, historyDateTo]);
@@ -551,6 +736,10 @@ export default function Attendance() {
           <TabsTrigger value="history" className="flex items-center gap-2">
             <History className="w-4 h-4" />
             Attendance History
+          </TabsTrigger>
+          <TabsTrigger value="coverage" className="flex items-center gap-2">
+            <BookOpen className="w-4 h-4" />
+            Coverage Tracking
           </TabsTrigger>
         </TabsList>
 
@@ -1050,20 +1239,56 @@ export default function Attendance() {
             className="widget-card mt-6 p-6 border-2 border-primary/10"
           >
             <h3 className="text-lg font-semibold mb-4 text-primary">Class Coverage Details</h3>
+            
+            {/* Topic Dropdown */}
+            <div className="mb-4 space-y-2">
+              <Label className="text-sm font-medium">Which topic did you teach? *</Label>
+              {loadingTopics ? (
+                <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-md">
+                  <div className="w-4 h-4 rounded-full border-2 border-primary border-t-transparent animate-spin"></div>
+                  <span className="text-sm text-muted-foreground">Loading topics...</span>
+                </div>
+              ) : pendingTopics.length > 0 ? (
+                <Select value={selectedLessonPlanId} onValueChange={setSelectedLessonPlanId} disabled={locked}>
+                  <SelectTrigger className="bg-background/50">
+                    <SelectValue placeholder="Select a topic to track" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {pendingTopics.map((topic) => (
+                      <SelectItem key={topic.id} value={topic.id.toString()}>
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{topic.topic}</span>
+                          <span className="text-xs text-muted-foreground">
+                            ({topic.periods_taken}/{topic.periods_required} periods)
+                          </span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <div className="p-3 bg-info/10 border border-info/30 rounded-md text-sm text-info">
+                  No pending topics for this class. Create a course plan in the Academics section first.
+                </div>
+              )}
+            </div>
+
+            {/* Free-form notes (optional) */}
             <div className="space-y-2">
-              <Label className="text-sm font-medium">Topic / Unit Covered</Label>
+              <Label className="text-sm font-medium">Additional Notes (Optional)</Label>
               <Textarea
-                placeholder="Briefly describe what was taught today..."
+                placeholder="Any additional details about what was covered today..."
                 value={topicCovered}
                 onChange={(e) => setTopicCovered(e.target.value)}
-                className="min-h-[100px] bg-background/50"
+                className="min-h-[80px] bg-background/50"
+                disabled={locked}
               />
             </div>
 
             <div className="mt-6 flex justify-end">
               <Button
                 onClick={() => handleSave(false)}
-                disabled={locked || !isToday || !topicCovered.trim()}
+                disabled={locked || !isToday || !selectedLessonPlanId}
                 className="bg-primary hover:bg-primary/90 min-w-[200px]"
               >
                 <Save className="w-4 h-4 mr-2" />
@@ -1212,6 +1437,255 @@ export default function Attendance() {
                 </tbody>
               </table>
             </div>
+          </motion.div>
+        </TabsContent>
+
+        <TabsContent value="coverage">
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="widget-card"
+          >
+            <div className="mb-6">
+              <h3 className="section-title flex items-center gap-2 mb-4">
+                <BookOpen className="w-5 h-5 text-primary" />
+                Syllabus Coverage Tracking
+              </h3>
+              <p className="text-sm text-muted-foreground">Track topics covered and manage deviations in syllabus coverage</p>
+            </div>
+
+            {coverageSuccess && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-4 p-4 bg-success/10 border border-success/30 rounded-lg flex items-center gap-3"
+              >
+                <CheckCircle2 className="w-5 h-5 text-success" />
+                <p className="text-success font-medium">{coverageSuccess}</p>
+              </motion.div>
+            )}
+
+            {/* Subject Selection */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <div className="space-y-2">
+                <Label>Select Subject *</Label>
+                <Select 
+                  value={coverageSubjectId} 
+                  onValueChange={(value) => {
+                    setCoverageSubjectId(value);
+                    loadCoverageTopics(value);
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose a subject..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {subjects.map((sub) => (
+                      <SelectItem key={sub.id} value={sub.id.toString()}>
+                        {sub.code ? `[${sub.code}] ` : ''}{sub.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Coverage Date *</Label>
+                <Input
+                  type="date"
+                  value={coverageDate}
+                  onChange={(e) => setCoverageDate(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* Topics by Unit */}
+            {coverageSubjectId && coverageTopics.length > 0 && (
+              <div className="mb-6">
+                <h4 className="font-semibold text-foreground mb-4">Select Topic</h4>
+                <div className="space-y-3">
+                  {groupTopicsByUnit(coverageTopics).map(([unit, unitTopics]) => {
+                    const isExpanded = expandedUnits[unit] ?? true;
+                    
+                    return (
+                      <div key={unit} className="border border-border rounded-lg overflow-hidden">
+                        {/* Unit Header */}
+                        <button
+                          onClick={() => toggleUnit(unit)}
+                          className="w-full px-4 py-3 bg-primary/5 hover:bg-primary/10 transition-colors flex items-center justify-between border-b border-border"
+                        >
+                          <div className="flex items-center gap-3 text-left">
+                            {isExpanded ? (
+                              <ChevronDown className="w-5 h-5 text-primary" />
+                            ) : (
+                              <ChevronRight className="w-5 h-5 text-primary" />
+                            )}
+                            <h4 className="font-semibold text-foreground">{unit}</h4>
+                          </div>
+                          <Badge variant="secondary" className="text-xs">
+                            {unitTopics.length}
+                          </Badge>
+                        </button>
+
+                        {/* Topics under Unit */}
+                        {isExpanded && (
+                          <div className="p-4 space-y-2 bg-muted/20">
+                            {unitTopics.map((topic) => (
+                              <label
+                                key={topic.id}
+                                className={cn(
+                                  "flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all",
+                                  selectedTopicId === topic.id.toString()
+                                    ? "bg-primary/10 border-primary/40"
+                                    : "bg-background border-border hover:border-primary/30"
+                                )}
+                              >
+                                <input
+                                  type="radio"
+                                  name="topic"
+                                  value={topic.id.toString()}
+                                  checked={selectedTopicId === topic.id.toString()}
+                                  onChange={(e) => {
+                                    setSelectedTopicId(e.target.value);
+                                    setSelectedTopic(topic);
+                                  }}
+                                  className="mt-1"
+                                />
+                                <div className="flex-1">
+                                  <p className="font-medium text-sm">{topic.topic}</p>
+                                  <div className="grid grid-cols-2 gap-2 mt-2 text-xs text-muted-foreground">
+                                    <span>Periods Required: {topic.periods_required}</span>
+                                    <span>Periods Taken: {topic.periods_taken}</span>
+                                    {topic.co_number && <span>CO: {topic.co_number}</span>}
+                                    {topic.btl && <span>BTL: {topic.btl}</span>}
+                                  </div>
+                                </div>
+                              </label>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Status and Details */}
+            {selectedTopic && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="border border-border rounded-lg p-6 mb-6 bg-muted/30"
+              >
+                <h4 className="font-semibold text-foreground mb-4">Coverage Status</h4>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Status Selection */}
+                  <div className="space-y-3">
+                    <Label className="text-base font-semibold">Mark as *</Label>
+                    <RadioGroup value={coverageStatus} onValueChange={setCoverageStatus}>
+                      <div className="flex items-center gap-3">
+                        <RadioGroupItem value="completed" id="status-completed" />
+                        <Label htmlFor="status-completed" className="font-medium cursor-pointer">
+                          Completed
+                        </Label>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <RadioGroupItem value="deviation" id="status-deviation" />
+                        <Label htmlFor="status-deviation" className="font-medium cursor-pointer">
+                          Deviation
+                        </Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
+
+                  {/* Class Coverage Info */}
+                  <div className="space-y-3 p-4 bg-background rounded-lg border border-border">
+                    <h5 className="font-semibold text-sm">Class Coverage Details</h5>
+                    <div className="text-sm space-y-2">
+                      <div><span className="text-muted-foreground">Topic:</span> <span className="font-medium">{selectedTopic.topic}</span></div>
+                      <div><span className="text-muted-foreground">Unit:</span> <span className="font-medium">{selectedTopic.unit_label}</span></div>
+                      <div><span className="text-muted-foreground">Total Periods:</span> <span className="font-medium">{selectedTopic.periods_required}</span></div>
+                      <div><span className="text-muted-foreground">Periods Covered:</span> <span className="font-medium">{selectedTopic.periods_taken}</span></div>
+                      <div><span className="text-muted-foreground">Remaining:</span> <span className="font-medium">{selectedTopic.periods_required - selectedTopic.periods_taken}</span></div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Deviation Input */}
+                {coverageStatus === 'deviation' && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mt-6 space-y-2 p-4 bg-warning/5 border border-warning/30 rounded-lg"
+                  >
+                    <Label className="text-sm font-semibold">Reason for Deviation *</Label>
+                    <Textarea
+                      placeholder="Explain the reason for deviation (e.g., unexpected events, time constraints, etc.)"
+                      value={deviationReason}
+                      onChange={(e) => setDeviationReason(e.target.value)}
+                      className="min-h-24"
+                    />
+                  </motion.div>
+                )}
+
+                {/* Completion Message */}
+                {coverageStatus === 'completed' && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mt-6 p-4 bg-success/5 border border-success/30 rounded-lg flex items-center gap-3"
+                  >
+                    <CheckCircle2 className="w-5 h-5 text-success flex-shrink-0" />
+                    <div>
+                      <p className="font-semibold text-success text-sm">✓ You completed this topic</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {selectedTopic.periods_required - selectedTopic.periods_taken} period(s) will be marked as completed
+                      </p>
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* Notes and Submit */}
+                <div className="mt-6 space-y-3">
+                  <div>
+                    <Label>Additional Notes</Label>
+                    <Textarea
+                      placeholder="Add any additional notes about this topic coverage..."
+                      value={coverageNotes}
+                      onChange={(e) => setCoverageNotes(e.target.value)}
+                      className="min-h-20 mt-2"
+                    />
+                  </div>
+
+                  <Button
+                    onClick={handleCoverageSubmit}
+                    disabled={!coverageStatus || coverageSubmitting || (coverageStatus === 'deviation' && !deviationReason)}
+                    className="w-full"
+                  >
+                    {coverageSubmitting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Submitting...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="w-4 h-4 mr-2" />
+                        Submit Coverage Data
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </motion.div>
+            )}
+
+            {!coverageSubjectId && (
+              <div className="text-center py-12 border border-dashed border-border rounded-lg">
+                <BookOpen className="w-12 h-12 text-muted-foreground mx-auto mb-3 opacity-30" />
+                <p className="text-muted-foreground">Select a subject to start tracking coverage</p>
+              </div>
+            )}
           </motion.div>
         </TabsContent>
       </Tabs>

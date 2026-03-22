@@ -23,6 +23,7 @@ import {
   Shuffle,
   Clock,
   Zap,
+  CheckSquare,
 } from "lucide-react";
 import { cn } from "@/pages/admin/department-admin/lib/utils";
 
@@ -35,6 +36,8 @@ const menuItems = [
   { title: "Timetable Master", url: "/admin/department-admin/timetable-master", icon: CalendarDays },
   { title: "Attendance", url: "/admin/department-admin/attendance", icon: ClipboardCheck },
   { title: "Academics", url: "/admin/department-admin/academics", icon: BookOpen },
+  { title: "Course File Approvals", url: "/admin/department-admin/approvals", icon: ClipboardCheck },
+  { title: "Course Plan Approvals", url: "/admin/department-admin/course-plan-approvals", icon: CheckSquare },
   { title: "Leave Management", url: "/admin/department-admin/leave", icon: CalendarDays },
   { title: "Leave & Alteration", url: "/admin/department-admin/leave-with-alteration", icon: Clock },
   { title: "Assessments", url: "/admin/department-admin/assessments", icon: FileText },

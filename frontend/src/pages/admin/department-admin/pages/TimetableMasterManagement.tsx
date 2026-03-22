@@ -307,14 +307,20 @@ export default function TimetableMasterManagement() {
       } else {
         const errorData = await response.json();
         console.log('[handleActivate] error response:', errorData);
-        throw new Error(errorData.message || "Failed to activate timetable");
+        const serverMsg = errorData.error || errorData.message || "Failed to activate timetable";
+        throw new Error(serverMsg);
       }
     } catch (error) {
       console.error("Error activating timetable:", error);
       const errorMessage = error instanceof Error ? error.message : "Failed to activate timetable";
+      const alertMessage = errorMessage === 'Cannot activate timetable without slots'
+        ? 'Timetable has no slots. Add slots first and then activate.'
+        : errorMessage;
+
+      window.alert(`Timetable activation failed: ${alertMessage}`);
       toast({
         title: "❌ Activation Failed",
-        description: errorMessage,
+        description: alertMessage,
         variant: "destructive",
       });
     } finally {
@@ -537,8 +543,15 @@ export default function TimetableMasterManagement() {
                     "px-3 py-1 rounded-full text-xs font-semibold border",
                     statusStyles[timetable.status]
                   )}>
-                    {timetable.status.toUpperCase()}
+                    {timetable.status?.toUpperCase?.() || 'UNKNOWN'}
                   </div>
+                </div>
+                <div>
+                  {timetable.status?.toLowerCase?.() === 'active' ? (
+                    <p className="text-xs text-green-700">Active timetable: This schedule is currently in use.</p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">Inactive timetable: populate slots and activate using the button.</p>
+                  )}
                 </div>
               </CardHeader>
 

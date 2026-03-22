@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Bell, X, Megaphone, Clock, ChevronRight } from "lucide-react";
+import { Bell, X, Megaphone, Clock, ChevronRight, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/pages/admin/department-admin/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -12,7 +12,23 @@ interface Announcement {
     message: string;
     creatorRole: string;
     createdAt: string;
+    type: 'announcement';
 }
+
+interface CourseLessonPlanApprovalBatch {
+    batch_id: string;
+    topics_count: number;
+    faculty: {
+        Name: string;
+    };
+    subject: {
+        subject_name: string;
+    };
+    batch_submission_date: string;
+    type: 'course_plan_approval_batch';
+}
+
+type Notification = Announcement | CourseLessonPlanApproval;
 
 interface IntegratedNotificationBellProps {
     // No props needed - uses location context for routing
@@ -23,6 +39,7 @@ export function IntegratedNotificationBell({}: IntegratedNotificationBellProps) 
     const location = useLocation();
     const [isOpen, setIsOpen] = useState(false);
     const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+    const [coursePlanApprovals, setCoursePlanApprovals] = useState<CourseLessonPlanApprovalBatch[]>([]);
     const [loading, setLoading] = useState(true);
     const dropdownRef = useRef<HTMLDivElement>(null);
     const buttonRef = useRef<HTMLButtonElement>(null);
@@ -31,12 +48,33 @@ export function IntegratedNotificationBell({}: IntegratedNotificationBellProps) 
         try {
             setLoading(true);
             const token = localStorage.getItem('authToken');
-            const response = await fetch('/api/v1/announcements', {
-                headers: token ? { 'Authorization': `Bearer ${token}` } : {}
-            });
-            const result = await response.json().catch(() => ({ success: false, message: 'Invalid server response' }));
-            if (result.success) {
-                setAnnouncements(result.data.slice(0, 10)); // Top 10
+            const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+            
+            // Fetch announcements
+            const announcementRes = await fetch('/api/v1/announcements', { headers });
+            const announcementResult = await announcementRes.json().catch(() => ({ success: false, message: 'Invalid server response' }));
+            if (announcementResult.success) {
+                setAnnouncements(announcementResult.data.slice(0, 10).map((ann: any) => ({ ...ann, type: 'announcement' })));
+            }
+
+            // Fetch course lesson plan approvals if user is department admin
+            if (location.pathname.includes('/admin/department-admin')) {
+                try {
+                    const approvalRes = await fetch('/api/v1/department-admin/academics/course-plans/pending', { headers });
+                    const approvalResult = await approvalRes.json().catch(() => ({ success: false, message: 'Invalid server response' }));
+                    if (approvalResult.success && approvalResult.data && Array.isArray(approvalResult.data)) {
+                        setCoursePlanApprovals(
+                            approvalResult.data
+                                .slice(0, 5)
+                                .map((batch: any) => ({ 
+                                    ...batch, 
+                                    type: 'course_plan_approval_batch' 
+                                }))
+                        );
+                    }
+                } catch (error) {
+                    console.error('Error fetching course plan approvals:', error);
+                }
             }
         } catch (error) {
             console.error('Error fetching notifications:', error);
@@ -105,7 +143,7 @@ export function IntegratedNotificationBell({}: IntegratedNotificationBellProps) 
         }
     }, [isOpen]);
 
-    const unreadCount = announcements.length; // For now, treat all as new until clicked
+    const unreadCount = announcements.length + coursePlanApprovals.length;
 
     return (
         <div className="relative">
@@ -157,19 +195,59 @@ export function IntegratedNotificationBell({}: IntegratedNotificationBellProps) 
                                 <div className="p-8 text-center">
                                     <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full mx-auto" />
                                 </div>
-                            ) : announcements.length === 0 ? (
+                            ) : announcements.length === 0 && coursePlanApprovals.length === 0 ? (
                                 <div className="p-12 text-center">
                                     <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center mx-auto mb-3">
                                         <Bell className="w-6 h-6 text-muted-foreground" />
                                     </div>
                                     <p className="text-sm font-medium text-foreground">All caught up!</p>
-                                    <p className="text-xs text-muted-foreground mt-1">No new announcements at the moment.</p>
+                                    <p className="text-xs text-muted-foreground mt-1">No new announcements or pending approvals.</p>
                                 </div>
                             ) : (
                                 <div className="divide-y divide-border/40">
+                                    {/* Course Plan Approval Batches */}
+                                    {coursePlanApprovals.map((batch) => (
+                                        <div
+                                            key={`batch-${batch.batch_id}`}
+                                            onClick={() => {
+                                                setIsOpen(false);
+                                                navigate('/admin/department-admin/course-plan-approvals');
+                                            }}
+                                            className="p-4 hover:bg-muted/30 transition-colors cursor-pointer group"
+                                        >
+                                            <div className="flex gap-3">
+                                                <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-amber-500/10 text-amber-600">
+                                                    <BookOpen className="w-5 h-5" />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex justify-between items-start mb-1">
+                                                        <h4 className="font-bold text-sm text-foreground line-clamp-1 group-hover:text-primary transition-colors">
+                                                            Course Plan Batch Review
+                                                        </h4>
+                                                    </div>
+                                                    <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed mb-2">
+                                                        <span className="font-semibold">{batch.faculty.Name}</span> • {batch.topics_count} topics • {batch.subject.subject_name}
+                                                    </p>
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="flex items-center gap-1.5 text-[10px] font-medium text-muted-foreground">
+                                                            <Clock className="w-3 h-3" />
+                                                            {new Date(batch.batch_submission_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                                                            <span className="mx-1">•</span>
+                                                            <Badge variant="outline" className="text-[8px] py-0 px-1 font-black uppercase tracking-tighter bg-amber-500/10 text-amber-700">
+                                                                Pending
+                                                            </Badge>
+                                                        </div>
+                                                        <ChevronRight className="w-3 h-3 text-muted-foreground group-hover:translate-x-1 transition-transform" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+
+                                    {/* Announcements */}
                                     {announcements.map((ann) => (
                                         <div
-                                            key={ann.id}
+                                            key={`ann-${ann.id}`}
                                             onClick={() => handleAnnouncementClick(ann)}
                                             className="p-4 hover:bg-muted/30 transition-colors cursor-pointer group"
                                         >

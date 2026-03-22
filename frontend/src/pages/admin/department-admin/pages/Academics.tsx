@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { IntegratedNotificationBell } from "@/components/common/IntegratedNotificationBell";
 import { MainLayout } from "@/pages/admin/department-admin/components/layout/MainLayout";
 import { motion } from "framer-motion";
 import { Button } from "@/pages/admin/department-admin/components/ui/button";
@@ -28,6 +29,8 @@ import {
   RefreshCw,
   FileIcon,
   X,
+  Clock,
+  Calendar,
 } from "lucide-react";
 import { cn } from "@/pages/admin/department-admin/lib/utils";
 import {
@@ -40,11 +43,17 @@ import {
 
 interface ClassSubject {
   id: string;
+  assignment_id: number;
+  faculty_id: number;
+  subject_id: number;
+  class_id: number;
   program: string;
   semester: string;
   section: string;
   subject: string;
   subjectCode: string;
+  className: string;
+  batch: string;
 }
 
 interface Topic {
@@ -92,6 +101,22 @@ interface SemesterCredits {
   year: number;
   department: string;
   subjects: Subject[];
+}
+
+interface CourseLessonPlan {
+  id: number;
+  sno: number;
+  unit_label?: string;
+  topic: string;
+  co_number?: string;
+  btl?: string;
+  delivery_mode?: string;
+  reference_book?: string;
+  periods_required: number;
+  periods_taken: number;
+  cumulative_periods: number;
+  is_completed: boolean;
+  tentative_date?: string;
 }
 
 const apiFetch = async (url: string, options?: RequestInit) => {
@@ -285,12 +310,40 @@ const typeIcons = {
 };
 
 export default function Academics() {
+  const [currentTime, setCurrentTime] = useState(new Date());
   const [fetchedClassesHandled, setFetchedClassesHandled] = useState<ClassSubject[]>([]);
   const [selectedClassId, setSelectedClassId] = useState<string>("");
   const [topicsData, setTopicsData] = useState<Record<string, Topic[]>>(syllabusDataByClass);
   const [materialsData, setMaterialsData] = useState<Record<string, Material[]>>(materialsDataByClass);
   const [marksData, setMarksData] = useState<Record<string, StudentMark[]>>(studentMarksDataByClass);
   const [lockedClasses, setLockedClasses] = useState<Record<string, boolean>>({});
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Course Lesson Plan states
+  const [coursePlans, setCoursePlans] = useState<CourseLessonPlan[]>([]);
+  const [loadingPlans, setLoadingPlans] = useState(false);
+  const [editingPlanRow, setEditingPlanRow] = useState<number | null>(null);
+  const [planProgress, setPlanProgress] = useState({
+    totalTopics: 0,
+    totalPeriodsPlanned: 0,
+    totalPeriodsTaught: 0,
+    topicsCompleted: 0,
+    completionPercentage: 0,
+  });
+
+  // Update clock every second
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
+  };
+
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  };
 
   // Initialize selectedClassId when classes data is loaded
   useEffect(() => {
@@ -299,40 +352,85 @@ export default function Academics() {
     }
   }, [fetchedClassesHandled, selectedClassId]);
 
-  // Fetch department subjects
+  // Fetch department admin's assigned classes (treated as faculty)
   useEffect(() => {
     const fetchDepartmentSubjects = async () => {
       try {
-        const res = await apiFetch('/api/v1/department-admin/subjects');
+        setIsLoading(true);
+        // Department admins are faculty with role_id=7, so they can use the faculty academics endpoint
+        // This will return only their assigned subjects (if they teach) or filter by department (if they only manage)
+        const res = await apiFetch('/api/v1/faculty/academics/my-classes');
         if (res?.success && Array.isArray(res.data)) {
-          // Transform subjects to ClassSubject format for display in class selector
-          const subjects: ClassSubject[] = res.data.map((subject: any, index: number) => ({
-            id: subject.id.toString(),
-            program: subject.department?.short_name || 'Unknown',
-            semester: subject.semester?.toString() || '1',
-            section: 'A',
-            subject: subject.name || subject.subject_name,
-            subjectCode: subject.code || subject.subject_code
-          }));
-          setFetchedClassesHandled(subjects);
+          // API now returns all necessary fields: id, assignment_id, faculty_id, subject_id, class_id, etc.
+          setFetchedClassesHandled(res.data);
+        } else {
+          setFetchedClassesHandled([]);
         }
       } catch (error) {
         console.error('Error fetching department subjects:', error);
         setFetchedClassesHandled([]);
+      } finally {
+        setIsLoading(false);
       }
     };
 
     fetchDepartmentSubjects();
   }, []);
 
+  // Compute selectedClass early (before useEffect that uses it)
+  const selectedClass = fetchedClassesHandled.find(c => c.id === selectedClassId) || (fetchedClassesHandled.length > 0 ? fetchedClassesHandled[0] : { id: "", program: "", semester: "", section: "", subject: "", subjectCode: "" });
+
+  // Load course lesson plans when class is selected
+  useEffect(() => {
+    const loadCoursePlans = async () => {
+      if (!selectedClassId || !selectedClass?.id) return;
+      
+      try {
+        setLoadingPlans(true);
+        const response = await apiFetch(
+          `/api/v1/faculty/academics/course-plans?subjectId=${selectedClass.subject_id}&classId=${selectedClass.class_id}&facultyId=${selectedClass.faculty_id}`
+        );
+        
+        if (response.success && response.data) {
+          setCoursePlans(response.data);
+          
+          // Load progress info
+          const progressResponse = await apiFetch(
+            `/api/v1/faculty/academics/course-plans/progress?subjectId=${selectedClass.subject_id}&classId=${selectedClass.class_id}&facultyId=${selectedClass.faculty_id}`
+          );
+          if (progressResponse.success && progressResponse.data?.summary) {
+            setPlanProgress(progressResponse.data.summary);
+          }
+        }
+      } catch (error) {
+        console.warn('Could not load course plans:', error);
+        // Plans may not exist yet, which is normal
+      } finally {
+        setLoadingPlans(false);
+      }
+    };
+
+    loadCoursePlans();
+  }, [selectedClassId, selectedClass?.id]);
+
   // Dynamic credits data (based on allocated subjects)
   const [creditsData, setCreditsData] = useState<SemesterCredits[]>([]);
   const [isLoadingCredits, setIsLoadingCredits] = useState(false);
 
   // Credits filter states
-  const [creditsDepartment, setCreditsDepartment] = useState<string>("CSE");
-  const [creditsYear, setCreditsYear] = useState<string>("3");
-  const [creditsSemester, setCreditsSemester] = useState<string>("5");
+  const [creditsDepartment, setCreditsDepartment] = useState<string>("");
+  const [creditsYear, setCreditsYear] = useState<string>("");
+  const [creditsSemester, setCreditsSemester] = useState<string>("");
+
+  // Initialize filter states when fetched data changes
+  useEffect(() => {
+    if (creditsData.length > 0 && !creditsDepartment) {
+      const firstDept = creditsData[0];
+      setCreditsDepartment(firstDept.department);
+      setCreditsYear(firstDept.year.toString());
+      setCreditsSemester(firstDept.semester.toString());
+    }
+  }, [creditsData, creditsDepartment]);
 
   const availableDepartments = useMemo(() => {
     return Array.from(new Set(creditsData.map((c) => c.department))).filter(Boolean);
@@ -380,7 +478,7 @@ export default function Academics() {
     };
 
     loadAllocations();
-  }, [creditsSemester, creditsDepartment, creditsYear]);
+  }, [creditsSemester]);
 
   // Course file states
   const [courseFile, setCourseFile] = useState<File | null>(null);
@@ -402,7 +500,6 @@ export default function Academics() {
   });
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  const selectedClass = fetchedClassesHandled.find(c => c.id === selectedClassId) || (fetchedClassesHandled.length > 0 ? fetchedClassesHandled[0] : { id: "", program: "", semester: "", section: "", subject: "", subjectCode: "" });
   const topics = topicsData[selectedClassId] || [];
   const materials = materialsData[selectedClassId] || [];
   const allMarks = marksData[selectedClassId] || [];
@@ -538,16 +635,31 @@ export default function Academics() {
   };
 
   return (
-    <MainLayout>
+    <MainLayout hideHeader={true}>
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mb-8"
+        className="mb-8 flex items-start justify-between"
       >
-        <h1 className="page-header font-serif">Academic Activities</h1>
-        <p className="text-muted-foreground -mt-4">
-          Manage syllabus, materials, and internal marks for your classes
-        </p>
+        <div>
+          <h1 className="page-header font-serif">Academic Activities</h1>
+          <p className="text-muted-foreground -mt-4">
+            Manage syllabus, materials, and internal marks for your classes
+          </p>
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="text-right">
+            <p className="text-sm font-medium text-foreground flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-primary" />
+              {formatDate(currentTime)}
+            </p>
+            <p className="text-sm text-muted-foreground flex items-center gap-2 mt-1">
+              <Clock className="w-4 h-4 text-secondary" />
+              {formatTime(currentTime)}
+            </p>
+          </div>
+          <IntegratedNotificationBell />
+        </div>
       </motion.div>
 
       {/* Class Selector */}

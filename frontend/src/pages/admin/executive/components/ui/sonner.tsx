@@ -26,34 +26,34 @@ const Toaster = ({ ...props }: ToasterProps) => {
 // that even methods like `toast.success` are deferred, regardless of whether they
 // are enumerable properties on the toast function.
 function createDeferredToast() {
-  const handler: ProxyHandler<typeof originalToast> = {
-    apply(target, thisArg, args) {
-      setTimeout(() => {
-        try {
-          target.apply(thisArg, args);
-        } catch (e) {
-          console.error('Deferred toast error', e);
-        }
-      }, 0);
-    },
-    get(target, prop) {
-      const value = (target as any)[prop];
-      if (typeof value === 'function') {
-        return (...args: any[]) => {
-          setTimeout(() => {
-            try {
-              value.apply(target, args);
-            } catch (e) {
-              console.error('Deferred toast method error', e);
-            }
-          }, 0);
-        };
+  const wrapped: any = (...args: any[]) => {
+    setTimeout(() => {
+      try {
+        (originalToast as any)(...args);
+      } catch (e) {
+        console.error('Deferred toast error', e);
       }
-      return value;
-    },
+    }, 0);
   };
 
-  return new Proxy(originalToast, handler) as typeof originalToast;
+  // Copy all callable properties from originalToast (like .success/.error)
+  const methods = ['success', 'info', 'warning', 'error', 'promise', 'custom', 'dismiss', 'loading'];
+  methods.forEach((key) => {
+    const val = (originalToast as any)[key];
+    if (typeof val === 'function') {
+      wrapped[key] = (...args: any[]) => {
+        setTimeout(() => {
+          try {
+            (val as any)(...args);
+          } catch (e) {
+            console.error(`Deferred toast method error: ${key}`, e);
+          }
+        }, 0);
+      };
+    }
+  });
+
+  return wrapped as typeof originalToast;
 }
 
 const toast = createDeferredToast();

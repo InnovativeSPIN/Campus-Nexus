@@ -18,7 +18,7 @@ function getGradeVariant(grade: string): 'success' | 'warning' | 'danger' | 'inf
   return 'danger';
 }
 
-export default function Marks() {
+export default function Marks({ showHeader = true }: { showHeader?: boolean }) {
   const [selectedSemester, setSelectedSemester] = useState<number>(5);
   const [loading, setLoading] = useState(true);
   const [subjects, setSubjects] = useState<any[]>([]);
@@ -67,14 +67,16 @@ export default function Marks() {
 
   return (
     <div className="animate-fade-in">
-      <PageHeader
-        title="Marks"
-        subtitle="View your examination results"
-        breadcrumbs={[
-          { label: 'Academics', path: '/student/academics/marks' },
-          { label: 'Marks' },
-        ]}
-      />
+      {showHeader && (
+        <PageHeader
+          title="Marks"
+          subtitle="View your examination results"
+          breadcrumbs={[
+            { label: 'Academics', path: '/student/academics/marks' },
+            { label: 'Marks' },
+          ]}
+        />
+      )}
 
       {/* Summary Cards */}
       <div className="grid gap-4 sm:grid-cols-3 mb-6">
