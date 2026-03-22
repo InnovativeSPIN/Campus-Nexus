@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Mar 22, 2026 at 03:00 PM
+-- Generation Time: Mar 22, 2026 at 07:13 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -535,7 +535,7 @@ INSERT INTO `faculty_profiles` (`faculty_id`, `faculty_college_code`, `AICTE_ID`
 (489, 'NS70T07', NULL, NULL, 'JASMINE JOSE P', 'ns70t07@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 7, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL),
 (490, 'NS20T34', NULL, NULL, 'KESAVAMOORTHY N', 'ns20t34@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 7, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL),
 (491, 'NS20T14', NULL, NULL, 'ARUL JOTHI.S', 'ns20t14@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 7, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL),
-(492, 'NS70T05', NULL, NULL, 'MAHALAKSHMI S', 'ns70t05@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 7, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL),
+(492, 'NS70T05', NULL, NULL, 'MAHALAKSHMI S', 'mahalakshmi@nscet.org', '8248721606', '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 7, 'Assistant professor', NULL, 'No', 'Female', '1998-05-04', '2025-04-02', NULL, 'active', 'AB+', '321489215820', 'Bzkpm1362B', 'Balan nagar allinagaram', 'Balan nagar allinagaram', '2026-02-19 11:09:11', '2026-03-22 16:17:16', NULL, NULL),
 (493, 'NS20T39', NULL, NULL, 'BHAVANI M', 'ns20t39@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 7, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL),
 (494, 'NS70T04', NULL, NULL, 'SAI SUGANYA B', 'ns70t04@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 7, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL),
 (495, 'NS20T37', NULL, NULL, 'GEERTHIGA G', 'ns20t37@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 6, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-23 15:07:47', NULL, NULL),
@@ -641,7 +641,6 @@ INSERT INTO `faculty_subject_assignments` (`id`, `faculty_id`, `subject_id`, `as
 (26, 406, 98, 435, '2026-03-14 16:18:39', '2025-2026', 6, 21, '2023-2027', '2026-03-14', 'active', 45, 3, '2026-03-14 16:18:39', '2026-03-14 16:18:39'),
 (31, 507, 102, 435, '2026-03-14 17:16:59', '2026-2027', 6, 21, '2023-2027', '2026-03-14', 'active', 45, 3, '2026-03-14 17:16:59', '2026-03-14 17:16:59'),
 (32, 513, 103, 435, '2026-03-14 17:17:07', '2026-2027', 6, 21, NULL, '2026-03-14', 'active', 45, 3, '2026-03-14 17:17:07', '2026-03-14 17:17:07'),
-(33, 436, 100, 435, '2026-03-14 17:17:19', '2026-2027', 6, 21, NULL, '2026-03-14', 'active', 45, 3, '2026-03-14 17:17:19', '2026-03-14 17:17:19'),
 (34, 435, 90, 435, '2026-03-14 17:17:27', '2026-2027', 6, 21, NULL, '2026-03-14', 'active', 45, 3, '2026-03-14 17:17:27', '2026-03-14 17:17:27'),
 (35, 406, 98, 435, '2026-03-14 17:17:31', '2026-2027', 6, 21, NULL, '2026-03-14', 'active', 45, 3, '2026-03-14 17:17:31', '2026-03-14 17:17:31'),
 (36, 496, 94, 435, '2026-03-15 08:06:06', '2026-2027', 6, 21, '2023-2027', '2026-03-15', 'active', 45, 3, '2026-03-15 08:06:06', '2026-03-15 08:06:06'),
@@ -1563,20 +1562,20 @@ INSERT INTO `timetable_master_slots` (`id`, `master_id`, `day`, `period_slot_id`
 (329, 1, 'Monday', 1, 103, 513, 'tutorial', 0, NULL, NULL, NULL, 'YOGA', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
 (330, 1, 'Monday', 2, 102, 507, 'theory', 0, NULL, NULL, 'CR-15', 'ESIOT', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
 (331, 1, 'Monday', 4, 98, 406, 'theory', 0, NULL, NULL, 'CR-15', 'DM', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
-(332, 1, 'Monday', 6, 100, 436, 'theory', 0, NULL, NULL, 'CR-15', 'GT', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
+(332, 1, 'Monday', 6, 100, NULL, 'theory', 0, NULL, NULL, 'CR-15', 'GT', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
 (333, 1, 'Monday', 7, 94, 496, 'theory', 0, NULL, NULL, 'CR-15', 'APP', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
 (334, 1, 'Monday', 9, 98, 406, 'theory', 0, NULL, NULL, 'CR-15', 'DM', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
 (335, 1, 'Monday', 10, 94, 496, 'theory', 0, NULL, NULL, 'CR-15', 'APP', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
 (336, 1, 'Tuesday', 1, 94, 496, 'lab', 0, NULL, NULL, NULL, 'APP LAB', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
 (337, 1, 'Tuesday', 2, 94, 496, 'lab', 0, NULL, NULL, NULL, 'APP LAB', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
-(338, 1, 'Tuesday', 4, 100, 436, 'theory', 0, NULL, NULL, 'CR-15', 'GT', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
+(338, 1, 'Tuesday', 4, 100, NULL, 'theory', 0, NULL, NULL, 'CR-15', 'GT', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
 (339, 1, 'Tuesday', 6, 102, 507, 'lab', 0, NULL, NULL, NULL, 'ESIOT LAB', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
 (340, 1, 'Tuesday', 7, 102, 507, 'lab', 0, NULL, NULL, NULL, 'ESIOT LAB', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
 (341, 1, 'Tuesday', 9, 90, 435, 'theory', 0, NULL, NULL, 'CR-15', 'PPL', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
 (342, 1, 'Tuesday', 10, 105, NULL, 'free', 0, NULL, NULL, 'LIBRARY', 'LIBRARY', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
 (343, 1, 'Wednesday', 1, 102, 507, 'theory', 0, NULL, NULL, 'CR-15', 'ESIOT', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
 (344, 1, 'Wednesday', 2, 94, 496, 'theory', 0, NULL, NULL, 'CR-15', 'APP', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
-(345, 1, 'Wednesday', 4, 100, 436, 'theory', 0, NULL, NULL, 'CR-15', 'GT', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
+(345, 1, 'Wednesday', 4, 100, NULL, 'theory', 0, NULL, NULL, 'CR-15', 'GT', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
 (346, 1, 'Wednesday', 6, 90, 435, 'theory', 0, NULL, NULL, 'CR-15', 'PPL', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
 (347, 1, 'Wednesday', 7, 106, NULL, 'activity', 0, NULL, NULL, 'CR-15', 'PLACEMENT', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
 (348, 1, 'Wednesday', 9, 106, NULL, 'activity', 0, NULL, NULL, 'CR-15', 'PLACEMENT', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
@@ -1585,7 +1584,7 @@ INSERT INTO `timetable_master_slots` (`id`, `master_id`, `day`, `period_slot_id`
 (351, 1, 'Thursday', 2, 90, 435, 'theory', 0, NULL, NULL, 'CR-15', 'PPL', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
 (352, 1, 'Thursday', 4, 102, 507, 'theory', 0, NULL, NULL, 'CR-15', 'ESIOT', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
 (353, 1, 'Thursday', 6, 94, 496, 'theory', 0, NULL, NULL, 'CR-15', 'APP', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
-(354, 1, 'Thursday', 7, 100, 436, 'theory', 0, NULL, NULL, 'CR-15', 'GT', '2026-03-15 14:48:29', '2026-03-19 06:51:00'),
+(354, 1, 'Thursday', 7, 100, NULL, 'theory', 0, NULL, NULL, 'CR-15', 'GT', '2026-03-15 14:48:29', '2026-03-19 06:51:00'),
 (355, 1, 'Thursday', 9, 98, 406, 'lab', 0, NULL, NULL, NULL, 'DM LAB', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
 (356, 1, 'Thursday', 10, 98, 406, 'lab', 0, NULL, NULL, NULL, 'DM LAB', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
 (357, 1, 'Friday', 1, 95, 406, 'project', 0, NULL, NULL, NULL, 'NM', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
@@ -1595,7 +1594,7 @@ INSERT INTO `timetable_master_slots` (`id`, `master_id`, `day`, `period_slot_id`
 (361, 1, 'Friday', 7, 95, 406, 'project', 0, NULL, NULL, NULL, 'MUDHALVAN', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
 (362, 1, 'Friday', 9, 95, 406, 'project', 0, NULL, NULL, NULL, NULL, '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
 (363, 1, 'Friday', 10, 95, 406, 'project', 0, NULL, NULL, NULL, NULL, '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
-(364, 1, 'Saturday', 1, 100, 436, 'theory', 0, NULL, NULL, 'CR-15', 'GT', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
+(364, 1, 'Saturday', 1, 100, NULL, 'theory', 0, NULL, NULL, 'CR-15', 'GT', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
 (365, 1, 'Saturday', 2, 90, 435, 'theory', 0, NULL, NULL, 'CR-15', 'PPL', '2026-03-15 14:48:29', '2026-03-21 06:23:43'),
 (366, 1, 'Saturday', 4, 102, 507, 'theory', 0, NULL, NULL, 'CR-15', 'ESIOT', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
 (367, 1, 'Saturday', 6, 94, 496, 'theory', 0, NULL, NULL, 'CR-15', 'APP', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
