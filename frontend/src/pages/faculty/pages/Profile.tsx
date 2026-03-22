@@ -188,12 +188,14 @@ export default function Profile() {
             const p = payload.data;
             setFacultyData(prev => ({
               ...prev,
-              aicteId: p.aicte_id ?? p.aicteId ?? prev.aicteId,
-              coeId: p.Anna_University_ID ?? p.coeId ?? prev.coeId,
+              employeeId: p.faculty_college_code ?? p.employee_id ?? prev.employeeId,
+              aicteId: p.AICTE_ID ?? p.aicte_id ?? p.aicteId ?? prev.aicteId,
+              coeId: p.Anna_University_ID ?? p.anna_university_id ?? p.coeId ?? prev.coeId,
               orcidId: p.orcid_id ?? p.orcidId ?? prev.orcidId,
               dateOfBirth: p.date_of_birth ?? p.dob ?? prev.dateOfBirth,
               dateOfJoining: p.date_of_joining ?? p.dateOfJoining ?? prev.dateOfJoining,
               linkedinUrl: p.linkedin_url ?? p.linkedinUrl ?? prev.linkedinUrl,
+              address: p.curr_address ?? p.address ?? prev.address,
             }));
           }
         } catch (e) {
@@ -2489,250 +2491,107 @@ export default function Profile() {
             <h2 className="font-serif text-xl font-bold text-foreground">{facultyData.name}</h2>
             <p className="text-secondary font-medium">{facultyData.designation}</p>
             <p className="text-sm text-muted-foreground mt-1">{facultyData.department}</p>
-            <div className="mt-4 p-3 bg-muted rounded-lg">
-              <p className="text-xs text-muted-foreground">Employee ID</p>
-              <p className="font-mono font-semibold text-foreground">{facultyData.employeeId}</p>
-            </div>
-            {/* <div className="mt-2 p-3 bg-muted rounded-lg">
-              <p className="text-xs text-muted-foreground">AICTE ID</p>
-              <p className="font-mono font-semibold text-foreground">{facultyData.aicteId}</p>
-            </div> */}
-            {/* <div className="mt-2 p-3 bg-muted rounded-lg">
-              <p className="text-xs text-muted-foreground">Anna University ID Code</p>
-              <p className="font-mono font-semibold text-foreground">{facultyData.coeId}</p>
-            </div> */}
           </div>
 
           <div className="mt-6 space-y-4">
-            {/* AICTE ID */}
-            {facultyData.aicteId ? (
-              <div className="flex items-center gap-3 text-sm">
-                <Building className="w-4 h-4 text-primary flex-shrink-0" />
-                <span className="text-muted-foreground line-clamp-2">AICTE ID: {facultyData.aicteId}</span>
+            {/* Employee ID */}
+            {facultyData.employeeId && (
+              <div className="bg-muted rounded-xl p-2.5 border border-border/50 text-center mb-8 max-w-[260px] mx-auto shadow-sm">
+                <p className="text-xs text-muted-foreground font-semibold mb-1">Employee ID</p>
+                <p className="font-mono font-bold text-foreground text-base tracking-wide">{facultyData.employeeId}</p>
               </div>
-            ) : null}
-            {/* Anna University ID Code */}
-            {facultyData.coeId ? (
-              <div className="flex items-center gap-3 text-sm">
-                <Building className="w-4 h-4 text-primary flex-shrink-0" />
-                <span className="text-muted-foreground line-clamp-2">Anna University ID Code: {facultyData.coeId}</span>
-              </div>
-            ) : null}
+            )}
 
-            {/* ORCID ID */}
-            {facultyData.orcidId ? (
-              <div className="flex items-center gap-3 text-sm">
-                <Globe className="w-4 h-4 text-primary flex-shrink-0" />
-                <span className="text-muted-foreground line-clamp-2">ORCID ID: {facultyData.orcidId}</span>
+            {/* AICTE ID */}
+            {facultyData.aicteId && (
+              <div className="flex items-start gap-4 text-sm">
+                <Award className="w-4 h-4 text-primary flex-shrink-0 mt-1" />
+                <div className="flex-1">
+                  <p className="text-xs text-muted-foreground font-medium">AICTE ID</p>
+                  <p className="font-mono font-semibold text-foreground break-all">{facultyData.aicteId}</p>
+                </div>
               </div>
-            ) : null}
+            )}
+
+            {/* Anna University ID */}
+            {facultyData.coeId && (
+              <div className="flex items-start gap-3 text-sm">
+                <Building className="w-4 h-4 text-primary flex-shrink-0 mt-1" />
+                <div className="flex-1">
+                  <p className="text-xs text-muted-foreground font-medium">Anna University ID</p>
+                  <p className="font-mono font-semibold text-foreground break-all">{facultyData.coeId}</p>
+                </div>
+              </div>
+            )}
 
             {/* DOB & Age */}
-            <div className="flex items-center gap-3 text-sm">
-              <Calendar className="w-4 h-4 text-primary flex-shrink-0" />
-              <span className="text-muted-foreground">DOB:</span>
-              <span className="font-medium">{facultyData.dateOfBirth} (Age: {facultyData.age})</span>
-            </div>
+            {facultyData.dateOfBirth && (
+              <div className="flex items-start gap-3 text-sm">
+                <Calendar className="w-4 h-4 text-primary flex-shrink-0 mt-1" />
+                <div className="flex-1">
+                  <p className="text-xs text-muted-foreground font-medium">DOB</p>
+                  <p className="font-medium text-foreground">{facultyData.dateOfBirth}</p>
+                </div>
+              </div>
+            )}
 
             {/* Date of Joining */}
-            <div className="flex items-center gap-3 text-sm">
-              <Briefcase className="w-4 h-4 text-primary flex-shrink-0" />
-              <span className="text-muted-foreground">Date of Joined:</span>
-              <span className="font-medium">{facultyData.dateOfJoining}</span>
-            </div>
-
-            {/* LinkedIn URL */}
-            <div className="flex items-start gap-3 text-sm group">
-              <div className="w-8 h-8 rounded-full bg-[#0077B5]/10 flex items-center justify-center flex-shrink-0">
-                <Linkedin className="w-4 h-4 text-[#0077B5]" />
+            {facultyData.dateOfJoining && (
+              <div className="flex items-start gap-3 text-sm">
+                <Clock className="w-4 h-4 text-primary flex-shrink-0 mt-1" />
+                <div className="flex-1">
+                  <p className="text-xs text-muted-foreground font-medium">Date of Joined</p>
+                  <p className="font-medium text-foreground">{facultyData.dateOfJoining}</p>
+                </div>
               </div>
-              {editingField === 'linkedin_url' ? (
-                <div className="flex-1 space-y-2">
-                  <input
-                    type="url"
-                    value={tempValue}
-                    onChange={(e) => {
-                      setTempValue(e.target.value);
-                      setFieldError("");
-                    }}
-                    placeholder="https://www.linkedin.com/in/yourprofile"
-                    className="input input-bordered input-sm w-full text-sm"
-                    disabled={loading}
-                    autoFocus
-                  />
-                  {fieldError && (
-                    <p className="text-xs text-red-500 font-medium">{fieldError}</p>
-                  )}
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      onClick={() => handleSaveField('linkedin_url')}
-                      disabled={loading}
-                      className="h-8 px-3 bg-green-600 hover:bg-green-700"
-                    >
-                      {loading ? (
-                        <div className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
-                      ) : (
-                        <Check className="w-3 h-3" />
-                      )}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={handleCancelEdit}
-                      disabled={loading}
-                      className="h-8 px-3"
-                    >
-                      <X className="w-3 h-3" />
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex-1 flex items-center justify-between">
-                  {facultyData.linkedinUrl ? (
-                    <a
-                      href={facultyData.linkedinUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline font-medium truncate"
-                    >
-                      LinkedIn Profile
-                    </a>
-                  ) : (
-                    <span className="text-muted-foreground">LinkedIn Profile</span>
-                  )}
-                  <button
-                    onClick={() => handleEditField('linkedin_url', facultyData.linkedinUrl)}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-muted rounded ml-2 flex-shrink-0"
-                    title="Edit LinkedIn URL"
+            )}
+
+            {/* LinkedIn Profile */}
+            {facultyData.linkedinUrl && (
+              <div className="flex items-start gap-3 text-sm">
+                <Linkedin className="w-4 h-4 text-[#0077B5] flex-shrink-0 mt-1" />
+                <div className="flex-1">
+                  <p className="text-xs text-muted-foreground font-medium">LinkedIn Profile</p>
+                  <a
+                    href={facultyData.linkedinUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:underline font-medium break-all"
                   >
-                    <Edit2 className="w-4 h-4 text-muted-foreground" />
-                  </button>
+                    View Profile
+                  </a>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
 
             {/* Email */}
             <div className="flex items-start gap-3 text-sm group">
               <Mail className="w-4 h-4 text-primary flex-shrink-0 mt-1" />
-              {editingField === 'email' ? (
-                <div className="flex-1 space-y-2">
-                  <input
-                    type="email"
-                    value={tempValue}
-                    onChange={(e) => {
-                      setTempValue(e.target.value);
-                      setFieldError("");
-                    }}
-                    placeholder="Enter email address"
-                    className="input input-bordered input-sm w-full text-sm"
-                    disabled={loading}
-                    autoFocus
-                  />
-                  {fieldError && (
-                    <p className="text-xs text-red-500 font-medium">{fieldError}</p>
-                  )}
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      onClick={() => handleSaveField('email')}
-                      disabled={loading}
-                      className="h-8 px-3 bg-green-600 hover:bg-green-700"
-                    >
-                      {loading ? (
-                        <div className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
-                      ) : (
-                        <Check className="w-3 h-3" />
-                      )}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={handleCancelEdit}
-                      disabled={loading}
-                      className="h-8 px-3"
-                    >
-                      <X className="w-3 h-3" />
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex-1 flex items-center justify-between">
-                  <span className="font-medium text-sm break-all">{facultyData.email}</span>
-                  <button
-                    onClick={() => handleEditField('email', facultyData.email)}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-muted rounded ml-2 flex-shrink-0"
-                    title="Edit email"
-                  >
-                    <Edit2 className="w-4 h-4 text-muted-foreground" />
-                  </button>
-                </div>
-              )}
+              <div className="flex-1">
+                <p className="text-xs text-muted-foreground font-medium mb-1">Email</p>
+                <a href={`mailto:${facultyData.email}`} className="font-medium text-sm break-all hover:underline text-blue-600">{facultyData.email}</a>
+              </div>
             </div>
 
             {/* Phone */}
             <div className="flex items-start gap-3 text-sm group">
               <Phone className="w-4 h-4 text-primary flex-shrink-0 mt-1" />
-              {editingField === 'phone' ? (
-                <div className="flex-1 space-y-2">
-                  <input
-                    type="tel"
-                    value={tempValue}
-                    onChange={(e) => {
-                      setTempValue(e.target.value);
-                      setFieldError("");
-                    }}
-                    placeholder="Enter phone number"
-                    className="input input-bordered input-sm w-full text-sm"
-                    disabled={loading}
-                    autoFocus
-                  />
-                  {fieldError && (
-                    <p className="text-xs text-red-500 font-medium">{fieldError}</p>
-                  )}
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      onClick={() => handleSaveField('phone')}
-                      disabled={loading}
-                      className="h-8 px-3 bg-green-600 hover:bg-green-700"
-                    >
-                      {loading ? (
-                        <div className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
-                      ) : (
-                        <Check className="w-3 h-3" />
-                      )}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={handleCancelEdit}
-                      disabled={loading}
-                      className="h-8 px-3"
-                    >
-                      <X className="w-3 h-3" />
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex-1 flex items-center justify-between">
-                  <span className="font-medium">{facultyData.phone}</span>
-                  <button
-                    onClick={() => handleEditField('phone', facultyData.phone)}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-muted rounded ml-2 flex-shrink-0"
-                    title="Edit phone"
-                  >
-                    <Edit2 className="w-4 h-4 text-muted-foreground" />
-                  </button>
-                </div>
-              )}
+              <div className="flex-1">
+                <p className="text-xs text-muted-foreground font-medium mb-1">Phone</p>
+                <a href={`tel:${facultyData.phone}`} className="font-medium text-sm break-all hover:underline">{facultyData.phone}</a>
+              </div>
             </div>
 
             {/* Address */}
-            <div className="flex items-start gap-3 text-sm">
-              <MapPin className="w-4 h-4 text-primary flex-shrink-0 mt-1" />
-              <span className="font-medium text-sm">{facultyData.address}</span>
-            </div>
+            {facultyData.address && (
+              <div className="flex items-start gap-3 text-sm">
+                <MapPin className="w-4 h-4 text-primary flex-shrink-0 mt-1" />
+                <div className="flex-1">
+                  <p className="text-xs text-muted-foreground font-medium mb-1">Current Address</p>
+                  <p className="font-medium text-foreground break-all">{facultyData.address}</p>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Attendance Summary */}

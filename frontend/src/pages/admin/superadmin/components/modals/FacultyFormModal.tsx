@@ -28,6 +28,7 @@ interface FacultyFormData {
   AICTE_ID: string;
   employee_id: string;
   orcid_id: string;
+  linkedin_url: string;
   designation: string;
   email: string;
   phone_number: string;
@@ -69,6 +70,7 @@ export function FacultyFormModal({
     AICTE_ID: '',
     employee_id: '',
     orcid_id: '',
+    linkedin_url: '',
     designation: '',
     email: '',
     phone_number: '',
@@ -94,6 +96,7 @@ export function FacultyFormModal({
         AICTE_ID: facultyData.AICTE_ID || '',
         employee_id: facultyData.employee_id || '',
         orcid_id: facultyData.orcid_id || '',
+        linkedin_url: facultyData.linkedin_url || '',
         designation: facultyData.designation || '',
         email: facultyData.email || '',
         phone_number: facultyData.phone_number || '',
@@ -369,6 +372,16 @@ export function FacultyFormModal({
                   value={formData.orcid_id}
                   onChange={(e) => handleInputChange('orcid_id', e.target.value)}
                   placeholder="0000-0000-0000-0000"
+                  disabled={loading}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>LinkedIn Profile URL</Label>
+                <Input
+                  type="url"
+                  value={formData.linkedin_url}
+                  onChange={(e) => handleInputChange('linkedin_url', e.target.value)}
+                  placeholder="https://www.linkedin.com/in/username"
                   disabled={loading}
                 />
               </div>
