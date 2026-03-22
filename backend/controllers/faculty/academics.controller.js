@@ -619,17 +619,22 @@ export const getPendingCourseLessonPlans = asyncHandler(async (req, res, next) =
   }
 
   try {
+    console.log('[getPendingCourseLessonPlans] Fetching topics:', { facultyId, subjectIdNum, classIdNum });
+    
     // Get all uncompleted topics for this subject/class, ordered by sno
     const pendingTopics = await CourseLessonPlan.findAll({
       where: {
-        faculty_id,
+        faculty_id: facultyId,
         subject_id: subjectIdNum,
         class_id: classIdNum,
         is_completed: false,
       },
       order: [['sno', 'ASC']],
-      attributes: ['id', 'sno', 'unit_label', 'topic', 'periods_required', 'periods_taken', 'co_number', 'btl'],
+      attributes: ['id', 'sno', 'unit_label', 'topic', 'periods_required', 'periods_taken', 'co_number', 'btl', 'unit_number'],
+      raw: true,
     });
+
+    console.log('[getPendingCourseLessonPlans] Found topics:', pendingTopics.length);
 
     res.status(200).json({
       success: true,
@@ -638,7 +643,7 @@ export const getPendingCourseLessonPlans = asyncHandler(async (req, res, next) =
       message: pendingTopics.length > 0 ? 'Pending topics for marking' : 'All topics completed',
     });
   } catch (error) {
-    console.error('[getPendingCourseLessonPlans] Error:', error);
+    console.error('[getPendingCourseLessonPlans] Error:', error.message, error.stack);
     return next(
       new ErrorResponse(`Error fetching pending topics: ${error.message}`, 500)
     );
@@ -1195,5 +1200,85 @@ export const recordCoverageTracking = asyncHandler(async (req, res, next) => {
   } catch (error) {
     console.error('[recordCoverageTracking] Error:', error);
     return next(new ErrorResponse(`Error recording coverage: ${error.message}`, 500));
+  }
+});
+
+// @route   GET /api/v1/faculty/academics/today-schedule
+// @desc    Get faculty's schedule for today with current/next class info
+// @access  Private (Faculty)
+export const getTodaySchedule = asyncHandler(async (req, res, next) => {
+  const facultyId = req.user.faculty_id || req.user.id;
+
+  try {
+    const { TimetableSlot } = models;
+
+    // Get day of week (0=Sunday, 1=Monday, ..., 6=Saturday) - convert to day name
+    const dayOfWeek = new Date().getDay();
+    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const todayName = dayNames[dayOfWeek === 0 ? 6 : dayOfWeek - 1]; // Convert 0-indexed to day name (0=Sunday becomes 6=Saturday for us)
+
+    // Special handling: 0=Sunday should map to 'Sunday', but most systems use 0=Monday
+    // Let's use the standard: if dayOfWeek is 0 (Sunday), we skip it for most educational systems
+    // Assuming Monday=1, so we map: 1=>Monday, 2=>Tuesday, etc.
+    let todayDayName = 'Monday';
+    if (dayOfWeek === 0) todayDayName = 'Sunday'; // Sunday
+    else if (dayOfWeek === 1) todayDayName = 'Monday';
+    else if (dayOfWeek === 2) todayDayName = 'Tuesday';
+    else if (dayOfWeek === 3) todayDayName = 'Wednesday';
+    else if (dayOfWeek === 4) todayDayName = 'Thursday';
+    else if (dayOfWeek === 5) todayDayName = 'Friday';
+    else if (dayOfWeek === 6) todayDayName = 'Saturday';
+
+    // Fetch all timetable slots for today for this faculty
+    const todayClasses = await TimetableSlot.findAll({
+      where: {
+        faculty_id: facultyId,
+        day: todayDayName,
+        status: 'active'
+      },
+      include: [
+        {
+          model: Subject,
+          as: 'subject',
+          attributes: ['id', 'subject_name', 'subject_code']
+        },
+        {
+          model: ClassModel,
+          as: 'class',
+          attributes: ['id', 'name', 'section']
+        }
+      ],
+      order: [['period_number', 'ASC']],
+      raw: false
+    });
+
+    // Format the response
+    const formattedClasses = todayClasses.map(slot => ({
+      id: slot.id,
+      subject: slot.subject?.subject_name || 'Unknown',
+      subjectCode: slot.subject?.subject_code,
+      classId: slot.class_id,
+      className: slot.class?.name || 'TBD',
+      room: slot.room || 'TBD',
+      day: slot.day,
+      timeSlot: {
+        start: slot.start_time ? slot.start_time.substring(0, 5) : '00:00', // HH:mm format
+        end: slot.end_time ? slot.end_time.substring(0, 5) : '00:00'
+      },
+      type: slot.type || 'lecture',
+      studentsCount: 0, // Would need additional query to get from class
+      totalPeriods: 1,
+      periodNumber: slot.period_number
+    }));
+
+    res.status(200).json({
+      success: true,
+      count: formattedClasses.length,
+      dayName: todayDayName,
+      data: formattedClasses
+    });
+  } catch (error) {
+    console.error('[getTodaySchedule] Error:', error);
+    return next(new ErrorResponse(`Error fetching today's schedule: ${error.message}`, 500));
   }
 });

@@ -16,7 +16,8 @@ import {
   downloadCoursePlanCsvTemplate,
   getFacultyCourseFiles,
   downloadCourseFile,
-  recordCoverageTracking
+  recordCoverageTracking,
+  getTodaySchedule
 } from '../../controllers/faculty/academics.controller.js';
 
 const router = express.Router();
@@ -30,6 +31,9 @@ router.get('/my-subjects', getMyAssignedSubjects);
 
 // Get faculty's assigned classes
 router.get('/my-classes', getMyAssignedClasses);
+
+// Get faculty's today's schedule
+router.get('/today-schedule', getTodaySchedule);
 
 // ==================== COURSE LESSON PLAN ROUTES ====================
 
