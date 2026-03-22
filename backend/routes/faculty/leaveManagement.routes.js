@@ -8,6 +8,8 @@ import {
   getPendingAlterationRequests,
   getPendingAlterationsForIncharge,
   getSlotDetails,
+  getPeriodsForDateRange,
+  getAlternativeFacultyForPeriods,
 } from '../../controllers/faculty/leaveRequest.controller.js';
 import {
   acceptAlteration,
@@ -53,6 +55,12 @@ router.get('/leave-request/:leaveId/rejection-reasons', authorize('faculty', 'de
 
 // Get slot details for a specific date and period
 router.get('/leave-request/slot-details', authorize('faculty', 'department-admin'), getSlotDetails);
+
+// Get all periods for faculty in a date range (new leave flow)
+router.get('/leave-request/periods-for-dates', authorize('faculty', 'department-admin'), getPeriodsForDateRange);
+
+// Get alternative faculty for a set of periods (new leave flow)
+router.post('/leave-request/alternative-faculty', authorize('faculty', 'department-admin'), getAlternativeFacultyForPeriods);
 
 // ==================== SUBSTITUTE FACULTY APPROVAL ROUTES ====================
 

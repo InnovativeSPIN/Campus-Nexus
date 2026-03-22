@@ -30,12 +30,20 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
-// Create multer instance for photo uploads
-const photoUpload = multer({
+// Create multer instance for photo + PDF uploads
+const upload = multer({
   storage,
-  fileFilter,
+  fileFilter: (req, file, cb) => {
+    // Allow common image formats + pdf
+    const allowedMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'];
+    if (allowedMimes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files plus PDF are allowed (JPEG, PNG, GIF, WebP, PDF)'), false);
+    }
+  },
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB limit
+    fileSize: 50 * 1024 * 1024, // 50MB limit for course files
     files: 1, // Only one file
     fieldNameSize: 100,
     fieldSize: 10 * 1024 * 1024, // 10MB for form fields
@@ -43,4 +51,6 @@ const photoUpload = multer({
   }
 });
 
-export default photoUpload;
+export default upload;
+export { upload };
+

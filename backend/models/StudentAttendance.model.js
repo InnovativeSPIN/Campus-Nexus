@@ -92,6 +92,10 @@ const StudentAttendance = (sequelize) => {
       type: DataTypes.STRING(255),
       allowNull: true,
     },
+    lesson_plan_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
   }, {
     tableName: 'student_attendance',
     timestamps: false,
@@ -104,30 +108,54 @@ const StudentAttendance = (sequelize) => {
   });
 
   StudentAttendanceModel.associate = (models) => {
-    StudentAttendanceModel.belongsTo(models.Student, {
-      foreignKey: 'student_id',
-      as: 'student',
-    });
-    StudentAttendanceModel.belongsTo(models.Class, {
-      foreignKey: 'class_id',
-      as: 'class',
-    });
-    StudentAttendanceModel.belongsTo(models.Subject, {
-      foreignKey: 'subject_id',
-      as: 'subject',
-    });
-    StudentAttendanceModel.belongsTo(models.Faculty, {
-      foreignKey: 'faculty_id',
-      as: 'faculty',
-    });
-    StudentAttendanceModel.belongsTo(models.PeriodSlot, {
-      foreignKey: 'period_slot_id',
-      as: 'period',
-    });
-    StudentAttendanceModel.belongsTo(models.TimetableMasterSlots, {
-      foreignKey: 'master_slot_id',
-      as: 'masterSlot',
-    });
+    if (models.Student) {
+      StudentAttendanceModel.belongsTo(models.Student, {
+        foreignKey: 'student_id',
+        as: 'student',
+      });
+    }
+    
+    if (models.Class) {
+      StudentAttendanceModel.belongsTo(models.Class, {
+        foreignKey: 'class_id',
+        as: 'class',
+      });
+    }
+    
+    if (models.Subject) {
+      StudentAttendanceModel.belongsTo(models.Subject, {
+        foreignKey: 'subject_id',
+        as: 'subject',
+      });
+    }
+    
+    if (models.Faculty) {
+      StudentAttendanceModel.belongsTo(models.Faculty, {
+        foreignKey: 'faculty_id',
+        as: 'faculty',
+      });
+    }
+    
+    if (models.PeriodSlot) {
+      StudentAttendanceModel.belongsTo(models.PeriodSlot, {
+        foreignKey: 'period_slot_id',
+        as: 'period',
+      });
+    }
+    
+    if (models.TimetableMasterSlots) {
+      StudentAttendanceModel.belongsTo(models.TimetableMasterSlots, {
+        foreignKey: 'master_slot_id',
+        as: 'masterSlot',
+      });
+    }
+    
+    if (models.CourseLessonPlan) {
+      StudentAttendanceModel.belongsTo(models.CourseLessonPlan, {
+        foreignKey: 'lesson_plan_id',
+        as: 'lessonPlan',
+      });
+    }
   };
 
   return StudentAttendanceModel;

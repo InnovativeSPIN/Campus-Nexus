@@ -55,6 +55,10 @@ import PortfolioNotification from './PortfolioNotification.model.js';
 import TimetableMasterSlots from './TimetableMasterSlots.model.js';
 import TimetableOverlay from './TimetableOverlay.model.js';
 import FacultySubstitutes from './FacultySubstitutes.model.js';
+import CourseLessonPlan from './CourseLessonPlan.model.js';
+import PeriodTopicLog from './PeriodTopicLog.model.js';
+import CourseFile from './CourseFile.model.js';
+import CourseFileNotification from './CourseFileNotification.model.js';
 
 // Initialize models
 const models = {
@@ -111,6 +115,10 @@ const models = {
   TimetableMasterSlots: TimetableMasterSlots(sequelize),
   TimetableOverlay: TimetableOverlay(sequelize),
   FacultySubstitutes: FacultySubstitutes(sequelize),
+  CourseLessonPlan: CourseLessonPlan(sequelize),
+  PeriodTopicLog: PeriodTopicLog(sequelize),
+  CourseFile: CourseFile(sequelize),
+  CourseFileNotification: CourseFileNotification(sequelize),
 };
 
 // Define associations
