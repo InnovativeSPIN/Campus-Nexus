@@ -30,9 +30,9 @@ const menuItems = [
   { title: "Academics", url: "/faculty/academics", icon: BookOpen },
   { title: "Assessments", url: "/faculty/assessments", icon: FileText },
   { title: "Counseling", url: "/faculty/counseling", icon: Users },
+  { title: "Change Password", url: "/faculty/change-password", icon: Lock },
   { title: "Announcement", url: "/faculty/communication", icon: MessageSquare },
   { title: "Reports", url: "/faculty/reports", icon: BarChart3 },
-  { title: "Change Password", url: "/faculty/change-password", icon: Lock },
 ];
 
 export function AppSidebar() {
