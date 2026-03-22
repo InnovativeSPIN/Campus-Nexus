@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Mar 19, 2026 at 04:06 PM
+-- Generation Time: Mar 22, 2026 at 03:00 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -76,7 +76,6 @@ CREATE TABLE `classes` (
 --
 
 INSERT INTO `classes` (`id`, `name`, `room`, `department_id`, `capacity`, `status`, `batch`, `semester`, `academic_year`, `section`) VALUES
-(20, 'II Year AI&DS', 'CR-12', 6, 60, 'active', '2024-2028', 4, '2025-2026', 'A'),
 (21, 'III Year AI&DS', 'CR-15', 6, 30, 'active', '2023-2027', 6, '2025-2026', 'A');
 
 -- --------------------------------------------------------
@@ -103,6 +102,217 @@ CREATE TABLE `class_incharges` (
 
 INSERT INTO `class_incharges` (`id`, `class_id`, `faculty_id`, `academic_year`, `assigned_by`, `assigned_at`, `status`, `created_at`, `updated_at`) VALUES
 (10, 21, 406, '2023-2027', NULL, '2026-03-05 18:30:05', 'active', '2026-03-14 13:13:50', '2026-03-14 13:13:50');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `course_files`
+--
+
+CREATE TABLE `course_files` (
+  `id` int(11) NOT NULL,
+  `faculty_id` int(11) NOT NULL,
+  `subject_id` int(11) NOT NULL,
+  `class_id` int(11) NOT NULL,
+  `department_id` int(11) NOT NULL,
+  `academic_year` varchar(20) NOT NULL,
+  `semester` int(2) NOT NULL,
+  `file_name` varchar(255) NOT NULL,
+  `file_path` varchar(500) NOT NULL,
+  `file_size` bigint(20) DEFAULT NULL,
+  `file_hash` varchar(64) DEFAULT NULL,
+  `status` enum('draft','submitted','approved','rejected','revision_requested') DEFAULT 'draft',
+  `submission_date` datetime DEFAULT NULL,
+  `approval_remarks` text DEFAULT NULL,
+  `approved_by` int(11) DEFAULT NULL,
+  `approved_date` datetime DEFAULT NULL,
+  `is_active` tinyint(1) DEFAULT 0,
+  `version` int(11) DEFAULT 1,
+  `notes` text DEFAULT NULL,
+  `created_by` int(11) NOT NULL,
+  `updated_by` int(11) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Course file uploads for Section X and other course materials';
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `course_file_notifications`
+--
+
+CREATE TABLE `course_file_notifications` (
+  `id` int(11) NOT NULL,
+  `course_file_id` int(11) NOT NULL,
+  `recipient_type` enum('faculty','department-admin') NOT NULL,
+  `recipient_id` int(11) DEFAULT NULL,
+  `notification_type` enum('submission_received','approval_request','approved','rejected','revision_requested') NOT NULL,
+  `title` varchar(255) NOT NULL,
+  `message` text DEFAULT NULL,
+  `is_read` tinyint(1) DEFAULT 0,
+  `read_at` datetime DEFAULT NULL,
+  `action_url` varchar(500) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Notifications for course file approval workflow';
+
+-- --------------------------------------------------------
+
+--
+-- Stand-in structure for view `course_file_section_x`
+-- (See below for the actual view)
+--
+CREATE TABLE `course_file_section_x` (
+`sno` tinyint(3) unsigned
+,`unit_number` tinyint(1)
+,`unit_label` varchar(20)
+,`topic` text
+,`co_number` varchar(20)
+,`btl` varchar(20)
+,`delivery_mode` varchar(100)
+,`reference_book` varchar(255)
+,`periods_required` tinyint(2)
+,`cumulative_periods` tinyint(3) unsigned
+,`periods_taken` tinyint(2)
+,`covered` varchar(1)
+,`faculty_name` varchar(100)
+,`subject_name` varchar(255)
+,`class_name` varchar(100)
+,`academic_year` varchar(9)
+,`semester` tinyint(2)
+);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `course_lesson_plans`
+--
+
+CREATE TABLE `course_lesson_plans` (
+  `id` int(11) NOT NULL,
+  `faculty_id` int(11) NOT NULL,
+  `upload_batch_id` varchar(50) DEFAULT NULL COMMENT 'Unique ID for batch upload (groups related topics)',
+  `subject_id` int(11) NOT NULL,
+  `class_id` int(11) NOT NULL,
+  `academic_year` varchar(9) NOT NULL,
+  `semester` tinyint(2) NOT NULL,
+  `sno` tinyint(3) UNSIGNED NOT NULL,
+  `unit_number` tinyint(1) NOT NULL,
+  `unit_label` varchar(20) NOT NULL,
+  `topic` text NOT NULL,
+  `tentative_date` date DEFAULT NULL,
+  `co_number` varchar(20) NOT NULL,
+  `btl` varchar(20) NOT NULL,
+  `delivery_mode` varchar(100) DEFAULT NULL,
+  `reference_book` varchar(255) DEFAULT NULL,
+  `periods_required` tinyint(2) NOT NULL DEFAULT 1,
+  `cumulative_periods` tinyint(3) UNSIGNED DEFAULT NULL,
+  `is_completed` tinyint(1) NOT NULL DEFAULT 0,
+  `actual_date_from` date DEFAULT NULL,
+  `actual_date_to` date DEFAULT NULL,
+  `periods_taken` tinyint(2) DEFAULT 0,
+  `deviation_reason` text DEFAULT NULL,
+  `created_by` int(11) NOT NULL,
+  `updated_by` int(11) DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `approval_remarks` text DEFAULT NULL,
+  `approved_by` int(11) DEFAULT NULL,
+  `approved_date` datetime DEFAULT NULL,
+  `batch_submission_date` datetime DEFAULT NULL COMMENT 'When this batch was submitted for approval',
+  `approval_status` enum('pending','approved','rejected','revision_requested') DEFAULT 'approved',
+  `coverage_status` enum('completed','deviation') DEFAULT NULL COMMENT 'Status of topic coverage (completed or deviation)',
+  `coverage_date` datetime DEFAULT NULL COMMENT 'Date when the topic coverage was recorded',
+  `completed_date` datetime DEFAULT NULL COMMENT 'Date when the topic was marked as completed',
+  `additional_notes` longtext DEFAULT NULL COMMENT 'Additional notes about the topic coverage'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `course_lesson_plans`
+--
+
+INSERT INTO `course_lesson_plans` (`id`, `faculty_id`, `upload_batch_id`, `subject_id`, `class_id`, `academic_year`, `semester`, `sno`, `unit_number`, `unit_label`, `topic`, `tentative_date`, `co_number`, `btl`, `delivery_mode`, `reference_book`, `periods_required`, `cumulative_periods`, `is_completed`, `actual_date_from`, `actual_date_to`, `periods_taken`, `deviation_reason`, `created_by`, `updated_by`, `created_at`, `updated_at`, `approval_remarks`, `approved_by`, `approved_date`, `batch_submission_date`, `approval_status`, `coverage_status`, `coverage_date`, `completed_date`, `additional_notes`) VALUES
+(243, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 1, 1, 'UNIT I - INTRO TO ON', 'Online Market space', '2026-01-05', 'C602.1', 'L2', 'BB', 'T1 3', 1, 1, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
+(244, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 2, 1, 'UNIT I - INTRO TO ON', 'Digital Marketing Strategy', '2026-01-06', 'C602.1', 'L2', 'BB', 'T1 20', 1, 2, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
+(245, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 3, 1, 'UNIT I - INTRO TO ON', 'Components', '2026-01-08', 'C602.1', 'L2', 'BB', 'T1 42', 1, 3, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
+(246, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 4, 1, 'UNIT I - INTRO TO ON', 'Opportunities for building Brand Website', '2026-01-10', 'C602.1', 'L2', 'BB', 'T1 81', 1, 4, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
+(247, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 5, 1, 'UNIT I - INTRO TO ON', 'Planning and Creation', '2026-01-12', 'C602.1', 'L2', 'BB', 'T1 92', 1, 5, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
+(248, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 6, 1, 'UNIT I - INTRO TO ON', 'Content Marketing', '2026-01-13', 'C602.1', 'L2', 'BB', 'T1 100', 1, 6, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
+(249, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 7, 2, 'UNIT II - SEARCH ENG', 'Search Engine optimization - Keyword Strategy', '2026-01-19', 'C602.2', 'L2', 'BB', 'T1 115', 1, 7, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
+(250, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 8, 2, 'UNIT II - SEARCH ENG', 'SEO Strategy - SEO success factors', '2026-01-20', 'C602.2', 'L2', 'BB', 'T1 128', 1, 8, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
+(251, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 9, 2, 'UNIT II - SEARCH ENG', 'On-Page Techniques - Off-Page Techniques', '2026-01-22', 'C602.2', 'L2', 'BB', 'T1 135', 1, 9, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
+(252, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 10, 2, 'UNIT II - SEARCH ENG', 'Search Engine Marketing - How Search Engine work', '2026-01-24', 'C602.2', 'L2', 'BB', 'T1 142', 1, 10, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
+(253, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 11, 2, 'UNIT II - SEARCH ENG', 'SEM components - PPC advertising', '2026-01-27', 'C602.2', 'L2', 'BB', 'T1 150', 1, 11, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
+(254, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 12, 2, 'UNIT II - SEARCH ENG', 'Display Advertisement', '2026-01-29', 'C602.2', 'L2', 'BB', 'T1 153', 1, 12, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
+(255, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 13, 3, 'UNIT III - E-MAIL MA', 'E-Mail Marketing - Types of E-Mail Marketing - Email Automation', '2026-01-31', 'C602.3', 'L2', 'BB', 'T1 202', 1, 13, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
+(256, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 14, 3, 'UNIT III - E-MAIL MA', 'Lead Generation - Integrating Email with Social Media and Mobile', '2026-02-02', 'C602.3', 'L2', 'BB', 'T1 219', 1, 14, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
+(257, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 15, 3, 'UNIT III - E-MAIL MA', '\"Measuring and maximizing email campaign effectiveness', '2026-02-03', 'Mobile Marketing\"', 'C602.3', 'L2', 'BB', 1, 15, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
+(258, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 16, 3, 'UNIT III - E-MAIL MA', '\"Inventory/channels - Location based', '2026-02-05', 'Context based', 'Coupons and offers\"', 'C602.3', 'L2', 1, 16, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
+(259, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 17, 3, 'UNIT III - E-MAIL MA', '\"Mobile Apps', '2026-02-07', 'Mobile Commerce\"', 'C602.3', 'L2', 'BB', 1, 17, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
+(260, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 18, 3, 'UNIT III - E-MAIL MA', 'SMS Campaigns - Profiling and targeting', '2026-02-09', 'C602.3', 'L2', 'BB', 'T2 271', 1, 18, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
+(261, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 19, 4, 'UNIT IV - SOCIAL MED', 'Social Media Marketing', '2026-02-10', 'C602.4', 'L2', 'BB', 'T1 277', 1, 19, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
+(262, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 20, 4, 'UNIT IV - SOCIAL MED', 'Social Media Channels', '2026-02-10', 'C602.4', 'L2', 'BB', 'T1 286', 1, 20, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
+(263, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 21, 4, 'UNIT IV - SOCIAL MED', 'Leveraging Social media for brand conversations and buzz', '2026-02-12', 'C602.4', 'L2', 'BB', 'T1 301', 1, 21, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
+(264, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 22, 4, 'UNIT IV - SOCIAL MED', 'Successful/benchmark Social media campaigns', '2026-02-14', 'C602.4', 'L2', 'BB', 'T1 312', 1, 22, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
+(265, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 23, 4, 'UNIT IV - SOCIAL MED', 'Engagement Marketing - Building Customer relationships', '2026-02-24', 'C602.4', 'L2', 'BB', 'T2 345', 1, 23, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
+(266, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 24, 4, 'UNIT IV - SOCIAL MED', 'Creating Loyalty drivers - Influencer Marketing', '2026-02-28', 'C602.4', 'L2', 'BB', 'T1 364', 1, 24, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
+(267, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 25, 5, 'UNIT V - DIGITAL TRA', 'Digital Transformation & Channel Attribution', '2026-03-02', 'C602.5', 'L2', 'BB', 'T1 384', 1, 25, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
+(268, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 26, 5, 'UNIT V - DIGITAL TRA', 'Analytics', '2026-03-03', 'C602.5', 'L2', 'BB', 'T1 389', 1, 26, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
+(269, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 27, 5, 'UNIT V - DIGITAL TRA', '\"Ad-words', '2026-03-05', 'Email', 'Mobile\"', 'C602.5', 'L2', 1, 27, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
+(270, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 28, 5, 'UNIT V - DIGITAL TRA', '\"Social Media', '2026-03-09', 'Web Analytics\"', 'C602.5', 'L2', 'BB', 1, 28, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
+(271, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 29, 5, 'UNIT V - DIGITAL TRA', 'Changing your strategy based on analysis', '2026-03-12', 'C602.5', 'L2', 'BB', 'T2 403', 1, 29, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
+(272, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 30, 5, 'UNIT V - DIGITAL TRA', 'Recent trends in Digital marketing', '2026-03-14', 'C602.5', 'L2', 'SEM', 'T1 407', 1, 30, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
+(273, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 1, 1, 'UNIT I - INTRO TO ON', 'Online Market space', '2026-01-05', 'C602.1', 'L2', 'BB', 'T1 3', 1, 1, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
+(274, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 2, 1, 'UNIT I - INTRO TO ON', 'Digital Marketing Strategy', '2026-01-06', 'C602.1', 'L2', 'BB', 'T1 20', 1, 2, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
+(275, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 3, 1, 'UNIT I - INTRO TO ON', 'Components', '2026-01-08', 'C602.1', 'L2', 'BB', 'T1 42', 1, 3, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
+(276, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 4, 1, 'UNIT I - INTRO TO ON', 'Opportunities for building Brand Website', '2026-01-10', 'C602.1', 'L2', 'BB', 'T1 81', 1, 4, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
+(277, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 5, 1, 'UNIT I - INTRO TO ON', 'Planning and Creation', '2026-01-12', 'C602.1', 'L2', 'BB', 'T1 92', 1, 5, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
+(278, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 6, 1, 'UNIT I - INTRO TO ON', 'Content Marketing', '2026-01-13', 'C602.1', 'L2', 'BB', 'T1 100', 1, 6, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
+(279, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 7, 2, 'UNIT II - SEARCH ENG', 'Search Engine optimization - Keyword Strategy', '2026-01-19', 'C602.2', 'L2', 'BB', 'T1 115', 1, 7, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
+(280, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 8, 2, 'UNIT II - SEARCH ENG', 'SEO Strategy - SEO success factors', '2026-01-20', 'C602.2', 'L2', 'BB', 'T1 128', 1, 8, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
+(281, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 9, 2, 'UNIT II - SEARCH ENG', 'On-Page Techniques - Off-Page Techniques', '2026-01-22', 'C602.2', 'L2', 'BB', 'T1 135', 1, 9, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
+(282, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 10, 2, 'UNIT II - SEARCH ENG', 'Search Engine Marketing - How Search Engine work', '2026-01-24', 'C602.2', 'L2', 'BB', 'T1 142', 1, 10, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
+(283, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 11, 2, 'UNIT II - SEARCH ENG', 'SEM components - PPC advertising', '2026-01-27', 'C602.2', 'L2', 'BB', 'T1 150', 1, 11, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
+(284, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 12, 2, 'UNIT II - SEARCH ENG', 'Display Advertisement', '2026-01-29', 'C602.2', 'L2', 'BB', 'T1 153', 1, 12, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
+(285, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 13, 3, 'UNIT III - E-MAIL MA', 'E-Mail Marketing - Types of E-Mail Marketing - Email Automation', '2026-01-31', 'C602.3', 'L2', 'BB', 'T1 202', 1, 13, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
+(286, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 14, 3, 'UNIT III - E-MAIL MA', 'Lead Generation - Integrating Email with Social Media and Mobile', '2026-02-02', 'C602.3', 'L2', 'BB', 'T1 219', 1, 14, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
+(287, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 15, 3, 'UNIT III - E-MAIL MA', '\"Measuring and maximizing email campaign effectiveness', '2026-02-03', 'Mobile Marketing\"', 'C602.3', 'L2', 'BB', 1, 15, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
+(288, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 16, 3, 'UNIT III - E-MAIL MA', '\"Inventory/channels - Location based', '2026-02-05', 'Context based', 'Coupons and offers\"', 'C602.3', 'L2', 1, 16, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
+(289, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 17, 3, 'UNIT III - E-MAIL MA', '\"Mobile Apps', '2026-02-07', 'Mobile Commerce\"', 'C602.3', 'L2', 'BB', 1, 17, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
+(290, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 18, 3, 'UNIT III - E-MAIL MA', 'SMS Campaigns - Profiling and targeting', '2026-02-09', 'C602.3', 'L2', 'BB', 'T2 271', 1, 18, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
+(291, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 19, 4, 'UNIT IV - SOCIAL MED', 'Social Media Marketing', '2026-02-10', 'C602.4', 'L2', 'BB', 'T1 277', 1, 19, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
+(292, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 20, 4, 'UNIT IV - SOCIAL MED', 'Social Media Channels', '2026-02-10', 'C602.4', 'L2', 'BB', 'T1 286', 1, 20, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
+(293, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 21, 4, 'UNIT IV - SOCIAL MED', 'Leveraging Social media for brand conversations and buzz', '2026-02-12', 'C602.4', 'L2', 'BB', 'T1 301', 1, 21, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
+(294, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 22, 4, 'UNIT IV - SOCIAL MED', 'Successful/benchmark Social media campaigns', '2026-02-14', 'C602.4', 'L2', 'BB', 'T1 312', 1, 22, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
+(295, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 23, 4, 'UNIT IV - SOCIAL MED', 'Engagement Marketing - Building Customer relationships', '2026-02-24', 'C602.4', 'L2', 'BB', 'T2 345', 1, 23, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
+(296, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 24, 4, 'UNIT IV - SOCIAL MED', 'Creating Loyalty drivers - Influencer Marketing', '2026-02-28', 'C602.4', 'L2', 'BB', 'T1 364', 1, 24, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
+(297, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 25, 5, 'UNIT V - DIGITAL TRA', 'Digital Transformation & Channel Attribution', '2026-03-02', 'C602.5', 'L2', 'BB', 'T1 384', 1, 25, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
+(298, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 26, 5, 'UNIT V - DIGITAL TRA', 'Analytics', '2026-03-03', 'C602.5', 'L2', 'BB', 'T1 389', 1, 26, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
+(299, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 27, 5, 'UNIT V - DIGITAL TRA', '\"Ad-words', '2026-03-05', 'Email', 'Mobile\"', 'C602.5', 'L2', 1, 27, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
+(300, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 28, 5, 'UNIT V - DIGITAL TRA', '\"Social Media', '2026-03-09', 'Web Analytics\"', 'C602.5', 'L2', 'BB', 1, 28, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
+(301, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 29, 5, 'UNIT V - DIGITAL TRA', 'Changing your strategy based on analysis', '2026-03-12', 'C602.5', 'L2', 'BB', 'T2 403', 1, 29, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
+(302, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 30, 5, 'UNIT V - DIGITAL TRA', 'Recent trends in Digital marketing', '2026-03-14', 'C602.5', 'L2', 'SEM', 'T1 407', 1, 30, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Stand-in structure for view `course_lesson_plan_progress`
+-- (See below for the actual view)
+--
+CREATE TABLE `course_lesson_plan_progress` (
+`faculty_id` int(11)
+,`subject_id` int(11)
+,`class_id` int(11)
+,`academic_year` varchar(9)
+,`semester` tinyint(2)
+,`subject_name` varchar(255)
+,`class_name` varchar(100)
+,`total_topics` bigint(21)
+,`total_periods_planned` decimal(25,0)
+,`total_periods_taught` decimal(25,0)
+,`topics_completed` decimal(22,0)
+,`completion_percentage` decimal(28,2)
+);
 
 -- --------------------------------------------------------
 
@@ -268,7 +478,7 @@ CREATE TABLE `faculty_profiles` (
 INSERT INTO `faculty_profiles` (`faculty_id`, `faculty_college_code`, `AICTE_ID`, `Anna_University_ID`, `Name`, `email`, `phone_number`, `password`, `role_id`, `department_id`, `designation`, `educational_qualification`, `phd_status`, `gender`, `date_of_birth`, `date_of_joining`, `profile_image_url`, `status`, `blood_group`, `aadhar_number`, `pan_number`, `perm_address`, `curr_address`, `created_at`, `updated_at`, `linkedin_url`, `is_placement_coordinator`) VALUES
 (406, 'NS80T01', NULL, NULL, 'NAGAJOTHI P', 'ns80t01@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 6, 'Assistant Professor', NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-03-14 13:13:50', '2026-03-14 13:13:50', NULL, NULL),
 (434, 'NS20T11', NULL, NULL, 'PRATHAP C', 'cprathap1985@gmail.com', NULL, '$2a$10$ix7Vg2NBz9QKyRwHY1eS4OISqGo10McE05vht1cyk3JpafK6JDoci', 7, 7, 'HEAD OF THE DEPARTMENT', NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-03-14 13:13:50', '2026-03-14 13:13:50', NULL, NULL),
-(435, 'NS20T09', NULL, NULL, 'Vignesh L S', 'lsisreviving@gmail.com', NULL, '$2a$10$7S/p6nWcvVCUlmMC8cFeZewetHGp6MkxvvJLKBlahtsGt/KcyqC5a', 7, 6, 'HEAD OF THE DEPARTMENT', NULL, 'No', NULL, NULL, NULL, '/uploads/faculty/vignesh_l_s.jpg', 'active', NULL, NULL, NULL, NULL, NULL, '2026-03-14 13:13:50', '2026-03-14 15:34:33', NULL, NULL),
+(435, 'NS20T09', NULL, NULL, 'Vignesh L S', 'lsisreviving@gmail.com', NULL, '$2a$10$7S/p6nWcvVCUlmMC8cFeZewetHGp6MkxvvJLKBlahtsGt/KcyqC5a', 7, 6, 'HEAD OF THE DEPARTMENT', NULL, 'No', NULL, NULL, NULL, '/uploads/faculty/vignesh_l_s.jpg', 'active', NULL, NULL, NULL, NULL, NULL, '2026-03-14 13:13:50', '2026-03-21 06:44:20', NULL, NULL),
 (436, 'SH1', NULL, NULL, 'DR.B.MALLAIYASAMY', 'drbmallaiyasamy.faculty@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 10, 'Assistant Professor', NULL, 'No', 'Male', NULL, NULL, NULL, 'active', 'B+', NULL, NULL, NULL, NULL, '2026-02-19 11:08:21', '2026-03-05 05:30:07', NULL, NULL),
 (437, 'SH10', NULL, NULL, 'DR.DAVID MATHAN.N', 'drdavid.mathann@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 10, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:08:21', '2026-02-20 01:13:32', NULL, NULL),
 (438, 'ME11', NULL, NULL, 'VEMBATHURAJESH.A', 'vembathurajesha.faculty@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 10, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:08:21', '2026-02-20 01:13:32', NULL, NULL),
@@ -706,6 +916,32 @@ INSERT INTO `period_slots` (`id`, `slot_order`, `slot_type`, `period_number`, `p
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `period_topic_log`
+--
+
+CREATE TABLE `period_topic_log` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `attendance_date` date NOT NULL,
+  `period_slot_id` tinyint(3) UNSIGNED NOT NULL,
+  `faculty_id` int(11) NOT NULL,
+  `class_id` int(11) NOT NULL,
+  `subject_id` int(11) NOT NULL,
+  `lesson_plan_id` int(11) NOT NULL,
+  `unit_number` tinyint(1) NOT NULL,
+  `topic_summary` varchar(500) DEFAULT NULL,
+  `periods_covered` tinyint(2) NOT NULL DEFAULT 1,
+  `co_number` varchar(20) DEFAULT NULL,
+  `btl` varchar(20) DEFAULT NULL,
+  `is_deviation` tinyint(1) NOT NULL DEFAULT 0,
+  `deviation_note` varchar(500) DEFAULT NULL,
+  `master_slot_id` int(11) DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `roles`
 --
 
@@ -817,25 +1053,26 @@ CREATE TABLE `student_attendance` (
   `is_modified` tinyint(1) NOT NULL DEFAULT 0,
   `modified_by` int(11) DEFAULT NULL,
   `modified_at` datetime DEFAULT NULL,
-  `remarks` varchar(255) DEFAULT NULL
+  `remarks` varchar(255) DEFAULT NULL,
+  `lesson_plan_id` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `student_attendance`
 --
 
-INSERT INTO `student_attendance` (`id`, `student_id`, `class_id`, `subject_id`, `faculty_id`, `master_slot_id`, `attendance_date`, `period_slot_id`, `period_number`, `academic_year`, `semester`, `status`, `is_lab_session`, `lab_group`, `session_type`, `marked_by`, `marked_at`, `is_modified`, `modified_by`, `modified_at`, `remarks`) VALUES
-(1, 4159, 21, 98, 406, 350, '2026-03-19', 1, 1, '2025-2026', 6, 'present', 0, NULL, 'theory', 406, '2026-03-19 10:34:47', 0, NULL, NULL, NULL),
-(2, 3967, 21, 98, 406, 350, '2026-03-19', 1, 1, '2025-2026', 6, 'present', 0, NULL, 'theory', 406, '2026-03-19 10:34:48', 0, NULL, NULL, NULL),
-(3, 3968, 21, 98, 406, 350, '2026-03-19', 1, 1, '2025-2026', 6, 'od', 0, NULL, 'theory', 406, '2026-03-19 10:34:48', 0, NULL, NULL, NULL),
-(4, 3969, 21, 98, 406, 350, '2026-03-19', 1, 1, '2025-2026', 6, 'present', 0, NULL, 'theory', 406, '2026-03-19 10:34:48', 0, NULL, NULL, NULL),
-(5, 3970, 21, 98, 406, 350, '2026-03-19', 1, 1, '2025-2026', 6, 'present', 0, NULL, 'theory', 406, '2026-03-19 10:34:48', 0, NULL, NULL, NULL),
-(6, 3971, 21, 98, 406, 350, '2026-03-19', 1, 1, '2025-2026', 6, 'present', 0, NULL, 'theory', 406, '2026-03-19 10:34:48', 0, NULL, NULL, NULL),
-(7, 3972, 21, 98, 406, 350, '2026-03-19', 1, 1, '2025-2026', 6, 'present', 0, NULL, 'theory', 406, '2026-03-19 10:34:48', 0, NULL, NULL, NULL),
-(8, 3973, 21, 98, 406, 350, '2026-03-19', 1, 1, '2025-2026', 6, 'present', 0, NULL, 'theory', 406, '2026-03-19 10:34:48', 0, NULL, NULL, NULL),
-(9, 3974, 21, 98, 406, 350, '2026-03-19', 1, 1, '2025-2026', 6, 'absent', 0, NULL, 'theory', 406, '2026-03-19 10:34:48', 0, NULL, NULL, NULL),
-(10, 3975, 21, 98, 406, 350, '2026-03-19', 1, 1, '2025-2026', 6, 'absent', 0, NULL, 'theory', 406, '2026-03-19 10:34:48', 0, NULL, NULL, NULL),
-(11, 3976, 21, 98, 406, 350, '2026-03-19', 1, 1, '2025-2026', 6, 'present', 0, NULL, 'theory', 406, '2026-03-19 10:34:48', 0, NULL, NULL, NULL);
+INSERT INTO `student_attendance` (`id`, `student_id`, `class_id`, `subject_id`, `faculty_id`, `master_slot_id`, `attendance_date`, `period_slot_id`, `period_number`, `academic_year`, `semester`, `status`, `is_lab_session`, `lab_group`, `session_type`, `marked_by`, `marked_at`, `is_modified`, `modified_by`, `modified_at`, `remarks`, `lesson_plan_id`) VALUES
+(1, 4159, 21, 98, 406, NULL, '2026-03-19', 1, 1, '2025-2026', 6, 'present', 0, NULL, 'theory', 435, '2026-03-21 07:13:28', 1, 435, '2026-03-21 07:13:28', NULL, NULL),
+(2, 3967, 21, 98, 406, NULL, '2026-03-19', 1, 1, '2025-2026', 6, 'present', 0, NULL, 'theory', 435, '2026-03-21 07:13:27', 1, 435, '2026-03-21 07:13:27', NULL, NULL),
+(3, 3968, 21, 98, 406, NULL, '2026-03-19', 1, 1, '2025-2026', 6, 'present', 0, NULL, 'theory', 435, '2026-03-21 07:13:28', 1, 435, '2026-03-21 07:13:28', NULL, NULL),
+(4, 3969, 21, 98, 406, NULL, '2026-03-19', 1, 1, '2025-2026', 6, 'present', 0, NULL, 'theory', 435, '2026-03-21 07:13:28', 1, 435, '2026-03-21 07:13:28', NULL, NULL),
+(5, 3970, 21, 98, 406, NULL, '2026-03-19', 1, 1, '2025-2026', 6, 'present', 0, NULL, 'theory', 435, '2026-03-21 07:13:28', 1, 435, '2026-03-21 07:13:28', NULL, NULL),
+(6, 3971, 21, 98, 406, NULL, '2026-03-19', 1, 1, '2025-2026', 6, 'present', 0, NULL, 'theory', 435, '2026-03-21 07:13:28', 1, 435, '2026-03-21 07:13:28', NULL, NULL),
+(7, 3972, 21, 98, 406, NULL, '2026-03-19', 1, 1, '2025-2026', 6, 'present', 0, NULL, 'theory', 435, '2026-03-21 07:13:28', 1, 435, '2026-03-21 07:13:28', NULL, NULL),
+(8, 3973, 21, 98, 406, NULL, '2026-03-19', 1, 1, '2025-2026', 6, 'present', 0, NULL, 'theory', 435, '2026-03-21 07:13:28', 1, 435, '2026-03-21 07:13:28', NULL, NULL),
+(9, 3974, 21, 98, 406, NULL, '2026-03-19', 1, 1, '2025-2026', 6, 'absent', 0, NULL, 'theory', 435, '2026-03-21 07:13:28', 1, 435, '2026-03-21 07:13:28', NULL, NULL),
+(10, 3975, 21, 98, 406, NULL, '2026-03-19', 1, 1, '2025-2026', 6, 'absent', 0, NULL, 'theory', 435, '2026-03-21 07:13:28', 1, 435, '2026-03-21 07:13:28', NULL, NULL),
+(11, 3976, 21, 98, 406, NULL, '2026-03-19', 1, 1, '2025-2026', 6, 'present', 0, NULL, 'theory', 435, '2026-03-21 07:13:28', 1, 435, '2026-03-21 07:13:28', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -872,7 +1109,7 @@ CREATE TABLE `student_bio` (
 --
 
 INSERT INTO `student_bio` (`id`, `studentId`, `alternatePhone`, `linkedinUrl`, `dateOfBirth`, `bloodGroup`, `nationality`, `religion`, `category`, `aadharNo`, `motherTongue`, `residenceType`, `address`, `permanentAddress`, `parentInfo`, `references`, `previousEducation`, `scholarshipDetails`, `documents`, `createdAt`, `updatedAt`) VALUES
-(1, 3975, NULL, 'https://www.linkedin.com/in/r-logesh-kumar-74566a2a3/', NULL, 'B+', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{\"father\":{\"name\":\"\",\"phone\":\"\",\"email\":\"\",\"occupation\":\"\",\"qualification\":\"\",\"annualIncome\":\"\"},\"mother\":{\"name\":\"\",\"phone\":\"\",\"email\":\"\",\"occupation\":\"\",\"qualification\":\"\",\"annualIncome\":\"\"},\"guardian\":{\"name\":\"\",\"relation\":\"\",\"phone\":\"\",\"address\":\"\"}}', NULL, NULL, NULL, NULL, '2026-03-18 05:26:59', '2026-03-18 05:31:17');
+(1, 3975, NULL, 'https://www.linkedin.com/in/r-logesh-kumar-74566a2a3/', NULL, 'B+', 'Indian', '', NULL, NULL, 'Tamil', 'day_scholar', NULL, NULL, '{\"father\":{\"name\":\"\",\"phone\":\"\",\"email\":\"\",\"occupation\":\"\",\"qualification\":\"\",\"annualIncome\":\"\"},\"mother\":{\"name\":\"\",\"phone\":\"\",\"email\":\"\",\"occupation\":\"\",\"qualification\":\"\",\"annualIncome\":\"\"},\"guardian\":{\"name\":\"\",\"relation\":\"\",\"phone\":\"\",\"address\":\"\"}}', NULL, NULL, NULL, NULL, '2026-03-18 05:26:59', '2026-03-20 10:25:21');
 
 -- --------------------------------------------------------
 
@@ -996,7 +1233,8 @@ INSERT INTO `student_leaves` (`id`, `studentId`, `leaveType`, `startDate`, `endD
 (5, 3975, 'Medical', '2026-03-20', '2026-03-21', 2.0, 'Test after fix', 'pending', NULL, NULL, NULL, '2026-03-18 06:08:49', '2026-03-19 05:16:59', 21, 'cancelled', 'pending', NULL, NULL, NULL, 'pending', NULL, NULL, NULL, 'Sick', 'test-doc.pdf', 'Class Incharge'),
 (6, 3975, 'Personal', '2026-03-18', '2026-03-19', 2.0, 'personal', 'pending', NULL, NULL, NULL, '2026-03-18 06:09:33', '2026-03-18 18:04:20', 21, 'rejected', 'rejected', 406, NULL, '2026-03-18 18:04:20', 'pending', 435, NULL, NULL, 'Personal Leave', NULL, 'Class Incharge'),
 (7, 3975, 'Personal', '2026-03-18', '2026-03-19', 2.0, 'personal', 'pending', NULL, NULL, NULL, '2026-03-18 07:18:57', '2026-03-18 08:39:18', 21, 'approved', 'approved', 406, NULL, '2026-03-18 08:38:47', 'approved', 435, NULL, '2026-03-18 08:39:18', 'Personal Leave', 'attachment-1773818337550-804097791.pdf', 'Class Incharge'),
-(8, 3975, 'On-Duty', '2026-03-19', '2026-03-19', 1.0, 'leave for workshop', 'pending', NULL, NULL, NULL, '2026-03-19 05:17:34', '2026-03-19 05:19:10', 21, 'approved', 'approved', 406, 'ok', '2026-03-19 05:18:32', 'approved', 435, 'ok', '2026-03-19 05:19:10', 'Workshop', 'attachment-1773897454516-392030487.png', 'Class Incharge');
+(8, 3975, 'On-Duty', '2026-03-19', '2026-03-19', 1.0, 'leave for workshop', 'pending', NULL, NULL, NULL, '2026-03-19 05:17:34', '2026-03-19 05:19:10', 21, 'approved', 'approved', 406, 'ok', '2026-03-19 05:18:32', 'approved', 435, 'ok', '2026-03-19 05:19:10', 'Workshop', 'attachment-1773897454516-392030487.png', 'Class Incharge'),
+(9, 3975, 'On-Duty', '2026-03-21', '2026-03-21', 1.0, 'xjfdsafjf', 'pending', NULL, NULL, NULL, '2026-03-20 10:19:04', '2026-03-20 10:20:01', 21, 'approved', 'approved', 406, 'dcfbnjk,', '2026-03-20 10:19:26', 'approved', 435, NULL, '2026-03-20 10:20:01', 'Workshop', NULL, 'Class Incharge');
 
 -- --------------------------------------------------------
 
@@ -1061,7 +1299,10 @@ INSERT INTO `student_notifications` (`id`, `studentId`, `title`, `message`, `typ
 (9, 3975, 'Leave Application Submitted', 'Your On-Duty leave application for 1 days has been submitted.', 'leave', 'low', 8, 'StudentLeave', NULL, 0, NULL, NULL, '2026-03-19 05:17:34', '2026-03-19 05:17:34'),
 (10, 3975, 'Certification Approved', 'Your certification \"claude code in action\" has been approved. Remarks: keep going lokesh', 'approval', 'medium', 2, 'certification', '/student/portfolio/certifications', 0, NULL, NULL, '2026-03-19 05:18:18', '2026-03-19 05:18:18'),
 (11, 3975, 'Class Incharge Approved', 'Your leave has been approved by NAGAJOTHI P. Awaiting department admin approval.', 'leave', 'low', 8, 'StudentLeave', NULL, 0, NULL, NULL, '2026-03-19 05:18:32', '2026-03-19 05:18:32'),
-(12, 3975, 'Leave Approved', 'Your On-Duty leave has been approved by all required authorities.', 'leave', 'low', 8, 'StudentLeave', NULL, 0, NULL, NULL, '2026-03-19 05:19:10', '2026-03-19 05:19:10');
+(12, 3975, 'Leave Approved', 'Your On-Duty leave has been approved by all required authorities.', 'leave', 'low', 8, 'StudentLeave', NULL, 0, NULL, NULL, '2026-03-19 05:19:10', '2026-03-19 05:19:10'),
+(13, 3975, 'Leave Application Submitted', 'Your On-Duty leave application for 1 days has been submitted.', 'leave', 'low', 9, 'StudentLeave', NULL, 0, NULL, NULL, '2026-03-20 10:19:04', '2026-03-20 10:19:04'),
+(14, 3975, 'Class Incharge Approved', 'Your leave has been approved by NAGAJOTHI P. Awaiting department admin approval.', 'leave', 'low', 9, 'StudentLeave', NULL, 0, NULL, NULL, '2026-03-20 10:19:26', '2026-03-20 10:19:26'),
+(15, 3975, 'Leave Approved', 'Your On-Duty leave has been approved by all required authorities.', 'leave', 'low', 9, 'StudentLeave', NULL, 0, NULL, NULL, '2026-03-20 10:20:01', '2026-03-20 10:20:01');
 
 -- --------------------------------------------------------
 
@@ -1102,9 +1343,9 @@ CREATE TABLE `student_profile` (
 --
 
 INSERT INTO `student_profile` (`id`, `userId`, `role_id`, `studentId`, `rollNumber`, `admissionNo`, `firstName`, `lastName`, `email`, `phone`, `photo`, `gender`, `departmentId`, `classId`, `batch`, `semester`, `year`, `admissionDate`, `admissionType`, `feeStatus`, `status`, `password`, `createdAt`, `updatedAt`, `emisNo`) VALUES
-(3686, NULL, 6, '921024243001', '921024243001', NULL, 'ABARNA', 'K', '921024243001@nscet.org', '9876543210', 'default-student.png', 'female', 6, 20, '2024-2028', 4, '2', '2024-11-15', 'regular', 'paid', 'active', '$2a$10$dFoVkpiU4xkoGUYT3OhfOucc255f/yft8BhHC.o3aZqqY/vjHyY.O', '2026-03-14 13:13:50', '2026-03-14 13:13:50', NULL),
-(3687, NULL, 6, '921024243002', '921024243002', NULL, 'ABDUL RAHMAN', 'U', '921024243002@nscet.org', '9876543210', 'default-student.png', 'male', 6, 20, '2024-2028', 4, '2', '2024-11-15', 'regular', 'paid', 'active', '$2a$10$dFoVkpiU4xkoGUYT3OhfOucc255f/yft8BhHC.o3aZqqY/vjHyY.O', '2026-03-14 13:13:50', '2026-03-14 13:13:50', NULL),
-(3688, NULL, 6, '921024243003', '921024243003', NULL, 'ANBU DHARSINI', 'V', '921024243003@nscet.org', '9876543210', 'default-student.png', 'female', 6, 20, '2024-2028', 4, '2', '2024-11-15', 'regular', 'paid', 'active', '$2a$10$dFoVkpiU4xkoGUYT3OhfOucc255f/yft8BhHC.o3aZqqY/vjHyY.O', '2026-03-14 13:13:50', '2026-03-14 13:13:50', NULL),
+(3686, NULL, 6, '921024243001', '921024243001', NULL, 'ABARNA', 'K', '921024243001@nscet.org', '9876543210', 'default-student.png', 'female', 6, NULL, '2024-2028', 4, '2', '2024-11-15', 'regular', 'paid', 'active', '$2a$10$dFoVkpiU4xkoGUYT3OhfOucc255f/yft8BhHC.o3aZqqY/vjHyY.O', '2026-03-14 13:13:50', '2026-03-14 13:13:50', NULL),
+(3687, NULL, 6, '921024243002', '921024243002', NULL, 'ABDUL RAHMAN', 'U', '921024243002@nscet.org', '9876543210', 'default-student.png', 'male', 6, NULL, '2024-2028', 4, '2', '2024-11-15', 'regular', 'paid', 'active', '$2a$10$dFoVkpiU4xkoGUYT3OhfOucc255f/yft8BhHC.o3aZqqY/vjHyY.O', '2026-03-14 13:13:50', '2026-03-14 13:13:50', NULL),
+(3688, NULL, 6, '921024243003', '921024243003', NULL, 'ANBU DHARSINI', 'V', '921024243003@nscet.org', '9876543210', 'default-student.png', 'female', 6, NULL, '2024-2028', 4, '2', '2024-11-15', 'regular', 'paid', 'active', '$2a$10$dFoVkpiU4xkoGUYT3OhfOucc255f/yft8BhHC.o3aZqqY/vjHyY.O', '2026-03-14 13:13:50', '2026-03-14 13:13:50', NULL),
 (3967, NULL, 6, '921023243001', '921023243001', NULL, 'AJAY PRASATH', 'K', '921023243001@nscet.org', '9876543210', 'default-student.png', 'male', 6, 21, '2023-2027', 6, '3', '2023-11-15', 'regular', 'paid', 'active', '$2a$10$dFoVkpiU4xkoGUYT3OhfOucc255f/yft8BhHC.o3aZqqY/vjHyY.O', '2026-03-14 13:13:50', '2026-03-14 13:13:50', NULL),
 (3968, NULL, 6, '921023243002', '921023243002', NULL, 'ANFIYAA', 'M', '921023243002@nscet.org', '9876543210', 'default-student.png', 'female', 6, 21, '2023-2027', 6, '3', '2023-11-15', 'regular', 'paid', 'active', '$2a$10$dFoVkpiU4xkoGUYT3OhfOucc255f/yft8BhHC.o3aZqqY/vjHyY.O', '2026-03-14 13:13:50', '2026-03-14 13:13:50', NULL),
 (3969, NULL, 6, '921023243004', '921023243004', NULL, 'ASIM FATHIMA', 'P', '921023243004@nscet.org', '9876543210', 'default-student.png', 'female', 6, 21, '2023-2027', 6, '3', '2023-11-15', 'regular', 'paid', 'active', '$2a$10$dFoVkpiU4xkoGUYT3OhfOucc255f/yft8BhHC.o3aZqqY/vjHyY.O', '2026-03-14 13:13:50', '2026-03-14 13:13:50', NULL),
@@ -1113,7 +1354,7 @@ INSERT INTO `student_profile` (`id`, `userId`, `role_id`, `studentId`, `rollNumb
 (3972, NULL, 6, '921023243007', '921023243007', NULL, 'GOKUL', 'M', '921023243007@nscet.org', '9876543210', 'default-student.png', 'male', 6, 21, '2023-2027', 6, '3', '2023-11-15', 'regular', 'paid', 'active', '$2a$10$dFoVkpiU4xkoGUYT3OhfOucc255f/yft8BhHC.o3aZqqY/vjHyY.O', '2026-03-14 13:13:50', '2026-03-14 13:13:50', NULL),
 (3973, NULL, 6, '921023243008', '921023243008', NULL, 'HARI PRABHA', 'S', '921023243008@nscet.org', '9876543210', 'default-student.png', 'male', 6, 21, '2023-2027', 6, '3', '2023-11-15', 'regular', 'paid', 'active', '$2a$10$dFoVkpiU4xkoGUYT3OhfOucc255f/yft8BhHC.o3aZqqY/vjHyY.O', '2026-03-14 13:13:50', '2026-03-14 13:13:50', NULL),
 (3974, NULL, 6, '921023243009', '921023243009', NULL, 'KAVIYAMAHESHWARI', 'J', '921023243009@nscet.org', '9876543210', 'default-student.png', 'female', 6, 21, '2023-2027', 6, '3', '2023-11-15', 'regular', 'paid', 'active', '$2a$10$dFoVkpiU4xkoGUYT3OhfOucc255f/yft8BhHC.o3aZqqY/vjHyY.O', '2026-03-14 13:13:50', '2026-03-14 13:13:50', NULL),
-(3975, NULL, 6, '3975', '921023243010', NULL, 'LOGESH KUMAR', 'R', '921023243010@nscet.org', '9876543210', 'default-student.png', 'male', 6, 21, '2023-2027', 6, '3', '2023-11-15', 'regular', 'paid', 'active', '$2a$10$dFoVkpiU4xkoGUYT3OhfOucc255f/yft8BhHC.o3aZqqY/vjHyY.O', '2026-03-14 13:13:50', '2026-03-18 05:39:53', NULL),
+(3975, NULL, 6, '3975', '921023243010', NULL, 'LOGESH KUMAR', 'R', '921023243010@nscet.org', '9876543210', 'default-student.png', 'male', 6, 21, '2023-2027', 6, '3', '2023-11-15', 'regular', 'pending', 'active', '$2a$10$dFoVkpiU4xkoGUYT3OhfOucc255f/yft8BhHC.o3aZqqY/vjHyY.O', '2026-03-14 13:13:50', '2026-03-20 10:25:49', NULL),
 (3976, NULL, 6, '921023243011', '921023243011', NULL, 'MALARVIZHI', 'S', '921023243011@nscet.org', '9876543210', 'default-student.png', 'female', 6, 21, '2023-2027', 6, '3', '2023-11-15', 'regular', 'paid', 'active', '$2a$10$dFoVkpiU4xkoGUYT3OhfOucc255f/yft8BhHC.o3aZqqY/vjHyY.O', '2026-03-14 13:13:50', '2026-03-14 13:13:50', NULL),
 (4159, NULL, 3, '921023243018', '23AI&100', NULL, 'SHRIMATHI', 'R', 'shrimathiravi44@gmail.com', '9384114714', 'default-student.png', 'female', 6, 21, '2023-2027', 1, '3', '2026-03-15', 'regular', 'pending', 'active', '$2a$10$jvuWQ71xy2Z1C2XBFBTdleqcajw0FoikNF5Tw.o4CZmzW1MrcJ2v6', '2026-03-15 09:29:14', '2026-03-18 10:24:18', NULL);
 
@@ -1289,8 +1530,7 @@ CREATE TABLE `timetable_master` (
 --
 
 INSERT INTO `timetable_master` (`id`, `class_id`, `department_id`, `academic_year`, `semester`, `semester_type`, `batch`, `room_no`, `effective_from`, `effective_to`, `revision_no`, `status`, `class_coordinator_id`, `asst_coordinator_id`, `timetable_incharge_id`, `hod_id`, `approved_by`, `approved_at`, `created_by`, `created_at`, `updated_at`) VALUES
-(1, 21, 6, '2025-2026', 6, 'even', '2023-2027', 'CR-15', '2026-01-05', NULL, '05.01.2026/01', 'active', 406, 496, 406, 435, NULL, NULL, 435, '2026-03-14 13:13:50', '2026-03-15 15:58:50'),
-(2, 20, 6, '2025-2026', 4, 'even', '2024-2028', 'CR-12', '2026-01-05', NULL, '05.01.2026/02', '', 435, NULL, 357, 435, NULL, NULL, 435, '2026-03-14 13:13:50', '2026-03-16 05:05:43');
+(1, 21, 6, '2025-2026', 6, 'even', '2023-2027', 'CR-15', '2026-01-05', NULL, '05.01.2026/01', 'active', 406, 496, 406, 435, NULL, NULL, 435, '2026-03-14 13:13:50', '2026-03-20 16:36:56');
 
 -- --------------------------------------------------------
 
@@ -1356,7 +1596,7 @@ INSERT INTO `timetable_master_slots` (`id`, `master_id`, `day`, `period_slot_id`
 (362, 1, 'Friday', 9, 95, 406, 'project', 0, NULL, NULL, NULL, NULL, '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
 (363, 1, 'Friday', 10, 95, 406, 'project', 0, NULL, NULL, NULL, NULL, '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
 (364, 1, 'Saturday', 1, 100, 436, 'theory', 0, NULL, NULL, 'CR-15', 'GT', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
-(365, 1, 'Saturday', 2, 90, 436, 'theory', 0, NULL, NULL, 'CR-15', 'PPL', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
+(365, 1, 'Saturday', 2, 90, 435, 'theory', 0, NULL, NULL, 'CR-15', 'PPL', '2026-03-15 14:48:29', '2026-03-21 06:23:43'),
 (366, 1, 'Saturday', 4, 102, 507, 'theory', 0, NULL, NULL, 'CR-15', 'ESIOT', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
 (367, 1, 'Saturday', 6, 94, 496, 'theory', 0, NULL, NULL, 'CR-15', 'APP', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
 (368, 1, 'Saturday', 7, 98, 406, 'theory', 0, NULL, NULL, 'CR-15', 'DM', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
@@ -1601,6 +1841,24 @@ CREATE TABLE `v_subject_attendance_report` (
 -- --------------------------------------------------------
 
 --
+-- Structure for view `course_file_section_x`
+--
+DROP TABLE IF EXISTS `course_file_section_x`;
+
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `course_file_section_x`  AS SELECT `clp`.`sno` AS `sno`, `clp`.`unit_number` AS `unit_number`, `clp`.`unit_label` AS `unit_label`, `clp`.`topic` AS `topic`, `clp`.`co_number` AS `co_number`, `clp`.`btl` AS `btl`, `clp`.`delivery_mode` AS `delivery_mode`, `clp`.`reference_book` AS `reference_book`, `clp`.`periods_required` AS `periods_required`, `clp`.`cumulative_periods` AS `cumulative_periods`, `clp`.`periods_taken` AS `periods_taken`, CASE WHEN `clp`.`periods_taken` >= `clp`.`periods_required` THEN 'Y' ELSE 'N' END AS `covered`, `fp`.`Name` AS `faculty_name`, `s`.`subject_name` AS `subject_name`, `c`.`name` AS `class_name`, `clp`.`academic_year` AS `academic_year`, `clp`.`semester` AS `semester` FROM (((`course_lesson_plans` `clp` join `faculty_profiles` `fp` on(`fp`.`faculty_id` = `clp`.`faculty_id`)) join `subjects` `s` on(`s`.`id` = `clp`.`subject_id`)) join `classes` `c` on(`c`.`id` = `clp`.`class_id`)) ORDER BY `clp`.`sno` ASC ;
+
+-- --------------------------------------------------------
+
+--
+-- Structure for view `course_lesson_plan_progress`
+--
+DROP TABLE IF EXISTS `course_lesson_plan_progress`;
+
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `course_lesson_plan_progress`  AS SELECT `clp`.`faculty_id` AS `faculty_id`, `clp`.`subject_id` AS `subject_id`, `clp`.`class_id` AS `class_id`, `clp`.`academic_year` AS `academic_year`, `clp`.`semester` AS `semester`, `s`.`subject_name` AS `subject_name`, `c`.`name` AS `class_name`, count(`clp`.`id`) AS `total_topics`, sum(`clp`.`periods_required`) AS `total_periods_planned`, sum(`clp`.`periods_taken`) AS `total_periods_taught`, sum(case when `clp`.`is_completed` = 1 then 1 else 0 end) AS `topics_completed`, round(100 * sum(case when `clp`.`is_completed` = 1 then 1 else 0 end) / count(`clp`.`id`),2) AS `completion_percentage` FROM ((`course_lesson_plans` `clp` join `subjects` `s` on(`s`.`id` = `clp`.`subject_id`)) join `classes` `c` on(`c`.`id` = `clp`.`class_id`)) GROUP BY `clp`.`faculty_id`, `clp`.`subject_id`, `clp`.`class_id`, `clp`.`academic_year`, `clp`.`semester` ;
+
+-- --------------------------------------------------------
+
+--
 -- Structure for view `v_effective_timetable`
 --
 DROP TABLE IF EXISTS `v_effective_timetable`;
@@ -1654,6 +1912,44 @@ ALTER TABLE `class_incharges`
   ADD KEY `idx_faculty_id` (`faculty_id`),
   ADD KEY `idx_class_id` (`class_id`),
   ADD KEY `idx_status` (`status`);
+
+--
+-- Indexes for table `course_files`
+--
+ALTER TABLE `course_files`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_course_file_assignment` (`faculty_id`,`subject_id`,`class_id`,`academic_year`,`semester`),
+  ADD KEY `idx_dept_status` (`department_id`,`status`),
+  ADD KEY `idx_status` (`status`),
+  ADD KEY `idx_submission_date` (`submission_date`),
+  ADD KEY `fk_cf_subject` (`subject_id`),
+  ADD KEY `fk_cf_class` (`class_id`),
+  ADD KEY `fk_cf_approved_by` (`approved_by`);
+
+--
+-- Indexes for table `course_file_notifications`
+--
+ALTER TABLE `course_file_notifications`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_recipient_read` (`recipient_id`,`is_read`),
+  ADD KEY `idx_course_file_id` (`course_file_id`),
+  ADD KEY `idx_created_at` (`created_at`);
+
+--
+-- Indexes for table `course_lesson_plans`
+--
+ALTER TABLE `course_lesson_plans`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uq_plan_topic` (`faculty_id`,`subject_id`,`class_id`,`academic_year`,`semester`,`sno`),
+  ADD KEY `idx_clp_faculty` (`faculty_id`),
+  ADD KEY `idx_clp_subject` (`subject_id`),
+  ADD KEY `idx_clp_class` (`class_id`),
+  ADD KEY `idx_clp_unit` (`unit_number`),
+  ADD KEY `idx_clp_completed` (`is_completed`),
+  ADD KEY `idx_pending` (`faculty_id`,`is_completed`),
+  ADD KEY `idx_approval_status` (`approval_status`),
+  ADD KEY `idx_batch_id` (`upload_batch_id`),
+  ADD KEY `idx_batch_submission` (`batch_submission_date`);
 
 --
 -- Indexes for table `departments`
@@ -1824,6 +2120,21 @@ ALTER TABLE `period_slots`
   ADD UNIQUE KEY `uq_slot_order` (`slot_order`);
 
 --
+-- Indexes for table `period_topic_log`
+--
+ALTER TABLE `period_topic_log`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uq_ptl_date_period_class_subj` (`attendance_date`,`period_slot_id`,`class_id`,`subject_id`),
+  ADD KEY `idx_ptl_faculty` (`faculty_id`),
+  ADD KEY `idx_ptl_date` (`attendance_date`),
+  ADD KEY `idx_ptl_lesson_plan` (`lesson_plan_id`),
+  ADD KEY `idx_ptl_subject` (`subject_id`),
+  ADD KEY `fk_ptl_class` (`class_id`),
+  ADD KEY `fk_ptl_period` (`period_slot_id`),
+  ADD KEY `fk_ptl_slot` (`master_slot_id`),
+  ADD KEY `idx_date_faculty_subject` (`attendance_date`,`faculty_id`,`subject_id`);
+
+--
 -- Indexes for table `roles`
 --
 ALTER TABLE `roles`
@@ -1878,7 +2189,8 @@ ALTER TABLE `student_attendance`
   ADD KEY `idx_sa_status` (`status`),
   ADD KEY `idx_sa_date_class` (`attendance_date`,`class_id`,`period_slot_id`),
   ADD KEY `idx_sa_period` (`period_slot_id`),
-  ADD KEY `idx_sa_slot` (`master_slot_id`);
+  ADD KEY `idx_sa_slot` (`master_slot_id`),
+  ADD KEY `idx_student_attendance_lesson_plan` (`lesson_plan_id`);
 
 --
 -- Indexes for table `student_bio`
@@ -2142,6 +2454,24 @@ ALTER TABLE `class_incharges`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
+-- AUTO_INCREMENT for table `course_files`
+--
+ALTER TABLE `course_files`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `course_file_notifications`
+--
+ALTER TABLE `course_file_notifications`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `course_lesson_plans`
+--
+ALTER TABLE `course_lesson_plans`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=303;
+
+--
 -- AUTO_INCREMENT for table `departments`
 --
 ALTER TABLE `departments`
@@ -2235,7 +2565,7 @@ ALTER TABLE `leave_balance_v2`
 -- AUTO_INCREMENT for table `leave_notifications_v2`
 --
 ALTER TABLE `leave_notifications_v2`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `leave_requests`
@@ -2254,6 +2584,12 @@ ALTER TABLE `leave_types`
 --
 ALTER TABLE `period_slots`
   MODIFY `id` tinyint(3) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+
+--
+-- AUTO_INCREMENT for table `period_topic_log`
+--
+ALTER TABLE `period_topic_log`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `roles`
@@ -2283,7 +2619,7 @@ ALTER TABLE `staff_period_attendance`
 -- AUTO_INCREMENT for table `student_attendance`
 --
 ALTER TABLE `student_attendance`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=34;
 
 --
 -- AUTO_INCREMENT for table `student_bio`
@@ -2313,7 +2649,7 @@ ALTER TABLE `student_internal_marks`
 -- AUTO_INCREMENT for table `student_leaves`
 --
 ALTER TABLE `student_leaves`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT for table `student_marks`
@@ -2325,7 +2661,7 @@ ALTER TABLE `student_marks`
 -- AUTO_INCREMENT for table `student_notifications`
 --
 ALTER TABLE `student_notifications`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
 -- AUTO_INCREMENT for table `student_profile`
@@ -2415,6 +2751,31 @@ ALTER TABLE `classes`
 ALTER TABLE `class_incharges`
   ADD CONSTRAINT `class_incharges_ibfk_1` FOREIGN KEY (`class_id`) REFERENCES `classes` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   ADD CONSTRAINT `class_incharges_ibfk_2` FOREIGN KEY (`faculty_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE NO ACTION ON UPDATE CASCADE;
+
+--
+-- Constraints for table `course_files`
+--
+ALTER TABLE `course_files`
+  ADD CONSTRAINT `fk_cf_approved_by` FOREIGN KEY (`approved_by`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `fk_cf_class` FOREIGN KEY (`class_id`) REFERENCES `classes` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_cf_department` FOREIGN KEY (`department_id`) REFERENCES `departments` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_cf_faculty` FOREIGN KEY (`faculty_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_cf_subject` FOREIGN KEY (`subject_id`) REFERENCES `subjects` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `course_file_notifications`
+--
+ALTER TABLE `course_file_notifications`
+  ADD CONSTRAINT `fk_cfn_course_file` FOREIGN KEY (`course_file_id`) REFERENCES `course_files` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_cfn_recipient` FOREIGN KEY (`recipient_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `course_lesson_plans`
+--
+ALTER TABLE `course_lesson_plans`
+  ADD CONSTRAINT `fk_clp_class` FOREIGN KEY (`class_id`) REFERENCES `classes` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_clp_faculty` FOREIGN KEY (`faculty_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_clp_subject` FOREIGN KEY (`subject_id`) REFERENCES `subjects` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `faculty_events`
@@ -2521,6 +2882,17 @@ ALTER TABLE `leave_requests`
   ADD CONSTRAINT `fk_lr_type` FOREIGN KEY (`leave_type_id`) REFERENCES `leave_types` (`id`);
 
 --
+-- Constraints for table `period_topic_log`
+--
+ALTER TABLE `period_topic_log`
+  ADD CONSTRAINT `fk_ptl_class` FOREIGN KEY (`class_id`) REFERENCES `classes` (`id`),
+  ADD CONSTRAINT `fk_ptl_faculty` FOREIGN KEY (`faculty_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_ptl_lesson_plan` FOREIGN KEY (`lesson_plan_id`) REFERENCES `course_lesson_plans` (`id`),
+  ADD CONSTRAINT `fk_ptl_period` FOREIGN KEY (`period_slot_id`) REFERENCES `period_slots` (`id`),
+  ADD CONSTRAINT `fk_ptl_slot` FOREIGN KEY (`master_slot_id`) REFERENCES `timetable_master_slots` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `fk_ptl_subject` FOREIGN KEY (`subject_id`) REFERENCES `subjects` (`id`);
+
+--
 -- Constraints for table `staff_attendance`
 --
 ALTER TABLE `staff_attendance`
@@ -2548,7 +2920,8 @@ ALTER TABLE `student_attendance`
   ADD CONSTRAINT `fk_sa_period` FOREIGN KEY (`period_slot_id`) REFERENCES `period_slots` (`id`),
   ADD CONSTRAINT `fk_sa_slot` FOREIGN KEY (`master_slot_id`) REFERENCES `timetable_master_slots` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `fk_sa_student` FOREIGN KEY (`student_id`) REFERENCES `student_profile` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `fk_sa_subject` FOREIGN KEY (`subject_id`) REFERENCES `subjects` (`id`);
+  ADD CONSTRAINT `fk_sa_subject` FOREIGN KEY (`subject_id`) REFERENCES `subjects` (`id`),
+  ADD CONSTRAINT `fk_student_attendance_lesson_plan` FOREIGN KEY (`lesson_plan_id`) REFERENCES `course_lesson_plans` (`id`) ON DELETE SET NULL;
 
 --
 -- Constraints for table `student_bio`
