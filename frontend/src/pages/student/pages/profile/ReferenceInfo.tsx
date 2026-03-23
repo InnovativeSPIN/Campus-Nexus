@@ -2,13 +2,22 @@
 import PageHeader from '@/pages/student/components/layout/PageHeader';
 import SectionCard from '@/pages/student/components/common/SectionCard';
 import ProfileNavBar from '@/pages/student/components/layout/ProfileNavBar';
-import { User, Phone, MapPin, Clock, Briefcase, Heart, UserPlus, Loader2 } from 'lucide-react';
-import { getMyProfile } from '@/pages/student/services/studentApi';
+import { User, Phone, MapPin, Briefcase, Heart, UserPlus, Loader2, Edit, Plus, Trash2, X } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/pages/student/components/ui/dialog';
+import { Input } from '@/pages/student/components/ui/input';
+import { Label } from '@/pages/student/components/ui/label';
+import { Button } from '@/pages/student/components/ui/button';
+import { useToast } from '@/pages/student/hooks/use-toast';
+import { getMyProfile, updateMyProfile } from '@/pages/student/services/studentApi';
 
 export default function ReferenceInfo() {
   const [referenceList, setReferenceList] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [pendingRequest] = useState(false);
+  const { toast } = useToast();
+  const [editReferenceIndex, setEditReferenceIndex] = useState<number | null>(null);
+  const [referenceForm, setReferenceForm] = useState({ name: '', relation: '', phone: '', address: '', occupation: '' });
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     const fetchReferences = async () => {
@@ -26,6 +35,77 @@ export default function ReferenceInfo() {
     };
     fetchReferences();
   }, []);
+
+  const openReferenceDialog = (index: number | null = null) => {
+    if (index !== null && referenceList[index]) {
+      setReferenceForm({
+        name: referenceList[index].name || '',
+        relation: referenceList[index].relation || '',
+        phone: referenceList[index].phone || '',
+        address: referenceList[index].address || '',
+        occupation: referenceList[index].occupation || '',
+      });
+      setEditReferenceIndex(index);
+    } else {
+      setReferenceForm({ name: '', relation: '', phone: '', address: '', occupation: '' });
+      setEditReferenceIndex(null);
+    }
+    setDialogOpen(true);
+  };
+
+  const closeReferenceDialog = () => {
+    setDialogOpen(false);
+    setEditReferenceIndex(null);
+  };
+
+  const saveReference = async () => {
+    setSaving(true);
+    try {
+      const updated = [...referenceList];
+      if (editReferenceIndex === null) {
+        updated.push(referenceForm);
+      } else {
+        updated[editReferenceIndex] = referenceForm;
+      }
+
+      const res = (await updateMyProfile({ references: updated })) as any;
+      if (res.success) {
+        setReferenceList(updated);
+        setDialogOpen(false);
+        setEditReferenceIndex(null);
+        setTimeout(() => {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }, 100);
+        toast({ title: 'Saved', description: 'Reference updated successfully' });
+      } else {
+        toast({ title: 'Error', description: res.error || 'Unable to save reference', variant: 'destructive' });
+      }
+    } catch (error: any) {
+      console.error('Reference save failed', error);
+      toast({ title: 'Error', description: error.message || 'Unable to save reference', variant: 'destructive' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const deleteReference = async (index: number) => {
+    const updated = referenceList.filter((_, i) => i !== index);
+    setSaving(true);
+    try {
+      const res = (await updateMyProfile({ references: updated })) as any;
+      if (res.success) {
+        setReferenceList(updated);
+        toast({ title: 'Deleted', description: 'Reference removed successfully' });
+      } else {
+        toast({ title: 'Error', description: res.error || 'Unable to delete reference', variant: 'destructive' });
+      }
+    } catch (error: any) {
+      console.error('Failed to delete reference', error);
+      toast({ title: 'Error', description: error.message || 'Unable to delete reference', variant: 'destructive' });
+    } finally {
+      setSaving(false);
+    }
+  };
 
   if (loading) return (
     <div className="flex justify-center items-center h-64">
@@ -46,19 +126,13 @@ export default function ReferenceInfo() {
 
       <ProfileNavBar />
 
-      <div className="grid gap-8">
-        {pendingRequest && (
-          <div className="flex items-center gap-4 p-5 rounded-2xl bg-amber-50 border border-amber-200 shadow-sm">
-            <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
-              <Clock className="w-5 h-5 text-amber-600" />
-            </div>
-            <div>
-              <h3 className="font-bold text-amber-900">Verification Pending</h3>
-              <p className="text-sm text-amber-800 font-medium">Updated references are currently being reviewed.</p>
-            </div>
-          </div>
-        )}
+      <div className="flex justify-end mb-4">
+        <Button size="sm" variant="outline" onClick={() => openReferenceDialog(null)}>
+          <Plus className="w-4 h-4" /> Add Reference
+        </Button>
+      </div>
 
+      <div className="grid gap-8">
         {referenceList.length === 0 ? (
           <div className="section-card flex flex-col items-center justify-center py-20 bg-muted/20 border-dashed">
             <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
@@ -71,11 +145,22 @@ export default function ReferenceInfo() {
           <div className="grid gap-8 md:grid-cols-2">
             {referenceList.map((ref, index) => (
               <SectionCard
-                key={ref.id}
+                key={`${ref.id || index}-${ref.name}`}
                 title={`Reference #${index + 1}`}
                 icon={Heart}
                 className="shadow-xl"
               >
+                <div className="flex justify-between items-start mb-2">
+                  <span className="font-bold text-base text-foreground">{ref.name}</span>
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline" onClick={() => openReferenceDialog(index)}>
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                    <Button size="sm" variant="destructive" onClick={() => deleteReference(index)}>
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
                 <div className="space-y-6">
                   <div className="flex items-center gap-4 p-4 rounded-xl bg-orange-50/50 border border-orange-100">
                     <div className="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center">
@@ -113,6 +198,46 @@ export default function ReferenceInfo() {
           </div>
         )}
       </div>
+
+      <Dialog open={dialogOpen} onOpenChange={(open) => { if (!open) closeReferenceDialog(); }}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{editReferenceIndex !== null ? 'Edit Reference' : 'Add Reference'}</DialogTitle>
+          </DialogHeader>
+
+          <div className="grid grid-cols-1 gap-3 mt-4">
+            <div>
+              <Label>Name</Label>
+              <Input value={referenceForm.name} onChange={(e) => setReferenceForm((prev) => ({ ...prev, name: e.target.value }))} />
+            </div>
+            <div>
+              <Label>Relation</Label>
+              <Input value={referenceForm.relation} onChange={(e) => setReferenceForm((prev) => ({ ...prev, relation: e.target.value }))} />
+            </div>
+            <div>
+              <Label>Occupation</Label>
+              <Input value={referenceForm.occupation} onChange={(e) => setReferenceForm((prev) => ({ ...prev, occupation: e.target.value }))} />
+            </div>
+            <div>
+              <Label>Phone</Label>
+              <Input value={referenceForm.phone} onChange={(e) => setReferenceForm((prev) => ({ ...prev, phone: e.target.value }))} />
+            </div>
+            <div>
+              <Label>Address</Label>
+              <Input value={referenceForm.address} onChange={(e) => setReferenceForm((prev) => ({ ...prev, address: e.target.value }))} />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={closeReferenceDialog} disabled={saving}>
+              <X className="w-4 h-4" /> Cancel
+            </Button>
+            <Button onClick={saveReference} disabled={saving}>
+              {saving ? 'Saving...' : editReferenceIndex !== null ? 'Save Changes' : 'Add Reference'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

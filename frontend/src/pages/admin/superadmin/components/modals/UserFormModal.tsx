@@ -113,7 +113,12 @@ export function UserFormModal({ open, onClose, onSave, type, initialData, mode }
       if (type === 'student' && (formData as Student).batch) {
         setLoadingClasses(true);
         try {
-          const response = await fetch('/api/v1/classes', { credentials: 'include' });
+          const token = localStorage.getItem('authToken');
+          const response = await fetch('/api/v1/classes', { 
+            headers: {
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            }
+          });
           const result = await response.json();
           if (result.success) {
             // Filter classes by batch

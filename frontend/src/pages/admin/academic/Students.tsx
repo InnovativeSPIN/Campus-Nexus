@@ -81,7 +81,12 @@ export default function AcademicStudents() {
   useEffect(() => {
     const fetchStudents = async () => {
       try {
-        const res = await fetch('/api/v1/students?limit=0', { credentials: 'include' });
+        const token = localStorage.getItem('authToken');
+        const res = await fetch('/api/v1/students?limit=0', { 
+          headers: {
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          }
+        });
         const json = await res.json();
         if (json.success) {
           const mapped = json.data.map((s: any) => ({

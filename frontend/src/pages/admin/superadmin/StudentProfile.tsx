@@ -17,6 +17,22 @@ import { Badge } from '@/pages/admin/superadmin/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/pages/admin/superadmin/components/ui/tabs';
 import { toast } from '@/components/ui/sonner';
 
+// Helper function to format date for input display (converts "0000-00-00" to empty string)
+const formatDateForInput = (dateValue: any): string => {
+    if (!dateValue) return '';
+    const dateStr = String(dateValue).split('T')[0];
+    if (dateStr === '0000-00-00' || dateStr === '') return '';
+    return dateStr;
+};
+
+// Helper function to clean date before sending to backend (converts invalid dates to null)
+const cleanDateForBackend = (dateValue: any): string | null => {
+    if (!dateValue) return null;
+    const dateStr = String(dateValue).split('T')[0];
+    if (dateStr === '0000-00-00' || dateStr === '') return null;
+    return dateStr;
+};
+
 export default function SuperAdminStudentProfile() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
@@ -36,7 +52,12 @@ export default function SuperAdminStudentProfile() {
         if (!id) return;
         try {
             setLoading(true);
-            const res = await fetch(`/api/v1/students/${id}`, { credentials: 'include' });
+            const token = localStorage.getItem('authToken');
+            const res = await fetch(`/api/v1/students/${id}`, { 
+                headers: {
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                }
+            });
             if (!res.ok) throw new Error(`Server responded with ${res.status}`);
             const json = await res.json();
             if (json.success && json.data) {
@@ -125,10 +146,21 @@ export default function SuperAdminStudentProfile() {
                 cleanData.classId = formData.classId;
             }
 
+            // Clean up date fields - convert "0000-00-00" and empty dates to null
+            if (cleanData.dateOfBirth) {
+                cleanData.dateOfBirth = cleanDateForBackend(cleanData.dateOfBirth);
+            }
+            if (cleanData.admissionDate) {
+                cleanData.admissionDate = cleanDateForBackend(cleanData.admissionDate);
+            }
+
+            const token = localStorage.getItem('authToken');
             const res = await fetch(`/api/v1/students/${id}`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
+                headers: { 
+                  'Content-Type': 'application/json',
+                  ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
                 body: JSON.stringify(cleanData)
             });
             const json = await res.json();
@@ -212,9 +244,12 @@ export default function SuperAdminStudentProfile() {
             const formDataToSend = new FormData();
             formDataToSend.append('photo', file);
 
+            const token = localStorage.getItem('authToken');
             const res = await fetch(`/api/v1/students/${id}/photo`, {
                 method: 'PUT',
-                credentials: 'include',
+                headers: {
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
                 body: formDataToSend
             });
 
@@ -372,7 +407,7 @@ export default function SuperAdminStudentProfile() {
                                             </div>
                                             <div>
                                                 <Label>Date of Birth</Label>
-                                                <Input type="date" value={formData.dateOfBirth ? String(formData.dateOfBirth).split('T')[0] : ''} onChange={(e) => handleInputChange('dateOfBirth', e.target.value)} />
+                                                <Input type="date" value={formatDateForInput(formData.dateOfBirth)} onChange={(e) => handleInputChange('dateOfBirth', e.target.value)} />
                                             </div>
                                             <div>
                                                 <Label>Blood Group</Label>
@@ -547,7 +582,7 @@ export default function SuperAdminStudentProfile() {
                                             </div>
                                             <div>
                                                 <Label>Admission Date</Label>
-                                                <Input type="date" value={formData.admissionDate ? String(formData.admissionDate).split('T')[0] : ''} onChange={(e) => handleInputChange('admissionDate', e.target.value)} />
+                                                <Input type="date" value={formatDateForInput(formData.admissionDate)} onChange={(e) => handleInputChange('admissionDate', e.target.value)} />
                                             </div>
                                             <div>
                                                 <Label>Admission Type</Label>

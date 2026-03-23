@@ -36,7 +36,12 @@ export default function SuperAdminStudentProfile() {
         if (!id) return;
         try {
             setLoading(true);
-            const res = await fetch(`/api/v1/students/${id}`, { credentials: 'include' });
+            const token = localStorage.getItem('authToken');
+            const res = await fetch(`/api/v1/students/${id}`, { 
+              headers: {
+                ...(token ? { Authorization: `Bearer ${token}` } : {}),
+              }
+            });
             if (!res.ok) throw new Error(`Server responded with ${res.status}`);
             const json = await res.json();
             if (json.success && json.data) {
@@ -65,10 +70,13 @@ export default function SuperAdminStudentProfile() {
     const handleSaveSection = async (section: string) => {
         setSaving(true);
         try {
+            const token = localStorage.getItem('authToken');
             const res = await fetch(`/api/v1/students/${id}`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
+                headers: { 
+                  'Content-Type': 'application/json',
+                  ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
                 body: JSON.stringify(formData)
             });
             const json = await res.json();

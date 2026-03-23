@@ -40,6 +40,23 @@ export const getMyProfile = () => request('/students/me/profile');
 export const updateMyProfile = (data: Record<string, unknown>) =>
     request('/students/me/profile', { method: 'PUT', body: JSON.stringify(data) });
 
+export const uploadStudentPhoto = (studentId: number | string, file: File) => {
+    const formData = new FormData();
+    formData.append('photo', file);
+
+    return fetch(`${BASE_URL}/students/${studentId}/photo`, {
+        method: 'PUT',
+        headers: {
+            ...(getToken() ? { Authorization: `Bearer ${getToken()}` } : {}),
+        },
+        body: formData,
+    }).then(async (res) => {
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || data.message || 'Photo upload failed');
+        return data;
+    });
+};
+
 // ─────────────────────────────────────────────────────────
 // MARKS
 // ─────────────────────────────────────────────────────────

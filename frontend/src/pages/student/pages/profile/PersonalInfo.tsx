@@ -2,10 +2,14 @@ import { useState, useEffect } from 'react';
 import PageHeader from '@/pages/student/components/layout/PageHeader';
 import SectionCard from '@/pages/student/components/common/SectionCard';
 import ProfileNavBar from '@/pages/student/components/layout/ProfileNavBar';
-import { User as UserIcon, Mail, Phone, Linkedin, MapPin, Fingerprint, CalendarClock, CreditCard } from 'lucide-react';
+import { User as UserIcon, Mail, Phone, Linkedin, MapPin, Fingerprint, CalendarClock, CreditCard, Edit, Save, X } from 'lucide-react';
 import { useToast } from '@/pages/student/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { getMyProfile } from '@/pages/student/services/studentApi';
+import { getMyProfile, updateMyProfile } from '@/pages/student/services/studentApi';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/pages/student/components/ui/dialog';
+import { Input } from '@/pages/student/components/ui/input';
+import { Label } from '@/pages/student/components/ui/label';
+import { Button } from '@/pages/student/components/ui/button';
 
 const defaultPersonalData = {
   email: '',
@@ -37,6 +41,9 @@ export default function PersonalInfo() {
   const { user, updateUserData } = useAuth();
 
   const [personalData, setPersonalData] = useState<any>(defaultPersonalData);
+  const [formValues, setFormValues] = useState<any>(defaultPersonalData);
+  const [editSection, setEditSection] = useState<'contact' | 'academic' | 'address' | null>(null);
+  const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -75,6 +82,7 @@ export default function PersonalInfo() {
           };
 
           setPersonalData(newPersonalData);
+          setFormValues(newPersonalData);
 
           if (user) {
             updateUserData({
@@ -93,6 +101,70 @@ export default function PersonalInfo() {
     };
     fetchProfile();
   }, []);
+
+  const closeEditDialog = () => setEditSection(null);
+
+  const handleEditClick = (section: 'contact' | 'academic' | 'address') => {
+    setFormValues(personalData);
+    setEditSection(section);
+  };
+
+  const handleSave = async () => {
+    if (!editSection) return;
+
+    setSaving(true);
+    try {
+      const payload: any = {};
+
+      if (editSection === 'contact') {
+        payload.email = formValues.email;
+        payload.phone = formValues.phone;
+        payload.linkedinUrl = formValues.linkedinUrl;
+        payload.alternatePhone = formValues.alternatePhone;
+      } else if (editSection === 'academic') {
+        payload.bloodGroup = formValues.bloodGroup;
+        payload.motherTongue = formValues.motherTongue;
+        payload.nationality = formValues.nationality;
+        payload.religion = formValues.religion;
+        payload.category = formValues.category;
+        payload.residenceType = formValues.residenceType;
+        payload.dateOfBirth = formValues.dob;
+      } else if (editSection === 'address') {
+        payload.address = formValues.address;
+        payload.city = formValues.city;
+        payload.state = formValues.state;
+        payload.pincode = formValues.pincode;
+      }
+
+      const res = (await updateMyProfile(payload)) as any;
+
+      if (res.success) {
+        const updatedData = {
+          ...personalData,
+          ...payload,
+          dob: editSection === 'academic' ? formValues.dob : personalData.dob,
+        };
+
+        if (editSection === 'address') {
+          updatedData.address = formValues.address;
+          updatedData.city = formValues.city;
+          updatedData.state = formValues.state;
+          updatedData.pincode = formValues.pincode;
+        }
+
+        setPersonalData(updatedData);
+        toast({ title: 'Success', description: 'Profile updated successfully' });
+        closeEditDialog();
+      } else {
+        toast({ title: 'Error', description: res.error || 'Failed to save changes', variant: 'destructive' });
+      }
+    } catch (error: any) {
+      console.error('Failed to update profile', error);
+      toast({ title: 'Error', description: error.message || 'Failed to save changes', variant: 'destructive' });
+    } finally {
+      setSaving(false);
+    }
+  };
 
   if (loading) return (
     <div className="flex justify-center items-center h-64">
@@ -128,6 +200,10 @@ export default function PersonalInfo() {
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div className="space-y-1">
                   <h2 className="text-3xl font-bold text-foreground tracking-tight">{user?.name || 'N/A'}</h2>
+                  <div className="flex items-center gap-4">
+                    <span className="text-sm text-muted-foreground">Roll No: <span className="font-semibold text-foreground">{personalData.admissionNo || 'N/A'}</span></span>
+                    <span className="text-sm text-muted-foreground">EMIS: <span className="font-semibold text-foreground">{personalData.emisNo || 'N/A'}</span></span>
+                  </div>
                   <div className="flex items-center gap-2 text-muted-foreground font-medium hidden">
                     <span className="text-primary/80">{user?.studentId || 'N/A'}</span>
                     <span className="w-1 h-1 rounded-full bg-muted-foreground/30" />
@@ -149,6 +225,18 @@ export default function PersonalInfo() {
       </div>
 
       <ProfileNavBar />
+
+      <div className="flex flex-wrap justify-end gap-2 mb-4">
+        <Button size="sm" variant="outline" onClick={() => handleEditClick('contact')}>
+          <Edit className="w-4 h-4" /> Edit Contact
+        </Button>
+        <Button size="sm" variant="outline" onClick={() => handleEditClick('academic')}>
+          <Edit className="w-4 h-4" /> Edit Academic
+        </Button>
+        <Button size="sm" variant="outline" onClick={() => handleEditClick('address')}>
+          <Edit className="w-4 h-4" /> Edit Address
+        </Button>
+      </div>
 
       <div className="grid gap-8">
         {/* Contact Quick Info */}
@@ -300,6 +388,115 @@ export default function PersonalInfo() {
           </SectionCard>
         </div>
       </div>
+
+      <Dialog open={!!editSection} onOpenChange={(open) => { if (!open) closeEditDialog(); }}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              {editSection === 'contact' && 'Edit Contact Information'}
+              {editSection === 'academic' && 'Edit Academic / Personal Details'}
+              {editSection === 'address' && 'Edit Address Details'}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="grid grid-cols-1 gap-4 mt-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <Label>Name (uneditable)</Label>
+                <Input value={user?.name || ''} disabled />
+              </div>
+              <div>
+                <Label>Roll Number (uneditable)</Label>
+                <Input value={personalData.admissionNo || ''} disabled />
+              </div>
+            </div>
+
+            {editSection === 'contact' && (
+              <>
+                <div>
+                  <Label>Email</Label>
+                  <Input type="email" value={formValues.email || ''} onChange={(e) => setFormValues((prev: any) => ({ ...prev, email: e.target.value }))} />
+                </div>
+                <div>
+                  <Label>Phone</Label>
+                  <Input value={formValues.phone || ''} onChange={(e) => setFormValues((prev: any) => ({ ...prev, phone: e.target.value }))} />
+                </div>
+                <div>
+                  <Label>Alternate Phone</Label>
+                  <Input value={formValues.alternatePhone || ''} onChange={(e) => setFormValues((prev: any) => ({ ...prev, alternatePhone: e.target.value }))} />
+                </div>
+                <div>
+                  <Label>LinkedIn URL</Label>
+                  <Input value={formValues.linkedinUrl || ''} onChange={(e) => setFormValues((prev: any) => ({ ...prev, linkedinUrl: e.target.value }))} />
+                </div>
+              </>
+            )}
+
+            {editSection === 'academic' && (
+              <>
+                <div>
+                  <Label>Date of Birth</Label>
+                  <Input type="date" value={formValues.dob || ''} onChange={(e) => setFormValues((prev: any) => ({ ...prev, dob: e.target.value }))} />
+                </div>
+                <div>
+                  <Label>Blood Group</Label>
+                  <Input value={formValues.bloodGroup || ''} onChange={(e) => setFormValues((prev: any) => ({ ...prev, bloodGroup: e.target.value }))} />
+                </div>
+                <div>
+                  <Label>Mother Tongue</Label>
+                  <Input value={formValues.motherTongue || ''} onChange={(e) => setFormValues((prev: any) => ({ ...prev, motherTongue: e.target.value }))} />
+                </div>
+                <div>
+                  <Label>Nationality</Label>
+                  <Input value={formValues.nationality || ''} onChange={(e) => setFormValues((prev: any) => ({ ...prev, nationality: e.target.value }))} />
+                </div>
+                <div>
+                  <Label>Religion</Label>
+                  <Input value={formValues.religion || ''} onChange={(e) => setFormValues((prev: any) => ({ ...prev, religion: e.target.value }))} />
+                </div>
+                <div>
+                  <Label>Category</Label>
+                  <Input value={formValues.category || ''} onChange={(e) => setFormValues((prev: any) => ({ ...prev, category: e.target.value }))} />
+                </div>
+                <div>
+                  <Label>Residence Type</Label>
+                  <Input value={formValues.residenceType || ''} onChange={(e) => setFormValues((prev: any) => ({ ...prev, residenceType: e.target.value }))} />
+                </div>
+              </>
+            )}
+
+            {editSection === 'address' && (
+              <>
+                <div>
+                  <Label>Street Address</Label>
+                  <Input value={formValues.address || ''} onChange={(e) => setFormValues((prev: any) => ({ ...prev, address: e.target.value }))} />
+                </div>
+                <div>
+                  <Label>City</Label>
+                  <Input value={formValues.city || ''} onChange={(e) => setFormValues((prev: any) => ({ ...prev, city: e.target.value }))} />
+                </div>
+                <div>
+                  <Label>State</Label>
+                  <Input value={formValues.state || ''} onChange={(e) => setFormValues((prev: any) => ({ ...prev, state: e.target.value }))} />
+                </div>
+                <div>
+                  <Label>Pincode</Label>
+                  <Input value={formValues.pincode || ''} onChange={(e) => setFormValues((prev: any) => ({ ...prev, pincode: e.target.value }))} />
+                </div>
+              </>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={closeEditDialog} disabled={saving}>
+              <X className="w-4 h-4" /> Cancel
+            </Button>
+            <Button onClick={handleSave} disabled={saving}>
+              {saving ? 'Saving...' : 'Save Changes'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

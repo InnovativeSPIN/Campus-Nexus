@@ -53,7 +53,13 @@ export default function SuperAdminStudents() {
       // always ask for unlimited results
       params.append('limit', '0');
       const url = '/api/v1/students' + (params.toString() ? `?${params.toString()}` : '');
-      const res = await fetch(url, { credentials: 'include', cache: 'no-store' });
+      const token = localStorage.getItem('authToken');
+      const res = await fetch(url, { 
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        cache: 'no-store' 
+      });
       const json = await res.json();
       if (json.success) {
         const mapped: Student[] = json.data.map((s: any) => ({
@@ -81,7 +87,11 @@ export default function SuperAdminStudents() {
         setAcademicYears(years as string[]);
       }
 
-      const deptRes = await fetch('/api/v1/departments', { credentials: 'include' });
+      const deptRes = await fetch('/api/v1/departments', { 
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        }
+      });
       const deptJson = await deptRes.json();
       if (deptJson.success) {
         setDepartments(
@@ -197,9 +207,12 @@ export default function SuperAdminStudents() {
   const confirmDelete = async () => {
     if (deleteDialog.data) {
       try {
+        const token = localStorage.getItem('authToken');
         await fetch(`/api/v1/students/${deleteDialog.data.id}`, {
           method: 'DELETE',
-          credentials: 'include'
+          headers: {
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          }
         });
         toast.success('Student deleted successfully');
         await loadData();
@@ -212,18 +225,39 @@ export default function SuperAdminStudents() {
   };
 
   const handleSave = async (data: any) => {
-    // transform department value to id if it is string
+    // Clean up and transform payload
     const payload: any = { ...data };
+    
+    // Remove frontend-only fields
+    delete payload.avatarFile;
+    
+    // Split full name into firstName and lastName if present
+    if (payload.name && typeof payload.name === 'string') {
+      const nameParts = payload.name.trim().split(' ');
+      payload.firstName = nameParts[0];
+      payload.lastName = nameParts.slice(1).join(' ') || '.';
+      delete payload.name;
+    }
+
+    // Transform department value to id if it is string
     if (payload.department && typeof payload.department !== 'number') {
       payload.department = parseInt(payload.department, 10);
     }
 
+    // Ensure classId is an integer
+    if (payload.classId && typeof payload.classId === 'string') {
+      payload.classId = parseInt(payload.classId, 10) || null;
+    }
+
     try {
       if (formModal.mode === 'add') {
+        const token = localStorage.getItem('authToken');
         const res = await fetch('/api/v1/students', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
+          headers: { 
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
           body: JSON.stringify(payload)
         });
         const json = await res.json();
@@ -235,10 +269,13 @@ export default function SuperAdminStudents() {
           toast.error(json.message || 'Failed to add student');
         }
       } else {
+        const token = localStorage.getItem('authToken');
         const res = await fetch(`/api/v1/students/${formModal.data?.id}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
+          headers: { 
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
           body: JSON.stringify(payload)
         });
         const json = await res.json();

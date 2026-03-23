@@ -2,7 +2,7 @@
 import PageHeader from '@/pages/student/components/layout/PageHeader';
 import SectionCard from '@/pages/student/components/common/SectionCard';
 import ProfileNavBar from '@/pages/student/components/layout/ProfileNavBar';
-import { User, Phone, Briefcase, Users, Edit, Clock, Mail, Heart, Shield, GraduationCap, DollarSign } from 'lucide-react';
+import { User, Phone, Briefcase, Users, Edit, Mail, Heart, Shield, GraduationCap, DollarSign } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/pages/student/components/ui/dialog';
 import { useToast } from '@/pages/student/hooks/use-toast';
 import { getMyProfile, updateMyProfile } from '@/pages/student/services/studentApi';
@@ -36,7 +36,6 @@ export default function ParentInfo() {
   const [isSaving, setIsSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showDialog, setShowDialog] = useState(false);
-  const [pendingRequest, setPendingRequest] = useState(false);
   const [editingParent, setEditingParent] = useState<'father' | 'mother' | 'guardian' | null>(null);
   const [editingSiblingIndex, setEditingSiblingIndex] = useState<number | null>(null);
   const [siblings, setSiblings] = useState<SiblingDetails[]>([]);
@@ -220,10 +219,9 @@ export default function ParentInfo() {
 
       setFormData(updatedFormData);
       setSiblings(updatedSiblings);
-      setPendingRequest(true);
       toast({
-        title: 'Request Submitted',
-        description: 'Your changes have been saved and submitted for faculty approval.',
+        title: 'Saved Successfully',
+        description: 'Your parent information has been updated.',
       });
     } catch (error) {
       console.error('Failed to save parent info', error);
@@ -266,17 +264,6 @@ export default function ParentInfo() {
       <ProfileNavBar />
 
       <div className="grid gap-8">
-        {pendingRequest && (
-          <div className="flex items-center gap-4 p-5 rounded-2xl bg-amber-50 border border-amber-200 shadow-sm animate-pulse">
-            <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
-              <Clock className="w-5 h-5 text-amber-600" />
-            </div>
-            <div>
-              <h3 className="font-bold text-amber-900">Request Under Review</h3>
-              <p className="text-sm text-amber-800 font-medium">Your changes are waiting for faculty approval.</p>
-            </div>
-          </div>
-        )}
 
         <div className="grid gap-8 md:grid-cols-2">
           {/* Father Section */}
@@ -287,7 +274,6 @@ export default function ParentInfo() {
             actions={
               <button
                 onClick={() => handleEditClick('father')}
-                disabled={pendingRequest}
                 className="p-2.5 rounded-xl bg-primary/5 text-primary hover:bg-primary/10 transition-all border border-primary/10"
               >
                 <Edit className="w-4 h-4" />
@@ -348,7 +334,6 @@ export default function ParentInfo() {
             actions={
               <button
                 onClick={() => handleEditClick('mother')}
-                disabled={pendingRequest}
                 className="p-2.5 rounded-xl bg-secondary/5 text-secondary hover:bg-secondary/10 transition-all border border-secondary/10"
               >
                 <Edit className="w-4 h-4" />
@@ -410,7 +395,6 @@ export default function ParentInfo() {
             actions={
               <button
                 onClick={() => handleEditClick('guardian')}
-                disabled={pendingRequest}
                 className="p-2.5 rounded-xl bg-accent/5 text-accent hover:bg-accent/10 transition-all border border-accent/10"
               >
                 <Edit className="w-4 h-4" />
@@ -463,8 +447,7 @@ export default function ParentInfo() {
                     </div>
                     <button
                       onClick={() => handleEditSiblingClick(index)}
-                      disabled={pendingRequest}
-                      className="p-2 rounded-lg text-muted-foreground hover:bg-card transition-colors disabled:opacity-50"
+                      className="p-2 rounded-lg text-muted-foreground hover:bg-card transition-colors"
                     >
                       <Edit className="w-3.5 h-3.5" />
                     </button>
@@ -487,7 +470,7 @@ export default function ParentInfo() {
               {editingSiblingIndex !== null ? 'Update Sibling Info' : `Update ${(editingParent || 'Parent').charAt(0).toUpperCase() + (editingParent || 'Parent').slice(1)}'s Info`}
             </DialogTitle>
             <DialogDescription className="text-muted-foreground font-medium">
-              Submit your changes for verification by the academic office.
+              Update your family information.
             </DialogDescription>
           </DialogHeader>
 

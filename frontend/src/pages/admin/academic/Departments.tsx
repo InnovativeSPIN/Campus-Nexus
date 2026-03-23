@@ -54,7 +54,12 @@ export default function AcademicDepartments() {
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await fetch('/api/v1/departments', { credentials: 'include' });
+        const token = localStorage.getItem('authToken');
+        const res = await fetch('/api/v1/departments', { 
+          headers: {
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          }
+        });
         const json = await res.json();
         if (json.success) {
           setDepartments(json.data);

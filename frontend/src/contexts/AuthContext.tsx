@@ -166,25 +166,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setUser(userObj);
         setAuthTokenState(result.token);
 
-        // Fetch timetable-related role flags (class coordinator / timetable incharge)
-        try {
-          const rolesRes = await fetch('/api/v1/faculty/me/timetable-roles', {
-            headers: { 'Authorization': `Bearer ${result.token}` }
-          });
-          if (rolesRes.ok) {
-            const rolesJson = await rolesRes.json();
-            if (rolesJson.success && rolesJson.data) {
-              const updated = {
-                ...userObj,
-                is_timetable_incharge: rolesJson.data.isTimetableIncharge || false,
-                is_class_incharge: rolesJson.data.isClassCoordinator || false
-              };
-              localStorage.setItem('campus_nexus_user', JSON.stringify(updated));
-              setUser(updated);
+        // Fetch timetable-related role flags (class coordinator / timetable incharge) - only for faculty roles
+        const userRole = userObj.role || userObj.position;
+        if (userRole === 'faculty' || userRole === 'department-admin') {
+          try {
+            const rolesRes = await fetch('/api/v1/faculty/me/timetable-roles', {
+              headers: { 'Authorization': `Bearer ${result.token}` }
+            });
+            if (rolesRes.ok) {
+              const rolesJson = await rolesRes.json();
+              if (rolesJson.success && rolesJson.data) {
+                const updated = {
+                  ...userObj,
+                  is_timetable_incharge: rolesJson.data.isTimetableIncharge || false,
+                  is_class_incharge: rolesJson.data.isClassCoordinator || false
+                };
+                localStorage.setItem('campus_nexus_user', JSON.stringify(updated));
+                setUser(updated);
+              }
             }
+          } catch (err) {
+            console.warn('Failed to fetch timetable role flags:', err);
           }
-        } catch (err) {
-          console.warn('Failed to fetch timetable role flags:', err);
         }
 
         return true;

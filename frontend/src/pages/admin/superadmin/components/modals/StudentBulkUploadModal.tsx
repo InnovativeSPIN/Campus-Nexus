@@ -30,8 +30,11 @@ export function StudentBulkUploadModal({ open, onOpenChange, onSuccess }: Studen
   const downloadTemplate = async () => {
     setDownloadingTemplate(true);
     try {
+      const token = localStorage.getItem('authToken');
       const res = await fetch('/api/v1/students/bulk/template', {
-        credentials: 'include',
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
       });
       
       if (!res.ok) {
@@ -70,10 +73,13 @@ export function StudentBulkUploadModal({ open, onOpenChange, onSuccess }: Studen
       const formData = new FormData();
       formData.append('file', file);
 
+      const token = localStorage.getItem('authToken');
       const res = await fetch('/api/v1/students/bulk/upload', {
         method: 'POST',
         body: formData,
-        credentials: 'include',
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
       });
       
       const result = await res.json();

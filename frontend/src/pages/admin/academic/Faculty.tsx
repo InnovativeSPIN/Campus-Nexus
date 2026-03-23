@@ -77,7 +77,12 @@ export default function AcademicFaculty() {
   useEffect(() => {
     const fetchFaculty = async () => {
       try {
-        const res = await fetch('/api/v1/faculty?limit=0', { credentials: 'include' });
+        const token = localStorage.getItem('authToken');
+        const res = await fetch('/api/v1/faculty?limit=0', { 
+          headers: {
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          }
+        });
         const json = await res.json();
         if (json.success) {
           setFaculty(json.data);

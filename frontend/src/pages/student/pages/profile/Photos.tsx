@@ -2,20 +2,64 @@
 import PageHeader from '@/pages/student/components/layout/PageHeader';
 import SectionCard from '@/pages/student/components/common/SectionCard';
 import ProfileNavBar from '@/pages/student/components/layout/ProfileNavBar';
-import { Camera, Users, Check, Image as ImageIcon } from 'lucide-react';
+import { Camera, Users, Check, Image as ImageIcon, UploadCloud } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { normalizeImageUrl } from '@/utils/imageUrl';
+import { useToast } from '@/pages/student/hooks/use-toast';
+import { Button } from '@/pages/student/components/ui/button';
+import { uploadStudentPhoto } from '@/pages/student/services/studentApi';
 
 export default function Photos() {
-  const { user } = useAuth();
+  const { user, updateUserData } = useAuth();
   const [studentPhoto, setStudentPhoto] = useState<string | null>(normalizeImageUrl(user?.avatar) || null);
   const [familyPhoto, setFamilyPhoto] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (user?.avatar) {
       setStudentPhoto(normalizeImageUrl(user.avatar));
     }
   }, [user?.avatar]);
+
+  const uploadPhoto = async (file: File, isFamily: boolean) => {
+    if (!user?.id) {
+      toast({ title: 'Unauthorized', description: 'User not logged in', variant: 'destructive' });
+      return;
+    }
+
+    if (!file.type.startsWith('image/')) {
+      toast({ title: 'Invalid file', description: 'Please select an image file', variant: 'destructive' });
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: 'File too large', description: 'Max 5MB allowed', variant: 'destructive' });
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const res = await uploadStudentPhoto(user.id, file);
+      if (res.success) {
+        const imageUrl = normalizeImageUrl(res.data.photo);
+        if (isFamily) {
+          setFamilyPhoto(imageUrl);
+        } else {
+          setStudentPhoto(imageUrl);
+          updateUserData({ avatar: imageUrl || '' });
+          toast({ title: 'Success', description: 'Student photo updated successfully' });
+        }
+      } else {
+        toast({ title: 'Error', description: res.error || 'Photo upload failed', variant: 'destructive' });
+      }
+    } catch (error: any) {
+      console.error('Photo upload failed', error);
+      toast({ title: 'Error', description: error.message || 'Failed to upload photo', variant: 'destructive' });
+    } finally {
+      setUploading(false);
+    }
+  };
 
   interface PhotoUploadCardProps {
     title: string;
@@ -45,6 +89,22 @@ export default function Photos() {
             <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-success text-success-foreground rounded-full flex items-center justify-center shadow-xl border-4 border-card z-10">
               <Check className="w-6 h-6 font-black" />
             </div>
+            <div className="mt-3 flex justify-center">
+              <label className="inline-flex items-center gap-2 px-3 py-2 bg-primary text-primary-foreground rounded-lg cursor-pointer hover:bg-primary/90">
+                <UploadCloud className="w-4 h-4" />
+                <span className="text-xs font-semibold">Change</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) uploadPhoto(file, title !== 'Student Photo');
+                  }}
+                  disabled={uploading}
+                />
+              </label>
+            </div>
           </div>
         ) : (
           <div className="w-64 h-64 rounded-[1.5rem] border-4 border-dashed border-primary/10 bg-primary/5 flex flex-col items-center justify-center gap-5 group transition-all hover:bg-primary/10 hover:border-primary/30">
@@ -53,7 +113,21 @@ export default function Photos() {
             </div>
             <div className="text-center px-6">
               <p className="text-base font-bold text-primary/70 tracking-tight">Image Required</p>
-              <p className="text-xs text-muted-foreground mt-1.5 font-medium leading-relaxed">Please contact the administration office to update your official records.</p>
+              <p className="text-xs text-muted-foreground mt-1.5 font-medium leading-relaxed">No image found yet.</p>
+              <label className="mt-4 inline-flex items-center gap-2 px-3 py-2 bg-primary text-primary-foreground rounded-lg cursor-pointer hover:bg-primary/90">
+                <UploadCloud className="w-4 h-4" />
+                <span className="text-xs font-semibold">Upload</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) uploadPhoto(file, title !== 'Student Photo');
+                  }}
+                  disabled={uploading}
+                />
+              </label>
             </div>
           </div>
         )}
