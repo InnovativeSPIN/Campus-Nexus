@@ -1210,66 +1210,70 @@ export const getTodaySchedule = asyncHandler(async (req, res, next) => {
   const facultyId = req.user.faculty_id || req.user.id;
 
   try {
-    const { TimetableSlot } = models;
+    const { TimetableMasterSlots, TimetableMaster, PeriodSlot, Class: ClassModel } = models;
 
-    // Determine today's day name reliably from locale
+    // Get today's day name (Monday-Saturday)
     const now = new Date();
-    let todayDayName = now.toLocaleDateString('en-US', { weekday: 'long' });
+    const todayDayName = now.toLocaleDateString('en-US', { weekday: 'long' });
 
-    // Normalize to known timetable values (data stored as Monday..Saturday)
-    const validDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    if (!validDays.includes(todayDayName)) {
-      // Sunday is outside normal class days; treat as no classes for today.
-      todayDayName = 'Sunday';
-    }
+    console.log('[getTodaySchedule] Faculty ID:', facultyId, 'Day:', todayDayName);
 
-    // Fetch all timetable slots for today for this faculty.
-    // Day is stored as one of Monday..Saturday (Sunday intentionally may be no classes).
-    const dayFilter = validDays.includes(todayDayName) ? todayDayName : null;
-    const whereClause = {
-      faculty_id: facultyId,
-      status: 'active'
-    };
-    if (dayFilter) {
-      whereClause.day = dayFilter;
-    }
-
-    const todayClasses = await TimetableSlot.findAll({
-      where: whereClause,
+    // Fetch timetable slots for today for this faculty
+    const todayClasses = await TimetableMasterSlots.findAll({
+      where: {
+        faculty_id: facultyId,
+        day: todayDayName,
+      },
       include: [
         {
-          model: Subject,
-          as: 'subject',
-          attributes: ['id', 'subject_name', 'subject_code']
+          model: TimetableMaster,
+          as: 'master',
+          attributes: ['id', 'class_id', 'department_id', 'academic_year', 'semester'],
+          include: [
+            {
+              model: ClassModel,
+              as: 'class',
+              attributes: ['id', 'name', 'section']
+            }
+          ]
         },
         {
-          model: ClassModel,
-          as: 'class',
-          attributes: ['id', 'name', 'section']
+          model: PeriodSlot,
+          as: 'period',
+          attributes: ['id', 'start_time', 'end_time', 'period_label']
         }
       ],
-      order: [['period_number', 'ASC']],
-      raw: false
+      order: [['period_slot_id', 'ASC']],
+      raw: false,
+      subQuery: false
     });
 
+    console.log('[getTodaySchedule] Found', todayClasses.length, 'slots for today');
+
     // Format the response
-    const formattedClasses = todayClasses.map(slot => ({
-      id: slot.id,
-      subject: slot.subject?.subject_name || 'Unknown',
-      subjectCode: slot.subject?.subject_code,
-      classId: slot.class_id,
-      className: slot.class?.name || 'TBD',
-      room: slot.room || 'TBD',
-      day: slot.day,
-      timeSlot: {
-        start: slot.start_time ? slot.start_time.substring(0, 5) : '00:00', // HH:mm format
-        end: slot.end_time ? slot.end_time.substring(0, 5) : '00:00'
-      },
-      type: slot.type || 'lecture',
-      studentsCount: 0, // Would need additional query to get from class
-      totalPeriods: 1,
-      periodNumber: slot.period_number
-    }));
+    const formattedClasses = todayClasses.map(slot => {
+      const period = slot.period || {};
+      const master = slot.master || {};
+      const classData = master.class || {};
+      
+      return {
+        id: slot.id,
+        subject: slot.notes || 'Class',
+        subjectCode: slot.notes || '',
+        classId: master.class_id,
+        className: classData.name ? `${classData.name}${classData.section ? '-' + classData.section : ''}` : 'TBD',
+        room: slot.room || 'TBD',
+        day: slot.day,
+        timeSlot: {
+          start: period.start_time ? (typeof period.start_time === 'string' ? period.start_time.substring(0, 5) : new Date(period.start_time).toTimeString().substring(0, 5)) : '00:00',
+          end: period.end_time ? (typeof period.end_time === 'string' ? period.end_time.substring(0, 5) : new Date(period.end_time).toTimeString().substring(0, 5)) : '00:00'
+        },
+        type: slot.session_type || 'lecture',
+        studentsCount: 0,
+        totalPeriods: 1,
+        periodNumber: slot.period_slot_id
+      };
+    });
 
     res.status(200).json({
       success: true,
