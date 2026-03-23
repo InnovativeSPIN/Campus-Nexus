@@ -72,10 +72,29 @@ export default function SuperAdminDashboard() {
 
   const fetchStats = async () => {
     try {
-      const res = await fetch('/api/v1/users/stats/dashboard');
+      const res = await fetch('/api/v1/dashboard/stats');
       const json = await res.json();
       if (json.success && json.data) {
-        setStats(json.data);
+        setStats((prev) => ({
+          ...prev,
+          totalStudents: json.data.totalStudents ?? prev.totalStudents,
+          totalFaculty: json.data.totalFaculty ?? prev.totalFaculty,
+          totalDepartments: json.data.totalDepartments ?? prev.totalDepartments,
+        }));
+        setStatsLoaded(true);
+        setStatsError(false);
+        return;
+      }
+      // Fallback to legacy endpoint if dashboard route is missing
+      const fallbackRes = await fetch('/api/v1/users/stats/dashboard');
+      const fallbackJson = await fallbackRes.json();
+      if (fallbackJson.success && fallbackJson.data) {
+        setStats((prev) => ({
+          ...prev,
+          totalStudents: fallbackJson.data.totalStudents ?? prev.totalStudents,
+          totalFaculty: fallbackJson.data.totalFaculty ?? prev.totalFaculty,
+          totalDepartments: fallbackJson.data.totalDepartments ?? prev.totalDepartments,
+        }));
         setStatsLoaded(true);
         setStatsError(false);
       }

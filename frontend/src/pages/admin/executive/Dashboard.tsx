@@ -1,10 +1,10 @@
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { AdminLayout } from '@/pages/admin/executive/components/layout/AdminLayout';
 import { cn } from '@/pages/admin/executive/lib/utils';
 import { StatsCard } from '@/pages/admin/executive/components/dashboard/StatsCard';
-import { dashboardStats, mockStudents, mockFaculty } from '@/data/mockData';
+import { dashboardStats as mockDashboardStats, mockStudents, mockFaculty } from '@/data/mockData';
 import { useAnnouncementNotification } from '@/hooks/useAnnouncementNotification';
 import { AnnouncementNotificationModal } from '@/components/common/AnnouncementNotificationModal';
 import {
@@ -86,6 +86,40 @@ export default function ExecutiveAdminDashboard() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [activeAnalysisView, setActiveAnalysisView] = useState<'faculty' | 'student'>('student');
   const [selectedDeptForGender, setSelectedDeptForGender] = useState<string | null>(null);
+  const [dashboardStats, setDashboardStats] = useState(mockDashboardStats);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await fetch('/api/v1/dashboard/stats');
+        const json = await res.json();
+        if (json.success && json.data) {
+          setDashboardStats((prev) => ({
+            ...prev,
+            totalStudents: json.data.totalStudents ?? prev.totalStudents,
+            totalFaculty: json.data.totalFaculty ?? prev.totalFaculty,
+            totalDepartments: json.data.totalDepartments ?? prev.totalDepartments,
+          }));
+          return;
+        }
+
+        const usersRes = await fetch('/api/v1/users/stats/dashboard');
+        const usersJson = await usersRes.json();
+        if (usersJson.success && usersJson.data) {
+          setDashboardStats((prev) => ({
+            ...prev,
+            totalStudents: usersJson.data.totalStudents ?? prev.totalStudents,
+            totalFaculty: usersJson.data.totalFaculty ?? prev.totalFaculty,
+            totalDepartments: usersJson.data.totalDepartments ?? prev.totalDepartments,
+          }));
+        }
+      } catch (err) {
+        console.error('Failed to load dashboard stats', err);
+      }
+    };
+
+    fetchStats();
+  }, []);
 
   const filteredStudents = useMemo(() => {
     if (!selectedCategory) return [];
