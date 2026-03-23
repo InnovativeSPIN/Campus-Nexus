@@ -1212,30 +1212,30 @@ export const getTodaySchedule = asyncHandler(async (req, res, next) => {
   try {
     const { TimetableSlot } = models;
 
-    // Get day of week (0=Sunday, 1=Monday, ..., 6=Saturday) - convert to day name
-    const dayOfWeek = new Date().getDay();
-    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    const todayName = dayNames[dayOfWeek === 0 ? 6 : dayOfWeek - 1]; // Convert 0-indexed to day name (0=Sunday becomes 6=Saturday for us)
+    // Determine today's day name reliably from locale
+    const now = new Date();
+    let todayDayName = now.toLocaleDateString('en-US', { weekday: 'long' });
 
-    // Special handling: 0=Sunday should map to 'Sunday', but most systems use 0=Monday
-    // Let's use the standard: if dayOfWeek is 0 (Sunday), we skip it for most educational systems
-    // Assuming Monday=1, so we map: 1=>Monday, 2=>Tuesday, etc.
-    let todayDayName = 'Monday';
-    if (dayOfWeek === 0) todayDayName = 'Sunday'; // Sunday
-    else if (dayOfWeek === 1) todayDayName = 'Monday';
-    else if (dayOfWeek === 2) todayDayName = 'Tuesday';
-    else if (dayOfWeek === 3) todayDayName = 'Wednesday';
-    else if (dayOfWeek === 4) todayDayName = 'Thursday';
-    else if (dayOfWeek === 5) todayDayName = 'Friday';
-    else if (dayOfWeek === 6) todayDayName = 'Saturday';
+    // Normalize to known timetable values (data stored as Monday..Saturday)
+    const validDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    if (!validDays.includes(todayDayName)) {
+      // Sunday is outside normal class days; treat as no classes for today.
+      todayDayName = 'Sunday';
+    }
 
-    // Fetch all timetable slots for today for this faculty
+    // Fetch all timetable slots for today for this faculty.
+    // Day is stored as one of Monday..Saturday (Sunday intentionally may be no classes).
+    const dayFilter = validDays.includes(todayDayName) ? todayDayName : null;
+    const whereClause = {
+      faculty_id: facultyId,
+      status: 'active'
+    };
+    if (dayFilter) {
+      whereClause.day = dayFilter;
+    }
+
     const todayClasses = await TimetableSlot.findAll({
-      where: {
-        faculty_id: facultyId,
-        day: todayDayName,
-        status: 'active'
-      },
+      where: whereClause,
       include: [
         {
           model: Subject,
