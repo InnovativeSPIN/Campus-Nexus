@@ -8,30 +8,46 @@ const { Student, Department, Class: ClassModel, Subject, StudentBio, CourseLesso
 const ensureCompleteParentInfo = (parentInfo) => {
   if (!parentInfo) return null;
   
+  // Handle case where parentInfo might be a string from the database
+  let data = parentInfo;
+  if (typeof parentInfo === 'string') {
+    try {
+      data = JSON.parse(parentInfo);
+    } catch (e) {
+      console.error('Failed to parse parentInfo JSON string:', e);
+      return null;
+    }
+  }
+  
+  const f = data.father || {};
+  const m = data.mother || {};
+  const g = data.guardian || {};
+
   return {
     father: {
-      name: parentInfo.father?.name || '',
-      phone: parentInfo.father?.phone || '',
-      email: parentInfo.father?.email || '',
-      occupation: parentInfo.father?.occupation || '',
-      qualification: parentInfo.father?.qualification || '',
-      annualIncome: parentInfo.father?.annualIncome || '',
+      name: f.name || '',
+      phone: f.phone || '',
+      email: f.email || '',
+      occupation: f.occupation || '',
+      qualification: f.qualification || '',
+      // Handle both camelCase and lowercase as we've seen it both ways
+      annualIncome: f.annualIncome || f.annualincome || '',
     },
     mother: {
-      name: parentInfo.mother?.name || '',
-      phone: parentInfo.mother?.phone || '',
-      email: parentInfo.mother?.email || '',
-      occupation: parentInfo.mother?.occupation || '',
-      qualification: parentInfo.mother?.qualification || '',
-      annualIncome: parentInfo.mother?.annualIncome || '',
+      name: m.name || '',
+      phone: m.phone || '',
+      email: m.email || '',
+      occupation: m.occupation || '',
+      qualification: m.qualification || '',
+      annualIncome: m.annualIncome || m.annualincome || '',
     },
     guardian: {
-      name: parentInfo.guardian?.name || '',
-      relation: parentInfo.guardian?.relation || '',
-      phone: parentInfo.guardian?.phone || '',
-      address: parentInfo.guardian?.address || '',
+      name: g.name || '',
+      relation: g.relation || '',
+      phone: g.phone || '',
+      address: g.address || '',
     },
-    siblings: parentInfo.siblings || [],
+    siblings: data.siblings || [],
   };
 };
 import { Op, Sequelize } from 'sequelize';
@@ -365,9 +381,15 @@ export const updateStudent = asyncHandler(async (req, res, next) => {
       if (StudentBio) {
         const studentBio = await StudentBio.findOne({ where: { studentId: req.params.id } });
         if (studentBio) {
+          if (bioData.parentInfo) {
+            bioData.parentInfo = ensureCompleteParentInfo(bioData.parentInfo);
+          }
           await studentBio.update(bioData);
         } else {
           // Create new bio record if it doesn't exist
+          if (bioData.parentInfo) {
+            bioData.parentInfo = ensureCompleteParentInfo(bioData.parentInfo);
+          }
           await StudentBio.create({ studentId: req.params.id, ...bioData });
         }
       }

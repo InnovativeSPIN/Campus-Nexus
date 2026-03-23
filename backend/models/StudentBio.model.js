@@ -16,7 +16,7 @@ const StudentBio = (sequelize) => {
         residenceType: { type: DataTypes.ENUM('hosteller', 'day_scholar', 'other'), allowNull: true },
         address: { type: DataTypes.JSON, allowNull: true },
         permanentAddress: { type: DataTypes.JSON, allowNull: true },
-        parentInfo: { type: DataTypes.JSON, allowNull: true },
+        parentInfo: { type: DataTypes.JSON, allowNull: true, field: 'parentinfo' },
         references: { type: DataTypes.JSON, allowNull: true },
         previousEducation: { type: DataTypes.JSON, allowNull: true },
         scholarshipDetails: { type: DataTypes.JSON, allowNull: true },

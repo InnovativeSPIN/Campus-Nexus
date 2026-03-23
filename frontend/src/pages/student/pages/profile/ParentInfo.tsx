@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import PageHeader from '@/pages/student/components/layout/PageHeader';
 import SectionCard from '@/pages/student/components/common/SectionCard';
 import ProfileNavBar from '@/pages/student/components/layout/ProfileNavBar';
@@ -502,6 +502,24 @@ export default function ParentInfo() {
                     type="text"
                     value={dialogFormData.phone}
                     onChange={(e) => setDialogFormData({ ...dialogFormData, phone: e.target.value })}
+                    className="w-full px-4 py-3 rounded-xl bg-muted/50 border border-border focus:ring-2 focus:ring-primary/20 transition-all outline-none"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-foreground ml-1">Qualification</label>
+                  <input
+                    type="text"
+                    value={dialogFormData.qualification}
+                    onChange={(e) => setDialogFormData({ ...dialogFormData, qualification: e.target.value })}
+                    className="w-full px-4 py-3 rounded-xl bg-muted/50 border border-border focus:ring-2 focus:ring-primary/20 transition-all outline-none"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-foreground ml-1">Annual Income</label>
+                  <input
+                    type="text"
+                    value={dialogFormData.annualIncome}
+                    onChange={(e) => setDialogFormData({ ...dialogFormData, annualIncome: e.target.value })}
                     className="w-full px-4 py-3 rounded-xl bg-muted/50 border border-border focus:ring-2 focus:ring-primary/20 transition-all outline-none"
                   />
                 </div>
