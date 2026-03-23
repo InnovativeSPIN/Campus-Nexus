@@ -72,7 +72,7 @@ export default function SuperAdminDashboard() {
 
   const fetchStats = async () => {
     try {
-      const res = await fetch('/api/v1/dashboard/stats');
+      const res = await fetch('/api/v1/users/stats/dashboard');
       const json = await res.json();
       if (json.success && json.data) {
         setStats(json.data);

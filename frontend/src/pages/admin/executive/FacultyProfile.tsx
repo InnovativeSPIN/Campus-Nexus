@@ -1,15 +1,88 @@
 import { useParams, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { AdminLayout } from '@/pages/admin/executive/components/layout/AdminLayout';
 import { Button } from '@/pages/admin/executive/components/ui/button';
-import { ChevronLeft, Mail, Phone, Building2, Calendar, Award, User, MapPin, Briefcase } from 'lucide-react';
-import { mockFaculty } from '@/data/mockData';
+import { ChevronLeft, Mail, Phone, Building2, Calendar, Award, User, MapPin, Briefcase, Edit2 } from 'lucide-react';
 import { Badge } from '@/pages/admin/executive/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/pages/admin/executive/components/ui/tabs';
+import { toast } from '@/components/ui/sonner';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/pages/admin/executive/components/ui/dialog';
+import { Input } from '@/pages/admin/executive/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/pages/admin/executive/components/ui/select';
+import { Label } from '@/pages/admin/executive/components/ui/label';
+import { normalizeImageUrl } from '@/utils/imageUrl';
 
 export default function ExecutiveFacultyProfile() {
     const { id } = useParams();
     const navigate = useNavigate();
-    const faculty = mockFaculty.find(f => f.faculty_id === parseInt(id || '0'));
+    const [faculty, setFaculty] = useState<any | null>(null);
+    const [departments, setDepartments] = useState<any[]>([]);
+    const [loading, setLoading] = useState<boolean>(true);
+    const [editModalOpen, setEditModalOpen] = useState(false);
+
+    useEffect(() => {
+      const fetchFaculty = async () => {
+        if (!id) return;
+        try {
+          setLoading(true);
+          const res = await fetch(`/api/v1/faculty/${id}`);
+          if (!res.ok) throw new Error(`server returned ${res.status}`);
+          const json = await res.json();
+          if (json.success && json.data) {
+            const f = json.data;
+            f.name = f.Name || '';
+            f.avatar = normalizeImageUrl(f.profile_image_url || f.avatar) || undefined;
+            setFaculty(f);
+          } else {
+            toast.error(json.message || 'Faculty not found');
+          }
+        } catch (err: any) {
+          console.error('Failed to load faculty', err);
+          toast.error(err.message || 'Failed to load faculty details');
+        } finally {
+          setLoading(false);
+        }
+      };
+      
+      const fetchDepartments = async () => {
+        try {
+          const res = await fetch('/api/v1/departments');
+          const json = await res.json();
+          if (json.success) {
+            setDepartments(json.data);
+          }
+        } catch (err) {
+          console.error('Failed to load departments', err);
+        }
+      };
+
+      if (id) {
+        fetchFaculty();
+        fetchDepartments();
+      }
+    }, [id]);
+
+    if (loading) {
+      return (
+        <AdminLayout>
+          <div className="flex items-center justify-center h-[60vh]">
+            <p className="text-muted-foreground">Loading...</p>
+          </div>
+        </AdminLayout>
+      );
+    }
 
     if (!faculty) {
         return (
@@ -23,6 +96,11 @@ export default function ExecutiveFacultyProfile() {
             </AdminLayout>
         );
     }
+
+    const getDepartmentName = (deptId: number | string | undefined) => {
+      if (!deptId) return 'N/A';
+      return departments.find((d) => d.id === Number(deptId))?.full_name || 'N/A';
+    };
 
     return (
         <AdminLayout>
@@ -57,7 +135,15 @@ export default function ExecutiveFacultyProfile() {
                                 <Badge variant={faculty.status === 'active' ? 'default' : 'secondary'} className={faculty.status === 'active' ? 'bg-success text-white' : ''}>
                                     {faculty.status}
                                 </Badge>
-                                {/* No Edit Button for Executive */}
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setEditModalOpen(true)}
+                                  className="gap-2"
+                                >
+                                  <Edit2 className="h-4 w-4" />
+                                  Edit
+                                </Button>
                             </div>
                         </div>
 
@@ -94,7 +180,7 @@ export default function ExecutiveFacultyProfile() {
                                         <div className="space-y-3">
                                             <div className="flex items-center gap-3 text-sm">
                                                 <Building2 className="h-4 w-4 text-primary" />
-                                                <span>{faculty.department_id}</span>
+                                                <span>{getDepartmentName(faculty.department_id)}</span>
                                             </div>
                                             <div className="flex items-center gap-3 text-sm">
                                                 <Award className="h-4 w-4 text-primary" />
@@ -157,7 +243,181 @@ export default function ExecutiveFacultyProfile() {
                         </Tabs>
                     </div>
                 </div>
+
+                {/* Edit Faculty Dialog */}
+                <EditFacultyDialog
+                  open={editModalOpen}
+                  onOpenChange={setEditModalOpen}
+                  faculty={faculty}
+                  departments={departments}
+                  onSuccess={() => {
+                    setEditModalOpen(false);
+                    if (id) {
+                      // Refresh faculty data
+                      fetch(`/api/v1/faculty/${id}`)
+                        .then(res => res.json())
+                        .then(json => {
+                          if (json.success && json.data) {
+                            const f = json.data;
+                            f.name = f.Name || '';
+                            f.avatar = normalizeImageUrl(f.profile_image_url || f.avatar) || undefined;
+                            setFaculty(f);
+                            toast.success('Faculty updated successfully');
+                          }
+                        })
+                        .catch(err => {
+                          console.error('Failed to refresh faculty', err);
+                          toast.error('Failed to refresh faculty data');
+                        });
+                    }
+                  }}
+                />
             </div>
         </AdminLayout>
     );
+}
+
+interface EditFacultyDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  faculty: any;
+  departments: any[];
+  onSuccess: () => void;
+}
+
+function EditFacultyDialog({ open, onOpenChange, faculty, departments, onSuccess }: EditFacultyDialogProps) {
+  const [formData, setFormData] = useState<any>({
+    Name: faculty?.Name || '',
+    email: faculty?.email || '',
+    phone_number: faculty?.phone_number || '',
+    designation: faculty?.designation || '',
+    department_id: faculty?.department_id || '',
+    faculty_college_code: faculty?.faculty_college_code || '',
+    date_of_joining: faculty?.date_of_joining || '',
+  });
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!faculty?.id) {
+      toast.error('Faculty ID is missing');
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      const response = await fetch(`/api/v1/faculty/${faculty.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      const json = await response.json();
+      if (json.success) {
+        toast.success('Faculty updated successfully');
+        onSuccess();
+      } else {
+        toast.error(json.message || 'Failed to update faculty');
+      }
+    } catch (err: any) {
+      console.error('Error updating faculty:', err);
+      toast.error(err.message || 'Error updating faculty');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[500px]">
+        <DialogHeader>
+          <DialogTitle>Edit Faculty Profile</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="name">Name</Label>
+            <Input
+              id="name"
+              value={formData.Name}
+              onChange={(e) => setFormData({ ...formData, Name: e.target.value })}
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="phone">Phone Number</Label>
+            <Input
+              id="phone"
+              value={formData.phone_number}
+              onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="designation">Designation</Label>
+            <Input
+              id="designation"
+              value={formData.designation}
+              onChange={(e) => setFormData({ ...formData, designation: e.target.value })}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="department">Department</Label>
+            <Select value={String(formData.department_id)} onValueChange={(value) => setFormData({ ...formData, department_id: value })}>
+              <SelectTrigger id="department">
+                <SelectValue placeholder="Select Department" />
+              </SelectTrigger>
+              <SelectContent>
+                {departments.map((dept) => (
+                  <SelectItem key={dept.id} value={String(dept.id)}>
+                    {dept.full_name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="college-code">Faculty College Code</Label>
+            <Input
+              id="college-code"
+              value={formData.faculty_college_code}
+              onChange={(e) => setFormData({ ...formData, faculty_college_code: e.target.value })}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="joining-date">Date of Joining</Label>
+            <Input
+              id="joining-date"
+              type="date"
+              value={formData.date_of_joining}
+              onChange={(e) => setFormData({ ...formData, date_of_joining: e.target.value })}
+            />
+          </div>
+
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={submitting}>
+              {submitting ? 'Saving...' : 'Save Changes'}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
 }
