@@ -1210,7 +1210,7 @@ export const getTodaySchedule = asyncHandler(async (req, res, next) => {
   const facultyId = req.user.faculty_id || req.user.id;
 
   try {
-    const { TimetableMasterSlots, TimetableMaster, PeriodSlot, Class: ClassModel } = models;
+    const { TimetableMasterSlots, TimetableMaster, PeriodSlot, Class: ClassModel, Student: StudentModel } = models;
 
     // Get today's day name (Monday-Saturday)
     const now = new Date();
@@ -1250,17 +1250,34 @@ export const getTodaySchedule = asyncHandler(async (req, res, next) => {
 
     console.log('[getTodaySchedule] Found', todayClasses.length, 'slots for today');
 
+    const classIds = Array.from(new Set(todayClasses.map(slot => slot.master?.class_id).filter(id => id)));
+    const studentCountsByClass = {};
+
+    if (classIds.length > 0) {
+      // Count students for each class to display accurate class size
+      for (const classId of classIds) {
+        const count = await StudentModel.count({
+          where: {
+            classId,
+            status: 'active'
+          }
+        });
+        studentCountsByClass[classId] = count;
+      }
+    }
+
     // Format the response
-    const formattedClasses = todayClasses.map(slot => {
+    const formattedClasses = await Promise.all(todayClasses.map(async slot => {
       const period = slot.period || {};
       const master = slot.master || {};
       const classData = master.class || {};
-      
+      const classId = master.class_id;
+
       return {
         id: slot.id,
         subject: slot.notes || 'Class',
         subjectCode: slot.notes || '',
-        classId: master.class_id,
+        classId,
         className: classData.name ? `${classData.name}${classData.section ? '-' + classData.section : ''}` : 'TBD',
         room: slot.room || 'TBD',
         day: slot.day,
@@ -1269,11 +1286,11 @@ export const getTodaySchedule = asyncHandler(async (req, res, next) => {
           end: period.end_time ? (typeof period.end_time === 'string' ? period.end_time.substring(0, 5) : new Date(period.end_time).toTimeString().substring(0, 5)) : '00:00'
         },
         type: slot.session_type || 'lecture',
-        studentsCount: 0,
+        studentsCount: classId ? (studentCountsByClass[classId] || 0) : 0,
         totalPeriods: 1,
         periodNumber: slot.period_slot_id
       };
-    });
+    }));
 
     res.status(200).json({
       success: true,
