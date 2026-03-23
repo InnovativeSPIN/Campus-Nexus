@@ -8,7 +8,7 @@ export function MenteesList() {
   const { year } = useParams<{ year: string }>();
   const navigate = useNavigate();
 
-  const yearValue = (year?.charAt(0).toUpperCase() + year?.slice(1)) as "2nd" | "3rd" | "Final" | undefined;
+  const yearValue = ((year || '').charAt(0).toUpperCase() + (year || '').slice(1)) as "2nd" | "3rd" | "Final" | undefined;
   const students = yearValue ? getStudentsByYear(yearValue) : [];
 
   const handleStudentClick = (studentId: string) => {

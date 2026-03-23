@@ -53,7 +53,7 @@ export default function AcademicStudents() {
     setFormModal({ open: true, mode: 'edit', data: student });
   };
 
-  const handleSave = (data: Partial<Student>) => {
+  const handleSave = (data: any) => {
     if (formModal.mode === 'add') {
       const newStudent: Student = {
         id: String(Date.now()),
@@ -63,6 +63,8 @@ export default function AcademicStudents() {
         department: data.department || '',
         enrollmentYear: data.enrollmentYear || new Date().getFullYear(),
         status: data.status || 'active',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       };
       setStudents((prev) => [...prev, newStudent]);
       toast.success('Student added successfully');

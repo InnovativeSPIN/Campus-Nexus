@@ -14,8 +14,8 @@ export type UserRole =
 	| 'student';
 
 export interface Department {
-	short_name: string;
-	full_name: string;
+	short_name?: string;
+	full_name?: string;
 }
 
 export interface User {
@@ -31,6 +31,9 @@ export interface User {
 	rollNo?: string;
 	year?: number;
 	semester?: number;
+	studentId?: string;
+	classId?: number;
+	batch?: string;
 	// additional flags for faculty
 	is_timetable_incharge?: boolean;
 	is_placement_coordinator?: boolean;
@@ -40,19 +43,19 @@ export interface User {
 
 export interface Student {
 	id: string;
-	role_id: number;
-	studentId: string;
-	rollNumber: string;
-	firstName: string;
-	lastName: string;
-	email: string;
-	phone: string;
+	role_id?: number;
+	studentId?: string;
+	rollNumber?: string;
+	firstName?: string;
+	lastName?: string;
+	email?: string;
+	phone?: string;
 	photo?: string;
-	gender: 'male' | 'female' | 'other';
-	departmentId: number;
+	gender?: 'male' | 'female' | 'other';
+	departmentId?: number;
 	classId?: number;
-	batch: string;
-	semester: number;
+	batch?: string;
+	semester?: number;
 	admissionDate?: string;
 	admissionType?: 'regular' | 'lateral' | 'management';
 	feeStatus?: 'paid' | 'pending' | 'partial';
@@ -69,14 +72,14 @@ export interface Student {
 	name?: string;
 	avatar?: string;
 	department?: string;
-	createdAt: string;
-	updatedAt: string;
+	createdAt?: string;
+	updatedAt?: string;
 }
 
 export interface Faculty {
 	id: string;
 	faculty_id?: number;
-	faculty_college_code: string;
+	faculty_college_code?: string;
 	AICTE_ID?: number;
 	Anna_University_ID?: number;
 	Name?: string;
@@ -86,6 +89,7 @@ export interface Faculty {
 	email: string;
 	phone?: string;
 	phone_number?: string;
+	employeeId?: string;
 	password?: string;
 	role_id?: number;
 	department_id?: number;

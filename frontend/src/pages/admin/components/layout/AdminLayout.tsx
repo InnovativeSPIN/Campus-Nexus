@@ -293,7 +293,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             type="button"
             onMouseDown={(e) => {
               e.preventDefault();
-              setSidebarOpen(prev => !prev);
+              setSidebarOpen((prev: boolean) => !prev);
             }}
             style={{ pointerEvents: 'auto' }}
             className="w-full flex items-center justify-center gap-3 px-3 py-3 rounded-xl bg-sidebar-accent/30 text-white/70 hover:bg-sidebar-accent hover:text-white transition-all border border-white/5 cursor-pointer"

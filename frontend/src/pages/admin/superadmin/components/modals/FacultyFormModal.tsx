@@ -125,6 +125,7 @@ export function FacultyFormModal({
       AICTE_ID: '',
       employee_id: '',
       orcid_id: '',
+      linkedin_url: '',
       designation: '',
       email: '',
       phone_number: '',

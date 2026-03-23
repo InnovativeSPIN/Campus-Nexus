@@ -433,7 +433,7 @@ export function UserFormModal({ open, onClose, onSave, type, initialData, mode }
                   <Label htmlFor="admissionNo">Admission Number</Label>
                   <Input
                     id="admissionNo"
-                    value={(formData as Student).admissionNo || ''}
+                    value={((formData as any).admissionNo) || ''}
                     onChange={(e) => updateField('admissionNo', e.target.value)}
                     placeholder="Enter admission number"
                   />
@@ -442,7 +442,7 @@ export function UserFormModal({ open, onClose, onSave, type, initialData, mode }
                   <Label htmlFor="emisNo">EMIS Number</Label>
                   <Input
                     id="emisNo"
-                    value={(formData as Student).emisNo || ''}
+                    value={((formData as any).emisNo) || ''}
                     onChange={(e) => updateField('emisNo', e.target.value)}
                     placeholder="Enter EMIS number"
                   />

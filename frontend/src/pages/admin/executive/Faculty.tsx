@@ -35,8 +35,8 @@ export default function ExecutiveFaculty() {
       label: 'Photo',
       render: (item: Faculty) => (
         <img
-          src={item.profile_image_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(item.Name)}&background=random`}
-          alt={item.Name}
+          src={item.profile_image_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(item.Name||'Faculty')}&background=random`}
+          alt={item.Name || 'Faculty'}
           className="w-8 h-8 rounded-full"
         />
       )
@@ -96,7 +96,7 @@ export default function ExecutiveFaculty() {
         </div>
 
         <DataTable
-          data={filteredFaculty.map(f => ({ ...f, id: f.faculty_id.toString() }))}
+          data={filteredFaculty.map(f => ({ ...f, id: (f.faculty_id ?? 0).toString() }))}
           columns={columns}
           title="All Faculty"
           searchPlaceholder="Search by Name..."

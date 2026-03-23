@@ -593,7 +593,7 @@ export default function TimetableMasterManagement() {
                   <div>
                     <p className="text-muted-foreground text-xs">Department</p>
                     <p className="font-medium">
-                      {timetable.department?.short_name || timetable.department?.full_name || timetable.class?.department?.short_name || timetable.class?.department?.full_name || "-"}
+                      { (timetable as any).department?.short_name || (timetable as any).department?.full_name || (timetable as any).class?.department?.short_name || (timetable as any).class?.department?.full_name || "-"}
                     </p>
                   </div>
                 </div>

@@ -28,7 +28,7 @@ interface CourseLessonPlanApprovalBatch {
     type: 'course_plan_approval_batch';
 }
 
-type Notification = Announcement | CourseLessonPlanApproval;
+type Notification = Announcement | CourseLessonPlanApprovalBatch;
 
 interface IntegratedNotificationBellProps {
     // No props needed - uses location context for routing
@@ -48,7 +48,7 @@ export function IntegratedNotificationBell({}: IntegratedNotificationBellProps) 
         try {
             setLoading(true);
             const token = localStorage.getItem('authToken');
-            const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+            const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
             
             // Fetch announcements
             const announcementRes = await fetch('/api/v1/announcements', { headers });

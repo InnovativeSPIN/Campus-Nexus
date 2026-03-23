@@ -78,6 +78,7 @@ interface PortfolioItem {
   type?: string;
   category?: string;
   level?: string;
+  fileUrl?: string;
   issuer?: string;
   joinedDate?: string;
   eventDate?: string;

@@ -388,7 +388,7 @@ export default function Academics() {
       try {
         setLoadingPlans(true);
         const response = await apiFetch(
-          `/api/v1/faculty/academics/course-plans?subjectId=${selectedClass.subject_id}&classId=${selectedClass.class_id}&facultyId=${selectedClass.faculty_id}`
+          `/api/v1/faculty/academics/course-plans?subjectId=${(selectedClass as any).subject_id || (selectedClass as any).subject}&classId=${(selectedClass as any).class_id || (selectedClass as any).id}&facultyId=${(selectedClass as any).faculty_id || ''}`
         );
         
         if (response.success && response.data) {
@@ -396,7 +396,7 @@ export default function Academics() {
           
           // Load progress info
           const progressResponse = await apiFetch(
-            `/api/v1/faculty/academics/course-plans/progress?subjectId=${selectedClass.subject_id}&classId=${selectedClass.class_id}&facultyId=${selectedClass.faculty_id}`
+            `/api/v1/faculty/academics/course-plans/progress?subjectId=${(selectedClass as any).subject_id || (selectedClass as any).subject}&classId=${(selectedClass as any).class_id || (selectedClass as any).id}&facultyId=${(selectedClass as any).faculty_id || ''}`
           );
           if (progressResponse.success && progressResponse.data?.summary) {
             setPlanProgress(progressResponse.data.summary);

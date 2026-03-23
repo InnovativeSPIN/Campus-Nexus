@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { MainLayout } from '@/pages/student/components/layout/MainLayout';
+import MainLayout from '@/pages/student/components/layout/MainLayout';
 import { motion } from 'framer-motion';
 import { Button } from '@/pages/student/components/ui/button';
 import {

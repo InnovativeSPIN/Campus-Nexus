@@ -26,6 +26,7 @@ interface Announcement {
   title: string;
   message: string;
   type?: string;
+  category?: string;
   targetRole: string[];
   department?: string;
   createdBy: { id?: number; name: string; avatar?: string };

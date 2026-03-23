@@ -43,8 +43,8 @@ export default function ExecutiveFacultyProfile() {
                             <div className="flex items-end gap-6">
                                 <div className="h-24 w-24 rounded-2xl bg-background border-4 border-card shadow-md flex items-center justify-center overflow-hidden">
                                     <img
-                                        src={faculty.profile_image_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(faculty.Name)}&background=random&size=128`}
-                                        alt={faculty.Name}
+                                        src={faculty.profile_image_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(faculty.Name || 'Faculty')}&background=random&size=128`}
+                                        alt={faculty.Name || 'Faculty'}
                                         className="w-full h-full object-cover"
                                     />
                                 </div>

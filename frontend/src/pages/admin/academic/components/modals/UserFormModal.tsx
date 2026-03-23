@@ -103,7 +103,7 @@ export function UserFormModal({ open, onClose, onSave, type, initialData, mode }
                 <Label htmlFor="employeeId">Employee ID</Label>
                 <Input
                   id="employeeId"
-                  value={(formData as Faculty).employeeId || ''}
+                  value={(formData as any).employeeId || ''}
                   onChange={(e) => updateField('employeeId', e.target.value)}
                   required
                 />

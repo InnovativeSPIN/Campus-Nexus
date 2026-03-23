@@ -325,7 +325,7 @@ export default function Academics() {
         setTopicsData(prev => ({ ...prev, [selectedClassId]: syllabusTopics }));
         
         // Initialize expanded units state - expand all units by default
-        const uniqueUnits = [...new Set(syllabusTopics.map(t => t.unit_label))];
+        const uniqueUnits = [...new Set(syllabusTopics.map((t: any) => t.unit_label))];
         const newExpandedUnits: { [key: string]: boolean } = {};
         uniqueUnits.forEach(unit => {
           newExpandedUnits[`${selectedClassId}-${unit}`] = true;

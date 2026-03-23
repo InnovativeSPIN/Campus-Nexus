@@ -212,8 +212,8 @@ export default function Dashboard() {
           </motion.div>
         ) : currentClassData || nextClassData ? (
           <NextClassCard
-            currentClass={currentClassData}
-            nextClass={nextClassData}
+            currentClass={currentClassData || undefined}
+            nextClass={nextClassData || undefined}
             onClassClick={(classInfo) => setSelectedSubject({
               id: current?.id || next?.id || 0,
               name: classInfo.subject,
@@ -223,6 +223,42 @@ export default function Dashboard() {
               duration: classInfo.duration || "50 mins",
             })}
           />
+        ) : allClasses.length > 0 ? (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="lg:col-span-2"
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="widget-card p-5 bg-secondary/5 border border-secondary/20"
+            >
+              <h3 className="text-lg font-bold text-foreground mb-4">Today&apos;s Classes</h3>
+              <div className="space-y-2">
+                {allClasses.map((cls) => (
+                  <button
+                    key={`${cls.id}-${cls.timeSlot.start}`}
+                    className="w-full text-left px-3 py-2 bg-background/70 hover:bg-background rounded-lg border border-border"
+                    onClick={() => setSelectedSubject({
+                      id: cls.id,
+                      name: cls.subject,
+                      room: cls.room,
+                      type: cls.type || 'Theory',
+                      totalPeriods: cls.totalPeriods || 1,
+                      duration: `${(parseInt(cls.timeSlot.end.split(':')[0]) - parseInt(cls.timeSlot.start.split(':')[0])) * 60 + (parseInt(cls.timeSlot.end.split(':')[1]) - parseInt(cls.timeSlot.start.split(':')[1]))} mins`,
+                    })}
+                  >
+                    <div className="flex justify-between items-center">
+                      <span className="font-semibold text-sm text-foreground">{cls.subject}</span>
+                      <span className="text-xs text-muted-foreground">{formatClassTime(cls.timeSlot.start, cls.timeSlot.end)}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">{cls.className} • {cls.room}</p>
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          </motion.div>
         ) : (
           <motion.div
             initial={{ opacity: 0 }}

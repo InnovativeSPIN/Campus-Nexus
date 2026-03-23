@@ -90,4 +90,7 @@ export const dashboardStats = {
   totalStudents: mockStudents.length,
   totalFaculty: mockFaculty.length,
   totalDepartments: mockDepartments.length,
+  activePrograms: 16,
+  attendanceRate: 92,
+  graduationRate: 76,
 };

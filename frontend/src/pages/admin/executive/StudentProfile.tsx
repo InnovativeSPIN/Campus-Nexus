@@ -99,7 +99,7 @@ export default function ExecutiveStudentProfile() {
                                             </div>
                                             <div className="flex items-center gap-3 text-sm">
                                                 <GraduationCap className="h-4 w-4 text-primary" />
-                                                <span>Year: {new Date().getFullYear() - parseInt(student.batch) + 1}</span>
+                                                <span>Year: {new Date().getFullYear() - parseInt(student.batch || '0') + 1}</span>
                                             </div>
                                             <div className="flex items-center gap-3 text-sm">
                                                 <Clock className="h-4 w-4 text-primary" />

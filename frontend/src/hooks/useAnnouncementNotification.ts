@@ -43,7 +43,8 @@ export function useAnnouncementNotification(): UseAnnouncementNotificationResult
                         // NEW: Check if this announcement ID has already been seen via localStorage
                         const seenIds = JSON.parse(localStorage.getItem('seen_announcement_ids') || '[]');
                         if (!seenIds.includes(latestAnnouncement.id)) {
-                            setShowNotification(true);
+                            // Defer state update to avoid React warning about setState during render phase
+                            setTimeout(() => setShowNotification(true), 0);
                             // Mark as seen
                             localStorage.setItem('seen_announcement_ids', JSON.stringify([...seenIds, latestAnnouncement.id]));
                         }

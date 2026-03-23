@@ -88,6 +88,7 @@ interface Slot {
   isLabSession?: boolean;
   labGroup?: string;
   facultyId?: number;
+  batch?: string;
 }
 
 export default function Attendance() {

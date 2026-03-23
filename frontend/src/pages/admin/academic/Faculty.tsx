@@ -50,7 +50,7 @@ export default function AcademicFaculty() {
     setFormModal({ open: true, mode: 'edit', data: item });
   };
 
-  const handleSave = (data: Partial<Faculty>) => {
+  const handleSave = (data: any) => {
     if (formModal.mode === 'add') {
       const newFaculty: Faculty = {
         id: String(Date.now()),

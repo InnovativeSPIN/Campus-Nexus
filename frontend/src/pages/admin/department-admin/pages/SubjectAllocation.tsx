@@ -183,7 +183,7 @@ export default function SubjectAllocation() {
         
         // Detailed logging for all allocations
         console.log('[ALLOCATIONS-DEBUG] All allocations:');
-        data.data.forEach(alloc => {
+        data.data.forEach((alloc: any) => {
           console.log(`  ID ${alloc.id}: Subject ${alloc.subject_id}, Class ${alloc.class_id}, Sem ${alloc.semester}, Year ${alloc.academic_year}, Faculty Name: ${alloc.faculty?.Name || 'MISSING'}`);
         });
       } else {
@@ -206,7 +206,7 @@ export default function SubjectAllocation() {
       if (data.success) {
         setMappings(data.data);
         console.log('[MAPPINGS-DEBUG] Fetched', data.data.length, 'mappings:');
-        data.data.forEach(m => {
+        data.data.forEach((m: any) => {
           console.log(`  ID ${m.id}: Subject ${m.subject_id}, Class ${m.class_id}, Sem ${m.semester}, Year ${m.academic_year}`);
         });
       } else {
@@ -992,7 +992,7 @@ export default function SubjectAllocation() {
                   className="border rounded-lg px-3 py-2 text-sm w-52"
                 />
                 <button
-                  onClick={() => setAllocFilters({ semester: '', academic_year: '' })}
+                  onClick={() => setAllocFilters({ semester: '', academic_year: '', class_id: '' })}
                   className="text-sm text-gray-500 underline"
                 >
                   Clear

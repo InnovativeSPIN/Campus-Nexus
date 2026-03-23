@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 
 interface MainLayoutProps {
   children: ReactNode;
+  hideHeader?: boolean;
 }
 
 export function MainLayout({ children }: MainLayoutProps) {

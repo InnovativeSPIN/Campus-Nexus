@@ -72,7 +72,7 @@ export function ProfileModal({ open, onClose, data, type }: ProfileModalProps) {
           <div className="flex items-center gap-4">
             <Avatar className="h-16 w-16">
               <AvatarFallback className="bg-primary text-primary-foreground text-xl">
-                {getName().split(' ').map((n: string) => n[0]).join('')}
+                {(getName() || '').split(' ').map((n: string) => n[0]).join('')}
               </AvatarFallback>
             </Avatar>
             <div>
