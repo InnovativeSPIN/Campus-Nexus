@@ -3,6 +3,37 @@ import asyncHandler from '../../middleware/async.js';
 import { models } from '../../models/index.js';
 import path from 'path';
 const { Student, Department, Class: ClassModel, Subject, StudentBio, CourseLessonPlan, Faculty } = models;
+
+// Helper function to ensure parentInfo has all required fields with defaults
+const ensureCompleteParentInfo = (parentInfo) => {
+  if (!parentInfo) return null;
+  
+  return {
+    father: {
+      name: parentInfo.father?.name || '',
+      phone: parentInfo.father?.phone || '',
+      email: parentInfo.father?.email || '',
+      occupation: parentInfo.father?.occupation || '',
+      qualification: parentInfo.father?.qualification || '',
+      annualIncome: parentInfo.father?.annualIncome || '',
+    },
+    mother: {
+      name: parentInfo.mother?.name || '',
+      phone: parentInfo.mother?.phone || '',
+      email: parentInfo.mother?.email || '',
+      occupation: parentInfo.mother?.occupation || '',
+      qualification: parentInfo.mother?.qualification || '',
+      annualIncome: parentInfo.mother?.annualIncome || '',
+    },
+    guardian: {
+      name: parentInfo.guardian?.name || '',
+      relation: parentInfo.guardian?.relation || '',
+      phone: parentInfo.guardian?.phone || '',
+      address: parentInfo.guardian?.address || '',
+    },
+    siblings: parentInfo.siblings || [],
+  };
+};
 import { Op, Sequelize } from 'sequelize';
 
 // @desc      Get all students
@@ -152,6 +183,10 @@ export const getStudent = asyncHandler(async (req, res, next) => {
       const studentBio = await StudentBio.findOne({ where: { studentId: student.id } });
       if (studentBio) {
         const bioData = studentBio.toJSON();
+        // Ensure parentInfo has all required fields
+        if (bioData.parentInfo) {
+          bioData.parentInfo = ensureCompleteParentInfo(bioData.parentInfo);
+        }
         studentData.bio = bioData;
         // Merge bio fields into main object for easier frontend access
         Object.assign(studentData, bioData);
@@ -315,7 +350,7 @@ export const updateStudent = asyncHandler(async (req, res, next) => {
         return next(new ErrorResponse(`Student ID '${profileData.studentId}' is already in use by another student`, 400));
       }
     }
-    console.log('Updating student with data:', profileData);
+    console.log('Updating student with data:', JSON.stringify(profileData, null, 2));
     const updateResult = await Student.update(profileData, { where: { id: req.params.id } });
     console.log('Update result:', updateResult);
   } catch (err) {
@@ -360,6 +395,10 @@ export const updateStudent = asyncHandler(async (req, res, next) => {
       const studentBio = await StudentBio.findOne({ where: { studentId: req.params.id } });
       if (studentBio) {
         const bioData = studentBio.toJSON();
+        // Ensure parentInfo has all required fields
+        if (bioData.parentInfo) {
+          bioData.parentInfo = ensureCompleteParentInfo(bioData.parentInfo);
+        }
         studentData.bio = bioData;
         // Merge bio fields into main object
         Object.assign(studentData, bioData);
@@ -507,9 +546,16 @@ export const getMyProfile = asyncHandler(async (req, res, next) => {
     return next(new ErrorResponse('Student profile not found', 404));
   }
 
+  const studentData = student.toJSON();
+  
+  // Ensure parentInfo has all required fields if it exists
+  if (studentData.bio && studentData.bio.parentInfo) {
+    studentData.bio.parentInfo = ensureCompleteParentInfo(studentData.bio.parentInfo);
+  }
+
   res.status(200).json({
     success: true,
-    data: student
+    data: studentData
   });
 });
 
@@ -553,7 +599,7 @@ export const updateMyProfile = asyncHandler(async (req, res, next) => {
   if (motherTongue !== undefined) bio.motherTongue = motherTongue;
   if (residenceType !== undefined) bio.residenceType = residenceType;
   if (dateOfBirth !== undefined) bio.dateOfBirth = dateOfBirth;
-  if (parentInfo !== undefined) bio.parentInfo = parentInfo;
+  if (parentInfo !== undefined) bio.parentInfo = ensureCompleteParentInfo(parentInfo);
   if (references !== undefined) bio.references = references;
 
   // Manage address JSON
@@ -639,11 +685,18 @@ export const uploadStudentPhotoAdmin = asyncHandler(async (req, res, next) => {
   
   // Move file to permanent location with student name
   const uploadsDir = path.join(process.cwd(), 'public', 'uploads', 'photos');
-  const filepath = path.join(uploadsDir, filename);
   
   try {
-    // Read the uploaded file and write to new location
+    // Create the photos directory if it doesn't exist
     const fs = await import('fs').then(m => m.promises);
+    const fsSync = require('fs');
+    if (!fsSync.existsSync(uploadsDir)) {
+      fsSync.mkdirSync(uploadsDir, { recursive: true });
+    }
+    
+    const filepath = path.join(uploadsDir, filename);
+    
+    // Read the uploaded file and write to new location
     await fs.rename(req.file.path, filepath);
     
     const photoPath = `/uploads/photos/${filename}`;
@@ -658,7 +711,7 @@ export const uploadStudentPhotoAdmin = asyncHandler(async (req, res, next) => {
     });
   } catch (err) {
     console.error('Error uploading photo:', err);
-    next(new ErrorResponse('Error uploading photo', 500));
+    next(new ErrorResponse(`Error uploading photo: ${err.message}`, 500));
   }
 });
 
