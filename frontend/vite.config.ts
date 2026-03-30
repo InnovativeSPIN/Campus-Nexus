@@ -16,7 +16,7 @@ export default defineConfig({
     open: true,
     proxy: {
       '/api': {
-        target: 'http://localhost:3005',
+        target: 'http://localhost:3030',
         changeOrigin: true,
         secure: false,
         configure: (proxy, options) => {
@@ -32,7 +32,7 @@ export default defineConfig({
         }
       },
       '/uploads': {
-        target: 'http://localhost:3005',
+        target: 'http://localhost:3030',
         changeOrigin: true,
         secure: false,
       },      // route format files from backend so downloads work in dev

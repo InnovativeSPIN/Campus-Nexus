@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { IntegratedNotificationBell } from "@/components/common/IntegratedNotificationBell";
 import { MainLayout } from "@/pages/faculty/components/layout/MainLayout";
 import { motion } from "framer-motion";
@@ -787,16 +787,16 @@ export default function Academics() {
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mb-8 flex items-start justify-between"
+        className="mb-8 flex flex-col sm:flex-row sm:items-start justify-between gap-4"
       >
         <div>
           <h1 className="page-header font-serif">Academic Activities</h1>
-          <p className="text-muted-foreground -mt-4">
+          <p className="text-muted-foreground -mt-4 text-sm">
             Manage syllabus, materials, and internal marks for your classes
           </p>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="text-right">
+        <div className="flex items-center gap-4 ml-auto">
+          <div className="text-right hidden sm:block">
             <p className="text-sm font-medium text-foreground flex items-center gap-2">
               <Calendar className="w-4 h-4 text-primary" />
               {formatDate(currentTime)}
@@ -806,7 +806,13 @@ export default function Academics() {
               {formatTime(currentTime)}
             </p>
           </div>
-          <IntegratedNotificationBell />
+          <div className="flex items-center gap-2">
+            <div className="sm:hidden text-right mr-2">
+               <p className="text-[10px] font-bold text-primary">{formatDate(currentTime)}</p>
+               <p className="text-[10px] text-muted-foreground">{formatTime(currentTime)}</p>
+            </div>
+            <IntegratedNotificationBell />
+          </div>
         </div>
       </motion.div>
 
@@ -870,26 +876,26 @@ export default function Academics() {
       </motion.div>
 
       <Tabs defaultValue="syllabus" className="w-full">
-        <TabsList className="mb-6">
-          <TabsTrigger value="syllabus" className="flex items-center gap-2">
+        <TabsList className="mb-6 w-full flex justify-start overflow-x-auto overflow-y-hidden custom-scrollbar gap-2">
+          <TabsTrigger value="syllabus" className="flex items-center gap-2 px-6">
             <BookOpen className="w-4 h-4" />
             Syllabus
           </TabsTrigger>
-          <TabsTrigger value="materials" className="flex items-center gap-2">
+          <TabsTrigger value="materials" className="flex items-center gap-2 px-6">
             <FileUp className="w-4 h-4" />
             Study Materials
           </TabsTrigger>
 
-          <TabsTrigger value="courseplan" className="flex items-center gap-2">
+          <TabsTrigger value="courseplan" className="flex items-center gap-2 px-6">
             <ClipboardList className="w-4 h-4" />
             Course Plan
           </TabsTrigger>
 
-          <TabsTrigger value="coursefile" className="flex items-center gap-2">
+          <TabsTrigger value="coursefile" className="flex items-center gap-2 px-6">
             <FileUp className="w-4 h-4" />
             Course Plan Upload
           </TabsTrigger>
-          <TabsTrigger value="credits" className="flex items-center gap-2">
+          <TabsTrigger value="credits" className="flex items-center gap-2 px-6">
             <GraduationCap className="w-4 h-4" />
             Credits
           </TabsTrigger>

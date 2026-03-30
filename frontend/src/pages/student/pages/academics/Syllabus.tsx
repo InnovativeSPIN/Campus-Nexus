@@ -68,6 +68,12 @@ export default function Syllabus({ showHeader = true }: { showHeader?: boolean }
       );
 
       if (!response.ok) {
+        // Handle 404 with a user-friendly message
+        if (response.status === 404) {
+          throw new Error(
+            `Academics not allocated for Semester ${selectedSemester}. Please contact your department administrator.`
+          );
+        }
         throw new Error(`Failed to fetch syllabus: ${response.statusText}`);
       }
 
@@ -157,27 +163,33 @@ export default function Syllabus({ showHeader = true }: { showHeader?: boolean }
         </SectionCard>
       )}
 
-      {/* Error State */}
+      {/* Error State - Academics Not Allocated Alert */}
       {error && !loading && (
-        <SectionCard>
-          <div className="flex gap-3 p-4 bg-danger/10 border border-danger/30 rounded-lg text-danger">
-            <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="font-semibold">Error Loading Syllabus</p>
-              <p className="text-sm mt-1">{error}</p>
+        <SectionCard className="border-2 border-danger/40 bg-danger/5">
+          <div className="flex gap-4 p-6 bg-gradient-to-r from-danger/10 to-danger/5 rounded-lg">
+            <AlertCircle className="w-6 h-6 text-danger flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="font-bold text-danger text-lg mb-2">Academics Not Allocated</p>
+              <p className="text-danger/80 text-sm leading-relaxed">{error}</p>
+              <p className="text-danger/60 text-xs mt-3">
+                ℹ️ If you believe this is an error, please contact your department administrator or class coordinator.
+              </p>
             </div>
           </div>
         </SectionCard>
       )}
 
-      {/* Empty State */}
+      {/* Empty State - No Academics Allocated */}
       {!loading && !error && syllabusData.length === 0 && (
-        <SectionCard>
+        <SectionCard className="border-2 border-warning/40 bg-warning/5">
           <div className="text-center py-12">
-            <BookOpen className="w-12 h-12 text-muted-foreground mb-3 mx-auto opacity-50" />
-            <p className="text-muted-foreground">No course plans available for Semester {selectedSemester}</p>
-            <p className="text-sm text-muted-foreground mt-1">
-              Course syllabus will appear here once approved by the department
+            <BookOpen className="w-16 h-16 text-warning mb-4 mx-auto opacity-60" />
+            <p className="text-lg font-semibold text-warning mb-2">No Academics Allocated</p>
+            <p className="text-warning/80 text-sm">
+              Academics have not been allocated for Semester {selectedSemester} yet.
+            </p>
+            <p className="text-warning/60 text-xs mt-3">
+              Course syllabuses will appear here once your course plan has been approved by the department.
             </p>
           </div>
         </SectionCard>

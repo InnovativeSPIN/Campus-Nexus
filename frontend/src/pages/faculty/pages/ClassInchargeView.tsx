@@ -111,6 +111,7 @@ export default function ClassInchargeView() {
   const { user, refreshUserData } = useAuth();
   const { toast } = useToast();
   const refreshedRef = useRef(false);
+  const portfolioFetchedRef = useRef(false);
   const [data, setData] = useState<ClassInchargeData | null>(null);
   const [leaves, setLeaves] = useState<StudentLeave[]>([]);
   const [loading, setLoading] = useState(true);
@@ -134,6 +135,7 @@ export default function ClassInchargeView() {
   const [isPortfolioDialogOpen, setIsPortfolioDialogOpen] = useState(false);
   const [portfolioRemarks, setPortfolioRemarks] = useState('');
   const [processingPortfolioId, setProcessingPortfolioId] = useState<number | null>(null);
+  const [classInchargeError, setClassInchargeError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!refreshedRef.current) {
@@ -145,13 +147,17 @@ export default function ClassInchargeView() {
   useEffect(() => {
     fetchClassIncharge();
     fetchLeaveRequests();
-    fetchPortfolioVerification();
   }, []);
 
   const fetchClassIncharge = async () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('authToken');
+      if (!token) {
+        console.error('No auth token found');
+        setLoading(false);
+        return;
+      }
       const res = await fetch('/api/v1/faculty/me/class-incharge', {
         headers: { 'Authorization': `Bearer ${token}` },
       });
@@ -166,10 +172,26 @@ export default function ClassInchargeView() {
     }
   };
 
+  // In React StrictMode (dev), effects can run twice. Also, portfolio endpoints
+  // should only be queried once we know the faculty has a class assignment.
+  useEffect(() => {
+    if (portfolioFetchedRef.current) return;
+    if (loading) return;
+    if (!data?.incharge?.class?.id) return;
+
+    portfolioFetchedRef.current = true;
+    fetchPortfolioVerification();
+  }, [loading, data?.incharge?.class?.id]);
+
   const fetchLeaveRequests = async () => {
     setLeavesLoading(true);
     try {
       const token = localStorage.getItem('authToken');
+      if (!token) {
+        console.error('No auth token found');
+        setLeavesLoading(false);
+        return;
+      }
       const res = await fetch('/api/v1/student-leaves/approvals/pending/class-incharge', {
         headers: { 'Authorization': `Bearer ${token}` },
       });
@@ -188,6 +210,11 @@ export default function ClassInchargeView() {
     setProcessingLeaveId(leaveId);
     try {
       const token = localStorage.getItem('authToken');
+      if (!token) {
+        toast({ title: '❌ Error', description: 'Authentication required. Please log in again.' });
+        setProcessingLeaveId(null);
+        return;
+      }
       const res = await fetch(
         `/api/v1/student-leaves/approvals/${leaveId}/class-incharge/${action}`,
         {
@@ -215,8 +242,16 @@ export default function ClassInchargeView() {
 
   const fetchPortfolioVerification = async () => {
     setPortfolioLoading(true);
+    setClassInchargeError(null);
     try {
       const token = localStorage.getItem('authToken');
+      if (!token) {
+        console.error('No auth token found for portfolio verification');
+        setClassInchargeError('Authentication required. Please log in again.');
+        setPortfolioData({ sports: [], events: [], certs: [], projects: [] });
+        setPortfolioLoading(false);
+        return;
+      }
       const fetchOpts = { headers: { 'Authorization': `Bearer ${token}` } };
 
       const [sportsRes, eventsRes, certsRes, projectsRes] = await Promise.all([
@@ -224,14 +259,22 @@ export default function ClassInchargeView() {
         fetch('/api/v1/student/extracurricular/events/class-incharge?approvalStatus=pending', fetchOpts),
         fetch('/api/v1/student/certifications/class-incharge?approvalStatus=pending', fetchOpts),
         fetch('/api/v1/student/projects/class-incharge?approvalStatus=pending', fetchOpts),
-      ]);
+      ]) as any;
+
+      // Check if faculty is not assigned as class in-charge
+      if (sportsRes.status === 403 || eventsRes.status === 403 || certsRes.status === 403 || projectsRes.status === 403) {
+        setClassInchargeError('Portfolio verification access denied. If you are a class in-charge, ask the admin to re-check your class-incharge assignment and refresh your session.');
+        setPortfolioData({ sports: [], events: [], certs: [], projects: [] });
+        setPortfolioLoading(false);
+        return;
+      }
 
       const [sportsData, eventsData, certsData, projectsData] = await Promise.all([
-        sportsRes.ok ? sportsRes.json() : { data: [] },
-        eventsRes.ok ? eventsRes.json() : { data: [] },
-        certsRes.ok ? certsRes.json() : { data: [] },
-        projectsRes.ok ? projectsRes.json() : { data: [] },
-      ]);
+        (sportsRes as any).ok ? (sportsRes as Response).json() : { data: [] },
+        (eventsRes as any).ok ? (eventsRes as Response).json() : { data: [] },
+        (certsRes as any).ok ? (certsRes as Response).json() : { data: [] },
+        (projectsRes as any).ok ? (projectsRes as Response).json() : { data: [] },
+      ]) as any;
 
       setPortfolioData({
         sports: sportsData.data || [],
@@ -240,7 +283,7 @@ export default function ClassInchargeView() {
         projects: projectsData.data || []
       });
     } catch (err) {
-      console.error('Failed to fetch portfolio verification:', err);
+      setClassInchargeError('Failed to load portfolio data. Please try again.');
     } finally {
       setPortfolioLoading(false);
     }
@@ -250,6 +293,11 @@ export default function ClassInchargeView() {
     setProcessingPortfolioId(id);
     try {
       const token = localStorage.getItem('authToken');
+      if (!token) {
+        toast({ title: '❌ Error', description: 'Authentication required. Please log in again.' });
+        setProcessingPortfolioId(null);
+        return;
+      }
       let endpoint = '';
       switch (category) {
         case 'sports': endpoint = `/api/v1/student/extracurricular/sports/${id}/approval`; break;
@@ -264,9 +312,9 @@ export default function ClassInchargeView() {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ 
-          approvalStatus: status, 
-          approvalRemarks: portfolioRemarks || undefined 
+        body: JSON.stringify({
+          approvalStatus: status,
+          approvalRemarks: portfolioRemarks || undefined
         }),
       });
 
@@ -418,8 +466,8 @@ export default function ClassInchargeView() {
             {activeTab === 'leaves' && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-card rounded-xl border border-muted-foreground/10 overflow-hidden">
                 <div className="p-4 border-b flex justify-between items-center bg-muted/20">
-                   <h2 className="font-bold flex items-center gap-2"><CalendarDays className="w-4 h-4 text-primary" /> Pending Leave Requests</h2>
-                   <Button variant="ghost" size="sm" onClick={fetchLeaveRequests} className="h-8 text-xs">Refresh</Button>
+                  <h2 className="font-bold flex items-center gap-2"><CalendarDays className="w-4 h-4 text-primary" /> Pending Leave Requests</h2>
+                  <Button variant="ghost" size="sm" onClick={fetchLeaveRequests} className="h-8 text-xs">Refresh</Button>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
@@ -462,6 +510,15 @@ export default function ClassInchargeView() {
 
             {activeTab === 'portfolio' && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
+                {classInchargeError && (
+                  <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
+                    <AlertCircle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-semibold text-red-900 text-sm">Access Denied</p>
+                      <p className="text-red-800 text-xs mt-1">{classInchargeError}</p>
+                    </div>
+                  </div>
+                )}
                 <div className="flex flex-wrap gap-2">
                   {[
                     { id: 'sports', icon: Trophy, color: 'bg-orange-600', count: portfolioData.sports.length },
@@ -484,17 +541,17 @@ export default function ClassInchargeView() {
                 </div>
 
                 <div className="bg-card rounded-xl border border-muted-foreground/10 overflow-hidden">
-                   <div className="overflow-x-auto">
-                     <table className="w-full text-sm">
-                       <thead>
-                         <tr className="bg-muted/30 border-b text-muted-foreground">
-                            <th className="py-3 px-4 text-left">Student</th>
-                            <th className="py-3 px-4 text-left">Item Details</th>
-                            <th className="py-3 px-4 text-left">Date</th>
-                            <th className="py-3 px-4 text-center">Action</th>
-                         </tr>
-                       </thead>
-                       <tbody>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="bg-muted/30 border-b text-muted-foreground">
+                          <th className="py-3 px-4 text-left">Student</th>
+                          <th className="py-3 px-4 text-left">Item Details</th>
+                          <th className="py-3 px-4 text-left">Date</th>
+                          <th className="py-3 px-4 text-center">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
                         {portfolioLoading ? (
                           <tr><td colSpan={4} className="py-12 text-center">Loading submissions...</td></tr>
                         ) : portfolioData[activePortfolioCategory].length === 0 ? (
@@ -516,9 +573,9 @@ export default function ClassInchargeView() {
                             </tr>
                           ))
                         )}
-                       </tbody>
-                     </table>
-                   </div>
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </motion.div>
             )}
@@ -527,7 +584,7 @@ export default function ClassInchargeView() {
       )}
 
       {/* DIALOGS */}
-      
+
       {/* Leave Dialog */}
       <Dialog open={!!selectedLeave} onOpenChange={o => !o && setSelectedLeave(null)}>
         <DialogContent className="max-w-md">
@@ -597,8 +654,8 @@ export default function ClassInchargeView() {
                 {(selectedPortfolioItem.documentUrl || selectedPortfolioItem.certificateUrl || selectedPortfolioItem.fileUrl) && (
                   <div className="pt-4 border-t border-muted-foreground/10 flex items-center justify-between bg-blue-50/50 p-3 rounded-xl border border-blue-100">
                     <div className="flex items-center gap-2">
-                       <FileText className="w-5 h-5 text-blue-600" />
-                       <span className="text-xs font-bold text-blue-800">Supportive Evidence Provided</span>
+                      <FileText className="w-5 h-5 text-blue-600" />
+                      <span className="text-xs font-bold text-blue-800">Supportive Evidence Provided</span>
                     </div>
                     <a
                       href={`/uploads/students/${selectedPortfolioItem.documentUrl || selectedPortfolioItem.certificateUrl || selectedPortfolioItem.fileUrl}`}

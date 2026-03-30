@@ -11,6 +11,8 @@ export type UserRole =
 	| 'research_development_admin'
 	| 'department-admin'
 	| 'faculty'
+	| 'principal'
+	| 'vice-principal'
 	| 'student';
 
 export interface Department {
@@ -34,6 +36,7 @@ export interface User {
 	studentId?: string;
 	classId?: number;
 	batch?: string;
+	faculty_id?: string | number;
 	// additional flags for faculty
 	is_timetable_incharge?: boolean;
 	is_placement_coordinator?: boolean;

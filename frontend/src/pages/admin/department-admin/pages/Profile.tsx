@@ -1,4 +1,4 @@
-﻿import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { normalizeImageUrl } from '@/utils/imageUrl';
 import { toast } from "@/pages/faculty/hooks/use-toast";
@@ -99,20 +99,20 @@ interface EventDetail {
 // Faculty data based on the Self-Appraisal Form
 const initialFacultyData = {
   // Basic Information
-  name: "C.Prathap",
-  employeeId: "NS20T15",
+  name: "",
+  employeeId: "",
   aicteId: "",
   coeId: "",
-  designation: "Assistant Professor",
-  department: "Artificial Intelligence and Data Science",
-  collegeCode: "NS20T11",
+  designation: "",
+  department: "",
+  collegeCode: "",
   orcidId: "",
   dateOfBirth: "",
   age: "",
   dateOfJoining: "",
   email: "",
-  phone: "+918072435849",
-  address: "Vadapudupatti, Theni 625531",
+  phone: "",
+  address: "",
   linkedinUrl: "",
   profilePhoto: "",
   phdStatus: "",
@@ -206,12 +206,15 @@ export default function Profile() {
           const p = payload.data;
           setFacultyData(prev => ({
             ...prev,
-            aicteId: p.aicte_id ?? p.aicteId ?? prev.aicteId,
+            employeeId: p.faculty_college_code ?? p.employee_id ?? prev.employeeId,
+            aicteId: p.AICTE_ID ?? p.aicte_id ?? p.aicteId ?? prev.aicteId,
             coeId: p.Anna_University_ID ?? p.coeId ?? prev.coeId,
             orcidId: p.orcid_id ?? p.orcidId ?? prev.orcidId,
             dateOfBirth: p.date_of_birth ?? p.dob ?? prev.dateOfBirth,
             dateOfJoining: p.date_of_joining ?? p.dateOfJoining ?? prev.dateOfJoining,
             linkedinUrl: p.linkedin_url ?? p.linkedinUrl ?? prev.linkedinUrl,
+            address: p.curr_address ?? p.address ?? prev.address,
+            phone: p.phone_number ?? p.phone ?? prev.phone,
           }));
         }
       } catch (e) {
@@ -555,7 +558,10 @@ export default function Profile() {
   }
 
   function validatePhone(phone: string) {
-    return /^(\+91[\s-]?)?[6-9]\d{9}$/.test(phone.replace(/\D/g, ''));
+    // Accept any phone number with 10 or more digits (supports +91, local, international formats)
+    if (!phone || phone.trim() === '') return false;
+    const digits = phone.replace(/\D/g, '');
+    return digits.length >= 10; // Accept 10+ digits
   }
 
   function validateLinkedInUrl(url: string) {
@@ -2567,61 +2573,131 @@ export default function Profile() {
             <h2 className="font-serif text-xl font-bold text-foreground">{facultyData.name}</h2>
             <p className="text-secondary font-medium">{facultyData.designation}</p>
             <p className="text-sm text-muted-foreground mt-1">{facultyData.department}</p>
-            <div className="mt-4 p-3 bg-muted rounded-lg">
-              <p className="text-xs text-muted-foreground">Employee ID</p>
-              <p className="font-mono font-semibold text-foreground">{facultyData.employeeId}</p>
-            </div>
-            {/* <div className="mt-2 p-3 bg-muted rounded-lg">
-              <p className="text-xs text-muted-foreground">AICTE ID</p>
-              <p className="font-mono font-semibold text-foreground">{facultyData.aicteId}</p>
-            </div> */}
-            {/* <div className="mt-2 p-3 bg-muted rounded-lg">
-              <p className="text-xs text-muted-foreground">Anna University ID Code</p>
-              <p className="font-mono font-semibold text-foreground">{facultyData.coeId}</p>
-            </div> */}
           </div>
 
           <div className="mt-6 space-y-4">
+            {/* Employee ID */}
+            {facultyData.employeeId && (
+              <div className="bg-muted rounded-xl p-2.5 border border-border/50 text-center mb-8 max-w-[260px] mx-auto shadow-sm">
+                <p className="text-xs text-muted-foreground font-semibold mb-1">Employee ID</p>
+                <p className="font-mono font-bold text-foreground text-base tracking-wide">{facultyData.employeeId}</p>
+              </div>
+            )}
             {/* AICTE ID */}
-            {facultyData.aicteId ? (
-              <div className="flex items-center gap-3 text-sm">
-                <Building className="w-4 h-4 text-primary flex-shrink-0" />
-                <span className="text-muted-foreground line-clamp-2">AICTE ID: {facultyData.aicteId}</span>
+            <div className="flex items-start gap-4 text-sm">
+              <Award className="w-4 h-4 text-primary flex-shrink-0 mt-1" />
+              <div className="flex-1">
+                <p className="text-xs text-muted-foreground font-medium">AICTE ID</p>
+                {editingField === 'aicteId' ? (
+                  <div className="space-y-1 mt-1">
+                    <input
+                      type="text"
+                      value={tempValue}
+                      onChange={(e) => { setTempValue(e.target.value); setFieldError(''); }}
+                      className="input input-bordered text-sm w-full"
+                      autoFocus
+                    />
+                    {fieldError && <p className="text-xs text-destructive">{fieldError}</p>}
+                    <div className="flex gap-1">
+                      <button onClick={() => handleSaveField('aicteId')} className="p-1 bg-green-600 text-white rounded"><Check className="w-3 h-3" /></button>
+                      <button onClick={handleCancelEdit} className="p-1 bg-muted rounded"><X className="w-3 h-3" /></button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <p className="font-mono font-semibold text-foreground break-all">{facultyData.aicteId || <span className="text-muted-foreground italic text-xs">Not set</span>}</p>
+                    <button onClick={() => handleEditField('aicteId', facultyData.aicteId)} className="p-1 hover:bg-muted rounded opacity-60 hover:opacity-100 transition-opacity flex-shrink-0" title="Edit AICTE ID"><Edit2 className="w-3 h-3" /></button>
+                  </div>
+                )}
               </div>
-            ) : null}
-            {/* Anna University ID Code */}
-            {facultyData.coeId ? (
-              <div className="flex items-center gap-3 text-sm">
-                <Building className="w-4 h-4 text-primary flex-shrink-0" />
-                <span className="text-muted-foreground line-clamp-2">Anna University ID Code: {facultyData.coeId}</span>
-              </div>
-            ) : null}
+            </div>
 
-            {/* ORCID ID */}
-            {facultyData.orcidId ? (
-              <div className="flex items-center gap-3 text-sm">
-                <Globe className="w-4 h-4 text-primary flex-shrink-0" />
-                <span className="text-muted-foreground line-clamp-2">ORCID ID: {facultyData.orcidId}</span>
+            {/* Anna University ID */}
+            <div className="flex items-start gap-3 text-sm">
+              <Building className="w-4 h-4 text-primary flex-shrink-0 mt-1" />
+              <div className="flex-1">
+                <p className="text-xs text-muted-foreground font-medium">Anna University ID</p>
+                {editingField === 'coeId' ? (
+                  <div className="space-y-1 mt-1">
+                    <input
+                      type="text"
+                      value={tempValue}
+                      onChange={(e) => { setTempValue(e.target.value); setFieldError(''); }}
+                      className="input input-bordered text-sm w-full"
+                      autoFocus
+                    />
+                    {fieldError && <p className="text-xs text-destructive">{fieldError}</p>}
+                    <div className="flex gap-1">
+                      <button onClick={() => handleSaveField('coeId')} className="p-1 bg-green-600 text-white rounded"><Check className="w-3 h-3" /></button>
+                      <button onClick={handleCancelEdit} className="p-1 bg-muted rounded"><X className="w-3 h-3" /></button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <p className="font-mono font-semibold text-foreground break-all">{facultyData.coeId || <span className="text-muted-foreground italic text-xs">Not set</span>}</p>
+                    <button onClick={() => handleEditField('coeId', facultyData.coeId)} className="p-1 hover:bg-muted rounded opacity-60 hover:opacity-100 transition-opacity flex-shrink-0" title="Edit COE ID"><Edit2 className="w-3 h-3" /></button>
+                  </div>
+                )}
               </div>
-            ) : null}
+            </div>
 
-            {/* DOB & Age */}
-            {facultyData.dateOfBirth ? (
-              <div className="flex items-center gap-3 text-sm">
-                <Calendar className="w-4 h-4 text-primary flex-shrink-0" />
-                <span className="text-muted-foreground">DOB:</span>
-                <span className="font-medium">{facultyData.dateOfBirth} {facultyData.age ? `(Age: ${facultyData.age})` : ''}</span>
+            {/* DOB */}
+            <div className="flex items-start gap-3 text-sm">
+              <Calendar className="w-4 h-4 text-primary flex-shrink-0 mt-1" />
+              <div className="flex-1">
+                <p className="text-xs text-muted-foreground font-medium">DOB</p>
+                {editingField === 'dateOfBirth' ? (
+                  <div className="space-y-1 mt-1">
+                    <input
+                      type="date"
+                      value={tempValue}
+                      onChange={(e) => { setTempValue(e.target.value); setFieldError(''); }}
+                      className="input input-bordered text-sm w-full"
+                      autoFocus
+                    />
+                    {fieldError && <p className="text-xs text-destructive">{fieldError}</p>}
+                    <div className="flex gap-1">
+                      <button onClick={() => handleSaveField('dateOfBirth')} className="p-1 bg-green-600 text-white rounded"><Check className="w-3 h-3" /></button>
+                      <button onClick={handleCancelEdit} className="p-1 bg-muted rounded"><X className="w-3 h-3" /></button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <p className="font-medium text-foreground">{facultyData.dateOfBirth || <span className="text-muted-foreground italic text-xs">Not set</span>}</p>
+                    <button onClick={() => handleEditField('dateOfBirth', facultyData.dateOfBirth)} className="p-1 hover:bg-muted rounded opacity-60 hover:opacity-100 transition-opacity flex-shrink-0" title="Edit DOB"><Edit2 className="w-3 h-3" /></button>
+                  </div>
+                )}
               </div>
-            ) : null}
+            </div>
 
             {/* Date of Joining */}
-            {facultyData.dateOfJoining ? (
-              <div className="flex items-center gap-3 text-sm">
-                <Briefcase className="w-4 h-4 text-primary flex-shrink-0" />
-                <span className="text-muted-foreground">Date of Joined:</span>
-                <span className="font-medium">{facultyData.dateOfJoining}</span>
+            <div className="flex items-start gap-3 text-sm">
+              <Clock className="w-4 h-4 text-primary flex-shrink-0 mt-1" />
+              <div className="flex-1">
+                <p className="text-xs text-muted-foreground font-medium">Date of Joined</p>
+                {editingField === 'dateOfJoining' ? (
+                  <div className="space-y-1 mt-1">
+                    <input
+                      type="date"
+                      value={tempValue}
+                      onChange={(e) => { setTempValue(e.target.value); setFieldError(''); }}
+                      className="input input-bordered text-sm w-full"
+                      autoFocus
+                    />
+                    {fieldError && <p className="text-xs text-destructive">{fieldError}</p>}
+                    <div className="flex gap-1">
+                      <button onClick={() => handleSaveField('dateOfJoining')} className="p-1 bg-green-600 text-white rounded"><Check className="w-3 h-3" /></button>
+                      <button onClick={handleCancelEdit} className="p-1 bg-muted rounded"><X className="w-3 h-3" /></button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <p className="font-medium text-foreground">{facultyData.dateOfJoining || <span className="text-muted-foreground italic text-xs">Not set</span>}</p>
+                    <button onClick={() => handleEditField('dateOfJoining', facultyData.dateOfJoining)} className="p-1 hover:bg-muted rounded opacity-60 hover:opacity-100 transition-opacity flex-shrink-0" title="Edit Joining Date"><Edit2 className="w-3 h-3" /></button>
+                  </div>
+                )}
               </div>
-            ) : null}
+            </div>
 
             {/* LinkedIn URL */}
             <div className="flex items-start gap-3 text-sm group">
@@ -4970,7 +5046,13 @@ export default function Profile() {
                         onChange={(e) => handlePhdFieldChange('phdStatus', e.target.value)}
                         className="select select-bordered w-full bg-white text-foreground"
                       >
+                        <option value="">Select Status</option>
                         <option value="Pursuing">Pursuing</option>
+                        <option value="Course work pursuing">Course work pursuing</option>
+                        <option value="Synopsis submitted">Synopsis submitted</option>
+                        <option value="Thesis submitted">Thesis submitted</option>
+                        <option value="Confirmation">Confirmation</option>
+                        <option value="Viva completed">Viva completed</option>
                         <option value="Completed">Completed</option>
                       </select>
                     </div>
@@ -5124,7 +5206,13 @@ export default function Profile() {
                         onChange={(e) => setNewPhd(prev => ({ ...prev, phdStatus: e.target.value }))}
                         className="select select-bordered w-full bg-white text-foreground"
                       >
+                        <option value="">Select Status</option>
                         <option value="Pursuing">Pursuing</option>
+                        <option value="Course work pursuing">Course work pursuing</option>
+                        <option value="Synopsis submitted">Synopsis submitted</option>
+                        <option value="Thesis submitted">Thesis submitted</option>
+                        <option value="Confirmation">Confirmation</option>
+                        <option value="Viva completed">Viva completed</option>
                         <option value="Completed">Completed</option>
                       </select>
                     </div>

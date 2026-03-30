@@ -1,21 +1,23 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import PageHeader from '@/pages/student/components/layout/PageHeader';
 import SectionCard from '@/pages/student/components/common/SectionCard';
 import ProfileNavBar from '@/pages/student/components/layout/ProfileNavBar';
-import { User, Phone, MapPin, Briefcase, Heart, UserPlus, Loader2, Edit, Plus, Trash2, X } from 'lucide-react';
+import { User, Phone, MapPin, Briefcase, UserCheck, UserPlus, Loader2, Edit, Plus, Trash2, X } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/pages/student/components/ui/dialog';
 import { Input } from '@/pages/student/components/ui/input';
 import { Label } from '@/pages/student/components/ui/label';
 import { Button } from '@/pages/student/components/ui/button';
 import { useToast } from '@/pages/student/hooks/use-toast';
-import { getMyProfile, updateMyProfile } from '@/pages/student/services/studentApi';
+import { getMyProfile, updateMyProfile, uploadReferencePhoto } from '@/pages/student/services/studentApi';
+import { normalizeImageUrl } from '@/utils/imageUrl';
 
 export default function ReferenceInfo() {
   const [referenceList, setReferenceList] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const [editReferenceIndex, setEditReferenceIndex] = useState<number | null>(null);
-  const [referenceForm, setReferenceForm] = useState({ name: '', relation: '', phone: '', address: '', occupation: '' });
+  const [referenceForm, setReferenceForm] = useState({ name: '', relation: '', phone: '', address: '', occupation: '', photo: '' });
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -25,7 +27,12 @@ export default function ReferenceInfo() {
         setLoading(true);
         const res = await getMyProfile() as any;
         if (res.success && res.data?.bio?.references) {
-          setReferenceList(res.data.bio.references);
+          let refs = res.data.bio.references;
+          // The DB may return references as a JSON string — parse it if so
+          if (typeof refs === 'string') {
+            try { refs = JSON.parse(refs); } catch { refs = []; }
+          }
+          setReferenceList(Array.isArray(refs) ? refs : []);
         }
       } catch (error) {
         console.error('Failed to fetch references', error);
@@ -44,28 +51,39 @@ export default function ReferenceInfo() {
         phone: referenceList[index].phone || '',
         address: referenceList[index].address || '',
         occupation: referenceList[index].occupation || '',
+        photo: referenceList[index].photo || '',
       });
       setEditReferenceIndex(index);
     } else {
-      setReferenceForm({ name: '', relation: '', phone: '', address: '', occupation: '' });
+      setReferenceForm({ name: '', relation: '', phone: '', address: '', occupation: '', photo: '' });
       setEditReferenceIndex(null);
     }
+    setPhotoFile(null);
     setDialogOpen(true);
   };
 
   const closeReferenceDialog = () => {
     setDialogOpen(false);
     setEditReferenceIndex(null);
+    setPhotoFile(null);
   };
 
   const saveReference = async () => {
     setSaving(true);
     try {
+      let photoUrl = referenceForm.photo;
+      if (photoFile) {
+        const uploadRes = await uploadReferencePhoto('me', photoFile) as any;
+        if (uploadRes.success && uploadRes.data?.photo) {
+          photoUrl = uploadRes.data.photo;
+        }
+      }
       const updated = [...referenceList];
+      const entry = { ...referenceForm, photo: photoUrl };
       if (editReferenceIndex === null) {
-        updated.push(referenceForm);
+        updated.push(entry);
       } else {
-        updated[editReferenceIndex] = referenceForm;
+        updated[editReferenceIndex] = entry;
       }
 
       const res = (await updateMyProfile({ references: updated })) as any;
@@ -147,7 +165,7 @@ export default function ReferenceInfo() {
               <SectionCard
                 key={`${ref.id || index}-${ref.name}`}
                 title={`Reference #${index + 1}`}
-                icon={Heart}
+                icon={UserCheck}
                 className="shadow-xl"
               >
                 <div className="flex justify-between items-start mb-2">
@@ -163,8 +181,12 @@ export default function ReferenceInfo() {
                 </div>
                 <div className="space-y-6">
                   <div className="flex items-center gap-4 p-4 rounded-xl bg-orange-50/50 border border-orange-100">
-                    <div className="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center">
-                      <User className="w-6 h-6 text-orange-600" />
+                    <div className="w-12 h-12 rounded-full overflow-hidden bg-orange-100 flex items-center justify-center shrink-0">
+                      {ref.photo ? (
+                        <img src={normalizeImageUrl(ref.photo) || ''} alt={ref.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <User className="w-6 h-6 text-orange-600" />
+                      )}
                     </div>
                     <div>
                       <h3 className="text-lg font-bold text-foreground">{ref.name}</h3>
@@ -225,6 +247,20 @@ export default function ReferenceInfo() {
             <div>
               <Label>Address</Label>
               <Input value={referenceForm.address} onChange={(e) => setReferenceForm((prev) => ({ ...prev, address: e.target.value }))} />
+            </div>
+            <div>
+              <Label>Photo <span className="text-muted-foreground text-xs">(Optional)</span></Label>
+              {referenceForm.photo && !photoFile && (
+                <div className="mt-2 mb-2">
+                  <img src={normalizeImageUrl(referenceForm.photo) || ''} alt="Current photo" className="w-14 h-14 rounded-full object-cover border border-muted" />
+                </div>
+              )}
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={(e) => setPhotoFile(e.target.files ? e.target.files[0] : null)}
+                className="file:mr-3 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer"
+              />
             </div>
           </div>
 

@@ -14,7 +14,9 @@ import {
   ChevronRight,
   ClipboardCheck,
   BookOpen,
-  Lock
+  Lock,
+  Menu,
+  X
 } from 'lucide-react';
 import { cn } from '@/pages/student/lib/utils';
 
@@ -33,9 +35,16 @@ const menuItems = [
 interface SidebarProps {
   isCollapsed: boolean;
   onToggle: () => void;
+  isMobileMenuOpen?: boolean;
+  setIsMobileMenuOpen?: (open: boolean) => void;
 }
 
-export default function Sidebar({ isCollapsed: collapsed, onToggle: setCollapsed }: SidebarProps) {
+export default function Sidebar({ 
+  isCollapsed: collapsed, 
+  onToggle: setCollapsed, 
+  isMobileMenuOpen = false, 
+  setIsMobileMenuOpen 
+}: SidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { logout, user } = useAuth();
@@ -57,10 +66,15 @@ export default function Sidebar({ isCollapsed: collapsed, onToggle: setCollapsed
       initial={false}
       animate={{ width: collapsed ? 80 : 280 }}
       transition={{ duration: 0.3, ease: "easeInOut" }}
-      className="fixed left-0 top-0 h-screen bg-sidebar z-50 flex flex-col shadow-xl"
+      className={cn(
+        "fixed left-0 top-0 h-screen h-[100dvh] bg-sidebar z-[100] lg:z-50 flex flex-col shadow-2xl transition-transform duration-300",
+        // Mobile hidden/visible
+        "max-lg:-translate-x-full lg:translate-x-0",
+        isMobileMenuOpen && "max-lg:translate-x-0"
+      )}
     >
       {/* Logo & Identity Section */}
-      <div className="p-4 border-b border-sidebar-border">
+      <div className="p-4 border-b border-sidebar-border flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="flex-shrink-0">
             {user?.avatar ? (
@@ -76,7 +90,7 @@ export default function Sidebar({ isCollapsed: collapsed, onToggle: setCollapsed
             )}
           </div>
           <AnimatePresence>
-            {!collapsed && (
+            {(!collapsed || isMobileMenuOpen) && (
               <motion.div
                 initial={{ opacity: 0, width: 0 }}
                 animate={{ opacity: 1, width: "auto" }}
@@ -84,15 +98,24 @@ export default function Sidebar({ isCollapsed: collapsed, onToggle: setCollapsed
                 className="overflow-hidden flex flex-col"
               >
                 <span className="font-serif font-bold text-white text-lg whitespace-nowrap">
-                  {user?.name || 'Dummy Student'}
+                  {user?.name || 'Student'}
                 </span>
                 <span className="text-[10px] text-white/70 uppercase tracking-widest font-semibold hidden">
-                  {user?.rollNo || 'NSC21CS001'}
+                  {user?.rollNo || ''}
                 </span>
               </motion.div>
             )}
           </AnimatePresence>
         </div>
+        {/* Mobile Close Button */}
+        {isMobileMenuOpen && (
+          <button 
+            onClick={() => setIsMobileMenuOpen?.(false)}
+            className="lg:hidden p-2 text-white/70 hover:text-white transition-colors"
+          >
+            <X className="w-6 h-6" />
+          </button>
+        )}
       </div>
 
       {/* Navigation */}
@@ -109,6 +132,7 @@ export default function Sidebar({ isCollapsed: collapsed, onToggle: setCollapsed
               >
                 <NavLink
                   to={item.url}
+                  onClick={() => setIsMobileMenuOpen?.(false)}
                   className={cn(
                     "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group relative",
                     active
@@ -123,7 +147,7 @@ export default function Sidebar({ isCollapsed: collapsed, onToggle: setCollapsed
                     )}
                   />
                   <AnimatePresence>
-                    {!collapsed && (
+                    {(!collapsed || isMobileMenuOpen) && (
                       <motion.span
                         initial={{ opacity: 0, width: 0 }}
                         animate={{ opacity: 1, width: "auto" }}
@@ -152,11 +176,11 @@ export default function Sidebar({ isCollapsed: collapsed, onToggle: setCollapsed
         {/* Logout Button */}
         <button
           onClick={handleLogout}
-          className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-destructive/90 text-white hover:bg-destructive transition-colors"
+          className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-destructive/90 text-white hover:bg-destructive transition-colors relative z-high"
         >
-          <LogOut className="w-5 h-5" />
+          <LogOut className="w-5 h-5 flex-shrink-0" />
           <AnimatePresence>
-            {!collapsed && (
+            {(!collapsed || isMobileMenuOpen) && (
               <motion.span
                 initial={{ opacity: 0, width: 0 }}
                 animate={{ opacity: 1, width: "auto" }}
@@ -169,20 +193,22 @@ export default function Sidebar({ isCollapsed: collapsed, onToggle: setCollapsed
           </AnimatePresence>
         </button>
 
-        {/* Collapse Toggle */}
-        <button
-          onClick={() => setCollapsed()}
-          className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-sidebar-accent/50 text-white hover:bg-sidebar-accent transition-colors"
-        >
-          {collapsed ? (
-            <ChevronRight className="w-5 h-5" />
-          ) : (
-            <>
-              <ChevronLeft className="w-5 h-5" />
-              <span className="text-sm font-medium">Collapse</span>
-            </>
-          )}
-        </button>
+        {/* Collapse Toggle - Hide on Mobile */}
+        <div className="hidden lg:block">
+          <button
+            onClick={() => setCollapsed()}
+            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-sidebar-accent/50 text-white hover:bg-sidebar-accent transition-colors"
+          >
+            {collapsed ? (
+              <ChevronRight className="w-5 h-5" />
+            ) : (
+              <>
+                <ChevronLeft className="w-5 h-5" />
+                <span className="text-sm font-medium">Collapse</span>
+              </>
+            )}
+          </button>
+        </div>
       </div>
     </motion.aside>
   );

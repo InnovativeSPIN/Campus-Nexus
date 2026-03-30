@@ -13,6 +13,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Home,
+  Menu,
+  X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -23,11 +25,26 @@ interface NavItem {
   badge?: string;
 }
 
-export function AcademicAdminSidebar() {
+interface AcademicAdminSidebarProps {
+  collapsed?: boolean;
+  setCollapsed?: (collapsed: boolean) => void;
+  isMobileMenuOpen?: boolean;
+  setIsMobileMenuOpen?: (open: boolean) => void;
+}
+
+export function AcademicAdminSidebar({
+  collapsed: propCollapsed,
+  setCollapsed: propSetCollapsed,
+  isMobileMenuOpen = false,
+  setIsMobileMenuOpen
+}: AcademicAdminSidebarProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const { logout, user } = useAuth();
-  const [collapsed, setCollapsed] = useState(false);
+  const [localCollapsed, setLocalCollapsed] = useState(false);
+
+  const collapsed = propCollapsed !== undefined ? propCollapsed : localCollapsed;
+  const setCollapsed = propSetCollapsed !== undefined ? propSetCollapsed : setLocalCollapsed;
 
   useEffect(() => {
     const saved = localStorage.getItem('academic_sidebar_collapsed');
@@ -70,9 +87,27 @@ export function AcademicAdminSidebar() {
       initial={false}
       animate={{ width: collapsed ? 80 : 280 }}
       transition={{ duration: 0.3, ease: "easeInOut" }}
-      className="fixed left-0 top-0 h-screen bg-sidebar z-50 flex flex-col shadow-xl"
+      className={cn(
+        "fixed left-0 top-0 h-screen bg-sidebar z-[100] lg:z-50 flex flex-col shadow-2xl transition-transform duration-300",
+        // Mobile hidden/visible
+        "max-lg:-translate-x-full lg:translate-x-0",
+        isMobileMenuOpen && "max-lg:translate-x-0"
+      )}
       style={{ pointerEvents: 'auto' }}
     >
+      {/* Mobile Header in Sidebar */}
+      <div className="lg:hidden p-4 border-b border-sidebar-border bg-sidebar-accent/10 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+           <GraduationCap className="w-6 h-6 text-white" />
+           <span className="text-white font-bold font-serif whitespace-nowrap">NSCET Academic</span>
+        </div>
+        <button 
+          onClick={() => setIsMobileMenuOpen?.(false)}
+          className="p-2 text-white/70 hover:text-white transition-colors"
+        >
+          <X className="w-6 h-6" />
+        </button>
+      </div>
       <div className="p-4 border-b border-sidebar-border bg-gradient-to-b from-sidebar-accent/20 to-sidebar-accent/5">
         <div className="flex items-center justify-between">
           <AnimatePresence>
@@ -145,9 +180,9 @@ export function AcademicAdminSidebar() {
               >
                 <button
                   type="button"
-                  onMouseDown={(e) => {
-                    e.preventDefault();
+                  onClick={() => {
                     navigate(item.path);
+                    setIsMobileMenuOpen?.(false);
                   }}
                   style={{ pointerEvents: 'auto' }}
                   className={cn(
@@ -194,10 +229,7 @@ export function AcademicAdminSidebar() {
       <div className="p-4 border-t border-sidebar-border space-y-3 bg-sidebar-accent/5">
         <button
           type="button"
-          onMouseDown={(e) => {
-            e.preventDefault();
-            handleLogout();
-          }}
+          onClick={handleLogout}
           style={{ pointerEvents: 'auto' }}
           className={cn(
             "w-full flex items-center justify-center gap-3 px-3 py-3 rounded-lg transition-all font-bold text-sm cursor-pointer",
@@ -219,41 +251,41 @@ export function AcademicAdminSidebar() {
           </AnimatePresence>
         </button>
 
-        <button
-          type="button"
-          onMouseDown={(e) => {
-            e.preventDefault();
-            setCollapsed(prev => !prev);
-          }}
-          style={{ pointerEvents: 'auto' }}
-          className={cn(
-            "w-full flex items-center justify-center gap-3 px-3 py-3 rounded-lg transition-all border font-bold text-sm cursor-pointer",
-            collapsed
-              ? 'bg-sidebar-accent/40 text-white border-sidebar-accent/60 hover:bg-sidebar-accent/60'
-              : 'bg-sidebar-accent/20 text-white/80 border-sidebar-accent/30 hover:bg-sidebar-accent/40 hover:text-white'
-          )}
-        >
-          {collapsed ? (
-            <motion.div
-              initial={{ rotate: -90 }}
-              animate={{ rotate: 0 }}
-              transition={{ duration: 0.2 }}
-            >
-              <ChevronRight className="w-5 h-5" />
-            </motion.div>
-          ) : (
-            <>
+        {/* Collapse Toggle - Hide on mobile */}
+        <div className="hidden lg:block">
+          <button
+            type="button"
+            onClick={() => setCollapsed?.(!collapsed)}
+            style={{ pointerEvents: 'auto' }}
+            className={cn(
+              "w-full flex items-center justify-center gap-3 px-3 py-3 rounded-lg transition-all border font-bold text-sm cursor-pointer",
+              collapsed
+                ? 'bg-sidebar-accent/40 text-white border-sidebar-accent/60 hover:bg-sidebar-accent/60'
+                : 'bg-sidebar-accent/20 text-white/80 border-sidebar-accent/30 hover:bg-sidebar-accent/40 hover:text-white'
+            )}
+          >
+            {collapsed ? (
               <motion.div
                 initial={{ rotate: -90 }}
                 animate={{ rotate: 0 }}
                 transition={{ duration: 0.2 }}
               >
-                <ChevronLeft className="w-5 h-5 flex-shrink-0" />
+                <ChevronRight className="w-5 h-5" />
               </motion.div>
-              <span className="text-xs font-bold uppercase tracking-widest">Collapse</span>
-            </>
-          )}
-        </button>
+            ) : (
+              <>
+                <motion.div
+                  initial={{ rotate: -90 }}
+                  animate={{ rotate: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <ChevronLeft className="w-5 h-5 flex-shrink-0" />
+                </motion.div>
+                <span className="text-xs font-bold uppercase tracking-widest">Collapse</span>
+              </>
+            )}
+          </button>
+        </div>
       </div>
     </motion.aside>
   );

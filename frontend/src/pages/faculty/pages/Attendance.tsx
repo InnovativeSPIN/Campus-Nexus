@@ -739,7 +739,7 @@ export default function Attendance() {
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mb-8 flex items-start justify-between"
+        className="mb-8 flex flex-col sm:flex-row sm:items-start justify-between gap-4"
       >
         <div>
           <h1 className="page-header font-serif">Attendance Management</h1>
@@ -748,7 +748,7 @@ export default function Attendance() {
           </p>
         </div>
         <div className="flex items-center gap-4">
-          <div className="text-right">
+          <div className="text-right hidden sm:block">
             <p className="text-sm font-medium text-foreground flex items-center gap-2">
               <Calendar className="w-4 h-4 text-primary" />
               {formatDate(currentTime)}
@@ -758,17 +758,23 @@ export default function Attendance() {
               {formatTime(currentTime)}
             </p>
           </div>
-          <IntegratedNotificationBell />
+          <div className="flex items-center gap-2 ml-auto">
+            <div className="sm:hidden text-right mr-2">
+               <p className="text-[10px] font-bold text-primary">{formatDate(currentTime)}</p>
+               <p className="text-[10px] text-muted-foreground">{formatTime(currentTime)}</p>
+            </div>
+            <IntegratedNotificationBell />
+          </div>
         </div>
       </motion.div>
 
       <Tabs defaultValue="mark" className="w-full">
-        <TabsList className="mb-6">
-          <TabsTrigger value="mark" className="flex items-center gap-2">
+        <TabsList className="mb-6 w-full flex justify-start overflow-x-auto overflow-y-hidden custom-scrollbar max-sm:gap-2">
+          <TabsTrigger value="mark" className="flex items-center gap-2 px-6">
             <ClipboardCheck className="w-4 h-4" />
             Mark Attendance
           </TabsTrigger>
-          <TabsTrigger value="history" className="flex items-center gap-2">
+          <TabsTrigger value="history" className="flex items-center gap-2 px-6">
             <History className="w-4 h-4" />
             Attendance History
           </TabsTrigger>

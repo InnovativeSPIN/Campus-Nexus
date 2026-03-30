@@ -122,7 +122,7 @@ export default function Dashboard() {
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mb-8 flex items-start justify-between"
+        className="mb-8 flex flex-col sm:flex-row sm:items-start justify-between gap-4"
       >
         <div>
           <h1 className="page-header font-serif">Faculty Dashboard</h1>
@@ -131,7 +131,7 @@ export default function Dashboard() {
           </p>
         </div>
         <div className="flex items-center gap-4">
-          <div className="text-right">
+          <div className="text-right hidden sm:block">
             <p className="text-sm font-medium text-foreground flex items-center gap-2">
               <Calendar className="w-4 h-4 text-primary" />
               {formatDate(currentTime)}
@@ -141,11 +141,14 @@ export default function Dashboard() {
               {formatTime(currentTime)}
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 ml-auto">
+            <div className="sm:hidden text-right mr-2">
+               <p className="text-[10px] font-bold text-primary">{formatDate(currentTime)}</p>
+               <p className="text-[10px] text-muted-foreground">{formatTime(currentTime)}</p>
+            </div>
             <LeaveNotificationBell />
             <IntegratedNotificationBell />
           </div>
-
         </div>
       </motion.div>
 

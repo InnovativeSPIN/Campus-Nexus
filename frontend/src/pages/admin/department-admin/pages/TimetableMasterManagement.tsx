@@ -56,7 +56,7 @@ interface TimetableMaster {
   room_no: string;
   effective_from: string;
   revision_no: string;
-  status: "draft" | "active" | "inactive";
+  status: "draft" | "pending_approval" | "active" | "inactive";
   class_coordinator_id: number | null;
   asst_coordinator_id: number | null;
   timetable_incharge_id: number | null;
@@ -101,11 +101,13 @@ export default function TimetableMasterManagement() {
   const [selectedTimetable, setSelectedTimetable] = useState<TimetableMaster | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isCoordinatorDialogOpen, setIsCoordinatorDialogOpen] = useState(false);
-  const { authToken } = useAuth();
+  const [coordinatorError, setCoordinatorError] = useState<string | null>(null);
+  const { authToken, user } = useAuth();
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
     class_id: "",
+    department_id: user?.department_id || "",
     academic_year: new Date().getFullYear() + "-" + (new Date().getFullYear() + 1),
     semester: "1",
     semester_type: "odd",
@@ -124,16 +126,35 @@ export default function TimetableMasterManagement() {
 
   // Fetch data on mount
   useEffect(() => {
+    // Update department_id if user loads
+    if (user?.department_id && !formData.department_id) {
+      setFormData(prev => ({
+        ...prev,
+        department_id: user.department_id!.toString(),
+      }));
+    }
+
     const fetchData = async () => {
       setLoading(true);
       try {
-        // Fetch timetables
-        const ttResponse = await fetch("/api/v1/timetable-master", {
+        // Fetch timetables - filter by current department
+        const departmentId = user?.department_id;
+        const timetableUrl = departmentId 
+          ? `/api/v1/timetable-master?department_id=${departmentId}`
+          : "/api/v1/timetable-master";
+        
+        const ttResponse = await fetch(timetableUrl, {
           headers: { Authorization: `Bearer ${authToken}` },
         });
         if (ttResponse.ok) {
-          const ttData = await ttResponse.json();
+          let ttData = await ttResponse.json();
           console.log("[TIMETABLE DEBUG] Timetables data:", ttData.data);
+          
+          // Additional client-side filter to ensure only current department's timetables
+          if (departmentId && ttData.data) {
+            ttData.data = ttData.data.filter((tt: TimetableMaster) => tt.department_id === departmentId);
+          }
+          
           if (ttData.data?.length > 0) {
             console.log("[TIMETABLE DEBUG] First timetable ALL fields:", ttData.data[0]);
             console.log("[TIMETABLE DEBUG] Status field:", {
@@ -147,21 +168,29 @@ export default function TimetableMasterManagement() {
           setTimetables(ttData.data || []);
         }
 
-        // Fetch faculties
+        // Fetch faculties - filter by current department
         const facResponse = await fetch("/api/v1/faculty", {
           headers: { Authorization: `Bearer ${authToken}` },
         });
         if (facResponse.ok) {
-          const facData = await facResponse.json();
+          let facData = await facResponse.json();
+          // Filter faculties to only current department
+          if (departmentId && facData.data) {
+            facData.data = facData.data.filter((fac: Faculty) => fac.department_id === departmentId);
+          }
           setFaculties(facData.data || []);
         }
 
-        // Fetch classes
+        // Fetch classes - filter by current department
         const classResponse = await fetch("/api/v1/classes", {
           headers: { Authorization: `Bearer ${authToken}` },
         });
         if (classResponse.ok) {
-          const classData = await classResponse.json();
+          let classData = await classResponse.json();
+          // Filter classes to only current department if they have department_id
+          if (departmentId && classData.data) {
+            classData.data = classData.data.filter((cls: any) => !cls.department_id || cls.department_id === departmentId);
+          }
           setClasses(classData.data || []);
         }
       } catch (error) {
@@ -177,11 +206,27 @@ export default function TimetableMasterManagement() {
     };
 
     fetchData();
-  }, [authToken]);
+  }, [authToken, user]);
 
   const handleCreateTimetable = async () => {
     try {
       setLoading(true);
+
+      // Validate required fields
+      if (!formData.class_id || !formData.department_id || !formData.effective_from) {
+        toast({
+          title: "Validation Error",
+          description: "Please fill in all required fields: Class, Department, and Effective From",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+
+      console.log('[TIMETABLE] Creating timetable with data:', {
+        ...formData,
+        semester: parseInt(formData.semester),
+      });
 
       const response = await fetch("/api/v1/timetable-master", {
         method: "POST",
@@ -189,15 +234,23 @@ export default function TimetableMasterManagement() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${authToken}`,
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          semester: parseInt(formData.semester),
+          department_id: parseInt(String(formData.department_id)),
+          class_id: parseInt(formData.class_id),
+        }),
       });
 
+      const responseData = await response.json();
+
       if (response.ok) {
-        const newTimetable = await response.json();
+        const newTimetable = responseData;
         setTimetables((prev) => [newTimetable.data, ...prev]);
         setIsCreateDialogOpen(false);
         setFormData({
           class_id: "",
+          department_id: user?.department_id || "",
           academic_year: new Date().getFullYear() + "-" + (new Date().getFullYear() + 1),
           semester: "1",
           semester_type: "odd",
@@ -211,13 +264,14 @@ export default function TimetableMasterManagement() {
           description: "Timetable created in draft status",
         });
       } else {
-        throw new Error("Failed to create timetable");
+        console.error('[TIMETABLE] API Error:', responseData);
+        throw new Error(responseData.message || "Failed to create timetable");
       }
     } catch (error) {
       console.error("Error creating timetable:", error);
       toast({
         title: "Error",
-        description: "Failed to create timetable",
+        description: error instanceof Error ? error.message : "Failed to create timetable",
         variant: "destructive",
       });
     } finally {
@@ -230,6 +284,24 @@ export default function TimetableMasterManagement() {
 
     try {
       setLoading(true);
+      setCoordinatorError(null);
+
+      // Prepare update payload - only include values that are set
+      const updatePayload: any = {};
+      if (coordinatorData.class_coordinator_id) {
+        updatePayload.class_coordinator_id = parseInt(coordinatorData.class_coordinator_id);
+      }
+      if (coordinatorData.asst_coordinator_id) {
+        updatePayload.asst_coordinator_id = parseInt(coordinatorData.asst_coordinator_id);
+      }
+      if (coordinatorData.timetable_incharge_id) {
+        updatePayload.timetable_incharge_id = parseInt(coordinatorData.timetable_incharge_id);
+      }
+      if (coordinatorData.hod_id) {
+        updatePayload.hod_id = parseInt(coordinatorData.hod_id);
+      }
+
+      console.log('[COORDINATOR UPDATE] Payload:', updatePayload);
 
       const response = await fetch(`/api/v1/timetable-master/${selectedTimetable.id}`, {
         method: "PATCH",
@@ -237,33 +309,39 @@ export default function TimetableMasterManagement() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${authToken}`,
         },
-        body: JSON.stringify({
-          class_coordinator_id: coordinatorData.class_coordinator_id || null,
-          asst_coordinator_id: coordinatorData.asst_coordinator_id || null,
-          timetable_incharge_id: coordinatorData.timetable_incharge_id || null,
-          hod_id: coordinatorData.hod_id || null,
-        }),
+        body: JSON.stringify(updatePayload),
       });
 
+      const responseData = await response.json();
+
       if (response.ok) {
-        const updatedTimetable = await response.json();
+        const updatedTimetable = responseData.data;
+        console.log('[COORDINATOR UPDATE] Success:', updatedTimetable);
+        
         setTimetables((prev) =>
-          prev.map((t) => (t.id === selectedTimetable.id ? updatedTimetable.data : t))
+          prev.map((t) => (t.id === selectedTimetable.id ? updatedTimetable : t))
         );
-        setSelectedTimetable(updatedTimetable.data);
+        setSelectedTimetable(updatedTimetable);
         setIsCoordinatorDialogOpen(false);
+        setCoordinatorError(null);
+        
         toast({
-          title: "Success",
-          description: "Coordinator assignments updated",
+          title: "✅ Success",
+          description: "Coordinator assignments updated successfully. Faculty will see new roles in their dashboard.",
         });
       } else {
-        throw new Error("Failed to update coordinators");
+        console.error('[COORDINATOR UPDATE] Error:', responseData);
+        const errorMsg = responseData.error || responseData.message || "Failed to update coordinators";
+        setCoordinatorError(errorMsg);
+        throw new Error(errorMsg);
       }
     } catch (error) {
       console.error("Error updating coordinators:", error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to update coordinators";
+      setCoordinatorError(errorMessage);
       toast({
-        title: "Error",
-        description: "Failed to update coordinators",
+        title: "❌ Error",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -366,6 +444,47 @@ export default function TimetableMasterManagement() {
     }
   };
 
+  const handleDelete = async (timetableId: number) => {
+    try {
+      // Confirm deletion
+      const confirmed = window.confirm(
+        "Are you sure you want to delete this timetable? This action cannot be undone."
+      );
+      if (!confirmed) return;
+
+      setLoading(true);
+
+      const response = await fetch(`/api/v1/timetable-master/${timetableId}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+
+      if (response.ok) {
+        setTimetables((prev) => prev.filter((t) => t.id !== timetableId));
+        toast({
+          title: "✅ Success",
+          description: "Timetable deleted successfully",
+        });
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to delete timetable");
+      }
+    } catch (error) {
+      console.error("Error deleting timetable:", error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to delete timetable";
+      toast({
+        title: "❌ Deletion Failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const openCoordinatorDialog = (timetable: TimetableMaster) => {
     setSelectedTimetable(timetable);
     setCoordinatorData({
@@ -379,6 +498,7 @@ export default function TimetableMasterManagement() {
 
   const statusStyles = {
     draft: "bg-yellow-100 text-yellow-800 border-yellow-200",
+    pending_approval: "bg-indigo-100 text-indigo-800 border-indigo-200",
     active: "bg-green-100 text-green-800 border-green-200",
     inactive: "bg-gray-100 text-gray-800 border-gray-200",
   };
@@ -618,7 +738,7 @@ export default function TimetableMasterManagement() {
                     Manage Slots
                   </Button>
 
-                  {((!timetable.status) || timetable.status?.toLowerCase?.() === "draft" || timetable.status?.toLowerCase?.() === "inactive") && (
+                  {((!timetable.status) || ["draft", "pending_approval", "inactive"].includes(timetable.status?.toLowerCase?.())) && (
                     <Button
                       size="sm"
                       className="bg-green-600 hover:bg-green-700"
@@ -641,6 +761,20 @@ export default function TimetableMasterManagement() {
                       Deactivate
                     </Button>
                   )}
+
+                  {timetable.status?.toLowerCase?.() === "draft" && (
+                    <>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => handleDelete(timetable.id)}
+                        disabled={loading}
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Delete
+                      </Button>
+                    </>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -649,12 +783,35 @@ export default function TimetableMasterManagement() {
       </motion.div>
 
       {/* Coordinator Assignment Dialog */}
-      <Dialog open={isCoordinatorDialogOpen} onOpenChange={setIsCoordinatorDialogOpen}>
+      <Dialog open={isCoordinatorDialogOpen} onOpenChange={(open) => {
+        setIsCoordinatorDialogOpen(open);
+        if (!open) setCoordinatorError(null);
+      }}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Assign Coordinators</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
+            {/* Error Alert */}
+            {coordinatorError && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex gap-3">
+                <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-medium text-red-900">Error</p>
+                  <p className="text-red-700 text-sm mt-1">{coordinatorError}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Info Alert */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex gap-3">
+              <AlertCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="font-medium text-blue-900">Note</p>
+                <p className="text-blue-700 text-sm mt-1">One faculty can have multiple coordinator roles in the same timetable</p>
+              </div>
+            </div>
+
             <div>
               <Label>Class Coordinator</Label>
               <Select value={coordinatorData.class_coordinator_id} onValueChange={(v) => setCoordinatorData({ ...coordinatorData, class_coordinator_id: v })}>
@@ -720,10 +877,20 @@ export default function TimetableMasterManagement() {
             </div>
 
             <div className="flex gap-2 pt-4">
-              <Button onClick={handleUpdateCoordinators} disabled={loading}>
-                Save Changes
+              <Button 
+                onClick={handleUpdateCoordinators} 
+                disabled={loading}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                {loading ? "Updating..." : "Save Changes"}
               </Button>
-              <Button variant="outline" onClick={() => setIsCoordinatorDialogOpen(false)}>
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setIsCoordinatorDialogOpen(false);
+                  setCoordinatorError(null);
+                }}
+              >
                 Cancel
               </Button>
             </div>

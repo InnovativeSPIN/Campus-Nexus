@@ -24,6 +24,8 @@ import {
   Clock,
   Zap,
   CheckSquare,
+  Menu,
+  X,
 } from "lucide-react";
 import { cn } from "@/pages/admin/department-admin/lib/utils";
 
@@ -36,7 +38,6 @@ const menuItems = [
   { title: "Timetable Master", url: "/admin/department-admin/timetable-master", icon: CalendarDays },
   { title: "Attendance", url: "/admin/department-admin/attendance", icon: ClipboardCheck },
   { title: "Academics", url: "/admin/department-admin/academics", icon: BookOpen },
-  { title: "Course File Approvals", url: "/admin/department-admin/approvals", icon: ClipboardCheck },
   { title: "Course Plan Approvals", url: "/admin/department-admin/course-plan-approvals", icon: CheckSquare },
   { title: "Leave Management", url: "/admin/department-admin/leave", icon: CalendarDays },
   { title: "Leave & Alteration", url: "/admin/department-admin/leave-with-alteration", icon: Clock },
@@ -48,8 +49,19 @@ const menuItems = [
   { title: "Change Password", url: "/admin/department-admin/change-password", icon: Lock },
 ];
 
-export function AppSidebar() {
-  const [collapsed, setCollapsed] = useState(false);
+interface AppSidebarProps {
+  collapsed?: boolean;
+  setCollapsed?: (collapsed: boolean) => void;
+  isMobileMenuOpen?: boolean;
+  setIsMobileMenuOpen?: (open: boolean) => void;
+}
+
+export function AppSidebar({ 
+  collapsed = false, 
+  setCollapsed, 
+  isMobileMenuOpen = false, 
+  setIsMobileMenuOpen 
+}: AppSidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { logout, user } = useAuth();
@@ -68,10 +80,15 @@ export function AppSidebar() {
       initial={false}
       animate={{ width: collapsed ? 80 : 280 }}
       transition={{ duration: 0.3, ease: "easeInOut" }}
-      className="fixed left-0 top-0 h-screen bg-sidebar z-50 flex flex-col shadow-xl"
+      className={cn(
+        "fixed left-0 top-0 h-screen bg-sidebar z-[100] lg:z-50 flex flex-col shadow-2xl transition-transform duration-300",
+        // Mobile hidden/visible
+        "max-lg:-translate-x-full lg:translate-x-0",
+        isMobileMenuOpen && "max-lg:translate-x-0"
+      )}
     >
       {/* Logo Section */}
-      <div className="p-4 border-b border-sidebar-border">
+      <div className="p-4 border-b border-sidebar-border flex items-center justify-between">
         <div className="flex items-center gap-3">
           <AnimatePresence>
             {!collapsed && (
@@ -116,6 +133,15 @@ export function AppSidebar() {
             )}
           </AnimatePresence>
         </div>
+        {/* Mobile Close Button */}
+        {isMobileMenuOpen && (
+          <button 
+            onClick={() => setIsMobileMenuOpen?.(false)}
+            className="lg:hidden p-2 text-white/70 hover:text-white transition-colors"
+          >
+            <X className="w-6 h-6" />
+          </button>
+        )}
       </div>
 
       {/* Navigation */}
@@ -132,6 +158,7 @@ export function AppSidebar() {
               >
                 <NavLink
                   to={item.url}
+                  onClick={() => setIsMobileMenuOpen?.(false)}
                   className={cn(
                     "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group",
                     isActive
@@ -185,21 +212,22 @@ export function AppSidebar() {
             )}
           </AnimatePresence>
         </button>
-
-        {/* Collapse Toggle */}
-        <button
-          onClick={() => setCollapsed(!collapsed)}
-          className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-sidebar-accent/50 text-white hover:bg-sidebar-accent transition-colors"
-        >
-          {collapsed ? (
-            <ChevronRight className="w-5 h-5" />
-          ) : (
-            <>
-              <ChevronLeft className="w-5 h-5" />
-              <span className="text-sm font-medium">Collapse</span>
-            </>
-          )}
-        </button>
+        {/* Collapse Toggle - Hide on Mobile */}
+        <div className="hidden lg:block">
+          <button
+            onClick={() => setCollapsed?.(!collapsed)}
+            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-sidebar-accent/50 text-white hover:bg-sidebar-accent transition-colors"
+          >
+            {collapsed ? (
+              <ChevronRight className="w-5 h-5" />
+            ) : (
+              <>
+                <ChevronLeft className="w-5 h-5" />
+                <span className="text-sm font-medium">Collapse</span>
+              </>
+            )}
+          </button>
+        </div>
       </div>
     </motion.aside>
   );

@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
 import PageHeader from '@/pages/student/components/layout/PageHeader';
-import SectionCard from '@/pages/student/components/common/SectionCard';
 import ProfileNavBar from '@/pages/student/components/layout/ProfileNavBar';
-import { User, Phone, Briefcase, Users, Edit, Mail, Heart, Shield, GraduationCap, DollarSign } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/pages/student/components/ui/dialog';
+import { User, Phone, Users, Edit, Mail, Heart, Shield, X, Plus } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/pages/student/components/ui/dialog';
 import { useToast } from '@/pages/student/hooks/use-toast';
 import { getMyProfile, updateMyProfile } from '@/pages/student/services/studentApi';
 import { Loader2 } from 'lucide-react';
@@ -31,14 +30,20 @@ interface SiblingDetails {
   phone: string;
 }
 
+type FamilyMemberType = 'father' | 'mother' | 'guardian';
+
 export default function ParentInfo() {
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [showDialog, setShowDialog] = useState(false);
-  const [editingParent, setEditingParent] = useState<'father' | 'mother' | 'guardian' | null>(null);
-  const [editingSiblingIndex, setEditingSiblingIndex] = useState<number | null>(null);
+  const [showForm, setShowForm] = useState(false);
+  const [showSiblingDialog, setShowSiblingDialog] = useState(false);
+  const [selectedType, setSelectedType] = useState<FamilyMemberType>('father');
+  const [editingGuardianIndex, setEditingGuardianIndex] = useState<number | null>(null);
   const [siblings, setSiblings] = useState<SiblingDetails[]>([]);
+  const [siblingCount, setSiblingCount] = useState(0);
+  const [guardians, setGuardians] = useState<GuardianDetails[]>([]);
+  
   const [formData, setFormData] = useState({
     father: {
       name: '',
@@ -56,14 +61,9 @@ export default function ParentInfo() {
       qualification: '',
       annualIncome: '',
     } as ParentDetails,
-    guardian: {
-      name: '',
-      relation: '',
-      phone: '',
-      address: '',
-    } as GuardianDetails,
   });
-  const [dialogFormData, setDialogFormData] = useState({
+
+  const [formValues, setFormValues] = useState({
     name: '',
     occupation: '',
     phone: '',
@@ -72,18 +72,35 @@ export default function ParentInfo() {
     annualIncome: '',
     relation: '',
     address: '',
-    age: '',
-    education: '',
   });
 
   const fetchParentInfo = async () => {
     try {
       setLoading(true);
       const res = await getMyProfile() as any;
+      console.log('Fetched profile from DB:', res);
+      
       if (res.success && res.data?.bio) {
         const bio = res.data.bio;
+        console.log('Bio data from DB:', bio);
+        console.log('parentInfo from DB:', bio.parentInfo);
+        
         if (bio.parentInfo) {
-          const pi = bio.parentInfo;
+          let pi = bio.parentInfo;
+          
+          // Handle case where parentInfo might be a JSON string
+          if (typeof pi === 'string') {
+            try {
+              pi = JSON.parse(pi);
+            } catch (e) {
+              console.error('Failed to parse parentInfo JSON:', e);
+              pi = {};
+            }
+          }
+          
+          console.log('Parsed parentInfo:', pi);
+          
+          // Set parent data
           setFormData({
             father: {
               name: pi.father?.name || '',
@@ -101,20 +118,32 @@ export default function ParentInfo() {
               qualification: pi.mother?.qualification || '',
               annualIncome: pi.mother?.annualIncome || '',
             },
-            guardian: {
-              name: pi.guardian?.name || '',
-              relation: pi.guardian?.relation || '',
-              phone: pi.guardian?.phone || '',
-              address: pi.guardian?.address || '',
-            },
           });
-          if (pi.siblings) {
+          
+          // Set guardians - handle different scenarios
+          if (Array.isArray(pi.guardians) && pi.guardians.length > 0) {
+            console.log('Setting guardians from array:', pi.guardians);
+            setGuardians(pi.guardians);
+          } else if (pi.guardian && typeof pi.guardian === 'object') {
+            console.log('Setting guardians from single object:', pi.guardian);
+            setGuardians([pi.guardian]);
+          } else {
+            console.log('No guardians found');
+            setGuardians([]);
+          }
+          
+          // Set siblings
+          if (Array.isArray(pi.siblings) && pi.siblings.length > 0) {
+            console.log('Setting siblings:', pi.siblings);
             setSiblings(pi.siblings);
+          } else {
+            console.log('No siblings found');
+            setSiblings([]);
           }
         }
       }
     } catch (error) {
-      console.error('Failed to fetch parent info', error);
+      console.error('Failed to fetch parent info from DB:', error);
     } finally {
       setLoading(false);
     }
@@ -124,12 +153,41 @@ export default function ParentInfo() {
     fetchParentInfo();
   }, []);
 
-  const handleEditClick = (parent: 'father' | 'mother' | 'guardian') => {
-    setEditingParent(parent);
-    setEditingSiblingIndex(null);
-    if (parent === 'father' || parent === 'mother') {
-      const data = formData[parent];
-      setDialogFormData({
+  const resetFormValues = () => {
+    setFormValues({
+      name: '',
+      occupation: '',
+      phone: '',
+      email: '',
+      qualification: '',
+      annualIncome: '',
+      relation: '',
+      address: '',
+    });
+  };
+
+  const populateFormValues = (type: FamilyMemberType, guardianIndex?: number) => {
+    setSelectedType(type);
+    setEditingGuardianIndex(guardianIndex ?? null);
+    setShowForm(true);
+    
+    if (type === 'guardian' && guardianIndex !== undefined) {
+      const guardian = guardians[guardianIndex];
+      setFormValues({
+        name: guardian.name,
+        occupation: '',
+        phone: guardian.phone,
+        email: '',
+        qualification: '',
+        annualIncome: '',
+        relation: guardian.relation,
+        address: guardian.address,
+      });
+    } else if (type === 'guardian') {
+      resetFormValues();
+    } else {
+      const data = formData[type];
+      setFormValues({
         name: data.name,
         occupation: data.occupation,
         phone: data.phone,
@@ -138,110 +196,88 @@ export default function ParentInfo() {
         annualIncome: data.annualIncome,
         relation: '',
         address: '',
-        age: '',
-        education: '',
-      });
-    } else {
-      setDialogFormData({
-        name: formData.guardian.name,
-        occupation: '',
-        phone: formData.guardian.phone,
-        email: '',
-        qualification: '',
-        annualIncome: '',
-        relation: formData.guardian.relation,
-        address: formData.guardian.address,
-        age: '',
-        education: '',
       });
     }
-    setShowDialog(true);
   };
 
-  const handleEditSiblingClick = (index: number) => {
-    setEditingSiblingIndex(index);
-    setEditingParent(null);
-    setDialogFormData({
-      name: siblings[index].name,
-      occupation: '',
-      phone: siblings[index].phone,
-      email: '',
-      qualification: '',
-      annualIncome: '',
-      relation: '',
-      address: '',
-      age: siblings[index].age.toString(),
-      education: siblings[index].education,
-    });
-    setShowDialog(true);
-  };
+  const handleSaveForm = async () => {
+    if (!formValues.name.trim()) {
+      toast({
+        title: 'Validation Error',
+        description: 'Name is required',
+        variant: 'destructive'
+      });
+      return;
+    }
 
-  const handleSaveDialog = async () => {
     setIsSaving(true);
     let updatedFormData = { ...formData };
-    let updatedSiblings = [...siblings];
-
-    if (editingSiblingIndex !== null) {
-      updatedSiblings[editingSiblingIndex] = {
-        ...updatedSiblings[editingSiblingIndex],
-        name: dialogFormData.name,
-        phone: dialogFormData.phone,
-        age: parseInt(dialogFormData.age) || updatedSiblings[editingSiblingIndex].age,
-        education: dialogFormData.education,
-      };
-    } else if (editingParent === 'father' || editingParent === 'mother') {
-      updatedFormData[editingParent] = {
-        ...updatedFormData[editingParent],
-        name: dialogFormData.name,
-        occupation: dialogFormData.occupation,
-        phone: dialogFormData.phone,
-        email: dialogFormData.email,
-        qualification: dialogFormData.qualification,
-        annualIncome: dialogFormData.annualIncome,
-      };
-    } else if (editingParent === 'guardian') {
-      updatedFormData.guardian = {
-        ...updatedFormData.guardian,
-        name: dialogFormData.name,
-        phone: dialogFormData.phone,
-        relation: dialogFormData.relation,
-        address: dialogFormData.address,
-      };
-    }
+    let updatedGuardians = [...guardians];
 
     try {
+      if (selectedType === 'guardian') {
+        if (editingGuardianIndex !== null) {
+          updatedGuardians[editingGuardianIndex] = {
+            name: formValues.name,
+            relation: formValues.relation,
+            phone: formValues.phone,
+            address: formValues.address,
+          };
+        } else {
+          updatedGuardians.push({
+            name: formValues.name,
+            relation: formValues.relation,
+            phone: formValues.phone,
+            address: formValues.address,
+          });
+        }
+      } else {
+        updatedFormData[selectedType] = {
+          ...updatedFormData[selectedType],
+          name: formValues.name,
+          occupation: formValues.occupation,
+          phone: formValues.phone,
+          email: formValues.email,
+          qualification: formValues.qualification,
+          annualIncome: formValues.annualIncome,
+        };
+      }
+
       const parentInfoToSave = {
         ...updatedFormData,
-        siblings: updatedSiblings
+        guardians: updatedGuardians,
+        siblings: siblings
       };
 
-      await updateMyProfile({ parentInfo: parentInfoToSave });
+      console.log('Saving to database:', parentInfoToSave);
+      
+      // Save to database
+      const response = await updateMyProfile({ parentInfo: parentInfoToSave });
+      console.log('Database response:', response);
 
-      setFormData(updatedFormData);
-      setSiblings(updatedSiblings);
       toast({
         title: 'Saved Successfully',
-        description: 'Your parent information has been updated.',
+        description: `${selectedType.charAt(0).toUpperCase() + selectedType.slice(1)} information has been saved to database.`,
       });
+      
+      // Close form immediately
+      resetFormValues();
+      setShowForm(false);
+      
+      // Refresh profile from database to load all updated data
+      console.log('Fetching updated data from database...');
+      await fetchParentInfo();
+      console.log('Data refreshed from database');
     } catch (error) {
-      console.error('Failed to save parent info', error);
+      console.error('Database save error:', error);
       toast({
         title: 'Error',
-        description: 'Failed to save changes. Please try again.',
+        description: error instanceof Error ? error.message : 'Failed to save changes. Please try again.',
         variant: 'destructive'
       });
     } finally {
       setIsSaving(false);
-      setShowDialog(false);
-      setEditingParent(null);
-      setEditingSiblingIndex(null);
     }
-  };
-
-  const handleCancelDialog = () => {
-    setShowDialog(false);
-    setEditingParent(null);
-    setEditingSiblingIndex(null);
   };
 
   if (loading) return (
@@ -250,362 +286,708 @@ export default function ParentInfo() {
     </div>
   );
 
+  // Calculate if there's any family data
+  const hasParentData = formData.father.name || formData.mother.name;
+  const hasGuardianData = guardians.filter(g => g.name && g.name.trim()).length > 0;
+  const hasFamilyData = hasParentData || hasGuardianData;
+
   return (
     <div className="animate-fade-in w-full max-w-5xl mx-auto space-y-8 pb-12">
-      <PageHeader
-        title="Parent Information"
-        subtitle="Manage family and guardian records"
-        breadcrumbs={[
-          { label: 'Profile', path: '/student/profile/personal' },
-          { label: 'Parent Info' },
-        ]}
-      />
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <PageHeader
+            title="Family Information"
+            subtitle="Manage your parents, guardians and siblings details"
+            breadcrumbs={[
+              { label: 'Profile', path: '/student/profile/personal' },
+              { label: 'Family Info' },
+            ]}
+          />
+        </div>
+        
+        {/* EDIT BUTTON - Show only when there's data */}
+        {hasFamilyData && !showForm && (
+          <button
+            onClick={() => {
+              setSelectedType('father');
+              resetFormValues();
+              setShowForm(true);
+            }}
+            className="mt-2 px-3 py-2 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-all text-sm font-semibold flex items-center gap-2 flex-shrink-0"
+          >
+            <Edit className="w-4 h-4" /> Edit Family Info
+          </button>
+        )}
+      </div>
 
       <ProfileNavBar />
 
-      <div className="grid gap-8">
-
-        <div className="grid gap-8 md:grid-cols-2">
-          {/* Father Section */}
-          <SectionCard
-            title="Father's Details"
-            icon={Heart}
-            className="shadow-xl"
-            actions={
-              <button
-                onClick={() => handleEditClick('father')}
-                className="p-2.5 rounded-xl bg-primary/5 text-primary hover:bg-primary/10 transition-all border border-primary/10"
-              >
-                <Edit className="w-4 h-4" />
-              </button>
-            }
-          >
-            <div className="space-y-6">
-              <div className="flex items-center gap-4 p-4 rounded-xl bg-muted/30 border border-border/50">
-                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                  <User className="w-6 h-6 text-primary" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-foreground">{formData.father.name}</h3>
-                  <p className="text-sm text-muted-foreground font-medium flex items-center gap-1.5">
-                    <Briefcase className="w-3.5 h-3.5" /> {formData.father.occupation}
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-6">
-                <div>
-                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest block mb-1">Phone</label>
-                  <div className="flex items-center gap-2 text-foreground font-semibold">
-                    <Phone className="w-4 h-4 text-primary" />
-                    {formData.father.phone}
-                  </div>
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest block mb-1">Qualification</label>
-                  <div className="flex items-center gap-2 text-foreground font-semibold">
-                    <GraduationCap className="w-4 h-4 text-primary" />
-                    {formData.father.qualification}
-                  </div>
-                </div>
-                <div className="col-span-2">
-                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest block mb-1">Email Address</label>
-                  <div className="flex items-center gap-2 text-foreground font-semibold truncate">
-                    <Mail className="w-4 h-4 text-primary" />
-                    {formData.father.email}
-                  </div>
-                </div>
-                <div className="col-span-2">
-                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest block mb-1">Annual Income</label>
-                  <div className="flex items-center gap-2 text-primary font-bold text-lg">
-                    <DollarSign className="w-5 h-5" />
-                    {formData.father.annualIncome}
-                  </div>
-                </div>
-              </div>
+      {showForm ? (
+        <div className="bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900/50 dark:to-slate-900/30 rounded-2xl border border-border/50 p-8 space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-bold text-foreground mb-2">Add / Edit Family Member</h2>
+              <p className="text-muted-foreground">Select a family member type and fill in their details</p>
             </div>
-          </SectionCard>
+            <button
+              onClick={() => {
+                setShowForm(false);
+                resetFormValues();
+              }}
+              className="p-2 text-muted-foreground hover:bg-muted rounded-lg transition-all"
+              title="Close form"
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
 
-          {/* Mother Section */}
-          <SectionCard
-            title="Mother's Details"
-            icon={Heart}
-            className="shadow-xl"
-            actions={
+          {/* Type Selector */}
+          <div className="grid grid-cols-3 gap-4">
+            {[
+              { type: 'father' as FamilyMemberType, label: '👨 Father', color: 'blue' },
+              { type: 'mother' as FamilyMemberType, label: '👩 Mother', color: 'pink' },
+              { type: 'guardian' as FamilyMemberType, label: '🛡️ Guardian', color: 'amber' },
+            ].map(({ type, label, color }) => (
               <button
-                onClick={() => handleEditClick('mother')}
-                className="p-2.5 rounded-xl bg-secondary/5 text-secondary hover:bg-secondary/10 transition-all border border-secondary/10"
+                key={type}
+                onClick={() => populateFormValues(type)}
+                className={`p-4 rounded-xl border-2 transition-all font-semibold ${
+                  selectedType === type
+                    ? color === 'blue'
+                      ? 'bg-blue-50 dark:bg-blue-950/30 border-blue-300 dark:border-blue-700 shadow-lg'
+                      : color === 'pink'
+                      ? 'bg-pink-50 dark:bg-pink-950/30 border-pink-300 dark:border-pink-700 shadow-lg'
+                      : 'bg-amber-50 dark:bg-amber-950/30 border-amber-300 dark:border-amber-700 shadow-lg'
+                    : 'bg-white/50 dark:bg-slate-800/50 border-border/30 hover:border-border/60'
+                }`}
               >
-                <Edit className="w-4 h-4" />
+                {label}
               </button>
-            }
-          >
-            <div className="space-y-6">
-              <div className="flex items-center gap-4 p-4 rounded-xl bg-muted/30 border border-border/50">
-                <div className="w-12 h-12 rounded-full bg-secondary/10 flex items-center justify-center">
-                  <User className="w-6 h-6 text-secondary" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-foreground">{formData.mother.name}</h3>
-                  <p className="text-sm text-muted-foreground font-medium flex items-center gap-1.5">
-                    <Briefcase className="w-3.5 h-3.5" /> {formData.mother.occupation}
-                  </p>
-                </div>
-              </div>
+            ))}
+          </div>
 
-              <div className="grid grid-cols-2 gap-6">
-                <div>
-                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest block mb-1">Phone</label>
-                  <div className="flex items-center gap-2 text-foreground font-semibold">
-                    <Phone className="w-4 h-4 text-secondary" />
-                    {formData.mother.phone}
-                  </div>
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest block mb-1">Qualification</label>
-                  <div className="flex items-center gap-2 text-foreground font-semibold">
-                    <GraduationCap className="w-4 h-4 text-secondary" />
-                    {formData.mother.qualification}
-                  </div>
-                </div>
-                <div className="col-span-2">
-                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest block mb-1">Email Address</label>
-                  <div className="flex items-center gap-2 text-foreground font-semibold truncate">
-                    <Mail className="w-4 h-4 text-secondary" />
-                    {formData.mother.email}
-                  </div>
-                </div>
-                <div className="col-span-2">
-                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest block mb-1">Annual Income</label>
-                  <div className="flex items-center gap-2 text-secondary font-bold text-lg">
-                    <DollarSign className="w-5 h-5" />
-                    {formData.mother.annualIncome}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </SectionCard>
-
-          {/* Local Guardian Section */}
-          <SectionCard
-            title="Local Guardian"
-            subtitle="Alternative contact person"
-            icon={Shield}
-            className="shadow-xl"
-            actions={
-              <button
-                onClick={() => handleEditClick('guardian')}
-                className="p-2.5 rounded-xl bg-accent/5 text-accent hover:bg-accent/10 transition-all border border-accent/10"
-              >
-                <Edit className="w-4 h-4" />
-              </button>
-            }
-          >
-            <div className="grid gap-6">
-              <div className="grid grid-cols-2 gap-6">
-                <div>
-                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest block mb-1">Name</label>
-                  <p className="font-bold text-foreground">{formData.guardian.name}</p>
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest block mb-1">Relation</label>
-                  <p className="font-bold text-accent">{formData.guardian.relation}</p>
-                </div>
-                <div className="col-span-2">
-                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest block mb-1">Phone</label>
-                  <div className="flex items-center gap-2 text-foreground font-semibold">
-                    <Phone className="w-4 h-4 text-accent" />
-                    {formData.guardian.phone}
-                  </div>
-                </div>
-              </div>
-              <div className="p-4 rounded-xl bg-accent/5 border border-accent/10">
-                <label className="text-xs font-bold text-accent uppercase tracking-widest block mb-1">Address</label>
-                <p className="text-sm font-medium leading-relaxed">{formData.guardian.address}</p>
-              </div>
-            </div>
-          </SectionCard>
-
-          {/* Siblings Section */}
-          <SectionCard
-            title="Siblings"
-            icon={Users}
-            className="shadow-xl"
-          >
-            <div className="space-y-4">
-              {siblings.map((sibling, index) => (
-                <div key={index} className="group relative p-4 rounded-xl border border-border/50 bg-muted/10 hover:bg-muted/20 hover:shadow-md transition-all">
-                  <div className="flex justify-between items-start mb-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500">
-                        <User className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <h4 className="font-bold text-foreground">{sibling.name}</h4>
-                        <p className="text-xs text-muted-foreground font-medium">Age: {sibling.age} • {sibling.education}</p>
-                      </div>
+          {/* PARENT DATA PREVIEW - Show when editing guardian */}
+          {selectedType === 'guardian' && (
+            <div className="bg-white dark:bg-slate-800 rounded-xl border border-border/30 p-6 space-y-4">
+              <h3 className="font-bold text-foreground text-sm uppercase tracking-wide">Family Context</h3>
+              <div className="grid grid-cols-2 gap-4">
+                {/* Father Preview */}
+                <div className={`p-4 rounded-lg border-l-4 ${
+                  formData.father.name 
+                    ? 'bg-blue-50/50 dark:bg-blue-950/20 border-l-blue-500'
+                    : 'bg-slate-50/50 dark:bg-slate-900/20 border-l-slate-300'
+                }`}>
+                  <p className="text-xs font-bold text-muted-foreground uppercase mb-2">Father</p>
+                  {formData.father.name ? (
+                    <div className="space-y-1 text-xs">
+                      <p className="font-semibold text-foreground">{formData.father.name}</p>
+                      <p className="text-muted-foreground">{formData.father.phone || '—'}</p>
                     </div>
-                    <button
-                      onClick={() => handleEditSiblingClick(index)}
-                      className="p-2 rounded-lg text-muted-foreground hover:bg-card transition-colors"
-                    >
-                      <Edit className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-foreground/80 font-medium">
-                    <Phone className="w-3.5 h-3.5 text-blue-500" />
-                    {sibling.phone}
-                  </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">Not added</p>
+                  )}
                 </div>
-              ))}
+
+                {/* Mother Preview */}
+                <div className={`p-4 rounded-lg border-l-4 ${
+                  formData.mother.name 
+                    ? 'bg-pink-50/50 dark:bg-pink-950/20 border-l-pink-500'
+                    : 'bg-slate-50/50 dark:bg-slate-900/20 border-l-slate-300'
+                }`}>
+                  <p className="text-xs font-bold text-muted-foreground uppercase mb-2">Mother</p>
+                  {formData.mother.name ? (
+                    <div className="space-y-1 text-xs">
+                      <p className="font-semibold text-foreground">{formData.mother.name}</p>
+                      <p className="text-muted-foreground">{formData.mother.phone || '—'}</p>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">Not added</p>
+                  )}
+                </div>
+              </div>
             </div>
-          </SectionCard>
-        </div>
-      </div>
+          )}
 
-      <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className="max-w-md rounded-2xl border-0 shadow-2xl">
-          <DialogHeader className="pb-4 border-b border-border">
-            <DialogTitle className="text-2xl font-bold text-foreground tracking-tight">
-              {editingSiblingIndex !== null ? 'Update Sibling Info' : `Update ${(editingParent || 'Parent').charAt(0).toUpperCase() + (editingParent || 'Parent').slice(1)}'s Info`}
-            </DialogTitle>
-            <DialogDescription className="text-muted-foreground font-medium">
-              Update your family information.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="grid gap-5 py-6">
+          {/* Master Form */}
+          <div className="bg-white dark:bg-slate-800 rounded-xl border border-border/30 p-6 space-y-5">
             <div className="space-y-2">
-              <label className="text-sm font-bold text-foreground ml-1">Full Name</label>
+              <label className="text-sm font-bold text-foreground block">Full Name *</label>
               <input
                 type="text"
-                value={dialogFormData.name}
-                onChange={(e) => setDialogFormData({ ...dialogFormData, name: e.target.value })}
-                className="w-full px-4 py-3 rounded-xl bg-muted/50 border border-border focus:ring-2 focus:ring-primary/20 transition-all outline-none"
+                value={formValues.name}
+                onChange={(e) => setFormValues({ ...formValues, name: e.target.value })}
+                placeholder="Enter full name"
+                className="w-full px-4 py-3 rounded-lg bg-muted/50 border border-border focus:ring-2 focus:ring-primary/20 transition-all outline-none"
               />
             </div>
 
-            {(editingParent === 'father' || editingParent === 'mother') && (
-              <div className="grid grid-cols-2 gap-5">
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-foreground ml-1">Occupation</label>
-                  <input
-                    type="text"
-                    value={dialogFormData.occupation}
-                    onChange={(e) => setDialogFormData({ ...dialogFormData, occupation: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl bg-muted/50 border border-border focus:ring-2 focus:ring-primary/20 transition-all outline-none"
-                  />
+            {/* Parent Fields */}
+            {(selectedType === 'father' || selectedType === 'mother') && (
+              <>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-bold text-foreground block">Occupation</label>
+                    <input
+                      type="text"
+                      value={formValues.occupation}
+                      onChange={(e) => setFormValues({ ...formValues, occupation: e.target.value })}
+                      placeholder="e.g., Engineer, Doctor"
+                      className="w-full px-4 py-3 rounded-lg bg-muted/50 border border-border focus:ring-2 focus:ring-primary/20 transition-all outline-none"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-bold text-foreground block">Phone</label>
+                    <input
+                      type="text"
+                      value={formValues.phone}
+                      onChange={(e) => setFormValues({ ...formValues, phone: e.target.value })}
+                      placeholder="Phone number"
+                      className="w-full px-4 py-3 rounded-lg bg-muted/50 border border-border focus:ring-2 focus:ring-primary/20 transition-all outline-none"
+                    />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-foreground ml-1">Phone</label>
-                  <input
-                    type="text"
-                    value={dialogFormData.phone}
-                    onChange={(e) => setDialogFormData({ ...dialogFormData, phone: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl bg-muted/50 border border-border focus:ring-2 focus:ring-primary/20 transition-all outline-none"
-                  />
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-bold text-foreground block">Qualification</label>
+                    <input
+                      type="text"
+                      value={formValues.qualification}
+                      onChange={(e) => setFormValues({ ...formValues, qualification: e.target.value })}
+                      placeholder="e.g., B.Tech, MBA"
+                      className="w-full px-4 py-3 rounded-lg bg-muted/50 border border-border focus:ring-2 focus:ring-primary/20 transition-all outline-none"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-bold text-foreground block">Annual Income</label>
+                    <input
+                      type="text"
+                      value={formValues.annualIncome}
+                      onChange={(e) => setFormValues({ ...formValues, annualIncome: e.target.value })}
+                      placeholder="e.g., 5,00,000"
+                      className="w-full px-4 py-3 rounded-lg bg-muted/50 border border-border focus:ring-2 focus:ring-primary/20 transition-all outline-none"
+                    />
+                  </div>
                 </div>
+
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-foreground ml-1">Qualification</label>
-                  <input
-                    type="text"
-                    value={dialogFormData.qualification}
-                    onChange={(e) => setDialogFormData({ ...dialogFormData, qualification: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl bg-muted/50 border border-border focus:ring-2 focus:ring-primary/20 transition-all outline-none"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-foreground ml-1">Annual Income</label>
-                  <input
-                    type="text"
-                    value={dialogFormData.annualIncome}
-                    onChange={(e) => setDialogFormData({ ...dialogFormData, annualIncome: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl bg-muted/50 border border-border focus:ring-2 focus:ring-primary/20 transition-all outline-none"
-                  />
-                </div>
-                <div className="col-span-2 space-y-2">
-                  <label className="text-sm font-bold text-foreground ml-1">Email Address</label>
+                  <label className="text-sm font-bold text-foreground block">Email Address</label>
                   <input
                     type="email"
-                    value={dialogFormData.email}
-                    onChange={(e) => setDialogFormData({ ...dialogFormData, email: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl bg-muted/50 border border-border focus:ring-2 focus:ring-primary/20 transition-all outline-none"
-                  />
-                </div>
-              </div>
-            )}
-
-            {editingParent === 'guardian' && (
-              <>
-                <div className="grid grid-cols-2 gap-5">
-                  <div className="space-y-2">
-                    <label className="text-sm font-bold text-foreground ml-1">Relation</label>
-                    <input
-                      type="text"
-                      value={dialogFormData.relation}
-                      onChange={(e) => setDialogFormData({ ...dialogFormData, relation: e.target.value })}
-                      className="w-full px-4 py-3 rounded-xl bg-muted/50 border border-border focus:ring-2 focus:ring-primary/20 transition-all outline-none"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-bold text-foreground ml-1">Phone</label>
-                    <input
-                      type="text"
-                      value={dialogFormData.phone}
-                      onChange={(e) => setDialogFormData({ ...dialogFormData, phone: e.target.value })}
-                      className="w-full px-4 py-3 rounded-xl bg-muted/50 border border-border focus:ring-2 focus:ring-primary/20 transition-all outline-none"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-foreground ml-1">Address</label>
-                  <textarea
-                    value={dialogFormData.address}
-                    onChange={(e) => setDialogFormData({ ...dialogFormData, address: e.target.value })}
-                    rows={3}
-                    className="w-full px-4 py-3 rounded-xl bg-muted/50 border border-border focus:ring-2 focus:ring-primary/20 transition-all outline-none resize-none"
+                    value={formValues.email}
+                    onChange={(e) => setFormValues({ ...formValues, email: e.target.value })}
+                    placeholder="email@example.com"
+                    className="w-full px-4 py-3 rounded-lg bg-muted/50 border border-border focus:ring-2 focus:ring-primary/20 transition-all outline-none"
                   />
                 </div>
               </>
             )}
 
-            {editingSiblingIndex !== null && (
-              <div className="grid grid-cols-2 gap-5">
+            {/* Guardian Fields */}
+            {selectedType === 'guardian' && (
+              <>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-bold text-foreground block">Relation</label>
+                    <input
+                      type="text"
+                      value={formValues.relation}
+                      onChange={(e) => setFormValues({ ...formValues, relation: e.target.value })}
+                      placeholder="e.g., Uncle, Aunt"
+                      className="w-full px-4 py-3 rounded-lg bg-muted/50 border border-border focus:ring-2 focus:ring-primary/20 transition-all outline-none"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-bold text-foreground block">Phone</label>
+                    <input
+                      type="text"
+                      value={formValues.phone}
+                      onChange={(e) => setFormValues({ ...formValues, phone: e.target.value })}
+                      placeholder="Phone number"
+                      className="w-full px-4 py-3 rounded-lg bg-muted/50 border border-border focus:ring-2 focus:ring-primary/20 transition-all outline-none"
+                    />
+                  </div>
+                </div>
+
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-foreground ml-1">Age</label>
-                  <input
-                    type="number"
-                    value={dialogFormData.age}
-                    onChange={(e) => setDialogFormData({ ...dialogFormData, age: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl bg-muted/50 border border-border focus:ring-2 focus:ring-primary/20 transition-all outline-none"
+                  <label className="text-sm font-bold text-foreground block">Address</label>
+                  <textarea
+                    value={formValues.address}
+                    onChange={(e) => setFormValues({ ...formValues, address: e.target.value })}
+                    placeholder="Full address"
+                    rows={3}
+                    className="w-full px-4 py-3 rounded-lg bg-muted/50 border border-border focus:ring-2 focus:ring-primary/20 transition-all outline-none resize-none"
                   />
                 </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-foreground ml-1">Education</label>
-                  <input
-                    type="text"
-                    value={dialogFormData.education}
-                    onChange={(e) => setDialogFormData({ ...dialogFormData, education: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl bg-muted/50 border border-border focus:ring-2 focus:ring-primary/20 transition-all outline-none"
-                  />
+              </>
+            )}
+
+            {/* Save Button */}
+            <button
+              onClick={handleSaveForm}
+              disabled={isSaving || !formValues.name}
+              className="w-full px-6 py-3 rounded-lg bg-primary text-primary-foreground font-bold hover:shadow-lg hover:shadow-primary/20 transition-all disabled:opacity-50"
+            >
+              {isSaving ? 'Saving...' : 'Save Details'}
+            </button>
+          </div>
+        </div>
+      ) : (
+        // Show this only when form is NOT visible AND there's NO data
+        !hasFamilyData ? (
+          <div className="bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900/50 dark:to-slate-900/30 rounded-2xl border border-border/50 p-12 flex flex-col items-center justify-center min-h-96 space-y-8">
+            <div className="text-center space-y-3">
+              <h2 className="text-3xl font-bold text-foreground">Add Family Member Details</h2>
+              <p className="text-muted-foreground max-w-md">Keep your family contact information up to date</p>
+            </div>
+            <button
+              onClick={() => {
+                setSelectedType('father');
+                resetFormValues();
+                setShowForm(true);
+              }}
+              className="px-6 py-3 rounded-lg bg-primary text-primary-foreground font-bold hover:shadow-lg hover:shadow-primary/20 transition-all text-base"
+            >
+              + Add Parent Info
+            </button>
+          </div>
+        ) : null
+      )}
+
+      {/* DISPLAY SECTION - Parents */}
+      {(formData.father.name || formData.mother.name) && (
+        <div className="space-y-4">
+          <h3 className="text-xl font-bold text-foreground">Parents Information</h3>
+          <div className="grid grid-cols-2 gap-6">
+            {/* Father Card - Only show if has data */}
+            {formData.father.name && (
+              <div className="bg-blue-50/50 dark:bg-blue-950/20 rounded-xl border-2 border-blue-200 dark:border-blue-800 p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-blue-600/20 flex items-center justify-center">
+                      <Heart className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <h4 className="font-bold text-foreground">Father</h4>
+                  </div>
+                  <div className="flex gap-2 flex-shrink-0">
+                    <button
+                      onClick={() => populateFormValues('father')}
+                      className="p-2 rounded-lg text-blue-600 hover:bg-blue-100/50 dark:hover:bg-blue-900/30 transition-all"
+                      title="Edit father"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={async () => {
+                        try {
+                          console.log('Deleting father information and saving to database');
+                          
+                          const response = await updateMyProfile({ 
+                            parentInfo: { 
+                              ...formData, 
+                              father: { name: '', occupation: '', phone: '', email: '', qualification: '', annualIncome: '' },
+                              guardians, 
+                              siblings 
+                            } 
+                          });
+                          console.log('Database delete response:', response);
+                          
+                          toast({
+                            title: 'Deleted',
+                            description: 'Father information removed from database.',
+                          });
+                          
+                          // Refresh data from database
+                          await fetchParentInfo();
+                        } catch (error) {
+                          console.error('Database delete error:', error);
+                          toast({
+                            title: 'Error',
+                            description: error instanceof Error ? error.message : 'Failed to delete.',
+                            variant: 'destructive'
+                          });
+                        }
+                      }}
+                      className="p-2 rounded-lg text-red-600 hover:bg-red-100/50 dark:hover:bg-red-900/30 transition-all"
+                      title="Delete father"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+                <div className="space-y-2 text-sm">
+                  <p><span className="font-semibold">Name:</span> {formData.father.name}</p>
+                  <p><span className="font-semibold">Email:</span> {formData.father.email || 'N/A'}</p>
+                  <p><span className="font-semibold">Phone:</span> {formData.father.phone || 'N/A'}</p>
+                  <p><span className="font-semibold">Occupation:</span> {formData.father.occupation || 'N/A'}</p>
+                  <p><span className="font-semibold">Qualification:</span> {formData.father.qualification || 'N/A'}</p>
+                  <p><span className="font-semibold">Annual Income:</span> {formData.father.annualIncome || 'N/A'}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Mother Card - Only show if has data */}
+            {formData.mother.name && (
+              <div className="bg-pink-50/50 dark:bg-pink-950/20 rounded-xl border-2 border-pink-200 dark:border-pink-800 p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-pink-600/20 flex items-center justify-center">
+                      <Heart className="w-5 h-5 text-pink-600" />
+                    </div>
+                    <h4 className="font-bold text-foreground">Mother</h4>
+                  </div>
+                  <div className="flex gap-2 flex-shrink-0">
+                    <button
+                      onClick={() => populateFormValues('mother')}
+                      className="p-2 rounded-lg text-pink-600 hover:bg-pink-100/50 dark:hover:bg-pink-900/30 transition-all"
+                      title="Edit mother"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={async () => {
+                        try {
+                          console.log('Deleting mother information and saving to database');
+                          
+                          const response = await updateMyProfile({ 
+                            parentInfo: { 
+                              ...formData, 
+                              mother: { name: '', occupation: '', phone: '', email: '', qualification: '', annualIncome: '' },
+                              guardians, 
+                              siblings 
+                            } 
+                          });
+                          console.log('Database delete response:', response);
+                          
+                          toast({
+                            title: 'Deleted',
+                            description: 'Mother information removed from database.',
+                          });
+                          
+                          // Refresh data from database
+                          await fetchParentInfo();
+                        } catch (error) {
+                          console.error('Database delete error:', error);
+                          toast({
+                            title: 'Error',
+                            description: error instanceof Error ? error.message : 'Failed to delete.',
+                            variant: 'destructive'
+                          });
+                        }
+                      }}
+                      className="p-2 rounded-lg text-red-600 hover:bg-red-100/50 dark:hover:bg-red-900/30 transition-all"
+                      title="Delete mother"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+                <div className="space-y-2 text-sm">
+                  <p><span className="font-semibold">Name:</span> {formData.mother.name}</p>
+                  <p><span className="font-semibold">Email:</span> {formData.mother.email || 'N/A'}</p>
+                  <p><span className="font-semibold">Phone:</span> {formData.mother.phone || 'N/A'}</p>
+                  <p><span className="font-semibold">Occupation:</span> {formData.mother.occupation || 'N/A'}</p>
+                  <p><span className="font-semibold">Qualification:</span> {formData.mother.qualification || 'N/A'}</p>
+                  <p><span className="font-semibold">Annual Income:</span> {formData.mother.annualIncome || 'N/A'}</p>
                 </div>
               </div>
             )}
           </div>
+        </div>
+      )}
 
-          <div className="flex gap-4 pt-4 border-t border-border">
+      {/* DISPLAY SECTION - Guardians */}
+      {guardians.filter(g => g.name && g.name.trim()).length > 0 && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xl font-bold text-foreground">Guardians Information</h3>
             <button
-              onClick={handleCancelDialog}
-              className="flex-1 px-4 py-3 rounded-xl border border-border font-bold text-foreground hover:bg-muted transition-all"
+              onClick={() => {
+                setSelectedType('guardian');
+                setEditingGuardianIndex(null);
+                populateFormValues('guardian');
+              }}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-600/10 text-amber-600 hover:bg-amber-600/20 transition-all font-semibold"
             >
-              Discard
+              <Plus className="w-4 h-4" /> Add Guardian
+            </button>
+          </div>
+
+          <div className="grid gap-4">
+            {guardians.filter(g => g.name && g.name.trim()).map((guardian, idx) => (
+              <div key={idx} className="bg-amber-50/50 dark:bg-amber-950/20 rounded-xl border border-amber-200 dark:border-amber-800 p-5">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <h4 className="font-bold text-foreground mb-1">{guardian.name}</h4>
+                    <div className="space-y-1 text-sm">
+                      {guardian.relation && <p className="text-muted-foreground"><span className="font-semibold">Relation:</span> {guardian.relation}</p>}
+                      {guardian.phone && <p className="text-muted-foreground"><span className="font-semibold">Phone:</span> {guardian.phone}</p>}
+                      {guardian.address && <p className="text-muted-foreground"><span className="font-semibold">Address:</span> {guardian.address}</p>}
+                    </div>
+                  </div>
+                  <div className="flex gap-2 flex-shrink-0">
+                    <button
+                      onClick={() => {
+                        setSelectedType('guardian');
+                        populateFormValues('guardian', idx);
+                      }}
+                      className="p-2 rounded-lg text-amber-600 hover:bg-amber-100/50 dark:hover:bg-amber-900/30 transition-all"
+                      title="Edit guardian"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={async () => {
+                        try {
+                          const newGuardians = guardians.filter((_, i) => i !== idx);
+                          console.log('Deleting guardian and saving to database:', newGuardians);
+                          
+                          const response = await updateMyProfile({ 
+                            parentInfo: { 
+                              ...formData, 
+                              guardians: newGuardians, 
+                              siblings 
+                            } 
+                          });
+                          console.log('Database delete response:', response);
+                          
+                          toast({
+                            title: 'Deleted',
+                            description: 'Guardian information removed from database.',
+                          });
+                          
+                          // Refresh data from database
+                          await fetchParentInfo();
+                        } catch (error) {
+                          console.error('Database delete error:', error);
+                          toast({
+                            title: 'Error',
+                            description: error instanceof Error ? error.message : 'Failed to delete.',
+                            variant: 'destructive'
+                          });
+                        }
+                      }}
+                      className="p-2 rounded-lg text-red-600 hover:bg-red-100/50 dark:hover:bg-red-900/30 transition-all"
+                      title="Delete guardian"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Add Guardian button when no guardians exist with data */}
+      {guardians.filter(g => g.name && g.name.trim()).length === 0 && (formData.father.name || formData.mother.name) && (
+        <div className="flex items-center justify-between mt-8">
+          <h3 className="text-xl font-bold text-foreground">Guardians Information</h3>
+          <button
+            onClick={() => {
+              setSelectedType('guardian');
+              setEditingGuardianIndex(null);
+              populateFormValues('guardian');
+            }}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-600/10 text-amber-600 hover:bg-amber-600/20 transition-all font-semibold"
+          >
+            <Plus className="w-4 h-4" /> Add Guardian
+          </button>
+        </div>
+      )}
+
+      {/* SIBLINGS SECTION */}
+      {siblings.length > 0 && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xl font-bold text-foreground">Siblings Information</h3>
+            <button
+              onClick={() => {
+                setSiblingCount(siblings.length);
+                setShowSiblingDialog(true);
+              }}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-green-600/10 text-green-600 hover:bg-green-600/20 transition-all font-semibold"
+            >
+              <Plus className="w-4 h-4" /> Manage Siblings
+            </button>
+          </div>
+
+          <div className="grid gap-3">
+            {siblings.map((sibling, index) => (
+              <div key={index} className="bg-green-50/50 dark:bg-green-950/20 rounded-xl border border-green-200 dark:border-green-800 p-5">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-full bg-green-600/20 flex items-center justify-center">
+                    <User className="w-5 h-5 text-green-600" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-bold text-foreground">{sibling.name}</h4>
+                    <p className="text-xs text-muted-foreground">Age: {sibling.age} • {sibling.education} • {sibling.phone}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Add/Manage Siblings button when parent data exists */}
+      {(formData.father.name || formData.mother.name) && siblings.length === 0 && (
+        <div className="flex items-center justify-between mt-8">
+          <h3 className="text-xl font-bold text-foreground">Siblings Information</h3>
+          <button
+            onClick={() => {
+              setSiblingCount(0);
+              setShowSiblingDialog(true);
+            }}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-green-600/10 text-green-600 hover:bg-green-600/20 transition-all font-semibold"
+          >
+            <Plus className="w-4 h-4" /> Add Siblings
+          </button>
+        </div>
+      )}
+
+      {/* Sibling Dialog */}
+      <Dialog open={showSiblingDialog} onOpenChange={setShowSiblingDialog}>
+        <DialogContent className="max-w-md rounded-2xl border-0 shadow-2xl">
+          <DialogHeader className="pb-4 border-b border-border">
+            <DialogTitle className="text-xl font-bold text-foreground">👨‍👩‍👧‍👦 Manage Siblings</DialogTitle>
+          </DialogHeader>
+
+          <div className="grid gap-4 py-4 max-h-80 overflow-y-auto">
+            <div>
+              <label className="text-sm font-bold text-foreground ml-1 block mb-2">Number of Siblings</label>
+              <input 
+                type="number" 
+                min="0" 
+                value={siblingCount} 
+                onChange={(e) => {
+                  const count = Math.max(0, parseInt(e.target.value) || 0);
+                  setSiblingCount(count);
+                  const newSiblings = siblings.slice(0, count);
+                  for (let i = newSiblings.length; i < count; i++) {
+                    newSiblings.push({ name: '', phone: '', age: 0, education: '' });
+                  }
+                  setSiblings(newSiblings);
+                }}
+                placeholder="Enter number of siblings"
+                className="w-full px-4 py-3 rounded-xl bg-muted/50 border border-border focus:ring-2 focus:ring-green-500/20 transition-all outline-none"
+              />
+            </div>
+
+            {siblings.length > 0 && (
+              <div className="space-y-3">
+                {siblings.map((sibling, idx) => (
+                  <div key={idx} className="p-3 border rounded-lg bg-green-50/30 dark:bg-green-950/20 space-y-2">
+                    <div className="flex items-center justify-between gap-2 mb-2">
+                      <span className="text-xs font-bold text-green-600 uppercase">Sibling {idx + 1}</span>
+                      <button
+                        onClick={() => {
+                          const newSiblings = siblings.filter((_, i) => i !== idx);
+                          setSiblings(newSiblings);
+                          setSiblingCount(newSiblings.length);
+                        }}
+                        className="p-1 text-destructive hover:bg-destructive/10 rounded transition-colors"
+                        type="button"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <input 
+                      type="text"
+                      value={sibling.name || ''} 
+                      onChange={(e) => {
+                        const newSiblings = [...siblings];
+                        newSiblings[idx].name = e.target.value;
+                        setSiblings(newSiblings);
+                      }}
+                      placeholder="Name"
+                      className="w-full px-3 py-2 rounded-lg bg-white dark:bg-slate-900/50 border border-border text-sm outline-none focus:ring-2 focus:ring-green-500/20"
+                    />
+                    <div className="grid grid-cols-2 gap-2">
+                      <input 
+                        type="number"
+                        value={sibling.age || ''} 
+                        onChange={(e) => {
+                          const newSiblings = [...siblings];
+                          newSiblings[idx].age = parseInt(e.target.value) || 0;
+                          setSiblings(newSiblings);
+                        }}
+                        placeholder="Age"
+                        min="0"
+                        className="w-full px-3 py-2 rounded-lg bg-white dark:bg-slate-900/50 border border-border text-sm outline-none focus:ring-2 focus:ring-green-500/20"
+                      />
+                      <input 
+                        type="text"
+                        value={sibling.education || ''} 
+                        onChange={(e) => {
+                          const newSiblings = [...siblings];
+                          newSiblings[idx].education = e.target.value;
+                          setSiblings(newSiblings);
+                        }}
+                        placeholder="Education"
+                        className="w-full px-3 py-2 rounded-lg bg-white dark:bg-slate-900/50 border border-border text-sm outline-none focus:ring-2 focus:ring-green-500/20"
+                      />
+                    </div>
+                    <input 
+                      type="text"
+                      value={sibling.phone || ''} 
+                      onChange={(e) => {
+                        const newSiblings = [...siblings];
+                        newSiblings[idx].phone = e.target.value;
+                        setSiblings(newSiblings);
+                      }}
+                      placeholder="Phone number"
+                      className="w-full px-3 py-2 rounded-lg bg-white dark:bg-slate-900/50 border border-border text-sm outline-none focus:ring-2 focus:ring-green-500/20"
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="flex gap-3 pt-4 border-t border-border">
+            <button
+              onClick={() => setShowSiblingDialog(false)}
+              className="flex-1 px-4 py-2.5 rounded-xl border border-border font-semibold text-foreground hover:bg-muted transition-all"
+            >
+              Cancel
             </button>
             <button
-              onClick={handleSaveDialog}
-              disabled={isSaving}
-              className="flex-1 px-4 py-3 rounded-xl bg-primary text-primary-foreground font-bold hover:shadow-lg hover:shadow-primary/20 transition-all disabled:opacity-50"
+              onClick={async () => {
+                try {
+                  console.log('Saving siblings to database:', siblings);
+                  
+                  const response = await updateMyProfile({ 
+                    parentInfo: { 
+                      ...formData, 
+                      guardians, 
+                      siblings 
+                    } 
+                  });
+                  console.log('Database siblings save response:', response);
+                  
+                  toast({
+                    title: 'Saved Successfully',
+                    description: 'Sibling information has been saved to database.',
+                  });
+                  
+                  setShowSiblingDialog(false);
+                  
+                  // Refresh data from database
+                  await fetchParentInfo();
+                } catch (error) {
+                  console.error('Database siblings save error:', error);
+                  toast({
+                    title: 'Error',
+                    description: error instanceof Error ? error.message : 'Failed to save changes.',
+                    variant: 'destructive'
+                  });
+                }
+              }}
+              className="flex-1 px-4 py-2.5 rounded-xl bg-green-600 text-white font-semibold hover:shadow-lg transition-all"
             >
-              {isSaving ? 'Processing...' : 'Submit Request'}
+              Save Siblings
             </button>
           </div>
         </DialogContent>

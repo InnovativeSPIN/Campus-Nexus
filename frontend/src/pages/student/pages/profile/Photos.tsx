@@ -7,7 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { normalizeImageUrl } from '@/utils/imageUrl';
 import { useToast } from '@/pages/student/hooks/use-toast';
 import { Button } from '@/pages/student/components/ui/button';
-import { uploadStudentPhoto } from '@/pages/student/services/studentApi';
+import { uploadStudentPhoto, uploadFamilyPhoto, getMyProfile } from '@/pages/student/services/studentApi';
 
 export default function Photos() {
   const { user, updateUserData } = useAuth();
@@ -21,6 +21,21 @@ export default function Photos() {
       setStudentPhoto(normalizeImageUrl(user.avatar));
     }
   }, [user?.avatar]);
+
+  // Load family photo from profile on mount
+  useEffect(() => {
+    const loadFamilyPhoto = async () => {
+      try {
+        const profileData = await getMyProfile() as any;
+        if (profileData?.success && profileData.data?.bio?.familyPhoto) {
+          setFamilyPhoto(normalizeImageUrl(profileData.data.bio.familyPhoto));
+        }
+      } catch (error) {
+        console.error('Failed to load family photo:', error);
+      }
+    };
+    loadFamilyPhoto();
+  }, []);
 
   const uploadPhoto = async (file: File, isFamily: boolean) => {
     if (!user?.id) {
@@ -40,11 +55,15 @@ export default function Photos() {
 
     setUploading(true);
     try {
-      const res = await uploadStudentPhoto(user.id, file);
+      const res = isFamily 
+        ? await uploadFamilyPhoto(user.id, file)
+        : await uploadStudentPhoto(user.id, file);
+
       if (res.success) {
-        const imageUrl = normalizeImageUrl(res.data.photo);
+        const imageUrl = normalizeImageUrl(res.data.photo || res.data.familyPhoto);
         if (isFamily) {
           setFamilyPhoto(imageUrl);
+          toast({ title: 'Success', description: 'Family photo updated successfully' });
         } else {
           setStudentPhoto(imageUrl);
           updateUserData({ avatar: imageUrl || '' });

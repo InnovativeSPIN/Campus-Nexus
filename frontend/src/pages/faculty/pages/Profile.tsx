@@ -1,4 +1,4 @@
-﻿import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { normalizeImageUrl } from '@/utils/imageUrl';
 import { toast } from "@/pages/faculty/hooks/use-toast";
@@ -196,7 +196,9 @@ export default function Profile() {
               dateOfJoining: p.date_of_joining ?? p.dateOfJoining ?? prev.dateOfJoining,
               linkedinUrl: p.linkedin_url ?? p.linkedinUrl ?? prev.linkedinUrl,
               address: p.curr_address ?? p.address ?? prev.address,
+              phone: p.phone_number ?? p.phone ?? prev.phone,
             }));
+            console.log('[FACULTY PROFILE LOADED] Phone from DB:', p.phone_number ?? p.phone);
           }
         } catch (e) {
           console.warn('Failed to fetch faculty profile', e);
@@ -218,7 +220,14 @@ export default function Profile() {
           }
         });
 
-        const result = await response.json();
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const result = await response.json().catch((e) => {
+          console.error('[PARSE ERROR] Education data:', e);
+          throw new Error('Failed to parse education response. Check console for details.');
+        });
         if (result.success && Array.isArray(result.data)) {
           // Education has 'degree', Memberships have 'society_name'
           const education = result.data.filter((item: any) => item.degree && item.degree !== 'Membership');
@@ -248,7 +257,15 @@ export default function Profile() {
         const expResponse = await fetch('/api/v1/faculty/experience', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
-        const expResult = await expResponse.json();
+        
+        if (!expResponse.ok) {
+          throw new Error(`HTTP ${expResponse.status}: Failed to fetch experiences`);
+        }
+
+        const expResult = await expResponse.json().catch((e) => {
+          console.error('[PARSE ERROR] Experience data:', e);
+          throw new Error('Failed to parse experience response');
+        });
         if (expResult.success && Array.isArray(expResult.data)) {
           setTeachingExpData(expResult.data.map((r: any) => ({
             id: r.id,
@@ -267,7 +284,15 @@ export default function Profile() {
         const indResponse = await fetch('/api/v1/faculty/experience/industry', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
-        const indResult = await indResponse.json();
+        
+        if (!indResponse.ok) {
+          throw new Error(`HTTP ${indResponse.status}: Failed to fetch industry experiences`);
+        }
+
+        const indResult = await indResponse.json().catch((e) => {
+          console.error('[PARSE ERROR] Industry experience data:', e);
+          throw new Error('Failed to parse industry experience response');
+        });
         if (indResult.success && Array.isArray(indResult.data)) {
           setIndustryExpData(indResult.data.map((r: any) => ({
             id: r.id,
@@ -289,7 +314,10 @@ export default function Profile() {
             // Endpoint may not exist on backend; skip without attempting to parse HTML error pages
             console.debug('[PROFILE] /faculty/phd returned', phdResponse.status, phdResponse.statusText);
           } else {
-            const phdResult = await phdResponse.json();
+            const phdResult = await phdResponse.json().catch((e) => {
+              console.error('[PARSE ERROR] PhD data:', e);
+              throw new Error('Failed to parse PhD response');
+            });
             if (phdResult.success && Array.isArray(phdResult.data)) {
               const entries = phdResult.data.map((r: any) => ({
                 id: r.phd_id ?? r.id ?? null,
@@ -326,7 +354,10 @@ export default function Profile() {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           if (eventsResponse.ok) {
-            const eventsResult = await eventsResponse.json();
+            const eventsResult = await eventsResponse.json().catch((e) => {
+              console.error('[PARSE ERROR] Events data:', e);
+              throw new Error('Failed to parse events response');
+            });
             if (eventsResult.success && Array.isArray(eventsResult.data)) {
               setEventsData(eventsResult.data.map((r: any) => ({
                 id: r.id ?? r.event_id ?? null,
@@ -356,7 +387,10 @@ export default function Profile() {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           if (researchResponse.ok) {
-            const researchResult = await researchResponse.json();
+            const researchResult = await researchResponse.json().catch((e) => {
+              console.error('[PARSE ERROR] Research data:', e);
+              throw new Error('Failed to parse research response');
+            });
             if (researchResult.success && Array.isArray(researchResult.data)) {
               setResearchData(researchResult.data.map((r: any) => ({
                 research_id: r.research_id,
@@ -390,6 +424,11 @@ export default function Profile() {
         }
       } catch (error) {
         console.error('Failed to fetch data:', error);
+        toast({
+          title: 'Data Load Warning',
+          description: 'Some data could not be loaded. Please refresh the page if you see incomplete information.',
+          variant: 'destructive'
+        });
       }
     };
 
@@ -499,7 +538,10 @@ export default function Profile() {
   }
 
   function validatePhone(phone: string) {
-    return /^(\+91[\s-]?)?[6-9]\d{9}$/.test(phone.replace(/\D/g, ''));
+    // Accept any phone number with 10 or more digits (allows +91, local, international formats)
+    if (!phone || phone.trim() === '') return false;
+    const digits = phone.replace(/\D/g, '');
+    return digits.length >= 10; // Modified: Accept 10+ digits (most standard phone numbers)
   }
 
   function validateLinkedInUrl(url: string) {
@@ -522,57 +564,77 @@ export default function Profile() {
     if (primaryPhdId) {
       if (!window.confirm('Are you sure you want to delete the primary PhD record?')) return;
       const token = localStorage.getItem('authToken');
-      if (!token) return;
+      if (!token) {
+        toast({ title: 'Error', description: 'Authentication required. Please log in again.', variant: 'destructive' });
+        return;
+      }
       setLoading(true);
       try {
         const response = await fetch(`/api/v1/faculty/phd/${primaryPhdId}`, {
           method: 'DELETE',
           headers: { 'Authorization': `Bearer ${token}` }
         });
-        const result = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: Failed to delete PhD record`);
+        }
+
+        let result;
+        try {
+          result = await response.json();
+        } catch (parseError) {
+          console.error('[Delete PhD] Response parse error:', parseError);
+          throw new Error('Failed to parse delete response');
+        }
+
         if (result.success) {
           // Refresh canonical list
           const phdResponse = await fetch('/api/v1/faculty/phd', { headers: { 'Authorization': `Bearer ${token}` } });
           if (phdResponse.ok) {
-            const phdResult = await phdResponse.json();
-            if (phdResult.success && Array.isArray(phdResult.data)) {
-              const entries = phdResult.data.map((r: any) => ({
-                id: r.phd_id ?? r.id ?? null,
-                orcidId: r.orcid_id ?? r.orcidId ?? "",
-                phdStatus: r.status ?? r.phd_status ?? r.phdStatus ?? "",
-                thesisTitle: r.thesis_title ?? r.thesisTitle ?? "",
-                registerNo: r.register_no ?? r.registerNo ?? "",
-                guideName: r.guide_name ?? r.guideName ?? "",
-              }));
-
-              if (entries.length > 0) {
-                const primary = entries[0];
-                setPrimaryPhdId(primary.id ?? null);
-                setFacultyData(prev => ({
-                  ...prev,
-                  phdStatus: primary.phdStatus || prev.phdStatus,
-                  orcidId: primary.orcidId || prev.orcidId,
-                  thesisTitle: primary.thesisTitle || prev.thesisTitle,
-                  registerNo: primary.registerNo || prev.registerNo,
-                  guideName: primary.guideName || prev.guideName,
+            try {
+              const phdResult = await phdResponse.json();
+              if (phdResult.success && Array.isArray(phdResult.data)) {
+                const entries = phdResult.data.map((r: any) => ({
+                  id: r.phd_id ?? r.id ?? null,
+                  orcidId: r.orcid_id ?? r.orcidId ?? "",
+                  phdStatus: r.status ?? r.phd_status ?? r.phdStatus ?? "",
+                  thesisTitle: r.thesis_title ?? r.thesisTitle ?? "",
+                  registerNo: r.register_no ?? r.registerNo ?? "",
+                  guideName: r.guide_name ?? r.guideName ?? "",
                 }));
-                setPhdList(entries.slice(1));
-              } else {
-                // No entries remain
-                setPrimaryPhdId(null);
-                setFacultyData(prev => ({ ...prev, phdStatus: "", orcidId: "", thesisTitle: "", registerNo: "", guideName: "" }));
-                setPhdList([]);
+
+                if (entries.length > 0) {
+                  const primary = entries[0];
+                  setPrimaryPhdId(primary.id ?? null);
+                  setFacultyData(prev => ({
+                    ...prev,
+                    phdStatus: primary.phdStatus || prev.phdStatus,
+                    orcidId: primary.orcidId || prev.orcidId,
+                    thesisTitle: primary.thesisTitle || prev.thesisTitle,
+                    registerNo: primary.registerNo || prev.registerNo,
+                    guideName: primary.guideName || prev.guideName,
+                  }));
+                  setPhdList(entries.slice(1));
+                } else {
+                  // No entries remain
+                  setPrimaryPhdId(null);
+                  setFacultyData(prev => ({ ...prev, phdStatus: "", orcidId: "", thesisTitle: "", registerNo: "", guideName: "" }));
+                  setPhdList([]);
+                }
               }
+            } catch (refreshError) {
+              console.warn('Failed to refresh PhD list after delete:', refreshError);
             }
           }
 
-          toast({ title: 'Primary PhD deleted' });
+          toast({ title: 'PhD Record Deleted', description: 'Primary PhD record has been deleted successfully.' });
         } else {
-          throw new Error(result.message || 'Failed to delete PhD');
+          throw new Error(result.message || 'Failed to delete PhD record');
         }
       } catch (error: any) {
         console.error('Delete primary PhD error', error);
-        toast({ title: 'Error', description: error.message || 'Failed to delete PhD.', variant: 'destructive' });
+        const errorMsg = error instanceof Error ? error.message : 'An unexpected error occurred';
+        toast({ title: 'Deletion Failed', description: errorMsg || 'Failed to delete PhD.', variant: 'destructive' });
       } finally {
         setLoading(false);
       }
@@ -647,20 +709,32 @@ export default function Profile() {
       }
 
       const updatePayload: any = {};
-      let valueToSave: string | undefined = tempValue;
+      let valueToSave: any = tempValue;
+      let payloadField = field;
+      
       if (field === 'phone') {
+        // Validate and clean phone number (remove all non-digits)
         const cleaned = tempValue.replace(/\D/g, '');
-        if (cleaned.length === 10) {
-          valueToSave = '+91' + cleaned;
-        } else if (cleaned.length > 10 && tempValue.startsWith('+')) {
-          valueToSave = tempValue;
-        } else {
-          valueToSave = tempValue;
+        if (cleaned.length < 10) {
+          setFieldError('Phone number must be at least 10 digits');
+          setLoading(false);
+          return;
         }
+        // Store the full cleaned phone number (supports 10-digit or country code + 10-digit)
+        valueToSave = cleaned;
+        payloadField = 'phone_number'; // Map to phone_number for backend
+      } else if (field === 'address') {
+        payloadField = 'curr_address'; // Map to curr_address for backend
+      } else if (field === 'aicteId') {
+        payloadField = 'AICTE_ID'; // Map to AICTE_ID for backend
+        valueToSave = tempValue ? String(tempValue).trim() : null; // Keep as string
+      } else if (field === 'coeId') {
+        payloadField = 'Anna_University_ID'; // Map to Anna_University_ID for backend
+        valueToSave = tempValue ? String(tempValue).trim() : null; // Keep as string
       }
-      updatePayload[field] = valueToSave;
+      updatePayload[payloadField] = valueToSave;
 
-      const response = await fetch('http://localhost:3005/api/v1/faculty/update-profile', {
+      const response = await fetch('/api/v1/faculty/update-profile', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -670,23 +744,65 @@ export default function Profile() {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        console.error('[PROFILE UPDATE ERROR]', {
-          status: response.status,
-          statusText: response.statusText,
-          error: errorData
-        });
-        setFieldError(errorData.message || 'Failed to update profile');
+        let errorMessage = 'Failed to update profile';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorMessage;
+          console.error('[PROFILE UPDATE ERROR]', {
+            status: response.status,
+            statusText: response.statusText,
+            error: errorData
+          });
+        } catch (parseError) {
+          console.error('[PROFILE UPDATE ERROR - JSON Parse]', {
+            status: response.status,
+            statusText: response.statusText,
+            parseError: parseError
+          });
+        }
+        setFieldError(errorMessage);
         setLoading(false);
         return;
       }
 
-      await response.json();
+      try {
+        await response.json();
+      } catch (parseError) {
+        console.warn('[PROFILE UPDATE] Response body parse error (non-critical):', parseError);
+        // Continue anyway since we got a successful status
+      }
 
+      // Update local state with the saved value (use cleaned value for phone)
       setFacultyData((prev) => ({
         ...prev,
-        [field]: tempValue,
+        [field]: field === 'phone' ? valueToSave : tempValue,
       }));
+      
+      // For phone field, refresh from database to confirm save
+      if (field === 'phone') {
+        try {
+          const token = localStorage.getItem('authToken');
+          if (token) {
+            const refreshRes = await fetch('/api/v1/faculty/me/profile', {
+              headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (refreshRes.ok) {
+              const refreshPayload = await refreshRes.json();
+              if (refreshPayload && refreshPayload.success && refreshPayload.data) {
+                const phoneFromDB = refreshPayload.data.phone_number ?? refreshPayload.data.phone;
+                console.log('[PHONE FIELD] Database confirmation - Phone saved as:', phoneFromDB);
+                setFacultyData(prev => ({
+                  ...prev,
+                  phone: phoneFromDB
+                }));
+              }
+            }
+          }
+        } catch (refreshError) {
+          console.warn('[PHONE FIELD] Could not refresh from DB (non-critical):', refreshError);
+        }
+      }
+      
       setEditingField(null);
       setTempValue("");
       setFieldError("");
@@ -697,10 +813,11 @@ export default function Profile() {
       });
     } catch (error) {
       console.error('Update error:', error);
-      setFieldError('Failed to update profile. Please try again.');
+      const errorMsg = error instanceof Error ? error.message : 'An unexpected error occurred';
+      setFieldError(`Failed to update profile: ${errorMsg}`);
       toast({
         title: 'Error',
-        description: 'Failed to update profile. Please try again.',
+        description: `Failed to update profile: ${errorMsg}`,
         variant: 'destructive'
       });
     } finally {
@@ -723,7 +840,7 @@ export default function Profile() {
     if (!tempEducation) return;
     const token = localStorage.getItem('authToken');
     if (!token) {
-      toast({ title: 'Not authenticated', description: 'Please log in and try again.', variant: 'destructive' });
+      toast({ title: 'Authentication Required', description: 'Please log in and try again.', variant: 'destructive' });
       return;
     }
 
@@ -753,7 +870,15 @@ export default function Profile() {
         })
       });
 
-      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const result = await response.json().catch((e) => {
+        console.error('[EDUCATION UPDATE - JSON Parse]', e);
+        throw new Error('Failed to parse response. Check console for details.');
+      });
+
       if (result.success) {
         const updated = [...educationData];
         updated[index] = { ...tempEducation, id: result.data.id };
@@ -765,14 +890,16 @@ export default function Profile() {
           description: 'Educational qualification has been updated successfully.'
         });
       } else {
-        throw new Error(result.error || 'Failed to update record');
+        throw new Error(result.message || result.error || 'Failed to update record');
       }
     } catch (error: any) {
+      const errorMsg = error instanceof Error ? error.message : 'An unexpected error occurred';
       toast({
-        title: 'Error',
-        description: error.message || 'Failed to update education record.',
+        title: 'Update Education Failed',
+        description: errorMsg || 'Failed to update education record.',
         variant: 'destructive'
       });
+      console.error('[EDUCATION UPDATE ERROR]', error);
     } finally {
       setLoading(false);
     }
@@ -797,7 +924,7 @@ export default function Profile() {
     if (!tempMembership) return;
     const token = localStorage.getItem('authToken');
     if (!token) {
-      toast({ title: 'Not authenticated', description: 'Please log in and try again.', variant: 'destructive' });
+      toast({ title: 'Authentication Required', description: 'Please log in and try again.', variant: 'destructive' });
       return;
     }
 
@@ -808,6 +935,7 @@ export default function Profile() {
       return;
     }
 
+    setLoading(true);
     try {
       const response = await fetch(`/api/v1/faculty/education/${recId}`, {
         method: 'PUT',
@@ -823,7 +951,15 @@ export default function Profile() {
         })
       });
 
-      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const result = await response.json().catch((e) => {
+        console.error('[MEMBERSHIP UPDATE - JSON Parse]', e);
+        throw new Error('Failed to parse response. Check console for details.');
+      });
+
       if (result.success) {
         const updated = [...membershipData];
         updated[index] = { ...tempMembership, id: result.data.id };
@@ -831,17 +967,20 @@ export default function Profile() {
         setEditingMembership(null);
         setTempMembership(null);
         toast({
-          title: 'Membership updated'
+          title: 'Membership updated',
+          description: 'Professional membership has been updated successfully.'
         });
       } else {
-        throw new Error(result.error || 'Failed to update record');
+        throw new Error(result.message || result.error || 'Failed to update record');
       }
     } catch (error: any) {
+      const errorMsg = error instanceof Error ? error.message : 'An unexpected error occurred';
       toast({
-        title: 'Error',
-        description: error.message || 'Failed to update membership record.',
+        title: 'Update Membership Failed',
+        description: errorMsg || 'Failed to update membership record.',
         variant: 'destructive'
       });
+      console.error('[MEMBERSHIP UPDATE ERROR]', error);
     } finally {
       setLoading(false);
     }
@@ -892,7 +1031,14 @@ export default function Profile() {
     }
 
     const token = localStorage.getItem('authToken');
-    if (!token) return;
+    if (!token) {
+      toast({
+        title: 'Authentication Required',
+        description: 'Please log in again to save education record.',
+        variant: 'destructive'
+      });
+      return;
+    }
 
     setLoading(true);
     try {
@@ -914,7 +1060,15 @@ export default function Profile() {
         })
       });
 
-      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const result = await response.json().catch((e) => {
+        console.error('[EDUCATION ADD - JSON Parse]', e);
+        throw new Error('Failed to parse response. Check console for details.');
+      });
+
       if (result.success) {
         const updatedRow = { ...newEducation, id: result.data.id };
 
@@ -946,14 +1100,16 @@ export default function Profile() {
           description: 'New educational qualification has been added successfully.'
         });
       } else {
-        throw new Error(result.error || 'Failed to save record');
+        throw new Error(result.message || result.error || 'Failed to save record');
       }
     } catch (error: any) {
+      const errorMsg = error instanceof Error ? error.message : 'An unexpected error occurred';
       toast({
-        title: 'Error',
-        description: error.message || 'Failed to save education record.',
+        title: 'Add Education Failed',
+        description: errorMsg || 'Failed to save education record.',
         variant: 'destructive'
       });
+      console.error('[EDUCATION ADD ERROR]', error);
     } finally {
       setLoading(false);
     }
@@ -966,7 +1122,14 @@ export default function Profile() {
   const handleDeleteEducation = async (index: number) => {
     if (window.confirm('Are you sure you want to delete this educational qualification?')) {
       const token = localStorage.getItem('authToken');
-      if (!token) return;
+      if (!token) {
+        toast({
+          title: 'Authentication Required',
+          description: 'Please log in again to delete education record.',
+          variant: 'destructive'
+        });
+        return;
+      }
 
       setLoading(true);
       try {
@@ -977,7 +1140,15 @@ export default function Profile() {
           }
         });
 
-        const result = await response.json();
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const result = await response.json().catch((e) => {
+          console.error('[EDUCATION DELETE - JSON Parse]', e);
+          throw new Error('Failed to parse response. Check console for details.');
+        });
+
         if (result.success) {
           // If record was fully deleted, remove from both lists
           if (!result.data || Object.keys(result.data).length === 0) {
@@ -995,14 +1166,16 @@ export default function Profile() {
             description: 'Educational qualification has been cleared successfully.'
           });
         } else {
-          throw new Error(result.error || 'Failed to delete record');
+          throw new Error(result.message || result.error || 'Failed to delete record');
         }
       } catch (error: any) {
+        const errorMsg = error instanceof Error ? error.message : 'An unexpected error occurred';
         toast({
-          title: 'Error',
-          description: error.message || 'Failed to delete education record.',
+          title: 'Delete Education Failed',
+          description: errorMsg || 'Failed to delete education record.',
           variant: 'destructive'
         });
+        console.error('[EDUCATION DELETE ERROR]', error);
       } finally {
         setLoading(false);
       }
@@ -1042,7 +1215,14 @@ export default function Profile() {
     }
 
     const token = localStorage.getItem('authToken');
-    if (!token) return;
+    if (!token) {
+      toast({
+        title: 'Authentication Required',
+        description: 'Please log in again to save membership record.',
+        variant: 'destructive'
+      });
+      return;
+    }
 
     setLoading(true);
     try {
@@ -1065,7 +1245,15 @@ export default function Profile() {
         })
       });
 
-      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const result = await response.json().catch((e) => {
+        console.error('[MEMBERSHIP ADD - JSON Parse]', e);
+        throw new Error('Failed to parse response. Check console for details.');
+      });
+
       if (result.success) {
         const updatedRow = { ...newMembership, id: result.data.id };
 
@@ -1089,17 +1277,20 @@ export default function Profile() {
           url: "",
         });
         toast({
-          title: 'Membership added'
+          title: 'Membership added',
+          description: 'Professional membership has been added successfully.'
         });
       } else {
-        throw new Error(result.error || 'Failed to save record');
+        throw new Error(result.message || result.error || 'Failed to save record');
       }
     } catch (error: any) {
+      const errorMsg = error instanceof Error ? error.message : 'An unexpected error occurred';
       toast({
-        title: 'Error',
-        description: error.message || 'Failed to save membership record.',
+        title: 'Add Membership Failed',
+        description: errorMsg || 'Failed to save membership record.',
         variant: 'destructive'
       });
+      console.error('[MEMBERSHIP ADD ERROR]', error);
     } finally {
       setLoading(false);
     }
@@ -1112,7 +1303,14 @@ export default function Profile() {
   const handleDeleteMembership = async (index: number) => {
     if (window.confirm('Are you sure you want to delete this membership?')) {
       const token = localStorage.getItem('authToken');
-      if (!token) return;
+      if (!token) {
+        toast({
+          title: 'Authentication Required',
+          description: 'Please log in again to delete membership record.',
+          variant: 'destructive'
+        });
+        return;
+      }
 
       setLoading(true);
       try {
@@ -1123,7 +1321,15 @@ export default function Profile() {
           }
         });
 
-        const result = await response.json();
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const result = await response.json().catch((e) => {
+          console.error('[MEMBERSHIP DELETE - JSON Parse]', e);
+          throw new Error('Failed to parse response. Check console for details.');
+        });
+
         if (result.success) {
           // If record was fully deleted, remove from both lists
           if (!result.data || Object.keys(result.data).length === 0) {
@@ -1141,14 +1347,16 @@ export default function Profile() {
             description: 'Professional membership has been cleared successfully.'
           });
         } else {
-          throw new Error(result.error || 'Failed to delete record');
+          throw new Error(result.message || result.error || 'Failed to delete record');
         }
       } catch (error: any) {
+        const errorMsg = error instanceof Error ? error.message : 'An unexpected error occurred';
         toast({
-          title: 'Error',
-          description: error.message || 'Failed to delete membership record.',
+          title: 'Delete Membership Failed',
+          description: errorMsg || 'Failed to delete membership record.',
           variant: 'destructive'
         });
+        console.error('[MEMBERSHIP DELETE ERROR]', error);
       } finally {
         setLoading(false);
       }
@@ -1201,7 +1409,14 @@ export default function Profile() {
     }
 
     const token = localStorage.getItem('authToken');
-    if (!token) return;
+    if (!token) {
+      toast({
+        title: 'Authentication Required',
+        description: 'Please log in again to save teaching experience.',
+        variant: 'destructive'
+      });
+      return;
+    }
 
     setLoading(true);
     try {
@@ -1216,14 +1431,22 @@ export default function Profile() {
           institution_name: newTeachingExp.institutionName,
           university: newTeachingExp.university,
           department: newTeachingExp.department,
-          from_date: newTeachingExp.from,
-          to_date: newTeachingExp.to,
+          from_date: newTeachingExp.from || null,
+          to_date: newTeachingExp.current ? null : (newTeachingExp.to || null),
           period: newTeachingExp.period,
           is_current: newTeachingExp.current
         })
       });
 
-      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const result = await response.json().catch((e) => {
+        console.error('[TEACHING EXP ADD - JSON Parse]', e);
+        throw new Error('Failed to parse response. Check console for details.');
+      });
+
       if (result.success) {
         // Update both sections if the row is shared
         const updatedEntry = {
@@ -1275,14 +1498,16 @@ export default function Profile() {
           description: 'Teaching experience has been added successfully.'
         });
       } else {
-        throw new Error(result.error || 'Failed to save experience');
+        throw new Error(result.message || result.error || 'Failed to save experience');
       }
     } catch (error: any) {
+      const errorMsg = error instanceof Error ? error.message : 'An unexpected error occurred';
       toast({
-        title: 'Error',
-        description: error.message || 'Failed to save teaching experience.',
+        title: 'Add Teaching Experience Failed',
+        description: errorMsg || 'Failed to save teaching experience.',
         variant: 'destructive'
       });
+      console.error('[TEACHING EXP ADD ERROR]', error);
     } finally {
       setLoading(false);
     }
@@ -1306,7 +1531,7 @@ export default function Profile() {
     if (!tempTeachingExp) return;
     const token = localStorage.getItem('authToken');
     if (!token) {
-      toast({ title: 'Not authenticated', description: 'Please log in and try again.', variant: 'destructive' });
+      toast({ title: 'Authentication Required', description: 'Please log in and try again.', variant: 'destructive' });
       return;
     }
 
@@ -1330,14 +1555,22 @@ export default function Profile() {
           institution_name: tempTeachingExp.institutionName,
           university: tempTeachingExp.university,
           department: tempTeachingExp.department,
-          from_date: tempTeachingExp.from,
-          to_date: tempTeachingExp.to,
+          from_date: tempTeachingExp.from || null,
+          to_date: tempTeachingExp.current ? null : (tempTeachingExp.to || null),
           period: tempTeachingExp.period,
           is_current: tempTeachingExp.current
         })
       });
 
-      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const result = await response.json().catch((e) => {
+        console.error('[TEACHING EXP UPDATE - JSON Parse]', e);
+        throw new Error('Failed to parse response. Check console for details.');
+      });
+
       if (result.success) {
         const updated = [...teachingExpData];
         updated[index] = { ...tempTeachingExp, id: result.data.id };
@@ -1359,14 +1592,16 @@ export default function Profile() {
           description: 'Teaching experience has been updated successfully.'
         });
       } else {
-        throw new Error(result.error || 'Failed to update record');
+        throw new Error(result.message || result.error || 'Failed to update record');
       }
     } catch (error: any) {
+      const errorMsg = error instanceof Error ? error.message : 'An unexpected error occurred';
       toast({
-        title: 'Error',
-        description: error.message || 'Failed to update teaching experience.',
+        title: 'Update Teaching Experience Failed',
+        description: errorMsg || 'Failed to update teaching experience.',
         variant: 'destructive'
       });
+      console.error('[TEACHING EXP UPDATE ERROR]', error);
     } finally {
       setLoading(false);
     }
@@ -1379,7 +1614,14 @@ export default function Profile() {
   const handleDeleteTeachingExp = async (index: number) => {
     if (window.confirm('Are you sure you want to delete this teaching experience?')) {
       const token = localStorage.getItem('authToken');
-      if (!token) return;
+      if (!token) {
+        toast({
+          title: 'Authentication Required',
+          description: 'Please log in again to delete teaching experience.',
+          variant: 'destructive'
+        });
+        return;
+      }
 
       setLoading(true);
       try {
@@ -1390,7 +1632,15 @@ export default function Profile() {
           }
         });
 
-        const result = await response.json();
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const result = await response.json().catch((e) => {
+          console.error('[TEACHING EXP DELETE - JSON Parse]', e);
+          throw new Error('Failed to parse response. Check console for details.');
+        });
+
         if (result.success) {
           // If record was fully deleted, remove from both lists
           if (!result.data || Object.keys(result.data).length === 0) {
@@ -1414,14 +1664,16 @@ export default function Profile() {
             description: 'Teaching experience has been cleared successfully.'
           });
         } else {
-          throw new Error(result.error || 'Failed to delete record');
+          throw new Error(result.message || result.error || 'Failed to delete record');
         }
       } catch (error: any) {
+        const errorMsg = error instanceof Error ? error.message : 'An unexpected error occurred';
         toast({
-          title: 'Error',
-          description: error.message || 'Failed to delete teaching experience.',
+          title: 'Delete Teaching Experience Failed',
+          description: errorMsg || 'Failed to delete teaching experience.',
           variant: 'destructive'
         });
+        console.error('[TEACHING EXP DELETE ERROR]', error);
       } finally {
         setLoading(false);
       }
@@ -1470,7 +1722,14 @@ export default function Profile() {
     }
 
     const token = localStorage.getItem('authToken');
-    if (!token) return;
+    if (!token) {
+      toast({
+        title: 'Authentication Required',
+        description: 'Please log in again to save industry experience.',
+        variant: 'destructive'
+      });
+      return;
+    }
 
     setLoading(true);
     try {
@@ -1484,14 +1743,22 @@ export default function Profile() {
           job_title: newIndustryExp.jobTitle,
           company: newIndustryExp.company,
           location: newIndustryExp.location,
-          from_date: newIndustryExp.from,
-          to_date: newIndustryExp.to,
+          from_date: newIndustryExp.from || null,
+          to_date: newIndustryExp.current ? null : (newIndustryExp.to || null),
           period: newIndustryExp.period,
           is_current: newIndustryExp.current
         })
       });
 
-      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const result = await response.json().catch((e) => {
+        console.error('[INDUSTRY EXP ADD - JSON Parse]', e);
+        throw new Error('Failed to parse response. Check console for details.');
+      });
+
       if (result.success) {
         setAddingIndustryExp(false);
         setNewJobTitleIsOther(false);
@@ -1540,14 +1807,16 @@ export default function Profile() {
           description: 'Industry experience has been added successfully.'
         });
       } else {
-        throw new Error(result.error || 'Failed to save experience');
+        throw new Error(result.message || result.error || 'Failed to save experience');
       }
     } catch (error: any) {
+      const errorMsg = error instanceof Error ? error.message : 'An unexpected error occurred';
       toast({
-        title: 'Error',
-        description: error.message || 'Failed to save industry experience.',
+        title: 'Add Industry Experience Failed',
+        description: errorMsg || 'Failed to save industry experience.',
         variant: 'destructive'
       });
+      console.error('[INDUSTRY EXP ADD ERROR]', error);
     } finally {
       setLoading(false);
     }
@@ -1571,7 +1840,7 @@ export default function Profile() {
     if (!tempIndustryExp) return;
     const token = localStorage.getItem('authToken');
     if (!token) {
-      toast({ title: 'Not authenticated', description: 'Please log in and try again.', variant: 'destructive' });
+      toast({ title: 'Authentication Required', description: 'Please log in and try again.', variant: 'destructive' });
       return;
     }
 
@@ -1594,14 +1863,22 @@ export default function Profile() {
           job_title: tempIndustryExp.jobTitle,
           company: tempIndustryExp.company,
           location: tempIndustryExp.location,
-          from_date: tempIndustryExp.from,
-          to_date: tempIndustryExp.to,
+          from_date: tempIndustryExp.from || null,
+          to_date: tempIndustryExp.current ? null : (tempIndustryExp.to || null),
           period: tempIndustryExp.period,
           is_current: tempIndustryExp.current
         })
       });
 
-      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const result = await response.json().catch((e) => {
+        console.error('[INDUSTRY EXP UPDATE - JSON Parse]', e);
+        throw new Error('Failed to parse response. Check console for details.');
+      });
+
       if (result.success) {
         const updated = [...industryExpData];
         updated[index] = { ...tempIndustryExp, id: result.data.id };
@@ -1623,14 +1900,16 @@ export default function Profile() {
           description: 'Industry experience has been updated successfully.'
         });
       } else {
-        throw new Error(result.error || 'Failed to update record');
+        throw new Error(result.message || result.error || 'Failed to update record');
       }
     } catch (error: any) {
+      const errorMsg = error instanceof Error ? error.message : 'An unexpected error occurred';
       toast({
-        title: 'Error',
-        description: error.message || 'Failed to update industry experience.',
+        title: 'Update Industry Experience Failed',
+        description: errorMsg || 'Failed to update industry experience.',
         variant: 'destructive'
       });
+      console.error('[INDUSTRY EXP UPDATE ERROR]', error);
     } finally {
       setLoading(false);
     }
@@ -2109,7 +2388,7 @@ export default function Profile() {
     setLoading(true);
     try {
       const token = localStorage.getItem('authToken');
-      if (!token) throw new Error('Not authenticated');
+      if (!token) throw new Error('Not authenticated. Please log in again.');
 
       const resp = await fetch('/api/v1/faculty/update-profile', {
         method: 'PUT',
@@ -2124,8 +2403,22 @@ export default function Profile() {
       });
 
       if (!resp.ok) {
-        const err = await resp.json().catch(() => ({}));
-        throw new Error(err.message || 'Failed to update PhD status');
+        let errorMessage = 'Failed to update PhD status';
+        try {
+          const err = await resp.json();
+          errorMessage = err.message || errorMessage;
+        } catch (parseError) {
+          console.error('[PhD UPDATE] Error response parse failed:', parseError);
+          errorMessage = `HTTP ${resp.status}: ${resp.statusText || errorMessage}`;
+        }
+        throw new Error(errorMessage);
+      }
+
+      // Verify response body can be parsed
+      try {
+        await resp.json();
+      } catch (parseError) {
+        console.warn('[PhD UPDATE] Success response parse warning:', parseError);
       }
 
       setFacultyData((prev) => ({
@@ -2140,7 +2433,10 @@ export default function Profile() {
       try {
         const phdRes = await fetch('/api/v1/faculty/phd', { headers: { 'Authorization': `Bearer ${token}` } });
         if (phdRes.ok) {
-          const phdJson = await phdRes.json();
+          const phdJson = await phdRes.json().catch((e) => {
+            console.warn('[PhD REFRESH] Parse error:', e);
+            return { success: false };
+          });
           if (phdJson.success && Array.isArray(phdJson.data)) {
             setPhdList(phdJson.data.map((r: any) => ({ id: r.phd_id ?? r.id, orcidId: r.orcid_id, phdStatus: r.status, thesisTitle: r.thesis_title, registerNo: r.register_no, guideName: r.guide_name })));
           }
@@ -2152,7 +2448,12 @@ export default function Profile() {
       toast({ title: 'PhD details updated', description: 'Your PhD information has been updated successfully.' });
     } catch (error: any) {
       console.error('Failed to save PhD details', error);
-      toast({ title: 'Error', description: error.message || 'Failed to update PhD details', variant: 'destructive' });
+      const errorMsg = error instanceof Error ? error.message : 'An unexpected error occurred';
+      toast({ 
+        title: 'Update Failed', 
+        description: errorMsg || 'Failed to update PhD details', 
+        variant: 'destructive' 
+      });
     } finally {
       setLoading(false);
     }
@@ -2442,15 +2743,14 @@ export default function Profile() {
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mb-8 flex items-center justify-between"
+        className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
       >
         <div>
           <h1 className="page-header font-serif">Faculty Profile</h1>
           <p className="text-muted-foreground -mt-4"></p>
         </div>
         <div className="flex items-center gap-3">
-
-          <Button onClick={handleDownloadProfile} className="bg-secondary hover:bg-secondary/90">
+          <Button onClick={handleDownloadProfile} className="bg-secondary hover:bg-secondary/90 w-full sm:w-auto">
             <Download className="w-4 h-4 mr-2" />
             Download Profile
           </Button>
@@ -2503,95 +2803,242 @@ export default function Profile() {
             )}
 
             {/* AICTE ID */}
-            {facultyData.aicteId && (
-              <div className="flex items-start gap-4 text-sm">
-                <Award className="w-4 h-4 text-primary flex-shrink-0 mt-1" />
-                <div className="flex-1">
-                  <p className="text-xs text-muted-foreground font-medium">AICTE ID</p>
-                  <p className="font-mono font-semibold text-foreground break-all">{facultyData.aicteId}</p>
-                </div>
+            <div className="flex items-start gap-4 text-sm">
+              <Award className="w-4 h-4 text-primary flex-shrink-0 mt-1" />
+              <div className="flex-1">
+                <p className="text-xs text-muted-foreground font-medium">AICTE ID</p>
+                {editingField === 'aicteId' ? (
+                  <div className="space-y-1 mt-1">
+                    <input
+                      type="text"
+                      value={tempValue}
+                      onChange={(e) => { setTempValue(e.target.value); setFieldError(''); }}
+                      className="input input-bordered text-sm w-full"
+                      autoFocus
+                    />
+                    {fieldError && <p className="text-xs text-destructive">{fieldError}</p>}
+                    <div className="flex gap-1">
+                      <button onClick={() => handleSaveField('aicteId')} className="p-1 bg-green-600 text-white rounded"><Check className="w-3 h-3" /></button>
+                      <button onClick={handleCancelEdit} className="p-1 bg-muted rounded"><X className="w-3 h-3" /></button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <p className="font-mono font-semibold text-foreground break-all">{facultyData.aicteId || <span className="text-muted-foreground italic text-xs">Not set</span>}</p>
+                    <button onClick={() => handleEditField('aicteId', facultyData.aicteId)} className="p-1 hover:bg-muted rounded opacity-60 hover:opacity-100 transition-opacity flex-shrink-0" title="Edit AICTE ID"><Edit2 className="w-3 h-3" /></button>
+                  </div>
+                )}
               </div>
-            )}
+            </div>
 
             {/* Anna University ID */}
-            {facultyData.coeId && (
-              <div className="flex items-start gap-3 text-sm">
-                <Building className="w-4 h-4 text-primary flex-shrink-0 mt-1" />
-                <div className="flex-1">
-                  <p className="text-xs text-muted-foreground font-medium">Anna University ID</p>
-                  <p className="font-mono font-semibold text-foreground break-all">{facultyData.coeId}</p>
-                </div>
+            <div className="flex items-start gap-3 text-sm">
+              <Building className="w-4 h-4 text-primary flex-shrink-0 mt-1" />
+              <div className="flex-1">
+                <p className="text-xs text-muted-foreground font-medium">Anna University ID</p>
+                {editingField === 'coeId' ? (
+                  <div className="space-y-1 mt-1">
+                    <input
+                      type="text"
+                      value={tempValue}
+                      onChange={(e) => { setTempValue(e.target.value); setFieldError(''); }}
+                      className="input input-bordered text-sm w-full"
+                      autoFocus
+                    />
+                    {fieldError && <p className="text-xs text-destructive">{fieldError}</p>}
+                    <div className="flex gap-1">
+                      <button onClick={() => handleSaveField('coeId')} className="p-1 bg-green-600 text-white rounded"><Check className="w-3 h-3" /></button>
+                      <button onClick={handleCancelEdit} className="p-1 bg-muted rounded"><X className="w-3 h-3" /></button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <p className="font-mono font-semibold text-foreground break-all">{facultyData.coeId || <span className="text-muted-foreground italic text-xs">Not set</span>}</p>
+                    <button onClick={() => handleEditField('coeId', facultyData.coeId)} className="p-1 hover:bg-muted rounded opacity-60 hover:opacity-100 transition-opacity flex-shrink-0" title="Edit COE ID"><Edit2 className="w-3 h-3" /></button>
+                  </div>
+                )}
               </div>
-            )}
+            </div>
 
-            {/* DOB & Age */}
-            {facultyData.dateOfBirth && (
-              <div className="flex items-start gap-3 text-sm">
-                <Calendar className="w-4 h-4 text-primary flex-shrink-0 mt-1" />
-                <div className="flex-1">
-                  <p className="text-xs text-muted-foreground font-medium">DOB</p>
-                  <p className="font-medium text-foreground">{facultyData.dateOfBirth}</p>
-                </div>
+            {/* DOB */}
+            <div className="flex items-start gap-3 text-sm">
+              <Calendar className="w-4 h-4 text-primary flex-shrink-0 mt-1" />
+              <div className="flex-1">
+                <p className="text-xs text-muted-foreground font-medium">DOB</p>
+                {editingField === 'dateOfBirth' ? (
+                  <div className="space-y-1 mt-1">
+                    <input
+                      type="date"
+                      value={tempValue}
+                      onChange={(e) => { setTempValue(e.target.value); setFieldError(''); }}
+                      className="input input-bordered text-sm w-full"
+                      autoFocus
+                    />
+                    {fieldError && <p className="text-xs text-destructive">{fieldError}</p>}
+                    <div className="flex gap-1">
+                      <button onClick={() => handleSaveField('dateOfBirth')} className="p-1 bg-green-600 text-white rounded"><Check className="w-3 h-3" /></button>
+                      <button onClick={handleCancelEdit} className="p-1 bg-muted rounded"><X className="w-3 h-3" /></button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <p className="font-medium text-foreground">{facultyData.dateOfBirth || <span className="text-muted-foreground italic text-xs">Not set</span>}</p>
+                    <button onClick={() => handleEditField('dateOfBirth', facultyData.dateOfBirth)} className="p-1 hover:bg-muted rounded opacity-60 hover:opacity-100 transition-opacity flex-shrink-0" title="Edit DOB"><Edit2 className="w-3 h-3" /></button>
+                  </div>
+                )}
               </div>
-            )}
+            </div>
 
             {/* Date of Joining */}
-            {facultyData.dateOfJoining && (
-              <div className="flex items-start gap-3 text-sm">
-                <Clock className="w-4 h-4 text-primary flex-shrink-0 mt-1" />
-                <div className="flex-1">
-                  <p className="text-xs text-muted-foreground font-medium">Date of Joined</p>
-                  <p className="font-medium text-foreground">{facultyData.dateOfJoining}</p>
-                </div>
+            <div className="flex items-start gap-3 text-sm">
+              <Clock className="w-4 h-4 text-primary flex-shrink-0 mt-1" />
+              <div className="flex-1">
+                <p className="text-xs text-muted-foreground font-medium">Date of Joined</p>
+                {editingField === 'dateOfJoining' ? (
+                  <div className="space-y-1 mt-1">
+                    <input
+                      type="date"
+                      value={tempValue}
+                      onChange={(e) => { setTempValue(e.target.value); setFieldError(''); }}
+                      className="input input-bordered text-sm w-full"
+                      autoFocus
+                    />
+                    {fieldError && <p className="text-xs text-destructive">{fieldError}</p>}
+                    <div className="flex gap-1">
+                      <button onClick={() => handleSaveField('dateOfJoining')} className="p-1 bg-green-600 text-white rounded"><Check className="w-3 h-3" /></button>
+                      <button onClick={handleCancelEdit} className="p-1 bg-muted rounded"><X className="w-3 h-3" /></button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <p className="font-medium text-foreground">{facultyData.dateOfJoining || <span className="text-muted-foreground italic text-xs">Not set</span>}</p>
+                    <button onClick={() => handleEditField('dateOfJoining', facultyData.dateOfJoining)} className="p-1 hover:bg-muted rounded opacity-60 hover:opacity-100 transition-opacity flex-shrink-0" title="Edit Joining Date"><Edit2 className="w-3 h-3" /></button>
+                  </div>
+                )}
               </div>
-            )}
+            </div>
 
             {/* LinkedIn Profile */}
-            {facultyData.linkedinUrl && (
-              <div className="flex items-start gap-3 text-sm">
-                <Linkedin className="w-4 h-4 text-[#0077B5] flex-shrink-0 mt-1" />
-                <div className="flex-1">
-                  <p className="text-xs text-muted-foreground font-medium">LinkedIn Profile</p>
-                  <a
-                    href={facultyData.linkedinUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline font-medium break-all"
-                  >
-                    View Profile
-                  </a>
-                </div>
+            <div className="flex items-start gap-3 text-sm">
+              <Linkedin className="w-4 h-4 text-[#0077B5] flex-shrink-0 mt-1" />
+              <div className="flex-1">
+                <p className="text-xs text-muted-foreground font-medium">LinkedIn Profile</p>
+                {editingField === 'linkedin_url' ? (
+                  <div className="space-y-1 mt-1">
+                    <input
+                      type="url"
+                      value={tempValue}
+                      onChange={(e) => { setTempValue(e.target.value); setFieldError(''); }}
+                      className="input input-bordered text-sm w-full"
+                      placeholder="https://linkedin.com/in/..."
+                      autoFocus
+                    />
+                    {fieldError && <p className="text-xs text-destructive">{fieldError}</p>}
+                    <div className="flex gap-1">
+                      <button onClick={() => handleSaveField('linkedin_url')} className="p-1 bg-green-600 text-white rounded"><Check className="w-3 h-3" /></button>
+                      <button onClick={handleCancelEdit} className="p-1 bg-muted rounded"><X className="w-3 h-3" /></button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    {facultyData.linkedinUrl ? (
+                      <a href={facultyData.linkedinUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline font-medium break-all">View Profile</a>
+                    ) : (
+                      <span className="text-muted-foreground italic text-xs">Not set</span>
+                    )}
+                    <button onClick={() => handleEditField('linkedin_url', facultyData.linkedinUrl)} className="p-1 hover:bg-muted rounded opacity-60 hover:opacity-100 transition-opacity flex-shrink-0" title="Edit LinkedIn"><Edit2 className="w-3 h-3" /></button>
+                  </div>
+                )}
               </div>
-            )}
+            </div>
 
             {/* Email */}
-            <div className="flex items-start gap-3 text-sm group">
+            <div className="flex items-start gap-3 text-sm">
               <Mail className="w-4 h-4 text-primary flex-shrink-0 mt-1" />
               <div className="flex-1">
                 <p className="text-xs text-muted-foreground font-medium mb-1">Email</p>
-                <a href={`mailto:${facultyData.email}`} className="font-medium text-sm break-all hover:underline text-blue-600">{facultyData.email}</a>
+                {editingField === 'email' ? (
+                  <div className="space-y-1">
+                    <input
+                      type="email"
+                      value={tempValue}
+                      onChange={(e) => { setTempValue(e.target.value); setFieldError(''); }}
+                      className="input input-bordered text-sm w-full"
+                      autoFocus
+                    />
+                    {fieldError && <p className="text-xs text-destructive">{fieldError}</p>}
+                    <div className="flex gap-1">
+                      <button onClick={() => handleSaveField('email')} className="p-1 bg-green-600 text-white rounded"><Check className="w-3 h-3" /></button>
+                      <button onClick={handleCancelEdit} className="p-1 bg-muted rounded"><X className="w-3 h-3" /></button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <a href={`mailto:${facultyData.email}`} className="font-medium text-sm break-all hover:underline text-blue-600">{facultyData.email}</a>
+                    <button onClick={() => handleEditField('email', facultyData.email)} className="p-1 hover:bg-muted rounded opacity-60 hover:opacity-100 transition-opacity flex-shrink-0" title="Edit email"><Edit2 className="w-3 h-3" /></button>
+                  </div>
+                )}
               </div>
             </div>
 
             {/* Phone */}
-            <div className="flex items-start gap-3 text-sm group">
+            <div className="flex items-start gap-3 text-sm">
               <Phone className="w-4 h-4 text-primary flex-shrink-0 mt-1" />
               <div className="flex-1">
                 <p className="text-xs text-muted-foreground font-medium mb-1">Phone</p>
-                <a href={`tel:${facultyData.phone}`} className="font-medium text-sm break-all hover:underline">{facultyData.phone}</a>
+                {editingField === 'phone' ? (
+                  <div className="space-y-1">
+                    <input
+                      type="tel"
+                      value={tempValue}
+                      onChange={(e) => { setTempValue(e.target.value); setFieldError(''); }}
+                      className="input input-bordered text-sm w-full"
+                      placeholder="e.g. 9876543210 or +91 9876543210"
+                      autoFocus
+                    />
+                    {fieldError && <p className="text-xs text-destructive">{fieldError}</p>}
+                    <div className="flex gap-1">
+                      <button onClick={() => handleSaveField('phone')} className="p-1 bg-green-600 text-white rounded"><Check className="w-3 h-3" /></button>
+                      <button onClick={handleCancelEdit} className="p-1 bg-muted rounded"><X className="w-3 h-3" /></button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <a href={`tel:${facultyData.phone}`} className="font-medium text-sm break-all hover:underline">{facultyData.phone}</a>
+                    <button onClick={() => handleEditField('phone', facultyData.phone)} className="p-1 hover:bg-muted rounded opacity-60 hover:opacity-100 transition-opacity flex-shrink-0" title="Edit phone"><Edit2 className="w-3 h-3" /></button>
+                  </div>
+                )}
               </div>
             </div>
 
             {/* Address */}
-            {facultyData.address && (
-              <div className="flex items-start gap-3 text-sm">
-                <MapPin className="w-4 h-4 text-primary flex-shrink-0 mt-1" />
-                <div className="flex-1">
-                  <p className="text-xs text-muted-foreground font-medium mb-1">Current Address</p>
-                  <p className="font-medium text-foreground break-all">{facultyData.address}</p>
-                </div>
+            <div className="flex items-start gap-3 text-sm">
+              <MapPin className="w-4 h-4 text-primary flex-shrink-0 mt-1" />
+              <div className="flex-1">
+                <p className="text-xs text-muted-foreground font-medium mb-1">Current Address</p>
+                {editingField === 'address' ? (
+                  <div className="space-y-1">
+                    <textarea
+                      value={tempValue}
+                      onChange={(e) => { setTempValue(e.target.value); setFieldError(''); }}
+                      className="input input-bordered text-sm w-full resize-none"
+                      rows={2}
+                      autoFocus
+                    />
+                    {fieldError && <p className="text-xs text-destructive">{fieldError}</p>}
+                    <div className="flex gap-1">
+                      <button onClick={() => handleSaveField('address')} className="p-1 bg-green-600 text-white rounded"><Check className="w-3 h-3" /></button>
+                      <button onClick={handleCancelEdit} className="p-1 bg-muted rounded"><X className="w-3 h-3" /></button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-start gap-2">
+                    <p className="font-medium text-foreground break-all flex-1">{facultyData.address || <span className="text-muted-foreground italic text-xs">Not set</span>}</p>
+                    <button onClick={() => handleEditField('address', facultyData.address)} className="p-1 hover:bg-muted rounded opacity-60 hover:opacity-100 transition-opacity flex-shrink-0 mt-0.5" title="Edit address"><Edit2 className="w-3 h-3" /></button>
+                  </div>
+                )}
               </div>
-            )}
+            </div>
           </div>
 
           {/* Attendance Summary */}
@@ -2629,19 +3076,21 @@ export default function Profile() {
           className="widget-card lg:col-span-2"
         >
           <Tabs defaultValue="education" className="w-full">
-            <TabsList className="grid w-full grid-cols-6 mb-6">
-              <TabsTrigger value="education" className="text-xs">Education</TabsTrigger>
-              <TabsTrigger value="experience" className="text-xs">Experience</TabsTrigger>
-              <TabsTrigger value="subjects" className="text-xs">Subjects</TabsTrigger>
-              <TabsTrigger value="events" className="text-xs">Events</TabsTrigger>
-              <TabsTrigger value="research" className="text-xs">Research</TabsTrigger>
-              <TabsTrigger value="phd" className="text-xs">PhD Status</TabsTrigger>
-            </TabsList>
+            <div className="overflow-x-auto pb-2 scrollbar-hide -mx-2 px-2">
+              <TabsList className="flex w-max lg:grid lg:w-full lg:grid-cols-6 mb-2">
+                <TabsTrigger value="education" className="text-xs min-w-[100px] lg:min-w-0">Education</TabsTrigger>
+                <TabsTrigger value="experience" className="text-xs min-w-[100px] lg:min-w-0">Experience</TabsTrigger>
+                <TabsTrigger value="subjects" className="text-xs min-w-[100px] lg:min-w-0">Subjects</TabsTrigger>
+                <TabsTrigger value="events" className="text-xs min-w-[100px] lg:min-w-0">Events</TabsTrigger>
+                <TabsTrigger value="research" className="text-xs min-w-[100px] lg:min-w-0">Research</TabsTrigger>
+                <TabsTrigger value="phd" className="text-xs min-w-[100px] lg:min-w-0">PHD Status</TabsTrigger>
+              </TabsList>
+            </div>
 
             {/* Educational Qualifications */}
             <TabsContent value="education">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="section-title flex items-center gap-2">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+                <h3 className="section-title flex items-center gap-2 mb-0">
                   <GraduationCap className="w-5 h-5 text-secondary" />
                   Educational Qualifications
                 </h3>
@@ -2957,17 +3406,20 @@ export default function Profile() {
                           </div>
                           <p className="font-semibold text-foreground">{edu.branch}</p>
                           <p className="text-sm text-muted-foreground mt-1">{edu.college}</p>
-                          <div className="flex items-center gap-4 mt-2 text-sm">
-                            <span className="text-muted-foreground">
-                              <strong>University:</strong> {edu.university}
-                            </span>
-                            <span className="text-muted-foreground">
-                              <strong>Year:</strong> {edu.year}
-                            </span>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-y-2 gap-x-4 mt-3 text-sm">
+                            <div className="flex flex-col sm:flex-row sm:items-baseline gap-1">
+                              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">University:</span>
+                              <span className="text-foreground">{edu.university}</span>
+                            </div>
+                            <div className="flex flex-col sm:flex-row sm:items-baseline gap-1">
+                              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Year:</span>
+                              <span className="text-foreground">{edu.year}</span>
+                            </div>
                             {edu.percentage !== "-" && (
-                              <span className="text-secondary font-semibold">
-                                {edu.percentage}
-                              </span>
+                              <div className="flex flex-col sm:flex-row sm:items-baseline gap-1">
+                                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Score:</span>
+                                <span className="text-secondary font-bold text-lg">{edu.percentage}</span>
+                              </div>
                             )}
                           </div>
                         </div>
@@ -2994,8 +3446,8 @@ export default function Profile() {
               </div>
 
               {/* Professional Memberships */}
-              <div className="flex items-center justify-between mt-8 mb-4">
-                <h3 className="section-title flex items-center gap-2">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-8 mb-6">
+                <h3 className="section-title flex items-center gap-2 mb-0">
                   <Users className="w-5 h-5 text-secondary" />
                   Professional Memberships
                 </h3>
@@ -3150,13 +3602,15 @@ export default function Profile() {
                     ) : (
                       // View Mode
                       <>
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 bg-secondary/20 rounded-full">
-                            <Award className="w-5 h-5 text-secondary" />
-                          </div>
-                          <div>
-                            <p className="font-semibold text-foreground">{membership.society_name}</p>
-                            <p className="text-sm text-muted-foreground">ID: {membership.membership_id}</p>
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-4 flex-1">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 bg-secondary/20 rounded-full shrink-0">
+                              <Award className="w-5 h-5 text-secondary" />
+                            </div>
+                            <div>
+                              <p className="font-semibold text-foreground leading-tight">{membership.society_name}</p>
+                              <p className="text-xs text-muted-foreground mt-0.5 font-mono">ID: {membership.membership_id}</p>
+                            </div>
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
@@ -3187,15 +3641,15 @@ export default function Profile() {
 
             {/* Experience Details */}
             <TabsContent value="experience">
-              <h3 className="section-title flex items-center gap-2">
+              <h3 className="section-title flex items-center gap-2 mb-6">
                 <Briefcase className="w-5 h-5 text-secondary" />
                 Experience
               </h3>
 
               {/* Teaching Experience Section */}
-              <div className="mb-8">
-                <div className="flex items-center justify-between mb-3">
-                  <h4 className="font-semibold text-base text-primary">Teaching Experience</h4>
+              <div className="mb-10">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                  <h4 className="font-semibold text-base text-primary mb-0">Teaching Experience</h4>
                   <Button
                     size="sm"
                     onClick={handleAddTeachingExp}
@@ -3260,6 +3714,7 @@ export default function Profile() {
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="Professor">Professor</SelectItem>
+                              <SelectItem value="Associate Professor">Associate Professor</SelectItem>
                               <SelectItem value="Assistant Professor">Assistant Professor</SelectItem>
                               <SelectItem value="Non-Teaching Faculty">Non-Teaching Faculty</SelectItem>
                               <SelectItem value="Other">Other</SelectItem>
@@ -3361,13 +3816,22 @@ export default function Profile() {
                         </div>
                         <div className="flex flex-col gap-1">
                           <label className="text-xs font-medium">To Date</label>
-                          <input
-                            type="date"
-                            value={newTeachingExp.to}
-                            onChange={(e) => handleNewTeachingExpChange('to', e.target.value)}
-                            className="input input-bordered text-sm"
-                            disabled={loading || newTeachingExp.current}
-                          />
+                          {newTeachingExp.current ? (
+                            <input
+                              type="text"
+                              value="Present / Currently Working"
+                              className="input input-bordered text-sm bg-muted/50 cursor-not-allowed"
+                              disabled
+                            />
+                          ) : (
+                            <input
+                              type="date"
+                              value={newTeachingExp.to}
+                              onChange={(e) => handleNewTeachingExpChange('to', e.target.value)}
+                              className="input input-bordered text-sm"
+                              disabled={loading}
+                            />
+                          )}
                         </div>
                       </div>
                       {/* Period */}
@@ -3485,13 +3949,22 @@ export default function Profile() {
                             </div>
                             <div className="flex items-center gap-3">
                               <label className="text-sm font-medium w-20">To:</label>
-                              <input
-                                type="text"
-                                value={tempTeachingExp!.to}
-                                onChange={(e) => handleTeachingExpFieldChange('to', e.target.value)}
-                                className="input input-bordered flex-1 text-sm"
-                                disabled={loading}
-                              />
+                              {tempTeachingExp!.current ? (
+                                <input
+                                  type="text"
+                                  value="Present"
+                                  className="input input-bordered flex-1 text-sm bg-muted/50 cursor-not-allowed"
+                                  disabled
+                                />
+                              ) : (
+                                <input
+                                  type="text"
+                                  value={tempTeachingExp!.to}
+                                  onChange={(e) => handleTeachingExpFieldChange('to', e.target.value)}
+                                  className="input input-bordered flex-1 text-sm"
+                                  disabled={loading}
+                                />
+                              )}
                             </div>
                           </div>
                           <div className="flex items-center gap-3">
@@ -3543,26 +4016,26 @@ export default function Profile() {
                             <Badge className="absolute -top-2 right-4 bg-success">Current</Badge>
                           )}
                           <div className="flex items-start gap-4">
-                            <div className="p-2 bg-primary/10 rounded-lg">
+                            <div className="p-2 bg-primary/10 rounded-lg shrink-0 hidden sm:block">
                               <Building className="w-5 h-5 text-primary" />
                             </div>
-                            <div className="flex-1">
-                              <div className="flex flex-col md:flex-row md:items-center md:gap-3">
-                                <p className="font-semibold text-foreground">{exp.designation}</p>
-                                <span className="text-xs text-muted-foreground">{exp.department}</span>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex flex-col md:flex-row md:items-baseline md:gap-3">
+                                <p className="font-bold text-foreground text-lg">{exp.designation}</p>
+                                <span className="text-sm text-secondary font-medium">{exp.department}</span>
                               </div>
-                              <p className="text-sm text-foreground mt-1">
-                                <span className="font-medium">{exp.institutionName}</span>
-                                {exp.university && <span className="text-muted-foreground">, {exp.university}</span>}
+                              <p className="text-sm text-foreground mt-2 leading-relaxed">
+                                <span className="font-semibold">{exp.institutionName}</span>
+                                {exp.university && <span className="text-muted-foreground italic">, {exp.university}</span>}
                               </p>
-                              <div className="flex items-center gap-4 mt-3">
-                                <div className="flex items-center gap-2 text-xs">
-                                  <Calendar className="w-3 h-3 text-muted-foreground" />
-                                  <span className="text-muted-foreground">
-                                    {exp.from} - {exp.to}
+                              <div className="flex flex-wrap items-center gap-3 mt-4">
+                                <div className="flex items-center gap-2 px-2 py-1 bg-muted rounded text-[11px] font-medium">
+                                  <Calendar className="w-3.5 h-3.5 text-primary" />
+                                  <span className="text-foreground">
+                                    {exp.from} — {exp.current ? 'Present' : exp.to}
                                   </span>
                                 </div>
-                                <Badge variant="outline">{exp.period}</Badge>
+                                <Badge variant="secondary" className="text-[10px] font-bold uppercase tracking-wider">{exp.period}</Badge>
                               </div>
                             </div>
                             <div className="flex gap-1">
@@ -3591,8 +4064,8 @@ export default function Profile() {
 
               {/* Industry Experience Section */}
               <div>
-                <div className="flex items-center justify-between mb-3">
-                  <h4 className="font-semibold text-base text-primary">Industry Experience</h4>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                  <h4 className="font-semibold text-base text-primary mb-0">Industry Experience</h4>
                   <Button
                     size="sm"
                     onClick={handleAddIndustryExp}
@@ -3705,13 +4178,22 @@ export default function Profile() {
                         </div>
                         <div className="flex flex-col gap-1">
                           <label className="text-xs font-medium">To Date</label>
-                          <input
-                            type="date"
-                            value={newIndustryExp.to}
-                            onChange={(e) => handleNewIndustryExpChange('to', e.target.value)}
-                            className="input input-bordered text-sm"
-                            disabled={loading || newIndustryExp.current}
-                          />
+                          {newIndustryExp.current ? (
+                            <input
+                              type="text"
+                              value="Present / Currently Working"
+                              className="input input-bordered text-sm bg-muted/50 cursor-not-allowed"
+                              disabled
+                            />
+                          ) : (
+                            <input
+                              type="date"
+                              value={newIndustryExp.to}
+                              onChange={(e) => handleNewIndustryExpChange('to', e.target.value)}
+                              className="input input-bordered text-sm"
+                              disabled={loading}
+                            />
+                          )}
                         </div>
                       </div>
                       {/* Period */}
@@ -3819,13 +4301,22 @@ export default function Profile() {
                             </div>
                             <div className="flex items-center gap-3">
                               <label className="text-sm font-medium w-20">To:</label>
-                              <input
-                                type="text"
-                                value={tempIndustryExp!.to}
-                                onChange={(e) => handleIndustryExpFieldChange('to', e.target.value)}
-                                className="input input-bordered flex-1 text-sm"
-                                disabled={loading}
-                              />
+                              {tempIndustryExp!.current ? (
+                                <input
+                                  type="text"
+                                  value="Present"
+                                  className="input input-bordered flex-1 text-sm bg-muted/50 cursor-not-allowed"
+                                  disabled
+                                />
+                              ) : (
+                                <input
+                                  type="text"
+                                  value={tempIndustryExp!.to}
+                                  onChange={(e) => handleIndustryExpFieldChange('to', e.target.value)}
+                                  className="input input-bordered flex-1 text-sm"
+                                  disabled={loading}
+                                />
+                              )}
                             </div>
                           </div>
                           <div className="flex items-center gap-3">
@@ -3891,7 +4382,7 @@ export default function Profile() {
                                 <div className="flex items-center gap-2 text-xs">
                                   <Calendar className="w-3 h-3 text-muted-foreground" />
                                   <span className="text-muted-foreground">
-                                    {exp.from} - {exp.to}
+                                    {exp.from} - {exp.current ? 'Present' : exp.to}
                                   </span>
                                 </div>
                                 <Badge variant="outline">{exp.period}</Badge>
@@ -3924,10 +4415,12 @@ export default function Profile() {
 
             {/* Subjects Handled */}
             <TabsContent value="subjects">
-              <h3 className="section-title flex items-center gap-2">
-                <BookOpen className="w-5 h-5 text-secondary" />
-                Subjects Handled & Results
-              </h3>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+                <h3 className="section-title flex items-center gap-2 mb-0">
+                  <BookOpen className="w-5 h-5 text-secondary" />
+                  Subjects Handled & Results
+                </h3>
+              </div>
 
               {/* Filter Buttons */}
               <div className="mb-6 flex items-center gap-3 flex-wrap">
@@ -4019,20 +4512,19 @@ export default function Profile() {
               </div>
             </TabsContent>
 
-            {/* Events Section */}
             <TabsContent value="events">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-2xl font-serif font-bold text-foreground border-b-2 border-primary/20 pb-2 flex items-center gap-2">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+                <h3 className="text-2xl font-serif font-bold text-foreground border-b-4 border-primary/20 pb-2 flex items-center gap-2 mb-0">
                   <Calendar className="w-6 h-6 text-secondary" />
                   Events
                 </h3>
                 <Button
                   size="sm"
                   onClick={handleAddEvent}
-                  className="bg-primary hover:bg-primary/90"
+                  className="bg-primary hover:bg-primary/90 w-full sm:w-auto"
                 >
                   <Plus className="w-4 h-4 mr-1" />
-                  Add New
+                  Add New Event
                 </Button>
               </div>
 
@@ -4252,18 +4744,18 @@ export default function Profile() {
 
             {/* Research Section */}
             <TabsContent value="research">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-2xl font-serif font-bold text-foreground border-b-2 border-primary/20 pb-2 flex items-center gap-2">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+                <h3 className="text-2xl font-serif font-bold text-foreground border-b-4 border-primary/20 pb-2 flex items-center gap-2 mb-0">
                   <FileText className="w-6 h-6 text-secondary" />
                   Research
                 </h3>
                 <Button
                   size="sm"
                   onClick={handleAddResearch}
-                  className="bg-primary hover:bg-primary/90"
+                  className="bg-primary hover:bg-primary/90 w-full sm:w-auto"
                 >
                   <Plus className="w-4 h-4 mr-1" />
-                  Add New
+                  Add New Research
                 </Button>
               </div>
 
@@ -4740,7 +5232,13 @@ export default function Profile() {
                         onChange={(e) => handlePhdFieldChange('phdStatus', e.target.value)}
                         className="select select-bordered w-full bg-white text-foreground"
                       >
+                        <option value="">Select Status</option>
                         <option value="Pursuing">Pursuing</option>
+                        <option value="Course work pursuing">Course work pursuing</option>
+                        <option value="Synopsis submitted">Synopsis submitted</option>
+                        <option value="Thesis submitted">Thesis submitted</option>
+                        <option value="Confirmation">Confirmation</option>
+                        <option value="Viva completed">Viva completed</option>
                         <option value="Completed">Completed</option>
                       </select>
                     </div>
@@ -4893,7 +5391,13 @@ export default function Profile() {
                         onChange={(e) => setNewPhd(prev => ({ ...prev, phdStatus: e.target.value }))}
                         className="select select-bordered w-full bg-white text-foreground"
                       >
+                        <option value="">Select Status</option>
                         <option value="Pursuing">Pursuing</option>
+                        <option value="Course work pursuing">Course work pursuing</option>
+                        <option value="Synopsis submitted">Synopsis submitted</option>
+                        <option value="Thesis submitted">Thesis submitted</option>
+                        <option value="Confirmation">Confirmation</option>
+                        <option value="Viva completed">Viva completed</option>
                         <option value="Completed">Completed</option>
                       </select>
                     </div>

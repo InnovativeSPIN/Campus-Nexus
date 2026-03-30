@@ -3,7 +3,7 @@ import { MainLayout } from "@/pages/faculty/components/layout/MainLayout";
 import { motion } from "framer-motion";
 import { Button } from "@/pages/faculty/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/pages/faculty/components/ui/card";
-import { Calendar, Clock, Users, AlertCircle, Loader2 } from "lucide-react";
+import { Calendar, Clock, Users, AlertCircle, Loader2, ShieldAlert } from "lucide-react";
 import { toast } from "@/pages/faculty/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -20,14 +20,49 @@ interface Timetable {
   timetable_incharge?: { Name: string };
 }
 
+interface TimetableRoles {
+  isClassCoordinator: boolean;
+  isTimetableIncharge: boolean;
+}
+
 export default function TimetableManagement() {
   const [timetables, setTimetables] = useState<Timetable[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [accessDenied, setAccessDenied] = useState(false);
+  const [timetableRoles, setTimetableRoles] = useState<TimetableRoles | null>(null);
   const { authToken } = useAuth();
 
   useEffect(() => {
-    fetchTimetables();
-  }, []);
+    checkTimetableRoles();
+  }, [authToken]);
+
+  const checkTimetableRoles = async () => {
+    try {
+      const response = await fetch("/api/v1/faculty/me/timetable-roles", {
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setTimetableRoles(data.data);
+        
+        // If user has either role, fetch timetables
+        if (data.data?.isClassCoordinator || data.data?.isTimetableIncharge) {
+          await fetchTimetables();
+        } else {
+          setAccessDenied(true);
+          setLoading(false);
+        }
+      } else {
+        setAccessDenied(true);
+        setLoading(false);
+      }
+    } catch (error) {
+      console.error("Error checking timetable roles:", error);
+      setAccessDenied(true);
+      setLoading(false);
+    }
+  };
 
   const fetchTimetables = async () => {
     try {
@@ -68,6 +103,25 @@ export default function TimetableManagement() {
     );
   }
 
+  if (accessDenied) {
+    return (
+      <MainLayout>
+        <div className="min-h-96 bg-gradient-to-br from-slate-50 to-slate-100 rounded-lg border border-slate-200 p-12 flex items-center justify-center">
+          <div className="text-center max-w-md">
+            <ShieldAlert className="w-16 h-16 text-red-500 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-slate-900 mb-2">Access Denied</h2>
+            <p className="text-slate-600 mb-4">
+              You are not assigned as a Timetable Incharge or Class Coordinator. 
+            </p>
+            <p className="text-slate-500 text-sm">
+              Please contact your Department Admin to get assigned to a timetable role.
+            </p>
+          </div>
+        </div>
+      </MainLayout>
+    );
+  }
+
   return (
     <MainLayout>
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
@@ -86,8 +140,12 @@ export default function TimetableManagement() {
             <div className="flex gap-3">
               <AlertCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-blue-900 font-medium">As Timetable Incharge</p>
-                <p className="text-blue-700 text-sm">
+                <p className="text-blue-900 font-medium">Your Coordinator Status</p>
+                <div className="text-blue-700 text-sm mt-2 space-y-1">
+                  <p>✓ Class Coordinator: {timetableRoles?.isClassCoordinator ? "Yes" : "No"}</p>
+                  <p>✓ Timetable Incharge: {timetableRoles?.isTimetableIncharge ? "Yes" : "No"}</p>
+                </div>
+                <p className="text-blue-700 text-sm mt-3">
                   You can view timetables and apply alterations when faculty request leave. 
                   Department admins create and activate timetables.
                 </p>

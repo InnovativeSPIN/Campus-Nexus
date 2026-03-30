@@ -19,6 +19,7 @@ import {
   Briefcase,
   Lock,
   CheckCircle2,
+  X,
 } from "lucide-react";
 import { cn } from "@/pages/faculty/lib/utils";
 
@@ -35,8 +36,19 @@ const menuItems = [
   { title: "Reports", url: "/faculty/reports", icon: BarChart3 },
 ];
 
-export function AppSidebar() {
-  const [collapsed, setCollapsed] = useState(false);
+interface AppSidebarProps {
+  collapsed: boolean;
+  setCollapsed: (collapsed: boolean) => void;
+  isMobileMenuOpen: boolean;
+  setIsMobileMenuOpen: (open: boolean) => void;
+}
+
+export function AppSidebar({
+  collapsed,
+  setCollapsed,
+  isMobileMenuOpen,
+  setIsMobileMenuOpen,
+}: AppSidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { logout, user, refreshUserData } = useAuth();
@@ -96,11 +108,17 @@ export function AppSidebar() {
       initial={false}
       animate={{ width: collapsed ? 80 : 280 }}
       transition={{ duration: 0.3, ease: "easeInOut" }}
-      className="fixed left-0 top-0 h-screen bg-sidebar z-50 flex flex-col shadow-xl"
+      className={cn(
+        "fixed left-0 top-0 h-screen bg-sidebar flex flex-col shadow-xl transition-all duration-300",
+        "z-[100] lg:z-50",
+        // Mobile visibility
+        "max-lg:-translate-x-full lg:translate-x-0",
+        isMobileMenuOpen && "max-lg:translate-x-0"
+      )}
     >
       {/* Logo Section */}
-      <div className="p-4 border-b border-sidebar-border">
-        <div className="flex items-center gap-3">
+      <div className="p-4 border-b border-sidebar-border flex items-center justify-between">
+        <div className="flex items-center gap-3 overflow-hidden">
           <AnimatePresence>
             {!collapsed && (
               <motion.div
@@ -113,7 +131,7 @@ export function AppSidebar() {
                 <img
                   src={user?.avatar || "/src/assets/prathap.png"}
                   alt={user?.name}
-                  className="w-12 h-12 rounded-full object-cover border-2 border-white"
+                  className="w-12 h-12 rounded-full object-cover border-2 border-white shrink-0"
                   onError={(e) => {
                     e.currentTarget.style.display = 'none';
                     e.currentTarget.nextElementSibling?.classList.remove('hidden');
@@ -130,18 +148,33 @@ export function AppSidebar() {
                   <span className="text-[10px] text-white/70 uppercase tracking-widest font-semibold mt-1">
                     {user?.designation || 'Faculty'}
                   </span>
-                  <span className="text-[10px] text-white/50 uppercase tracking-wider">
+                  <p className="text-[10px] text-white/50 uppercase tracking-wider truncate max-w-[150px]">
                     {user?.department
                       ? (typeof user.department === 'object'
                         ? user.department.short_name || user.department.full_name
                         : user.department)
                       : 'Department'}
-                  </span>
+                  </p>
                 </div>
               </motion.div>
             )}
           </AnimatePresence>
+          {collapsed && (
+            <div className="w-12 h-12 rounded-full bg-sidebar-accent flex items-center justify-center text-white shrink-0">
+               <span className="font-bold">N</span>
+            </div>
+          )}
         </div>
+
+        {/* Mobile Close Button */}
+        {isMobileMenuOpen && (
+          <button 
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="lg:hidden p-2 text-white/70 hover:text-white transition-colors"
+          >
+            <X className="w-6 h-6" />
+          </button>
+        )}
       </div>
 
       {/* Navigation */}
@@ -158,6 +191,7 @@ export function AppSidebar() {
               >
                 <NavLink
                   to={item.url}
+                  onClick={() => setIsMobileMenuOpen(false)}
                   className={cn(
                     "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group",
                     isActive
@@ -198,6 +232,7 @@ export function AppSidebar() {
             >
               <NavLink
                 to="/faculty/placement"
+                onClick={() => setIsMobileMenuOpen(false)}
                 className={cn(
                   "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group",
                   location.pathname.startsWith("/faculty/placement")
@@ -240,6 +275,7 @@ export function AppSidebar() {
               >
                 <NavLink
                   to="/faculty/timetable-management"
+                  onClick={() => setIsMobileMenuOpen(false)}
                   className={cn(
                     "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group",
                     location.pathname.startsWith("/faculty/timetable-management")
@@ -284,6 +320,7 @@ export function AppSidebar() {
             >
               <NavLink
                 to="/faculty/class-incharge"
+                onClick={() => setIsMobileMenuOpen(false)}
                 className={cn(
                   "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group",
                   location.pathname.startsWith("/faculty/class-incharge")
@@ -324,6 +361,7 @@ export function AppSidebar() {
           >
             <NavLink
               to="/faculty/leave-management"
+              onClick={() => setIsMobileMenuOpen(false)}
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group",
                 location.pathname.startsWith("/faculty/leave-management")
@@ -363,6 +401,7 @@ export function AppSidebar() {
           >
             <NavLink
               to="/faculty/alteration-approval"
+              onClick={() => setIsMobileMenuOpen(false)}
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group",
                 location.pathname.startsWith("/faculty/alteration-approval")
@@ -402,9 +441,12 @@ export function AppSidebar() {
         {/* Logout Button */}
         <button
           onClick={handleLogout}
-          className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-destructive/90 text-white hover:bg-destructive transition-colors"
+          className={cn(
+            "w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-destructive/90 text-white hover:bg-destructive transition-colors",
+            collapsed && "px-0"
+          )}
         >
-          <LogOut className="w-5 h-5" />
+          <LogOut className="w-5 h-5 flex-shrink-0" />
           <AnimatePresence>
             {!collapsed && (
               <motion.span
@@ -419,17 +461,17 @@ export function AppSidebar() {
           </AnimatePresence>
         </button>
 
-        {/* Collapse Toggle */}
+        {/* Collapse Toggle - Hide on mobile since it's a drawer */}
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-sidebar-accent/50 text-white hover:bg-sidebar-accent transition-colors"
+          className="w-full hidden lg:flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-sidebar-accent/50 text-white hover:bg-sidebar-accent transition-colors"
         >
           {collapsed ? (
             <ChevronRight className="w-5 h-5" />
           ) : (
             <>
-              <ChevronLeft className="w-5 h-5" />
-              <span className="text-sm font-medium">Collapse</span>
+              <ChevronLeft className="w-5 h-5 flex-shrink-0" />
+              <span className="text-sm font-medium whitespace-nowrap overflow-hidden">Collapse</span>
             </>
           )}
         </button>

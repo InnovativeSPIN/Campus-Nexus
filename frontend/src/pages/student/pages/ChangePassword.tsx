@@ -6,6 +6,9 @@ import { Lock, Eye, EyeOff, CheckCircle, AlertCircle } from 'lucide-react';
 import { useToast } from '@/pages/student/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 
+// Get token from localStorage
+const getAuthToken = () => localStorage.getItem('authToken') || '';
+
 export default function ChangePassword() {
   const { toast } = useToast();
   const { logout } = useAuth();
@@ -55,10 +58,12 @@ export default function ChangePassword() {
     setIsLoading(true);
 
     try {
+      const token = getAuthToken();
       const response = await fetch('/api/v1/auth/update-student-password', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
           currentPassword: formData.currentPassword,

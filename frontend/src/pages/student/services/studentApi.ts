@@ -44,7 +44,7 @@ export const uploadStudentPhoto = (studentId: number | string, file: File) => {
     const formData = new FormData();
     formData.append('photo', file);
 
-    return fetch(`${BASE_URL}/students/${studentId}/photo`, {
+    return fetch(`${BASE_URL}/students/me/photo`, {
         method: 'PUT',
         headers: {
             ...(getToken() ? { Authorization: `Bearer ${getToken()}` } : {}),
@@ -53,6 +53,40 @@ export const uploadStudentPhoto = (studentId: number | string, file: File) => {
     }).then(async (res) => {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || data.message || 'Photo upload failed');
+        return data;
+    });
+};
+
+export const uploadFamilyPhoto = (studentId: number | string, file: File) => {
+    const formData = new FormData();
+    formData.append('familyPhoto', file);
+
+    return fetch(`${BASE_URL}/students/me/family-photo`, {
+        method: 'PUT',
+        headers: {
+            ...(getToken() ? { Authorization: `Bearer ${getToken()}` } : {}),
+        },
+        body: formData,
+    }).then(async (res) => {
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || data.message || 'Family photo upload failed');
+        return data;
+    });
+};
+
+export const uploadReferencePhoto = (_studentId: number | string, file: File) => {
+    const formData = new FormData();
+    formData.append('referencePhoto', file);
+
+    return fetch(`${BASE_URL}/students/me/reference-photo`, {
+        method: 'POST',
+        headers: {
+            ...(getToken() ? { Authorization: `Bearer ${getToken()}` } : {}),
+        },
+        body: formData,
+    }).then(async (res) => {
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || data.message || 'Reference photo upload failed');
         return data;
     });
 };
@@ -178,4 +212,16 @@ export const updateLeave = (id: string | number, data: FormData | Record<string,
 
 export const cancelLeave = (id: string | number) =>
     request(`/student-leaves/${id}`, { method: 'PUT', body: JSON.stringify({ overall_status: 'cancelled' }) });
+
+// ─────────────────────────────────────────────────────────
+// ATTENDANCE
+// ─────────────────────────────────────────────────────────
+export const getMyAttendance = (params?: { studentId?: number | string; semester?: number; academicYear?: string }) => {
+    const studentId = params?.studentId;
+    if (!studentId) throw new Error('Student ID is required');
+    const qs = new URLSearchParams();
+    if (params?.semester) qs.set('semester', String(params.semester));
+    if (params?.academicYear) qs.set('academicYear', params.academicYear);
+    return request(`/student/attendance/student/${studentId}${qs.toString() ? `?${qs}` : ''}`);
+};
 

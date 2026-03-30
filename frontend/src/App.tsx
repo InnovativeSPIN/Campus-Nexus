@@ -56,80 +56,117 @@ import StudentRoutes from './pages/student/StudentRoutes';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { Suspense } from 'react';
 
 const queryClient = new QueryClient();
 
+// Suppress Sonner state warning - it's a library internals issue that doesn't affect functionality
+if (typeof window !== 'undefined') {
+  const originalError = console.error;
+  console.error = (...args: any[]) => {
+    if (!args || args.length === 0) {
+      return originalError.apply(console, args);
+    }
+    
+    const message = String(args[0]);
+    
+    // Suppress React render phase update warning for Sonner/toast libraries
+    if (
+      /Cannot update a component.*while rendering a different component/i.test(message) &&
+      /ForwardRef|Toaster|sonner/i.test(message)
+    ) {
+      return; // Suppressed - known library internals issue
+    }
+    
+    originalError.apply(console, args);
+  };
+}
+
+// Main app routes and logic (without Toaster)
+const AppRoutes = () => (
+  <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+    <AuthProvider>
+      <Suspense fallback={
+        <div className="min-h-screen flex items-center justify-center bg-background">
+          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
+        </div>
+      }>
+      <Routes>
+        {/* Root redirect */}
+        <Route path="/" element={<Navigate to="/login" replace />} />
+
+        {/* Universal Auth */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/admin" element={<AdminLogin />} />
+        <Route path="/admin/change-password" element={<ChangePassword />} />
+
+        {/* Super Admin Routes */}
+        <Route path="/admin/superadmin" element={<SuperAdminDashboard />} />
+        <Route path="/admin/superadmin/admins" element={<SuperAdminAdmins />} />
+        <Route path="/admin/superadmin/timetable" element={<SuperAdminTimeTable />} />
+        <Route path="/admin/superadmin/students" element={<SuperAdminStudents />} />
+        <Route path="/admin/superadmin/students/:id" element={<SuperAdminStudentProfile />} />
+        <Route path="/admin/superadmin/faculty" element={<SuperAdminFaculty />} />
+        <Route path="/admin/superadmin/faculty/:id" element={<SuperAdminFacultyProfile />} />
+        <Route path="/admin/superadmin/departments" element={<SuperAdminDepartments />} />
+        <Route path="/admin/superadmin/classes" element={<SuperAdminClasses />} />
+        <Route path="/admin/superadmin/reports" element={<SuperAdminReports />} />
+        <Route path="/admin/superadmin/backup" element={<SuperAdminBackup />} />
+        <Route path="/admin/superadmin/announcements" element={<SuperAdminAnnouncements />} />
+        <Route path="/admin/superadmin/announcements/:id" element={<SuperAdminAnnouncementDetail />} />
+        <Route path="/admin/superadmin/subjects" element={<SuperAdminSubjectManagement />} />
+
+        {/* Executive Admin Routes */}
+        <Route path="/admin/executive" element={<ExecutiveAdminDashboard />} />
+        <Route path="/admin/executive/students" element={<ExecutiveStudents />} />
+        <Route path="/admin/executive/students/:id" element={<ExecutiveStudentProfile />} />
+        <Route path="/admin/executive/faculty" element={<ExecutiveFaculty />} />
+        <Route path="/admin/executive/faculty/:id" element={<ExecutiveFacultyProfile />} />
+        <Route path="/admin/executive/leave-requests" element={<ExecutiveLeaveRequests />} />
+        <Route path="/admin/executive/academic-performance" element={<AcademicPerformance />} />
+        <Route path="/admin/executive/reports" element={<ExecutiveReports />} />
+        <Route path="/admin/executive/announcements" element={<ExecutiveAnnouncements />} />
+        <Route path="/admin/executive/announcements/:id" element={<ExecutiveAnnouncementDetail />} />
+
+        {/* Academic Admin Routes */}
+        <Route path="/admin/academic" element={<AcademicAdminDashboard />} />
+        <Route path="/admin/academic/students" element={<AcademicStudents />} />
+        <Route path="/admin/academic/faculty" element={<AcademicFaculty />} />
+        <Route path="/admin/academic/departments" element={<AcademicDepartments />} />
+        <Route path="/admin/academic/reports" element={<AcademicReports />} />
+        <Route path="/admin/academic/announcements" element={<AcademicAnnouncements />} />
+        <Route path="/admin/academic/announcements/:id" element={<AcademicAnnouncementDetail />} />
+
+        {/* Department Admin Routes */}
+        <Route path="/admin/department-admin/*" element={<DepartmentAdminRoutes />} />
+
+        {/* Student Routes */}
+        <Route path="/student/*" element={<StudentRoutes />} />
+
+        {/* Faculty Routes */}
+        <Route path="/faculty/*" element={<FacultyRoutes />} />
+
+        {/* Redirects */}
+        <Route path="/dashboard" element={<Navigate to="/" replace />} />
+        {/* NotFound for all unmatched routes */}
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+      </Suspense>
+    </AuthProvider>
+  </BrowserRouter>
+);
+
 const App = () => {
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-          <Toaster />
-          <AuthProvider>
-            <Routes>
-              {/* Root redirect */}
-              <Route path="/" element={<Navigate to="/login" replace />} />
-
-              {/* Universal Auth */}
-              <Route path="/login" element={<Login />} />
-              <Route path="/admin" element={<AdminLogin />} />
-              <Route path="/admin/change-password" element={<ChangePassword />} />
-
-              {/* Super Admin Routes */}
-              <Route path="/admin/superadmin" element={<SuperAdminDashboard />} />
-              <Route path="/admin/superadmin/admins" element={<SuperAdminAdmins />} />
-              <Route path="/admin/superadmin/timetable" element={<SuperAdminTimeTable />} />
-              <Route path="/admin/superadmin/students" element={<SuperAdminStudents />} />
-              <Route path="/admin/superadmin/students/:id" element={<SuperAdminStudentProfile />} />
-              <Route path="/admin/superadmin/faculty" element={<SuperAdminFaculty />} />
-              <Route path="/admin/superadmin/faculty/:id" element={<SuperAdminFacultyProfile />} />
-              <Route path="/admin/superadmin/departments" element={<SuperAdminDepartments />} />
-              <Route path="/admin/superadmin/classes" element={<SuperAdminClasses />} />
-              <Route path="/admin/superadmin/reports" element={<SuperAdminReports />} />
-              <Route path="/admin/superadmin/backup" element={<SuperAdminBackup />} />
-              <Route path="/admin/superadmin/announcements" element={<SuperAdminAnnouncements />} />
-              <Route path="/admin/superadmin/announcements/:id" element={<SuperAdminAnnouncementDetail />} />
-              <Route path="/admin/superadmin/subjects" element={<SuperAdminSubjectManagement />} />
-
-              {/* Executive Admin Routes */}
-              <Route path="/admin/executive" element={<ExecutiveAdminDashboard />} />
-              <Route path="/admin/executive/students" element={<ExecutiveStudents />} />
-              <Route path="/admin/executive/students/:id" element={<ExecutiveStudentProfile />} />
-              <Route path="/admin/executive/faculty" element={<ExecutiveFaculty />} />
-              <Route path="/admin/executive/faculty/:id" element={<ExecutiveFacultyProfile />} />
-              <Route path="/admin/executive/leave-requests" element={<ExecutiveLeaveRequests />} />
-              <Route path="/admin/executive/academic-performance" element={<AcademicPerformance />} />
-              <Route path="/admin/executive/reports" element={<ExecutiveReports />} />
-              <Route path="/admin/executive/announcements" element={<ExecutiveAnnouncements />} />
-              <Route path="/admin/executive/announcements/:id" element={<ExecutiveAnnouncementDetail />} />
-
-              {/* Academic Admin Routes */}
-              <Route path="/admin/academic" element={<AcademicAdminDashboard />} />
-              <Route path="/admin/academic/students" element={<AcademicStudents />} />
-              <Route path="/admin/academic/faculty" element={<AcademicFaculty />} />
-              <Route path="/admin/academic/departments" element={<AcademicDepartments />} />
-              <Route path="/admin/academic/reports" element={<AcademicReports />} />
-              <Route path="/admin/academic/announcements" element={<AcademicAnnouncements />} />
-              <Route path="/admin/academic/announcements/:id" element={<AcademicAnnouncementDetail />} />
-
-              {/* Department Admin Routes */}
-              <Route path="/admin/department-admin/*" element={<DepartmentAdminRoutes />} />
-
-              {/* Student Routes */}
-              <Route path="/student/*" element={<StudentRoutes />} />
-
-              {/* Faculty Routes */}
-              <Route path="/faculty/*" element={<FacultyRoutes />} />
-
-              {/* Redirects */}
-              <Route path="/dashboard" element={<Navigate to="/" replace />} />
-              {/* NotFound for all unmatched routes */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </AuthProvider>
-        </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
+    <>
+      <Toaster />
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          {/* App routes run independently */}
+          <AppRoutes />
+        </TooltipProvider>
+      </QueryClientProvider>
+    </>
   );
 };
 

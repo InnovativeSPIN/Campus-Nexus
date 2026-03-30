@@ -27,9 +27,11 @@ import {
 } from '@/pages/admin/superadmin/components/ui/alert-dialog';
 
 const roleRoutes: Partial<Record<UserRole, string>> = {
-  'department-admin': '/admin/department-admin',
-  faculty: '/faculty',
-  student: '/student',
+  'department-admin': '/admin/department-admin/dashboard',
+  faculty: '/faculty/dashboard',
+  principal: '/faculty/dashboard',
+  'vice-principal': '/faculty/dashboard',
+  student: '/student/dashboard',
 };
 
 export default function Login() {
@@ -70,18 +72,44 @@ export default function Login() {
         return;
       }
 
+      const identifier = email.trim();
+      // Avoid hammering the API (and spamming 404s) while the user types.
+      // Faculty lookup endpoint supports only exact `email` or `faculty_college_code`.
+      if (role === 'faculty' || role === 'principal' || role === 'vice-principal') {
+        const looksLikeEmail = identifier.includes('@');
+        const looksLikeCollegeCode = /^[A-Za-z0-9._-]{3,}$/.test(identifier) && !identifier.includes(' ');
+        if (!looksLikeEmail && !looksLikeCollegeCode) {
+          setUserDetails(null);
+          return;
+        }
+      }
+
       setIsFetchingDetails(true);
       try {
         if (role === 'student') {
-          const response = await fetch(`/api/v1/auth/student-details/${encodeURIComponent(email.trim())}`);
+          const response = await fetch(`/api/v1/auth/student-details/${encodeURIComponent(identifier)}`);
+          if (!response.ok) {
+            if (response.status !== 404) {
+              console.warn(`[student-details] HTTP ${response.status}:`, await response.text());
+            }
+            setUserDetails(null);
+            return;
+          }
           const result = await response.json();
           if (result.success && result.data) {
             setUserDetails(result.data);
           } else {
             setUserDetails(null);
           }
-        } else if (role === 'faculty') {
-          const response = await fetch(`/api/v1/auth/faculty-details/${encodeURIComponent(email.trim())}`);
+        } else if (role === 'faculty' || role === 'principal' || role === 'vice-principal') {
+          const response = await fetch(`/api/v1/auth/faculty-details/${encodeURIComponent(identifier)}`);
+          if (!response.ok) {
+            if (response.status !== 404) {
+              console.warn(`[faculty-details] HTTP ${response.status}:`, await response.text());
+            }
+            setUserDetails(null);
+            return;
+          }
           const result = await response.json();
           if (result.success && result.data) {
             // If the returned faculty record is actually a department-admin
@@ -134,7 +162,8 @@ export default function Login() {
 
     if (success) {
       toast.success(`Welcome! Logged in as ${role}`);
-      navigate(roleRoutes[role] || '/');
+      // Navigation is now handled by the useEffect above
+      // to avoid double-navigation which can cause blank screens
     } else {
       toast.error('Invalid credentials. Please try again.');
     }
@@ -218,8 +247,10 @@ export default function Login() {
                   <SelectValue placeholder="Select your role" />
                 </SelectTrigger>
                 <SelectContent className="bg-popover">
-                  <SelectItem value="department-admin">Department Admin</SelectItem>
+                  <SelectItem value="department-admin">HOD</SelectItem>
                   <SelectItem value="faculty">Faculty</SelectItem>
+                  <SelectItem value="principal">Principal</SelectItem>
+                  <SelectItem value="vice-principal">Vice Principal</SelectItem>
                   <SelectItem value="student">Student</SelectItem>
                 </SelectContent>
               </Select>
@@ -243,7 +274,9 @@ export default function Login() {
                   {userDetails.rollNo && (
                     <div className="flex items-center gap-2">
                       <Mail className="h-3 w-3 text-muted-foreground" />
-                      <span className="text-muted-foreground">{role === 'faculty' ? 'Faculty ID:' : 'Roll No:'}</span>
+                      <span className="text-muted-foreground">
+                        {role === 'faculty' || role === 'principal' || role === 'vice-principal' ? 'ID:' : 'Roll No:'}
+                      </span>
                       <span className="font-medium">{userDetails.rollNo}</span>
                     </div>
                   )}
@@ -258,7 +291,10 @@ export default function Login() {
                     <div className="flex items-center gap-2">
                       <Calendar className="h-3 w-3 text-muted-foreground" />
                       <span className="text-muted-foreground">Year:</span>
-                      <span className="font-medium">{userDetails.year}{userDetails.semester ? ` (Semester ${userDetails.semester})` : ''}</span>
+                      <span className="font-medium">
+                        {userDetails.year}
+                        {userDetails.semester ? ` (Semester ${userDetails.semester})` : ''}
+                      </span>
                     </div>
                   )}
                   {userDetails.department && (

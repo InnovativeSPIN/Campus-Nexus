@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import PageHeader from '@/pages/student/components/layout/PageHeader';
 import SectionCard from '@/pages/student/components/common/SectionCard';
 import ProgressBar from '@/pages/student/components/common/ProgressBar';
@@ -6,40 +6,94 @@ import Badge from '@/pages/student/components/common/Badge';
 
 import { getAttendanceStatus, getAttendanceMessage, calculateAttendancePercentage } from '@/pages/student/utils/calculateAttendance';
 import { SEMESTERS, ATTENDANCE_THRESHOLD } from '@/pages/student/utils/constants';
-import { AlertTriangle, CheckCircle } from 'lucide-react';
-
-const attendanceData = {
-  5: {
-    overall: { attended: 165, total: 200 },
-    subjects: [
-      { code: 'CS501', name: 'Data Structures', attended: 38, total: 45 },
-      { code: 'CS502', name: 'Database Systems', attended: 35, total: 42 },
-      { code: 'CS503', name: 'Operating Systems', attended: 30, total: 40 },
-      { code: 'CS504', name: 'Computer Networks', attended: 32, total: 38 },
-      { code: 'CS505', name: 'Software Engineering', attended: 30, total: 35 },
-    ],
-  },
-  4: {
-    overall: { attended: 180, total: 220 },
-    subjects: [
-      { code: 'CS401', name: 'Discrete Mathematics', attended: 40, total: 45 },
-      { code: 'CS402', name: 'Digital Logic', attended: 38, total: 42 },
-      { code: 'CS403', name: 'Object Oriented Programming', attended: 36, total: 40 },
-      { code: 'CS404', name: 'Computer Architecture', attended: 35, total: 38 },
-      { code: 'CS405', name: 'Data Communication', attended: 31, total: 35 },
-    ],
-  },
-};
+import { AlertTriangle, CheckCircle, Loader2 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { getMyAttendance } from '@/pages/student/services/studentApi';
 
 export default function Attendance() {
-  const [selectedSemester, setSelectedSemester] = useState<number>(5);
-  const data = attendanceData[selectedSemester as keyof typeof attendanceData] || attendanceData[5];
+  const { user } = useAuth();
+  const [selectedSemester, setSelectedSemester] = useState<number>(user?.semester || 6);
+  const [loading, setLoading] = useState(true);
+  const [attendanceData, setAttendanceData] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchAttendance = async () => {
+      if (!user?.id) return;
+      try {
+        setLoading(true);
+        setError(null);
+        const res = await getMyAttendance({ 
+          studentId: user.id,
+          semester: selectedSemester 
+        }) as any;
+        
+        if (res.success && res.data) {
+          // Backend returns subjectWiseStats: [{subjectId, subjectName, subjectCode, total, present, absent, late, onDuty, percentage}]
+          // We filter by semester if the backend doesn't handle it, though backend seems to check query params
+          const subjects = res.data.subjectWiseStats.map((s: any) => ({
+            code: s.subjectCode,
+            name: s.subjectName,
+            attended: s.present + s.onDuty + s.late, // Calculate attended as present + OD + late (since OD count as present)
+            total: s.total
+          }));
+          
+          const overallAttended = subjects.reduce((acc: number, s: any) => acc + s.attended, 0);
+          const overallTotal = subjects.reduce((acc: number, s: any) => acc + s.total, 0);
+          
+          setAttendanceData({
+            overall: { attended: overallAttended, total: overallTotal },
+            subjects: subjects
+          });
+        } else {
+          setAttendanceData({
+            overall: { attended: 0, total: 0 },
+            subjects: []
+          });
+        }
+      } catch (err) {
+        console.error('Error fetching attendance:', err);
+        setError('Failed to load attendance records');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchAttendance();
+  }, [user?.id, selectedSemester]);
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px]">
+        <Loader2 className="w-10 h-10 text-primary animate-spin mb-4" />
+        <p className="text-muted-foreground">Loading attendance records...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-8 text-center bg-destructive/10 border border-destructive/20 rounded-xl">
+        <AlertTriangle className="w-12 h-12 text-destructive mx-auto mb-4" />
+        <h3 className="text-lg font-bold text-destructive mb-2">Error</h3>
+        <p className="text-muted-foreground">{error}</p>
+        <button 
+          onClick={() => window.location.reload()}
+          className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+        >
+          Try Again
+        </button>
+      </div>
+    );
+  }
+
+  const data = attendanceData || { overall: { attended: 0, total: 0 }, subjects: [] };
 
   const overallPercentage = calculateAttendancePercentage(data.overall.attended, data.overall.total);
   const overallStatus = getAttendanceStatus(overallPercentage);
 
   const lowAttendanceSubjects = data.subjects.filter(
-    (s) => calculateAttendancePercentage(s.attended, s.total) < ATTENDANCE_THRESHOLD
+    (s: any) => calculateAttendancePercentage(s.attended, s.total) < ATTENDANCE_THRESHOLD
   );
 
   return (
@@ -57,7 +111,7 @@ export default function Attendance() {
             onChange={(e) => setSelectedSemester(Number(e.target.value))}
             className="input-field py-2 pr-8"
           >
-            {SEMESTERS.slice(0, 5).reverse().map((sem) => (
+            {SEMESTERS.filter(sem => sem <= (user?.semester || 8)).reverse().map((sem) => (
               <option key={sem} value={sem}>Semester {sem}</option>
             ))}
           </select>
@@ -73,7 +127,7 @@ export default function Attendance() {
             <div>
               <p className="font-medium text-warning">Attendance Alert</p>
               <p className="text-sm text-muted-foreground mt-1">
-                Low attendance in: {lowAttendanceSubjects.map(s => s.name).join(', ')}
+                Low attendance in: {lowAttendanceSubjects.map((s: any) => s.name).join(', ')}
               </p>
             </div>
           </div>
@@ -165,7 +219,7 @@ export default function Attendance() {
       {/* Subject-wise Attendance */}
       <SectionCard title="Subject-wise Attendance">
         <div className="space-y-4">
-          {data.subjects.map((subject) => {
+          {data.subjects.map((subject: any) => {
             const percentage = calculateAttendancePercentage(subject.attended, subject.total);
             const status = getAttendanceStatus(percentage);
 

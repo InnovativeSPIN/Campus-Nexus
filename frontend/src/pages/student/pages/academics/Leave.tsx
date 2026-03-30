@@ -7,6 +7,8 @@ import { Plus, Calendar, Send, CheckCircle, Clock, XCircle, Download, Loader2, X
 import { useToast } from '@/pages/student/hooks/use-toast';
 import { formatDate } from '@/pages/student/utils/formatDate';
 import { getMyLeaves, applyLeave, cancelLeave } from '@/pages/student/services/studentApi';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 interface LeaveRequest {
   id: string | number;
@@ -152,11 +154,116 @@ export default function Leave() {
     }
   };
 
-  const handleDownloadCertificate = () => {
+  const handleDownloadCertificate = (request: LeaveRequest) => {
     toast({
-      title: 'Download Started',
-      description: 'Leave certificate is being downloaded.',
+      title: 'Generating PDF',
+      description: 'Please wait while we generate your leave certificate.',
     });
+
+    try {
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.width;
+      
+      // Add College Header (Customize with actual college details later)
+      doc.setFontSize(18);
+      doc.setTextColor(0, 51, 102);
+      doc.text('NADAR SARASWATHI COLLEGE OF', pageWidth / 2, 20, { align: 'center' });
+      doc.text('ENGINEERING & TECHNOLOGY', pageWidth / 2, 28, { align: 'center' });
+      
+      doc.setFontSize(14);
+      doc.setTextColor(100);
+      doc.text('Leave Authorization Certificate', pageWidth / 2, 38, { align: 'center' });
+
+      doc.setDrawColor(0, 51, 102);
+      doc.setLineWidth(0.5);
+      doc.line(14, 43, pageWidth - 14, 43);
+
+      // Certificate content
+      doc.setFontSize(11);
+      doc.setTextColor(0);
+      
+      const submitDate = formatDate(request.createdAt);
+      const approveDate = request.approvalDate ? formatDate(request.approvalDate) : 'N/A';
+      
+      let startY = 53;
+      
+      doc.setFont('', 'bold');
+      doc.text('Application Details:', 14, startY);
+      
+      doc.setFont('', 'normal');
+      startY += 10;
+      doc.text(`Reference No: LEAVE-${new Date(request.createdAt).getFullYear()}-${request.id || Math.floor(Math.random() * 1000)}`, 14, startY);
+      doc.text(`Submitted On: ${submitDate}`, pageWidth - 14, startY, { align: 'right' });
+      
+      startY += 10;
+      
+      // Create summary table
+      autoTable(doc, {
+        startY: startY,
+        head: [['Leave Summary', 'Details']],
+        body: [
+          ['Leave Type', `${request.leaveType} ${request.leaveSubType ? `(${request.leaveSubType})` : ''}`],
+          ['Reason', request.reason],
+          ['From Date', formatDate(request.startDate)],
+          ['To Date', formatDate(request.endDate)],
+          ['Total Days', `${request.totalDays} Days`],
+          ['Status', request.overall_status.toUpperCase()]
+        ],
+        theme: 'grid',
+        headStyles: { fillColor: [0, 51, 102] },
+        columnStyles: { 0: { fontStyle: 'bold', cellWidth: 50 } }
+      });
+
+      const finalY = (doc as any).lastAutoTable.finalY || startY + 50;
+      
+      // Approval details
+      let approvalY = finalY + 15;
+      doc.setFont('', 'bold');
+      doc.text('Approval Information:', 14, approvalY);
+      
+      doc.setFont('', 'normal');
+      approvalY += 10;
+      doc.text(`Submitted To: ${request.submitted_to || 'Class Incharge'}`, 14, approvalY);
+      
+      approvalY += 10;
+      doc.text(`Approved By: ${request.approvedBy?.name || 'Authorized Faculty'}`, 14, approvalY);
+      doc.text(`Approval Date: ${approveDate}`, pageWidth - 14, approvalY, { align: 'right' });
+      
+      if (request.approvalRemarks) {
+        approvalY += 10;
+        doc.text(`Remarks: ${request.approvalRemarks}`, 14, approvalY);
+      }
+      
+      // Signatures
+      approvalY += 30;
+      doc.setDrawColor(0);
+      doc.line(14, approvalY, 64, approvalY);
+      doc.text('Applicant Signature', 39, approvalY + 5, { align: 'center' });
+      
+      doc.line(pageWidth - 64, approvalY, pageWidth - 14, approvalY);
+      doc.text('Authorized Signature', pageWidth - 39, approvalY + 5, { align: 'center' });
+
+      // Footer
+      doc.setFontSize(8);
+      doc.setTextColor(150);
+      doc.text('This is a computer-generated document. No signature is required.', pageWidth / 2, doc.internal.pageSize.height - 10, { align: 'center' });
+
+      // Save PDF
+      doc.save(`Leave_Certificate_${formatDate(request.startDate).replace(/ /g, '_')}.pdf`);
+      
+      toast({
+        title: 'Download Complete',
+        description: 'Your leave certificate has been downloaded successfully.',
+        variant: 'default'
+      });
+    } catch (error) {
+      console.error('PDF generation error:', error);
+      toast({
+        title: 'Download Failed',
+        description: 'There was an error generating the PDF certificate.',
+        variant: 'destructive',
+      });
+    }
   };
 
   const closeModal = () => {
@@ -378,7 +485,7 @@ export default function Leave() {
 
                 {request.overall_status === 'approved' && (
                   <button
-                    onClick={() => handleDownloadCertificate()}
+                    onClick={() => handleDownloadCertificate(request)}
                     className="px-4 py-2 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors flex items-center gap-2 whitespace-nowrap shadow-sm"
                   >
                     <Download className="w-4 h-4" />
