@@ -241,9 +241,9 @@ export const login = asyncHandler(async (req, res, next) => {
   user = await Faculty.findOne({
     where: facultyWhere,
     attributes: { include: ['password', 'role_id'] },
-    include: [{ 
-      model: models.Department, 
-      as: 'department', 
+    include: [{
+      model: models.Department,
+      as: 'department',
       attributes: ['short_name', 'full_name'],
       required: false  // Use LEFT JOIN
     }]
@@ -269,9 +269,9 @@ export const login = asyncHandler(async (req, res, next) => {
       ]
     },
     attributes: { exclude: ['userId'] },
-    include: [{ 
-      model: models.Department, 
-      as: 'department', 
+    include: [{
+      model: models.Department,
+      as: 'department',
       attributes: ['short_name', 'full_name'],
       required: false  // Use LEFT JOIN
     }]
@@ -304,9 +304,9 @@ export const login = asyncHandler(async (req, res, next) => {
       const deptAdminFaculty = await Faculty.findOne({
         where: { email },
         attributes: { include: ['password'] },
-        include: [{ 
-          model: models.Department, 
-          as: 'department', 
+        include: [{
+          model: models.Department,
+          as: 'department',
           attributes: ['short_name', 'full_name'],
           required: false  // Use LEFT JOIN
         }]
@@ -401,41 +401,60 @@ export const getStudentDetails = asyncHandler(async (req, res, next) => {
     return next(new ErrorResponse('Please provide a student identifier', 400));
   }
 
-  // Check for student by either ID or email
-  const student = await Student.findOne({
-    where: {
-      [Op.or]: [
-        { studentId: identifier },
-        { email: identifier },
-        { rollNumber: identifier }
-      ]
-    },
-    attributes: ['firstName', 'lastName', 'studentId', 'rollNumber', 'year', 'semester', 'departmentId'],
-    include: [
-      {
-        model: models.Department,
-        as: 'department',
-        attributes: ['short_name', 'full_name']
-      }
-    ]
-  });
+  try {
+    // Check for student by either ID or email
+    const student = await Student.findOne({
+      where: {
+        [Op.or]: [
+          { studentId: identifier },
+          { email: identifier },
+          { rollNumber: identifier }
+        ]
+      },
+      attributes: ['id', 'firstName', 'lastName', 'studentId', 'rollNumber', 'year', 'semester', 'departmentId'],
+      include: [
+        {
+          model: models.Department,
+          as: 'department',
+          attributes: ['id', 'short_name', 'full_name'],
+          required: false  // LEFT JOIN instead of INNER JOIN
+        }
+      ],
+      raw: false,
+      subQuery: false
+    });
 
-  if (!student) {
-    return next(new ErrorResponse('Student not found', 404));
-  }
-
-  // Return student details
-  res.status(200).json({
-    success: true,
-    data: {
-      name: `${student.firstName} ${student.lastName}`,
-      rollNo: student.rollNumber || student.studentId,
-      studentId: student.studentId,
-      department: student.department?.short_name || student.department?.full_name,
-      year: parseInt(student.year) || undefined,
-      semester: student.semester
+    if (!student) {
+      return res.status(404).json({ success: false, message: 'Student not found', data: null });
     }
-  });
+
+    // Return student details
+    return res.status(200).json({
+      success: true,
+      data: {
+        name: `${student.firstName} ${student.lastName}`,
+        rollNo: student.rollNumber || student.studentId,
+        studentId: student.studentId,
+        department: student.department?.short_name || student.department?.full_name,
+        year: parseInt(student.year) || undefined,
+        semester: student.semester
+      }
+    });
+  } catch (err) {
+    // Log full error for debugging in development
+    if (process.env.NODE_ENV === 'development') {
+      console.error('[getStudentDetails] Error details:', {
+        message: err.message,
+        code: err.code,
+        sql: err.sql,
+        table: err.table,
+        fullError: err
+      });
+    } else {
+      console.error('[getStudentDetails] Error:', err.message);
+    }
+    return res.status(500).json({ success: false, message: 'Unable to fetch student details. Please try again later.', data: null });
+  }
 });
 
 // @desc      Get faculty details by email or college code
@@ -451,42 +470,61 @@ export const getFacultyDetails = asyncHandler(async (req, res, next) => {
   // Search by email or faculty_college_code. Exclude department-admins
   // (role_id === 7) from this lookup so admin accounts are not revealed
   // on the faculty login/details page.
-  const faculty = await Faculty.findOne({
-    where: {
-      [Op.or]: [
-        { email: identifier },
-        { faculty_college_code: identifier }
+  try {
+    const faculty = await Faculty.findOne({
+      where: {
+        [Op.or]: [
+          { email: identifier },
+          { faculty_college_code: identifier }
+        ],
+        role_id: { [Op.ne]: 7 }
+      },
+      attributes: { exclude: ['password'] },
+      include: [
+        {
+          model: models.Department,
+          as: 'department',
+          attributes: ['id', 'short_name', 'full_name'],
+          required: false  // LEFT JOIN instead of INNER JOIN
+        }
       ],
-      role_id: { [Op.ne]: 7 }
-    },
-    attributes: { exclude: ['password'] },
-    include: [
-      {
-        model: models.Department,
-        as: 'department',
-        attributes: ['short_name', 'full_name']
-      }
-    ]
-  });
-
-  if (!faculty) {
-    return res.status(200).json({
-      success: false,
-      message: 'Faculty not found',
-      data: null,
+      raw: false,
+      subQuery: false
     });
-  }
 
-  res.status(200).json({
-    success: true,
-    data: {
-      name: faculty.Name || `${faculty.firstName || ''} ${faculty.lastName || ''}`.trim(),
-      collegeId: faculty.faculty_college_code,
-      department: faculty.department?.short_name || faculty.department?.full_name,
-      email: faculty.email,
-      designation: faculty.designation || undefined
+    if (!faculty) {
+      return res.status(404).json({
+        success: false,
+        message: 'Faculty not found',
+        data: null,
+      });
     }
-  });
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        name: faculty.Name || `${faculty.firstName || ''} ${faculty.lastName || ''}`.trim(),
+        collegeId: faculty.faculty_college_code,
+        department: faculty.department?.short_name || faculty.department?.full_name,
+        email: faculty.email,
+        designation: faculty.designation || undefined
+      }
+    });
+  } catch (err) {
+    // Log full error for debugging in development
+    if (process.env.NODE_ENV === 'development') {
+      console.error('[getFacultyDetails] Error details:', {
+        message: err.message,
+        code: err.code,
+        sql: err.sql,
+        table: err.table,
+        fullError: err
+      });
+    } else {
+      console.error('[getFacultyDetails] Error:', err.message);
+    }
+    return res.status(500).json({ success: false, message: 'Unable to fetch faculty details. Please try again later.', data: null });
+  }
 });
 
 // @desc      Log user out / clear cookie
@@ -575,6 +613,27 @@ export const updateStudentPassword = asyncHandler(async (req, res, next) => {
   await student.save();
 
   sendTokenResponse(student, 200, res);
+});
+
+// @desc      Update faculty password
+// @route     PUT /api/v1/auth/update-faculty-password
+// @access    Private (Faculty only)
+export const updateFacultyPassword = asyncHandler(async (req, res, next) => {
+  const faculty = await Faculty.findByPk(req.user.id);
+
+  if (!faculty) {
+    return next(new ErrorResponse('Faculty profile not found', 404));
+  }
+
+  // Check current password
+  if (!(await faculty.matchPassword(req.body.currentPassword))) {
+    return next(new ErrorResponse('Password is incorrect', 401));
+  }
+
+  faculty.password = req.body.newPassword;
+  await faculty.save();
+
+  sendTokenResponse(faculty, 200, res);
 });
 
 // @desc      Forgot password

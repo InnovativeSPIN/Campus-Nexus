@@ -53,9 +53,9 @@ const TimetableMaster = (sequelize) => {
       comment: 'e.g. 05.01.2026/01'
     },
     status: {
-      type: DataTypes.ENUM('draft', 'active', 'inactive'),
+      type: DataTypes.ENUM('draft', 'pending_approval', 'active', 'inactive'),
       defaultValue: 'draft',
-      comment: 'draft on create, active after activation'
+      comment: 'draft on create, pending_approval for approval, active after activation, inactive when deactivated'
     },
     class_coordinator_id: {
       type: DataTypes.INTEGER,

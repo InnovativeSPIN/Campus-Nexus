@@ -673,10 +673,7 @@ export const getFacultyTimetable = asyncHandler(async (req, res, next) => {
       type: QueryTypes.SELECT
     });
 
-    if (timetable.length === 0) {
-      return next(new ErrorResponse('No timetable found for this faculty in your department', 404));
-    }
-
+    // Allow empty timetable for department admins who may not have classes assigned yet
     console.log(`[TIMETABLE] Found ${timetable.length} slots for faculty ${facultyId}`);
     
     // Disable caching to ensure fresh data

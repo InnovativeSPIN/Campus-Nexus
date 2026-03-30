@@ -14,6 +14,8 @@ import {
   getStudentStats,
   getAcademicYears,
   uploadStudentPhoto,
+  uploadFamilyPhoto,
+  uploadReferencePhoto,
   uploadStudentPhotoAdmin,
   downloadBulkTemplate,
   bulkUploadStudents
@@ -33,7 +35,13 @@ router.route('/me/profile')
   .put(authorize('student'), updateMyProfile);
 
 // Student can upload their own photo
-router.post('/me/photo', authorize('student'), studentUpload.single('photo'), uploadStudentPhoto);
+router.put('/me/photo', authorize('student'), studentUpload.single('photo'), uploadStudentPhoto);
+
+// Student can upload their family photo
+router.put('/me/family-photo', authorize('student'), studentUpload.single('familyPhoto'), uploadFamilyPhoto);
+
+// Student can upload their reference person's photo
+router.post('/me/reference-photo', authorize('student'), studentUpload.single('referencePhoto'), uploadReferencePhoto);
 
 // Admin can upload student photo
 router.put('/:id/photo', authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin'), studentUpload.single('photo'), uploadStudentPhotoAdmin);

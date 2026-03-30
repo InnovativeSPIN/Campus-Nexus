@@ -10,6 +10,7 @@ import {
   updateDetails,
   updatePassword,
   updateStudentPassword,
+  updateFacultyPassword,
   getAdminsByRole,
   uploadAvatar,
   uploadStudentAvatar,
@@ -36,6 +37,7 @@ router.post('/student-avatar', protect, uploadStudentAvatar);
 router.put('/updatedetails', protect, updateDetails);
 router.put('/updatepassword', protect, updatePassword);
 router.put('/update-student-password', protect, updateStudentPassword);
+router.put('/update-faculty-password', protect, updateFacultyPassword);
 router.post('/forgotpassword', forgotPassword);
 router.put('/resetpassword/:resettoken', resetPassword);
 

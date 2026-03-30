@@ -3,6 +3,7 @@ import ErrorResponse from '../../utils/errorResponse.js';
 import { models } from '../../models/index.js';
 import { Op } from 'sequelize';
 import { notifyClassIncharge, notifyStudentPortfolioResult } from '../../utils/portfolioNotification.js';
+import getAssignedClassIdForFaculty from '../../utils/getAssignedClassIdForFaculty.js';
 const { StudentCertification, Student, User, Faculty, TimetableMaster } = models;
 
 const getStudentId = async (userOrId, next) => {
@@ -145,28 +146,21 @@ export const updateApprovalStatus = asyncHandler(async (req, res, next) => {
     res.status(200).json({ success: true, data: cert });
 });
 
-const getAssignedClassIdForFaculty = async (facultyId) => {
-    // Check if faculty is class coordinator / assistant coordinator in an active/draft timetable
-    const timetable = await TimetableMaster.findOne({
-        where: {
-            status: { [Op.in]: ['draft', 'active'] },
-            [Op.or]: [
-                { class_coordinator_id: facultyId },
-                { asst_coordinator_id: facultyId }
-            ]
-        },
-        attributes: ['class_id']
-    });
-
-    return timetable?.class_id || null;
-};
+// Using centralized getAssignedClassIdForFaculty from utils
+// Checks: ClassIncharge table, TimetableMaster coords, Faculty is_class_incharge flag, Multiple assignments
 
 // @desc   Get certifications for class in-charge
 // @route  GET /api/student/certifications/class-incharge
 // @access Private/Faculty
 export const getClassInchargeCertifications = asyncHandler(async (req, res, next) => {
+    console.log(`\n[CERTS-CONTROLLER] ╔════════════════════════════════════════╗`);
+    console.log(`[CERTS-CONTROLLER] ║ GET CLASS INCHARGE CERTIFICATIONS      ║`);
+    console.log(`[CERTS-CONTROLLER] ╚════════════════════════════════════════╝`);
+    console.log(`[CERTS-CONTROLLER] Faculty ID to use: ${req.user?.faculty_id || req.user?.id}\n`);
+
     const facultyId = req.user.faculty_id || req.user.id;
-    const classId = await getAssignedClassIdForFaculty(facultyId);
+    const classId = await getAssignedClassIdForFaculty(facultyId, models);
+    console.log(`[CERTS-CONTROLLER] Class ID returned from utility: ${classId}\n`);
     if (!classId) {
         return next(new ErrorResponse('User is not assigned as a class in-charge', 403));
     }

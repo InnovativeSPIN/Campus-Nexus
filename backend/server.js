@@ -105,10 +105,12 @@ const startServer = () => {
   app.disable('etag');
 
   // ULTIMATE catch-all logger for debugging
+  // In production, avoid path-level request logging to reduce noise and leak risk.
+  // Keep this enabled only under development when needed.
   app.use((req, res, next) => {
     if (process.env.NODE_ENV === 'development') {
-        const time = new Date().toLocaleTimeString();
-        console.log(`\n[ULTIMATE-REQ] ${time} - ${req.method} ${req.url} (Type: ${req.header('content-type')})`.magenta.bold);
+      const time = new Date().toLocaleTimeString();
+      console.log(`\n[ULTIMATE-REQ] ${time} - ${req.method} ${req.url} (Type: ${req.header('content-type')})`.magenta.bold);
     }
     next();
   });
@@ -157,22 +159,29 @@ const startServer = () => {
       '/api/v1/student/sports',
       '/api/v1/leave',
       '/api/v1/timetable/bulk-upload',
-      '/api/v1/students/me/photo'
+      '/api/v1/students/me/photo',
+      '/api/v1/students/me/family-photo',
+      '/api/v1/students/me/reference-photo',
+      '/api/v1/students/bulk/upload'
     ];
 
     // Check if the current request path starts with any of the multerPaths
-    const isMulterRoute = multerPaths.some(p => req.path.startsWith(p)) || 
-                           req.path.includes('student-leaves') ||
-                           req.path.includes('student/projects') ||
-                           req.path.includes('student/certifications');
+    const isMulterRoute = multerPaths.some(p => req.path.startsWith(p)) ||
+      req.path.includes('student-leaves') ||
+      req.path.includes('student/projects') ||
+      req.path.includes('student/certifications') ||
+      req.path.includes('family-photo') ||
+      req.path.includes('reference-photo') ||
+      // Match photo routes: /api/v1/students/:id/photo
+      (req.path.includes('/students/') && req.path.endsWith('/photo'));
 
     if (isMulterRoute) {
       if (process.env.NODE_ENV === 'development') {
-          console.log(`[MULTER-SKIP] Bypassing express-fileupload for: ${req.method} ${req.path}`.cyan);
+        console.log(`[MULTER-SKIP] Bypassing express-fileupload for: ${req.method} ${req.path}`.cyan);
       }
       return next();
     }
-    
+
     // Use express-fileupload for all other routes (admin, faculty, etc.)
     uploader(req, res, next);
   });
@@ -225,7 +234,6 @@ const startServer = () => {
   app.use('/api/v1/admin/classes', classRoutes);
   app.use('/api/v1/faculty', facultyRoutes);
   app.use('/api/v1/students', studentRoutes);
-  app.use('/api/v1/student', studentSyllabusRoutes);
   app.use('/api/v1/subjects', generalSubjectRoutes);
   app.use('/api/v1/classes', classRoutes);
   app.use('/api/v1/timetable', timetableRoutes);
@@ -261,6 +269,8 @@ const startServer = () => {
   app.use('/api/v1/student-leaves/approvals', studentLeaveApprovalRoutes); // MUST be before /student-leaves to avoid :id shadowing
   app.use('/api/v1/student-leaves', studentLeaveRoutes);
   app.use('/api/v1/student/portfolio-notifications', portfolioNotificationRoutes);
+  // General student prefix LAST so specific /student/* routes take priority
+  app.use('/api/v1/student', studentSyllabusRoutes);
   app.use('/api/v1/notifications', notificationRoutes);
   app.use('/api/v1/approval-history', approvalHistoryRoutes);
 

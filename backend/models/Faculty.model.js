@@ -14,11 +14,11 @@ const Faculty = (sequelize) => {
       allowNull: false,
     },
     AICTE_ID: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.STRING(100),
       allowNull: true,
     },
     Anna_University_ID: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.STRING(100),
       allowNull: true,
     },
     Name: {
@@ -102,6 +102,21 @@ const Faculty = (sequelize) => {
     linkedin_url: {
       type: DataTypes.TEXT,
       allowNull: true,
+    },
+    is_timetable_incharge: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      comment: 'Faculty is assigned as timetable incharge'
+    },
+    is_class_incharge: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      comment: 'Faculty is assigned as class incharge'
+    },
+    is_placement_coordinator: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      comment: 'Faculty is assigned as placement coordinator'
     },
   }, {
     tableName: 'faculty_profiles',

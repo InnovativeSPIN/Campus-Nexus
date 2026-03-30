@@ -48,7 +48,7 @@ export const notifyStudentPortfolioResult = async (studentId, itemData) => {
     try {
         const { StudentNotification } = models;
         const statusText = itemData.status === 'approved' ? 'Approved' : 'Rejected';
-        
+
         await StudentNotification.create({
             studentId,
             title: `${itemData.referenceType.charAt(0).toUpperCase() + itemData.referenceType.slice(1)} ${statusText}`,

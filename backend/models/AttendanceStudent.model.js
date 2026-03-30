@@ -62,6 +62,10 @@ const AttendanceStudent = (sequelize) => {
       foreignKey: 'faculty_id',
       as: 'faculty',
     });
+    AttendanceStudentModel.belongsTo(models.PeriodSlot, {
+      foreignKey: 'period_session_number',
+      as: 'period',
+    });
   };
 
   return AttendanceStudentModel;

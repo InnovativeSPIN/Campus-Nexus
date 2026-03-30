@@ -511,7 +511,37 @@ export const updateFacultyProfile = asyncHandler(async (req, res, next) => {
   }
 
   // Only allow updating specific fields
-  const allowedFields = ['email', 'phone', 'linkedin_url', 'phd_status'];
+  const allowedFields = [
+    'email', 
+    'phone', 
+    'phone_number', 
+    'linkedin_url', 
+    'phd_status',
+    'thesis_title',
+    'register_no',
+    'guide_name',
+    'address',
+    'curr_address',
+    'perm_address',
+    'aicteId',
+    'AICTE_ID',
+    'coeId',
+    'Anna_University_ID',
+    'orcidId',
+    'orcid_id',
+    'dob',
+    'dateOfBirth',
+    'date_of_birth',
+    'joiningDate',
+    'dateOfJoining',
+    'date_of_joining',
+    'bloodGroup',
+    'blood_group',
+    'aadharNumber',
+    'aadhar_number',
+    'panNumber',
+    'pan_number'
+  ];
   const fieldsToUpdate = {};
 
   allowedFields.forEach(field => {
@@ -524,36 +554,74 @@ export const updateFacultyProfile = asyncHandler(async (req, res, next) => {
     return next(new ErrorResponse('No valid fields provided to update', 400));
   }
 
-  // Map phone to phone_number for Faculty model
-  const facultyUpdateFields = { ...fieldsToUpdate };
-  if (facultyUpdateFields.phone) {
-    facultyUpdateFields.phone_number = facultyUpdateFields.phone;
-    delete facultyUpdateFields.phone;
+  // Map frontend field names to database/model field names
+  const facultyUpdateFields = {};
+  
+  // Basic Info
+  if (fieldsToUpdate.email) facultyUpdateFields.email = fieldsToUpdate.email;
+  if (fieldsToUpdate.phone || fieldsToUpdate.phone_number) {
+    facultyUpdateFields.phone_number = fieldsToUpdate.phone || fieldsToUpdate.phone_number;
+  }
+  if (fieldsToUpdate.linkedin_url) facultyUpdateFields.linkedin_url = fieldsToUpdate.linkedin_url;
+  
+  // PhD status
+  if (fieldsToUpdate.phd_status) facultyUpdateFields.phd_status = fieldsToUpdate.phd_status;
+  
+  // Addresses
+  if (fieldsToUpdate.address || fieldsToUpdate.curr_address) {
+    facultyUpdateFields.curr_address = fieldsToUpdate.address || fieldsToUpdate.curr_address;
+  }
+  if (fieldsToUpdate.perm_address) facultyUpdateFields.perm_address = fieldsToUpdate.perm_address;
+  
+  // IDs - Store as strings (can handle large numbers and special formats)
+  if (fieldsToUpdate.aicteId || fieldsToUpdate.AICTE_ID) {
+    const aicteVal = fieldsToUpdate.aicteId || fieldsToUpdate.AICTE_ID;
+    facultyUpdateFields.AICTE_ID = aicteVal ? String(aicteVal).trim() : null;
+  }
+  if (fieldsToUpdate.coeId || fieldsToUpdate.Anna_University_ID) {
+    const coeVal = fieldsToUpdate.coeId || fieldsToUpdate.Anna_University_ID;
+    facultyUpdateFields.Anna_University_ID = coeVal ? String(coeVal).trim() : null;
+  }
+  if (fieldsToUpdate.aadharNumber || fieldsToUpdate.aadhar_number) {
+    facultyUpdateFields.aadhar_number = fieldsToUpdate.aadharNumber || fieldsToUpdate.aadhar_number;
+  }
+  if (fieldsToUpdate.panNumber || fieldsToUpdate.pan_number) {
+    facultyUpdateFields.pan_number = fieldsToUpdate.panNumber || fieldsToUpdate.pan_number;
+  }
+  
+  // Dates
+  if (fieldsToUpdate.dob || fieldsToUpdate.dateOfBirth || fieldsToUpdate.date_of_birth) {
+    facultyUpdateFields.date_of_birth = fieldsToUpdate.dob || fieldsToUpdate.dateOfBirth || fieldsToUpdate.date_of_birth;
+  }
+  if (fieldsToUpdate.joiningDate || fieldsToUpdate.dateOfJoining || fieldsToUpdate.date_of_joining) {
+    facultyUpdateFields.date_of_joining = fieldsToUpdate.joiningDate || fieldsToUpdate.dateOfJoining || fieldsToUpdate.date_of_joining;
+  }
+  
+  // Other
+  if (fieldsToUpdate.bloodGroup || fieldsToUpdate.blood_group) {
+    facultyUpdateFields.blood_group = fieldsToUpdate.bloodGroup || fieldsToUpdate.blood_group;
   }
 
-  // If phd_status is provided, ensure it's the correct column name in the Faculty model
-  if (fieldsToUpdate.phd_status !== undefined) {
-    facultyUpdateFields.phd_status = fieldsToUpdate.phd_status;
-  }
-
-  // Update Faculty table (Faculty has its own email, phone, linkedin_url fields)
+  // Update Faculty table
   try {
-    await Faculty.update(facultyUpdateFields, { where: { faculty_id: req.user.faculty_id } });
+    if (Object.keys(facultyUpdateFields).length > 0) {
+      await Faculty.update(facultyUpdateFields, { where: { faculty_id: req.user.faculty_id } });
+    }
 
     // Fetch updated faculty record
     // If phd-related fields were provided, upsert into faculty_phd table to keep details in sync
-    if (fieldsToUpdate.phd_status !== undefined || req.body.orcid_id || req.body.thesis_title || req.body.register_no || req.body.guide_name) {
+    if (fieldsToUpdate.phd_status !== undefined || fieldsToUpdate.orcid_id || fieldsToUpdate.thesis_title || fieldsToUpdate.register_no || fieldsToUpdate.guide_name) {
       try {
         const facultyId = req.user.faculty_id;
         const PhdModel = models.FacultyPhd;
         const existing = await PhdModel.findOne({ where: { faculty_id: facultyId } });
         const phdPayload = {
           faculty_id: facultyId,
-          status: fieldsToUpdate.phd_status ?? req.body.status ?? null,
-          orcid_id: req.body.orcid_id ?? null,
-          thesis_title: req.body.thesis_title ?? null,
-          register_no: req.body.register_no ?? null,
-          guide_name: req.body.guide_name ?? null
+          status: fieldsToUpdate.phd_status ?? null,
+          orcid_id: fieldsToUpdate.orcid_id ?? null,
+          thesis_title: fieldsToUpdate.thesis_title ?? null,
+          register_no: fieldsToUpdate.register_no ?? null,
+          guide_name: fieldsToUpdate.guide_name ?? null
         };
         if (existing) {
           await existing.update(phdPayload);
@@ -580,13 +648,29 @@ export const updateFacultyProfile = asyncHandler(async (req, res, next) => {
       ]
     });
 
-    res.status(200).json({
+    // Serialize safely to plain object
+    const response = {
       success: true,
-      data: updatedFaculty
-    });
+      data: updatedFaculty ? updatedFaculty.toJSON ? updatedFaculty.toJSON() : updatedFaculty : null
+    };
+
+    res.status(200).json(response);
   } catch (error) {
-    console.error('[UPDATE PROFILE ERROR]', error);
-    return next(new ErrorResponse('Failed to update profile', 500));
+    console.error('[UPDATE PROFILE ERROR]', {
+      message: error.message,
+      stack: error.stack,
+      facultyId: req.user.faculty_id,
+      fieldsToUpdate: Object.keys(facultyUpdateFields)
+    });
+    // Always return valid JSON on error
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to update profile: ' + (error.message || 'Unknown error'),
+      error: {
+        type: error.name || 'Error',
+        details: error.message || 'No details available'
+      }
+    });
   }
 });
 

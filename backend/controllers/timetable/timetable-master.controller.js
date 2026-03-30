@@ -1,7 +1,7 @@
 import ErrorResponse from '../../utils/errorResponse.js';
 import asyncHandler from '../../middleware/async.js';
 import { models, sequelize } from '../../models/index.js';
-import { Op } from 'sequelize';
+import { Op, QueryTypes } from 'sequelize';
 
 const {
   TimetableMaster,
@@ -41,6 +41,32 @@ export const createTimetableMaster = asyncHandler(async (req, res, next) => {
     return next(new ErrorResponse('Missing required fields', 400));
   }
 
+  // Validate coordinators belong to same department
+  if (class_coordinator_id || asst_coordinator_id || timetable_incharge_id || hod_id) {
+    const coordinatorIds = [class_coordinator_id, asst_coordinator_id, timetable_incharge_id, hod_id].filter(id => id);
+
+    if (coordinatorIds.length > 0) {
+      const departmentFaculties = await Faculty.findAll({
+        where: { department_id, status: 'active' },
+        attributes: ['faculty_id'],
+        raw: true,
+      });
+      const validFacultyIds = departmentFaculties.map(f => f.faculty_id);
+
+      for (const coordinatorId of coordinatorIds) {
+        if (!validFacultyIds.includes(coordinatorId)) {
+          return next(new ErrorResponse(
+            `Faculty ${coordinatorId} is not in department ${department_id}`,
+            400
+          ));
+        }
+      }
+
+      // Allow same faculty in multiple roles - no restriction on multiple assignments
+      // Faculty can be class coordinator AND timetable incharge
+    }
+  }
+
   // Check if an active timetable already exists for this class/semester combo
   const existingActive = await TimetableMaster.findOne({
     where: {
@@ -70,13 +96,27 @@ export const createTimetableMaster = asyncHandler(async (req, res, next) => {
     room_no: room_no || null,
     effective_from: new Date(effective_from),
     revision_no: revision_no || null,
-    status: 'draft', // Create in draft status
+    status: 'draft',
     class_coordinator_id: class_coordinator_id || null,
     asst_coordinator_id: asst_coordinator_id || null,
     timetable_incharge_id: timetable_incharge_id || null,
     hod_id: hod_id || null,
     created_by: req.user.faculty_id || req.user.id,
   });
+
+  // Sync faculty flags
+  if (timetable_incharge_id) {
+    await Faculty.update(
+      { is_timetable_incharge: true },
+      { where: { faculty_id: timetable_incharge_id } }
+    );
+  }
+  if (class_coordinator_id) {
+    await Faculty.update(
+      { is_class_incharge: true },
+      { where: { faculty_id: class_coordinator_id } }
+    );
+  }
 
   const result = await TimetableMaster.findByPk(timetableMaster.id, {
     include: [
@@ -204,17 +244,10 @@ export const getTimetableMaster = asyncHandler(async (req, res, next) => {
 export const updateTimetableMaster = asyncHandler(async (req, res, next) => {
   const { id } = req.params;
   const updates = {};
+  const coordinatorUpdates = {};
 
-  // Allow updating coordinator assignments
-  const allowed = ['class_coordinator_id', 'asst_coordinator_id', 'timetable_incharge_id', 'hod_id', 'revision_no'];
-  allowed.forEach((field) => {
-    if (req.body[field] !== undefined) {
-      updates[field] = req.body[field];
-    }
-  });
-
+  // Fetch existing timetable
   const timetable = await TimetableMaster.findByPk(id);
-
   if (!timetable) {
     return next(new ErrorResponse(`Timetable master not found with id ${id}`, 404));
   }
@@ -224,7 +257,84 @@ export const updateTimetableMaster = asyncHandler(async (req, res, next) => {
     return next(new ErrorResponse('Use separate endpoint to change status', 400));
   }
 
+  // Allow updating coordinator assignments
+  const allowed = ['class_coordinator_id', 'asst_coordinator_id', 'timetable_incharge_id', 'hod_id', 'revision_no'];
+  allowed.forEach((field) => {
+    if (req.body[field] !== undefined) {
+      updates[field] = req.body[field];
+      if (field !== 'revision_no') {
+        coordinatorUpdates[field] = req.body[field];
+      }
+    }
+  });
+
+  // If any coordinator is being assigned, validate they belong to the department
+  if (Object.keys(coordinatorUpdates).length > 0) {
+    const departmentId = timetable.department_id;
+    const departmentFaculties = await Faculty.findAll({
+      where: { department_id: departmentId, status: 'active' },
+      attributes: ['faculty_id'],
+      raw: true,
+    });
+    const validFacultyIds = departmentFaculties.map(f => f.faculty_id);
+
+    // Validate each coordinator belongs to the department
+    for (const [field, facultyId] of Object.entries(coordinatorUpdates)) {
+      if (facultyId !== null && !validFacultyIds.includes(facultyId)) {
+        return next(new ErrorResponse(
+          `Faculty ${facultyId} is not in department ${departmentId}`,
+          400
+        ));
+      }
+    }
+
+    // Allow same faculty in multiple roles - faculty can be class coordinator AND timetable incharge
+    // No restriction on multiple role assignments
+  }
+
+  // Update timetable
   await timetable.update(updates);
+
+  // Sync faculty flags based on new assignments
+  if (Object.keys(coordinatorUpdates).length > 0) {
+    const timetableInchargeId = updates.timetable_incharge_id || timetable.timetable_incharge_id;
+    const classCoordinatorId = updates.class_coordinator_id || timetable.class_coordinator_id;
+
+    // Update timetable incharge flag for new assignment
+    if (updates.timetable_incharge_id !== undefined) {
+      if (updates.timetable_incharge_id !== null) {
+        await Faculty.update(
+          { is_timetable_incharge: true },
+          { where: { faculty_id: updates.timetable_incharge_id } }
+        );
+      }
+      // Reset old assignment's flag if being removed
+      if (timetable.timetable_incharge_id && updates.timetable_incharge_id !== timetable.timetable_incharge_id) {
+        const oldCount = await TimetableMaster.count({
+          where: {
+            timetable_incharge_id: timetable.timetable_incharge_id,
+            status: 'active',
+          },
+        });
+        if (oldCount === 0) {
+          await Faculty.update(
+            { is_timetable_incharge: false },
+            { where: { faculty_id: timetable.timetable_incharge_id } }
+          );
+        }
+      }
+    }
+
+    // Update class incharge flag for class_coordinator_id
+    if (updates.class_coordinator_id !== undefined) {
+      if (updates.class_coordinator_id !== null) {
+        await Faculty.update(
+          { is_class_incharge: true },
+          { where: { faculty_id: updates.class_coordinator_id } }
+        );
+      }
+    }
+  }
 
   const result = await TimetableMaster.findByPk(id, {
     include: [
@@ -239,7 +349,7 @@ export const updateTimetableMaster = asyncHandler(async (req, res, next) => {
 
   res.status(200).json({
     success: true,
-    message: 'Timetable master updated',
+    message: 'Timetable master updated successfully',
     data: result,
   });
 });
@@ -252,59 +362,87 @@ export const updateTimetableMaster = asyncHandler(async (req, res, next) => {
 export const activateTimetableMaster = asyncHandler(async (req, res, next) => {
   const { id } = req.params;
 
-  const timetable = await TimetableMaster.findByPk(id);
+  try {
+    const timetable = await TimetableMaster.findByPk(id);
 
-  if (!timetable) {
-    return next(new ErrorResponse(`Timetable master not found with id ${id}`, 404));
-  }
-
-  if (timetable.status === 'active') {
-    return next(new ErrorResponse('Timetable is already active', 400));
-  }
-
-  // Check if it has slots
-  const slotCount = await models.TimetableMasterSlots.count({
-    where: { master_id: id },
-  });
-
-  console.log('[activateTimetableMaster] timetableId:', id, 'slotCount:', slotCount);
-
-  if (slotCount === 0) {
-    return next(new ErrorResponse('Cannot activate timetable without slots', 400));
-  }
-
-  // Deactivate other active timetables for the same class/semester
-  await TimetableMaster.update(
-    { status: 'inactive' },
-    {
-      where: {
-        class_id: timetable.class_id,
-        academic_year: timetable.academic_year,
-        semester: timetable.semester,
-        status: 'active',
-      },
+    if (!timetable) {
+      return next(new ErrorResponse(`Timetable master not found with id ${id}`, 404));
     }
-  );
 
-  // Activate this one
-  await timetable.update({ status: 'active' });
+    if (timetable.status === 'active') {
+      return next(new ErrorResponse('Timetable is already active', 400));
+    }
 
-  const result = await TimetableMaster.findByPk(id, {
-    include: [
-      { model: ClassModel, as: 'class' },
-      { model: Department, as: 'department' },
-      { model: Faculty, as: 'class_coordinator' },
-      { model: Faculty, as: 'asst_coordinator' },
-      { model: Faculty, as: 'timetable_incharge' },
-      { model: Faculty, as: 'hod' },
-    ],
-  });
+    // Check if it has slots
+    const slotCount = await models.TimetableMasterSlots.count({
+      where: { master_id: id },
+    });
 
-  res.status(200).json({
-    success: true,
-    message: 'Timetable master activated',
-    data: result,
-  });
+    console.log('[activateTimetableMaster] timetableId:', id, 'slotCount:', slotCount);
+
+    if (slotCount === 0) {
+      return next(new ErrorResponse('Cannot activate timetable without slots', 400));
+    }
+
+    // Deactivate other active timetables for the same class/semester using raw query
+    const [deactivateCount] = await sequelize.query(
+      `UPDATE timetable_master 
+       SET status = 'inactive', updated_at = CURRENT_TIMESTAMP
+       WHERE class_id = ? AND academic_year = ? AND semester = ? AND status = 'active' AND id != ?`,
+      {
+        replacements: [timetable.class_id, timetable.academic_year, timetable.semester, id],
+        type: QueryTypes.UPDATE
+      }
+    );
+
+    console.log('[activateTimetableMaster] Deactivated other timetables:', deactivateCount);
+
+    // Activate this one using raw query
+    const [activateCount] = await sequelize.query(
+      `UPDATE timetable_master SET status = 'active', updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+      {
+        replacements: [id],
+        type: QueryTypes.UPDATE
+      }
+    );
+
+    console.log('[activateTimetableMaster] Activated timetable:', activateCount);
+
+    // Sync coordinator flags for activated timetable
+    if (timetable.timetable_incharge_id) {
+      await Faculty.update(
+        { is_timetable_incharge: true },
+        { where: { faculty_id: timetable.timetable_incharge_id } }
+      );
+    }
+    if (timetable.class_coordinator_id) {
+      await Faculty.update(
+        { is_class_incharge: true },
+        { where: { faculty_id: timetable.class_coordinator_id } }
+      );
+    }
+
+    // Fetch and return the updated record
+    const result = await TimetableMaster.findByPk(id, {
+      include: [
+        { model: ClassModel, as: 'class' },
+        { model: Department, as: 'department' },
+        { model: Faculty, as: 'class_coordinator' },
+        { model: Faculty, as: 'asst_coordinator' },
+        { model: Faculty, as: 'timetable_incharge' },
+        { model: Faculty, as: 'hod' },
+      ],
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Timetable master activated',
+      data: result,
+    });
+  } catch (error) {
+    console.error('[activateTimetableMaster] Error:', error.message, error);
+    return next(new ErrorResponse(`Failed to activate timetable: ${error.message}`, 500));
+  }
 });
 
 /**
@@ -315,25 +453,82 @@ export const activateTimetableMaster = asyncHandler(async (req, res, next) => {
 export const deactivateTimetableMaster = asyncHandler(async (req, res, next) => {
   const { id } = req.params;
 
-  const timetable = await TimetableMaster.findByPk(id);
+  try {
+    const timetable = await TimetableMaster.findByPk(id);
 
-  if (!timetable) {
-    return next(new ErrorResponse(`Timetable master not found with id ${id}`, 404));
+    if (!timetable) {
+      return next(new ErrorResponse(`Timetable master not found with id ${id}`, 404));
+    }
+
+    if (timetable.status === 'inactive') {
+      return next(new ErrorResponse('Timetable is already inactive', 400));
+    }
+
+    // Directly update the database with raw query to avoid Sequelize validation conflicts
+    const [updateCount] = await sequelize.query(
+      `UPDATE timetable_master SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+      {
+        replacements: ['inactive', id],
+        type: QueryTypes.UPDATE
+      }
+    );
+
+    console.log('[deactivateTimetableMaster] Update result:', updateCount);
+
+    // Sync coordinator flags - check if they still have other active assignments
+    if (timetable.timetable_incharge_id) {
+      const activeCount = await TimetableMaster.count({
+        where: {
+          timetable_incharge_id: timetable.timetable_incharge_id,
+          status: 'active',
+          id: { [Op.ne]: id }
+        }
+      });
+      if (activeCount === 0) {
+        await Faculty.update(
+          { is_timetable_incharge: false },
+          { where: { faculty_id: timetable.timetable_incharge_id } }
+        );
+      }
+    }
+
+    if (timetable.class_coordinator_id) {
+      const activeCount = await TimetableMaster.count({
+        where: {
+          class_coordinator_id: timetable.class_coordinator_id,
+          status: 'active',
+          id: { [Op.ne]: id }
+        }
+      });
+      if (activeCount === 0) {
+        await Faculty.update(
+          { is_class_incharge: false },
+          { where: { faculty_id: timetable.class_coordinator_id } }
+        );
+      }
+    }
+
+    // Fetch and return the updated record
+    const result = await TimetableMaster.findByPk(id, {
+      include: [
+        { model: ClassModel, as: 'class' },
+        { model: Department, as: 'department' },
+        { model: Faculty, as: 'class_coordinator' },
+        { model: Faculty, as: 'asst_coordinator' },
+        { model: Faculty, as: 'timetable_incharge' },
+        { model: Faculty, as: 'hod' },
+      ],
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Timetable master deactivated',
+      data: result,
+    });
+  } catch (error) {
+    console.error('[deactivateTimetableMaster] Error:', error.message, error);
+    return next(new ErrorResponse(`Failed to deactivate timetable: ${error.message}`, 500));
   }
-
-  if (timetable.status === 'inactive') {
-    return next(new ErrorResponse('Timetable is already inactive', 400));
-  }
-
-  await timetable.update({ status: 'inactive' });
-
-  const result = await TimetableMaster.findByPk(id);
-
-  res.status(200).json({
-    success: true,
-    message: 'Timetable master deactivated',
-    data: result,
-  });
 });
 
 /**

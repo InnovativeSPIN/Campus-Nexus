@@ -3,6 +3,7 @@ import ErrorResponse from '../../utils/errorResponse.js';
 import { models } from '../../models/index.js';
 import { Op } from 'sequelize';
 import { notifyClassIncharge, notifyStudentPortfolioResult } from '../../utils/portfolioNotification.js';
+import getAssignedClassIdForFaculty from '../../utils/getAssignedClassIdForFaculty.js';
 const { StudentProject, Student, User, Faculty, TimetableMaster } = models;
 
 const getStudentId = async (userOrId, next) => {
@@ -121,7 +122,7 @@ export const updateProjectApproval = asyncHandler(async (req, res, next) => {
     if (!project) return next(new ErrorResponse('Project not found', 404));
 
     await project.update({ approvalStatus, approvalRemarks: approvalRemarks || null, approvedById: req.user.id, approvalDate: new Date() });
-    
+
     // Notify student (non-blocking)
     notifyStudentPortfolioResult(project.studentId, {
         referenceId: project.id,
@@ -134,45 +135,28 @@ export const updateProjectApproval = asyncHandler(async (req, res, next) => {
     res.status(200).json({ success: true, data: project });
 });
 
-const getAssignedClassIdForFaculty = async (facultyId) => {
-    // Check if faculty is class coordinator / assistant coordinator in an active/draft timetable
-    const timetable = await TimetableMaster.findOne({
-        where: {
-            status: { [Op.in]: ['draft', 'active'] },
-            [Op.or]: [
-                { class_coordinator_id: facultyId },
-                { asst_coordinator_id: facultyId }
-            ]
-        },
-        attributes: ['class_id']
-    });
-
-    return timetable?.class_id || null;
-};
+// Using centralized getAssignedClassIdForFaculty from utils
+// Checks: ClassIncharge table, TimetableMaster coords, Faculty is_class_incharge flag, Multiple assignments
 
 // @desc   Get projects for class in-charge
 // @route  GET /api/student/projects/class-incharge
 // @access Private/Faculty
 export const getClassInchargeProjects = asyncHandler(async (req, res, next) => {
+    console.log(`\n[PROJECTS-CONTROLLER] ╔════════════════════════════════════════╗`);
+    console.log(`[PROJECTS-CONTROLLER] ║ GET CLASS INCHARGE PROJECTS            ║`);
+    console.log(`[PROJECTS-CONTROLLER] ╚════════════════════════════════════════╝`);
+    console.log(`[PROJECTS-CONTROLLER] Faculty ID to use: ${req.user?.faculty_id || req.user?.id}\n`);
+
     const facultyId = req.user.faculty_id || req.user.id;
-    const classId = await getAssignedClassIdForFaculty(facultyId);
+    const classId = await getAssignedClassIdForFaculty(facultyId, models);
+    console.log(`[PROJECTS-CONTROLLER] Class ID returned from utility: ${classId}\n`);
     if (!classId) {
         return next(new ErrorResponse('User is not assigned as a class in-charge', 403));
     }
 
-    const studentIds = await Student.findAll({
-        where: { classId },
-        attributes: ['id'],
-        raw: true
-    }).then(rows => rows.map(r => r.id));
-
-    if (studentIds.length === 0) {
-        return res.status(200).json({ success: true, count: 0, data: [] });
-    }
-
     const { approvalStatus } = req.query;
 
-    const where = { studentId: { [Op.in]: studentIds } };
+    const where = { classId };
     if (approvalStatus) where.approvalStatus = approvalStatus;
 
     const projects = await StudentProject.findAll({

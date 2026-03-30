@@ -28,6 +28,7 @@ const StudentEvent = (sequelize) => {
         approvedById: { type: DataTypes.INTEGER, allowNull: true },
         approvalRemarks: { type: DataTypes.STRING(500), allowNull: true },
         approvalDate: { type: DataTypes.DATE, allowNull: true },
+        classId: { type: DataTypes.INTEGER, allowNull: true },
     }, {
         tableName: 'student_events',
         timestamps: true,

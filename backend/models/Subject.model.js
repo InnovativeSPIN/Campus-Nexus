@@ -15,7 +15,6 @@ const Subject = (sequelize) => {
     subject_code: {
       type: DataTypes.STRING(20),
       allowNull: false,
-      unique: true,
       field: 'subject_code'
     },
     department_id: {

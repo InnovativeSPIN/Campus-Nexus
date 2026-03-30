@@ -3,6 +3,7 @@ import ErrorResponse from '../../utils/errorResponse.js';
 import { models } from '../../models/index.js';
 import { Op } from 'sequelize';
 import { notifyClassIncharge, notifyStudentPortfolioResult } from '../../utils/portfolioNotification.js';
+import getAssignedClassIdForFaculty from '../../utils/getAssignedClassIdForFaculty.js';
 const { StudentSport, StudentEvent, Student, User, Faculty, TimetableMaster } = models;
 
 const getStudentId = async (userOrId, next) => {
@@ -115,7 +116,7 @@ export const updateSportApproval = asyncHandler(async (req, res, next) => {
     if (!sport) return next(new ErrorResponse('Sport record not found', 404));
 
     await sport.update({ approvalStatus, approvalRemarks: approvalRemarks || null, approvedById: req.user.id, approvalDate: new Date() });
-    
+
     // Notify student (non-blocking)
     notifyStudentPortfolioResult(sport.studentId, {
         referenceId: sport.id,
@@ -128,41 +129,37 @@ export const updateSportApproval = asyncHandler(async (req, res, next) => {
     res.status(200).json({ success: true, data: sport });
 });
 
-const getAssignedClassIdForFaculty = async (facultyId) => {
-    // Check if faculty is class coordinator / assistant coordinator in an active/draft timetable
-    const timetable = await TimetableMaster.findOne({
-        where: {
-            status: { [Op.in]: ['draft', 'active'] },
-            [Op.or]: [
-                { class_coordinator_id: facultyId },
-                { asst_coordinator_id: facultyId }
-            ]
-        },
-        attributes: ['class_id']
-    });
-
-    return timetable?.class_id || null;
-};
+// Using centralized getAssignedClassIdForFaculty from utils
+// Checks: ClassIncharge table, TimetableMaster coords, Faculty is_class_incharge flag, Multiple assignments
 
 // @desc   Get sports for class in-charge
 // @route  GET /api/student/sports/class-incharge
 // @access Private/Faculty
 export const getClassInchargeSports = asyncHandler(async (req, res, next) => {
+    console.log(`\n[SPORTS-CONTROLLER] ╔════════════════════════════════════════╗`);
+    console.log(`[SPORTS-CONTROLLER] ║ GET CLASS INCHARGE SPORTS              ║`);
+    console.log(`[SPORTS-CONTROLLER] ╚════════════════════════════════════════╝`);
+    console.log(`[SPORTS-CONTROLLER] req.user object:`, {
+        faculty_id: req.user?.faculty_id,
+        id: req.user?.id,
+        Name: req.user?.Name,
+        email: req.user?.email,
+        role: req.user?.role,
+        is_class_incharge: req.user?.is_class_incharge
+    });
+
     const facultyId = req.user.faculty_id || req.user.id;
-    const classId = await getAssignedClassIdForFaculty(facultyId);
+    console.log(`[SPORTS-CONTROLLER] Faculty ID to use: ${facultyId}\n`);
+
+    const classId = await getAssignedClassIdForFaculty(facultyId, models);
+    console.log(`[SPORTS-CONTROLLER] Class ID returned from utility: ${classId}\n`);
     if (!classId) {
         return next(new ErrorResponse('User is not assigned as a class in-charge', 403));
     }
 
     const { approvalStatus } = req.query;
 
-    const studentIds = await Student.findAll({
-        where: { classId },
-        attributes: ['id'],
-        raw: true
-    }).then(rows => rows.map(r => r.id));
-
-    const where = { studentId: { [Op.in]: studentIds } };
+    const where = { classId };
     if (approvalStatus) where.approvalStatus = approvalStatus;
 
     const sports = await StudentSport.findAll({
@@ -282,7 +279,7 @@ export const updateEventApproval = asyncHandler(async (req, res, next) => {
     if (!event) return next(new ErrorResponse('Event record not found', 404));
 
     await event.update({ approvalStatus, approvalRemarks: approvalRemarks || null, approvedById: req.user.id, approvalDate: new Date() });
-    
+
     // Notify student (non-blocking)
     notifyStudentPortfolioResult(event.studentId, {
         referenceId: event.id,
@@ -299,25 +296,21 @@ export const updateEventApproval = asyncHandler(async (req, res, next) => {
 // @route  GET /api/student/events/class-incharge
 // @access Private/Faculty
 export const getClassInchargeEvents = asyncHandler(async (req, res, next) => {
+    console.log(`\n[EVENTS-CONTROLLER] ╔════════════════════════════════════════╗`);
+    console.log(`[EVENTS-CONTROLLER] ║ GET CLASS INCHARGE EVENTS              ║`);
+    console.log(`[EVENTS-CONTROLLER] ╚════════════════════════════════════════╝`);
+    console.log(`[EVENTS-CONTROLLER] Faculty ID to use: ${req.user?.faculty_id || req.user?.id}\n`);
+
     const facultyId = req.user.faculty_id || req.user.id;
-    const classId = await getAssignedClassIdForFaculty(facultyId);
+    const classId = await getAssignedClassIdForFaculty(facultyId, models);
+    console.log(`[EVENTS-CONTROLLER] Class ID returned from utility: ${classId}\n`);
     if (!classId) {
         return next(new ErrorResponse('User is not assigned as a class in-charge', 403));
     }
 
-    const studentIds = await Student.findAll({
-        where: { classId },
-        attributes: ['id'],
-        raw: true
-    }).then(rows => rows.map(r => r.id));
-
-    if (studentIds.length === 0) {
-        return res.status(200).json({ success: true, count: 0, data: [] });
-    }
-
     const { approvalStatus } = req.query;
 
-    const where = { studentId: { [Op.in]: studentIds } };
+    const where = { classId };
     if (approvalStatus) where.approvalStatus = approvalStatus;
 
     const events = await StudentEvent.findAll({

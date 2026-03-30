@@ -1,34 +1,27 @@
--- phpMyAdmin SQL Dump
--- version 5.2.1
--- https://www.phpmyadmin.net/
---
--- Host: 127.0.0.1
--- Generation Time: Mar 23, 2026 at 08:49 AM
--- Server version: 10.4.32-MariaDB
--- PHP Version: 8.2.12
-
-SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
-START TRANSACTION;
-SET time_zone = "+00:00";
-
-
-/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
-/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
-/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
-/*!40101 SET NAMES utf8mb4 */;
-
---
--- Database: `eduvertex`
---
-
+-- --------------------------------------------------------
+-- Host:                         210.212.252.101
+-- Server version:               12.2.2-MariaDB - MariaDB Server
+-- Server OS:                    Win64
+-- HeidiSQL Version:             12.15.0.7171
 -- --------------------------------------------------------
 
---
--- Table structure for table `announcements`
---
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET NAMES utf8 */;
+/*!50503 SET NAMES utf8mb4 */;
+/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
+/*!40103 SET TIME_ZONE='+00:00' */;
+/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
+/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
+/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
-CREATE TABLE `announcements` (
-  `id` int(11) NOT NULL,
+
+-- Dumping database structure for eduvertex
+CREATE DATABASE IF NOT EXISTS `eduvertex` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_uca1400_ai_ci */;
+USE `eduvertex`;
+
+-- Dumping structure for table eduvertex.announcements
+CREATE TABLE IF NOT EXISTS `announcements` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `title` varchar(255) NOT NULL,
   `message` text NOT NULL,
   `type` enum('academic','leave','fee','general','disciplinary','attendance','result','approval','announcement') NOT NULL DEFAULT 'general',
@@ -41,25 +34,50 @@ CREATE TABLE `announcements` (
   `creatorRole` varchar(50) NOT NULL,
   `expiresAt` datetime DEFAULT NULL,
   `createdAt` datetime NOT NULL DEFAULT current_timestamp(),
-  `updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `createdById` (`createdById`),
+  KEY `idx_announcements_type` (`type`),
+  KEY `idx_announcements_active` (`isActive`)
+) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `announcements`
---
-
+-- Dumping data for table eduvertex.announcements: ~7 rows (approximately)
 INSERT INTO `announcements` (`id`, `title`, `message`, `type`, `priority`, `targetRole`, `department`, `attachments`, `isActive`, `createdById`, `creatorRole`, `expiresAt`, `createdAt`, `updatedAt`) VALUES
-(5, 'Welcome to eduvertex', 'The Eduvertex is a real time ERP Enterpersise Resource Planning', 'general', 'low', '[\"all\"]', NULL, '[]', 1, 109, 'super-admin', NULL, '2026-02-25 16:30:00', '2026-02-25 16:30:00'),
-(6, 'Welcome', 'welcome', 'general', 'low', '[\"faculty\",\"student\",\"department-admin\"]', NULL, '[]', 1, 109, 'super-admin', NULL, '2026-02-28 07:15:59', '2026-02-28 07:15:59');
+	(5, 'Welcome to eduvertex', 'The Eduvertex is a real time ERP Enterpersise Resource Planning', 'general', 'low', '["all"]', NULL, '[]', 1, 109, 'super-admin', NULL, '2026-02-25 16:30:00', '2026-02-25 16:30:00'),
+	(6, 'Welcome', 'welcome', 'general', 'low', '["faculty","student","department-admin"]', NULL, '[]', 1, 109, 'super-admin', NULL, '2026-02-28 07:15:59', '2026-02-28 07:15:59'),
+	(7, 'Individual Profile Updation', 'Dear Students, Kindly fill in the profile details by today. \r\nFor Internal Access (Inside the College Campus) : https://campusnexus.nscet.net\r\nFor External Access (Outside the Institution): https://campusnexus.nscet.org', 'general', 'low', '["student"]', 'AI&DS', '[]', 1, 435, 'department-admin', NULL, '2026-03-25 08:34:23', '2026-03-25 08:34:23'),
+	(8, 'Individual Profile Updation', 'Dear Students, Kindly fill in the profile details by today. \r\nFor Internal Access (Inside the College Campus) : https://campusnexus.nscet.net\r\nFor External Access (Outside the Institution): https://campusnexus.nscet.org', 'general', 'low', '["student"]', 'AI&DS', '[]', 1, 435, 'department-admin', NULL, '2026-03-25 08:34:23', '2026-03-25 08:34:23'),
+	(9, 'Individual Profile Updation', 'Dear Students, Kindly fill in the profile details by today. \r\nFor Internal Access (Inside the College Campus) : https://campusnexus.nscet.net\r\nFor External Access (Outside the Institution): https://campusnexus.nscet.org', 'general', 'low', '["student"]', 'AI&DS', '[]', 1, 435, 'department-admin', NULL, '2026-03-25 08:34:23', '2026-03-25 08:34:23'),
+	(10, 'Kindly fill in the profile details by today', 'Dear Students, Kindly fill in the profile details by today. \r\nFor Internal Access (Inside the College Campus) : https://campusnexus.nscet.net\r\nFor External Access (Outside the Institution): https://campusnexus.nscet.org', 'general', 'low', '["faculty","student"]', 'IT', '[]', 1, 434, 'department-admin', NULL, '2026-03-25 09:24:02', '2026-03-25 09:24:02'),
+	(11, 'Kindly fill in the profile details by today', 'Dear Students, Kindly fill in the profile details by today. For Internal Access (Inside the College Campus) : https://campusnexus.nscet.net For External Access (Outside the Institution): https://campusnexus.nscet.org', 'general', 'low', '["faculty","student"]', 'CSE', '[]', 1, 517, 'department-admin', NULL, '2026-03-25 14:23:26', '2026-03-25 14:23:26');
 
--- --------------------------------------------------------
+-- Dumping structure for table eduvertex.class_incharges
+CREATE TABLE IF NOT EXISTS `class_incharges` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `class_id` int(11) NOT NULL,
+  `faculty_id` int(11) NOT NULL,
+  `academic_year` varchar(20) NOT NULL,
+  `assigned_by` int(11) DEFAULT NULL,
+  `assigned_at` datetime DEFAULT NULL,
+  `status` enum('active','inactive') DEFAULT 'active',
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_class_academic_year` (`class_id`,`academic_year`),
+  KEY `idx_faculty_id` (`faculty_id`),
+  KEY `idx_class_id` (`class_id`),
+  KEY `idx_status` (`status`),
+  CONSTRAINT `class_incharges_ibfk_1` FOREIGN KEY (`class_id`) REFERENCES `classes` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `class_incharges_ibfk_2` FOREIGN KEY (`faculty_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE NO ACTION ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Table structure for table `classes`
---
+-- Dumping data for table eduvertex.class_incharges: ~1 rows (approximately)
+INSERT INTO `class_incharges` (`id`, `class_id`, `faculty_id`, `academic_year`, `assigned_by`, `assigned_at`, `status`, `created_at`, `updated_at`) VALUES
+	(10, 21, 406, '2023-2027', NULL, '2026-03-05 18:30:05', 'active', '2026-03-14 13:13:50', '2026-03-14 13:13:50');
 
-CREATE TABLE `classes` (
-  `id` int(11) NOT NULL,
+-- Dumping structure for table eduvertex.classes
+CREATE TABLE IF NOT EXISTS `classes` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(100) NOT NULL,
   `room` varchar(50) DEFAULT NULL,
   `department_id` int(11) DEFAULT NULL,
@@ -68,49 +86,69 @@ CREATE TABLE `classes` (
   `batch` varchar(20) DEFAULT NULL,
   `semester` tinyint(2) DEFAULT NULL,
   `academic_year` varchar(9) DEFAULT NULL,
-  `section` varchar(10) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `section` varchar(10) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `department_id` (`department_id`),
+  CONSTRAINT `fk_cls_department` FOREIGN KEY (`department_id`) REFERENCES `departments` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB AUTO_INCREMENT=27 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `classes`
---
-
+-- Dumping data for table eduvertex.classes: ~5 rows (approximately)
 INSERT INTO `classes` (`id`, `name`, `room`, `department_id`, `capacity`, `status`, `batch`, `semester`, `academic_year`, `section`) VALUES
-(21, 'III Year AI&DS', 'CR-15', 6, 30, 'active', '2023-2027', 6, '2025-2026', 'A');
+	(21, 'III Year AI&DS', 'CR-15', 6, 30, 'active', '2023-2027', 6, '2025-2026', 'A'),
+	(23, 'II Year AI&DS', 'CR-7', 6, 30, 'active', '2024-2028', 4, '2025-2026', NULL),
+	(24, 'II Year CSE', 'CR-11', 1, 59, 'active', '2024-2028', 4, '2025-2026', NULL),
+	(25, 'III Year CSE', 'CR-10', 1, 62, 'active', '2023-2027', 6, '2025-2026', NULL),
+	(26, 'IV YEAR CSE', 'CR-09', 1, 59, 'active', '2024-2028', 8, '2025-2026', NULL);
 
--- --------------------------------------------------------
+-- Dumping structure for table eduvertex.course_file_notifications
+CREATE TABLE IF NOT EXISTS `course_file_notifications` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `course_file_id` int(11) NOT NULL,
+  `recipient_type` enum('faculty','department-admin') NOT NULL,
+  `recipient_id` int(11) DEFAULT NULL,
+  `notification_type` enum('submission_received','approval_request','approved','rejected','revision_requested') NOT NULL,
+  `title` varchar(255) NOT NULL,
+  `message` text DEFAULT NULL,
+  `is_read` tinyint(1) DEFAULT 0,
+  `read_at` datetime DEFAULT NULL,
+  `action_url` varchar(500) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_recipient_read` (`recipient_id`,`is_read`),
+  KEY `idx_course_file_id` (`course_file_id`),
+  KEY `idx_created_at` (`created_at`),
+  CONSTRAINT `fk_cfn_course_file` FOREIGN KEY (`course_file_id`) REFERENCES `course_files` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_cfn_recipient` FOREIGN KEY (`recipient_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Notifications for course file approval workflow';
 
---
--- Table structure for table `class_incharges`
---
+-- Dumping data for table eduvertex.course_file_notifications: ~0 rows (approximately)
 
-CREATE TABLE `class_incharges` (
-  `id` int(11) NOT NULL,
-  `class_id` int(11) NOT NULL,
-  `faculty_id` int(11) NOT NULL,
-  `academic_year` varchar(20) NOT NULL,
-  `assigned_by` int(11) DEFAULT NULL,
-  `assigned_at` datetime DEFAULT NULL,
-  `status` enum('active','inactive') DEFAULT 'active',
-  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
-  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+-- Dumping structure for view eduvertex.course_file_section_x
+-- Creating temporary table to overcome VIEW dependency errors
+CREATE TABLE `course_file_section_x` (
+	`sno` TINYINT(3) UNSIGNED NOT NULL,
+	`unit_number` TINYINT(1) NOT NULL,
+	`unit_label` VARCHAR(1) NOT NULL COLLATE 'utf8mb4_unicode_ci',
+	`topic` TEXT NOT NULL COLLATE 'utf8mb4_unicode_ci',
+	`co_number` VARCHAR(1) NOT NULL COLLATE 'utf8mb4_unicode_ci',
+	`btl` VARCHAR(1) NOT NULL COLLATE 'utf8mb4_unicode_ci',
+	`delivery_mode` VARCHAR(1) NULL COLLATE 'utf8mb4_unicode_ci',
+	`reference_book` VARCHAR(1) NULL COLLATE 'utf8mb4_unicode_ci',
+	`periods_required` TINYINT(2) NOT NULL,
+	`cumulative_periods` TINYINT(3) UNSIGNED NULL,
+	`periods_taken` TINYINT(2) NULL,
+	`covered` VARCHAR(1) NULL COLLATE 'utf8mb4_uca1400_ai_ci',
+	`faculty_name` VARCHAR(1) NOT NULL COLLATE 'utf8mb4_general_ci',
+	`subject_name` VARCHAR(1) NOT NULL COLLATE 'utf8mb4_general_ci',
+	`class_name` VARCHAR(1) NOT NULL COLLATE 'utf8mb4_general_ci',
+	`academic_year` VARCHAR(1) NOT NULL COLLATE 'utf8mb4_unicode_ci',
+	`semester` TINYINT(2) NOT NULL
+);
 
---
--- Dumping data for table `class_incharges`
---
-
-INSERT INTO `class_incharges` (`id`, `class_id`, `faculty_id`, `academic_year`, `assigned_by`, `assigned_at`, `status`, `created_at`, `updated_at`) VALUES
-(10, 21, 406, '2023-2027', NULL, '2026-03-05 18:30:05', 'active', '2026-03-14 13:13:50', '2026-03-14 13:13:50');
-
--- --------------------------------------------------------
-
---
--- Table structure for table `course_files`
---
-
-CREATE TABLE `course_files` (
-  `id` int(11) NOT NULL,
+-- Dumping structure for table eduvertex.course_files
+CREATE TABLE IF NOT EXISTS `course_files` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `faculty_id` int(11) NOT NULL,
   `subject_id` int(11) NOT NULL,
   `class_id` int(11) NOT NULL,
@@ -132,71 +170,51 @@ CREATE TABLE `course_files` (
   `created_by` int(11) NOT NULL,
   `updated_by` int(11) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_course_file_assignment` (`faculty_id`,`subject_id`,`class_id`,`academic_year`,`semester`),
+  KEY `idx_dept_status` (`department_id`,`status`),
+  KEY `idx_status` (`status`),
+  KEY `idx_submission_date` (`submission_date`),
+  KEY `fk_cf_subject` (`subject_id`),
+  KEY `fk_cf_class` (`class_id`),
+  KEY `fk_cf_approved_by` (`approved_by`),
+  CONSTRAINT `fk_cf_approved_by` FOREIGN KEY (`approved_by`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_cf_class` FOREIGN KEY (`class_id`) REFERENCES `classes` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_cf_department` FOREIGN KEY (`department_id`) REFERENCES `departments` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_cf_faculty` FOREIGN KEY (`faculty_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_cf_subject` FOREIGN KEY (`subject_id`) REFERENCES `subjects` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Course file uploads for Section X and other course materials';
 
--- --------------------------------------------------------
+-- Dumping data for table eduvertex.course_files: ~0 rows (approximately)
 
---
--- Table structure for table `course_file_notifications`
---
-
-CREATE TABLE `course_file_notifications` (
-  `id` int(11) NOT NULL,
-  `course_file_id` int(11) NOT NULL,
-  `recipient_type` enum('faculty','department-admin') NOT NULL,
-  `recipient_id` int(11) DEFAULT NULL,
-  `notification_type` enum('submission_received','approval_request','approved','rejected','revision_requested') NOT NULL,
-  `title` varchar(255) NOT NULL,
-  `message` text DEFAULT NULL,
-  `is_read` tinyint(1) DEFAULT 0,
-  `read_at` datetime DEFAULT NULL,
-  `action_url` varchar(500) DEFAULT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Notifications for course file approval workflow';
-
--- --------------------------------------------------------
-
---
--- Stand-in structure for view `course_file_section_x`
--- (See below for the actual view)
---
-CREATE TABLE `course_file_section_x` (
-`sno` tinyint(3) unsigned
-,`unit_number` tinyint(1)
-,`unit_label` varchar(20)
-,`topic` text
-,`co_number` varchar(20)
-,`btl` varchar(20)
-,`delivery_mode` varchar(100)
-,`reference_book` varchar(255)
-,`periods_required` tinyint(2)
-,`cumulative_periods` tinyint(3) unsigned
-,`periods_taken` tinyint(2)
-,`covered` varchar(1)
-,`faculty_name` varchar(100)
-,`subject_name` varchar(255)
-,`class_name` varchar(100)
-,`academic_year` varchar(9)
-,`semester` tinyint(2)
+-- Dumping structure for view eduvertex.course_lesson_plan_progress
+-- Creating temporary table to overcome VIEW dependency errors
+CREATE TABLE `course_lesson_plan_progress` (
+	`faculty_id` INT(11) NOT NULL,
+	`subject_id` INT(11) NOT NULL,
+	`class_id` INT(11) NOT NULL,
+	`academic_year` VARCHAR(1) NOT NULL COLLATE 'utf8mb4_unicode_ci',
+	`semester` TINYINT(2) NOT NULL,
+	`subject_name` VARCHAR(1) NOT NULL COLLATE 'utf8mb4_general_ci',
+	`class_name` VARCHAR(1) NOT NULL COLLATE 'utf8mb4_general_ci',
+	`total_topics` BIGINT(21) NOT NULL,
+	`total_periods_planned` DECIMAL(25,0) NULL,
+	`total_periods_taught` DECIMAL(25,0) NULL,
+	`topics_completed` DECIMAL(22,0) NULL,
+	`completion_percentage` DECIMAL(28,2) NULL
 );
 
--- --------------------------------------------------------
-
---
--- Table structure for table `course_lesson_plans`
---
-
-CREATE TABLE `course_lesson_plans` (
-  `id` int(11) NOT NULL,
+-- Dumping structure for table eduvertex.course_lesson_plans
+CREATE TABLE IF NOT EXISTS `course_lesson_plans` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `faculty_id` int(11) NOT NULL,
   `upload_batch_id` varchar(50) DEFAULT NULL COMMENT 'Unique ID for batch upload (groups related topics)',
   `subject_id` int(11) NOT NULL,
   `class_id` int(11) NOT NULL,
   `academic_year` varchar(9) NOT NULL,
   `semester` tinyint(2) NOT NULL,
-  `sno` tinyint(3) UNSIGNED NOT NULL,
+  `sno` tinyint(3) unsigned NOT NULL,
   `unit_number` tinyint(1) NOT NULL,
   `unit_label` varchar(20) NOT NULL,
   `topic` text NOT NULL,
@@ -206,7 +224,7 @@ CREATE TABLE `course_lesson_plans` (
   `delivery_mode` varchar(100) DEFAULT NULL,
   `reference_book` varchar(255) DEFAULT NULL,
   `periods_required` tinyint(2) NOT NULL DEFAULT 1,
-  `cumulative_periods` tinyint(3) UNSIGNED DEFAULT NULL,
+  `cumulative_periods` tinyint(3) unsigned DEFAULT NULL,
   `is_completed` tinyint(1) NOT NULL DEFAULT 0,
   `actual_date_from` date DEFAULT NULL,
   `actual_date_to` date DEFAULT NULL,
@@ -224,133 +242,111 @@ CREATE TABLE `course_lesson_plans` (
   `coverage_status` enum('completed','deviation') DEFAULT NULL COMMENT 'Status of topic coverage (completed or deviation)',
   `coverage_date` datetime DEFAULT NULL COMMENT 'Date when the topic coverage was recorded',
   `completed_date` datetime DEFAULT NULL COMMENT 'Date when the topic was marked as completed',
-  `additional_notes` longtext DEFAULT NULL COMMENT 'Additional notes about the topic coverage'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `additional_notes` longtext DEFAULT NULL COMMENT 'Additional notes about the topic coverage',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_plan_topic` (`faculty_id`,`subject_id`,`class_id`,`academic_year`,`semester`,`sno`),
+  KEY `idx_clp_faculty` (`faculty_id`),
+  KEY `idx_clp_subject` (`subject_id`),
+  KEY `idx_clp_class` (`class_id`),
+  KEY `idx_clp_unit` (`unit_number`),
+  KEY `idx_clp_completed` (`is_completed`),
+  KEY `idx_pending` (`faculty_id`,`is_completed`),
+  KEY `idx_approval_status` (`approval_status`),
+  KEY `idx_batch_id` (`upload_batch_id`),
+  KEY `idx_batch_submission` (`batch_submission_date`),
+  CONSTRAINT `fk_clp_class` FOREIGN KEY (`class_id`) REFERENCES `classes` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_clp_faculty` FOREIGN KEY (`faculty_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_clp_subject` FOREIGN KEY (`subject_id`) REFERENCES `subjects` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=303 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
---
--- Dumping data for table `course_lesson_plans`
---
-
+-- Dumping data for table eduvertex.course_lesson_plans: ~60 rows (approximately)
 INSERT INTO `course_lesson_plans` (`id`, `faculty_id`, `upload_batch_id`, `subject_id`, `class_id`, `academic_year`, `semester`, `sno`, `unit_number`, `unit_label`, `topic`, `tentative_date`, `co_number`, `btl`, `delivery_mode`, `reference_book`, `periods_required`, `cumulative_periods`, `is_completed`, `actual_date_from`, `actual_date_to`, `periods_taken`, `deviation_reason`, `created_by`, `updated_by`, `created_at`, `updated_at`, `approval_remarks`, `approved_by`, `approved_date`, `batch_submission_date`, `approval_status`, `coverage_status`, `coverage_date`, `completed_date`, `additional_notes`) VALUES
-(243, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 1, 1, 'UNIT I - INTRO TO ON', 'Online Market space', '2026-01-05', 'C602.1', 'L2', 'BB', 'T1 3', 1, 1, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
-(244, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 2, 1, 'UNIT I - INTRO TO ON', 'Digital Marketing Strategy', '2026-01-06', 'C602.1', 'L2', 'BB', 'T1 20', 1, 2, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
-(245, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 3, 1, 'UNIT I - INTRO TO ON', 'Components', '2026-01-08', 'C602.1', 'L2', 'BB', 'T1 42', 1, 3, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
-(246, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 4, 1, 'UNIT I - INTRO TO ON', 'Opportunities for building Brand Website', '2026-01-10', 'C602.1', 'L2', 'BB', 'T1 81', 1, 4, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
-(247, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 5, 1, 'UNIT I - INTRO TO ON', 'Planning and Creation', '2026-01-12', 'C602.1', 'L2', 'BB', 'T1 92', 1, 5, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
-(248, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 6, 1, 'UNIT I - INTRO TO ON', 'Content Marketing', '2026-01-13', 'C602.1', 'L2', 'BB', 'T1 100', 1, 6, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
-(249, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 7, 2, 'UNIT II - SEARCH ENG', 'Search Engine optimization - Keyword Strategy', '2026-01-19', 'C602.2', 'L2', 'BB', 'T1 115', 1, 7, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
-(250, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 8, 2, 'UNIT II - SEARCH ENG', 'SEO Strategy - SEO success factors', '2026-01-20', 'C602.2', 'L2', 'BB', 'T1 128', 1, 8, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
-(251, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 9, 2, 'UNIT II - SEARCH ENG', 'On-Page Techniques - Off-Page Techniques', '2026-01-22', 'C602.2', 'L2', 'BB', 'T1 135', 1, 9, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
-(252, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 10, 2, 'UNIT II - SEARCH ENG', 'Search Engine Marketing - How Search Engine work', '2026-01-24', 'C602.2', 'L2', 'BB', 'T1 142', 1, 10, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
-(253, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 11, 2, 'UNIT II - SEARCH ENG', 'SEM components - PPC advertising', '2026-01-27', 'C602.2', 'L2', 'BB', 'T1 150', 1, 11, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
-(254, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 12, 2, 'UNIT II - SEARCH ENG', 'Display Advertisement', '2026-01-29', 'C602.2', 'L2', 'BB', 'T1 153', 1, 12, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
-(255, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 13, 3, 'UNIT III - E-MAIL MA', 'E-Mail Marketing - Types of E-Mail Marketing - Email Automation', '2026-01-31', 'C602.3', 'L2', 'BB', 'T1 202', 1, 13, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
-(256, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 14, 3, 'UNIT III - E-MAIL MA', 'Lead Generation - Integrating Email with Social Media and Mobile', '2026-02-02', 'C602.3', 'L2', 'BB', 'T1 219', 1, 14, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
-(257, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 15, 3, 'UNIT III - E-MAIL MA', '\"Measuring and maximizing email campaign effectiveness', '2026-02-03', 'Mobile Marketing\"', 'C602.3', 'L2', 'BB', 1, 15, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
-(258, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 16, 3, 'UNIT III - E-MAIL MA', '\"Inventory/channels - Location based', '2026-02-05', 'Context based', 'Coupons and offers\"', 'C602.3', 'L2', 1, 16, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
-(259, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 17, 3, 'UNIT III - E-MAIL MA', '\"Mobile Apps', '2026-02-07', 'Mobile Commerce\"', 'C602.3', 'L2', 'BB', 1, 17, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
-(260, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 18, 3, 'UNIT III - E-MAIL MA', 'SMS Campaigns - Profiling and targeting', '2026-02-09', 'C602.3', 'L2', 'BB', 'T2 271', 1, 18, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
-(261, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 19, 4, 'UNIT IV - SOCIAL MED', 'Social Media Marketing', '2026-02-10', 'C602.4', 'L2', 'BB', 'T1 277', 1, 19, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
-(262, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 20, 4, 'UNIT IV - SOCIAL MED', 'Social Media Channels', '2026-02-10', 'C602.4', 'L2', 'BB', 'T1 286', 1, 20, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
-(263, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 21, 4, 'UNIT IV - SOCIAL MED', 'Leveraging Social media for brand conversations and buzz', '2026-02-12', 'C602.4', 'L2', 'BB', 'T1 301', 1, 21, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
-(264, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 22, 4, 'UNIT IV - SOCIAL MED', 'Successful/benchmark Social media campaigns', '2026-02-14', 'C602.4', 'L2', 'BB', 'T1 312', 1, 22, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
-(265, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 23, 4, 'UNIT IV - SOCIAL MED', 'Engagement Marketing - Building Customer relationships', '2026-02-24', 'C602.4', 'L2', 'BB', 'T2 345', 1, 23, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
-(266, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 24, 4, 'UNIT IV - SOCIAL MED', 'Creating Loyalty drivers - Influencer Marketing', '2026-02-28', 'C602.4', 'L2', 'BB', 'T1 364', 1, 24, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
-(267, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 25, 5, 'UNIT V - DIGITAL TRA', 'Digital Transformation & Channel Attribution', '2026-03-02', 'C602.5', 'L2', 'BB', 'T1 384', 1, 25, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
-(268, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 26, 5, 'UNIT V - DIGITAL TRA', 'Analytics', '2026-03-03', 'C602.5', 'L2', 'BB', 'T1 389', 1, 26, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
-(269, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 27, 5, 'UNIT V - DIGITAL TRA', '\"Ad-words', '2026-03-05', 'Email', 'Mobile\"', 'C602.5', 'L2', 1, 27, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
-(270, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 28, 5, 'UNIT V - DIGITAL TRA', '\"Social Media', '2026-03-09', 'Web Analytics\"', 'C602.5', 'L2', 'BB', 1, 28, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
-(271, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 29, 5, 'UNIT V - DIGITAL TRA', 'Changing your strategy based on analysis', '2026-03-12', 'C602.5', 'L2', 'BB', 'T2 403', 1, 29, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
-(272, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 30, 5, 'UNIT V - DIGITAL TRA', 'Recent trends in Digital marketing', '2026-03-14', 'C602.5', 'L2', 'SEM', 'T1 407', 1, 30, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
-(273, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 1, 1, 'UNIT I - INTRO TO ON', 'Online Market space', '2026-01-05', 'C602.1', 'L2', 'BB', 'T1 3', 1, 1, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
-(274, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 2, 1, 'UNIT I - INTRO TO ON', 'Digital Marketing Strategy', '2026-01-06', 'C602.1', 'L2', 'BB', 'T1 20', 1, 2, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
-(275, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 3, 1, 'UNIT I - INTRO TO ON', 'Components', '2026-01-08', 'C602.1', 'L2', 'BB', 'T1 42', 1, 3, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
-(276, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 4, 1, 'UNIT I - INTRO TO ON', 'Opportunities for building Brand Website', '2026-01-10', 'C602.1', 'L2', 'BB', 'T1 81', 1, 4, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
-(277, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 5, 1, 'UNIT I - INTRO TO ON', 'Planning and Creation', '2026-01-12', 'C602.1', 'L2', 'BB', 'T1 92', 1, 5, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
-(278, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 6, 1, 'UNIT I - INTRO TO ON', 'Content Marketing', '2026-01-13', 'C602.1', 'L2', 'BB', 'T1 100', 1, 6, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
-(279, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 7, 2, 'UNIT II - SEARCH ENG', 'Search Engine optimization - Keyword Strategy', '2026-01-19', 'C602.2', 'L2', 'BB', 'T1 115', 1, 7, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
-(280, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 8, 2, 'UNIT II - SEARCH ENG', 'SEO Strategy - SEO success factors', '2026-01-20', 'C602.2', 'L2', 'BB', 'T1 128', 1, 8, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
-(281, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 9, 2, 'UNIT II - SEARCH ENG', 'On-Page Techniques - Off-Page Techniques', '2026-01-22', 'C602.2', 'L2', 'BB', 'T1 135', 1, 9, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
-(282, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 10, 2, 'UNIT II - SEARCH ENG', 'Search Engine Marketing - How Search Engine work', '2026-01-24', 'C602.2', 'L2', 'BB', 'T1 142', 1, 10, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
-(283, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 11, 2, 'UNIT II - SEARCH ENG', 'SEM components - PPC advertising', '2026-01-27', 'C602.2', 'L2', 'BB', 'T1 150', 1, 11, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
-(284, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 12, 2, 'UNIT II - SEARCH ENG', 'Display Advertisement', '2026-01-29', 'C602.2', 'L2', 'BB', 'T1 153', 1, 12, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
-(285, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 13, 3, 'UNIT III - E-MAIL MA', 'E-Mail Marketing - Types of E-Mail Marketing - Email Automation', '2026-01-31', 'C602.3', 'L2', 'BB', 'T1 202', 1, 13, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
-(286, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 14, 3, 'UNIT III - E-MAIL MA', 'Lead Generation - Integrating Email with Social Media and Mobile', '2026-02-02', 'C602.3', 'L2', 'BB', 'T1 219', 1, 14, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
-(287, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 15, 3, 'UNIT III - E-MAIL MA', '\"Measuring and maximizing email campaign effectiveness', '2026-02-03', 'Mobile Marketing\"', 'C602.3', 'L2', 'BB', 1, 15, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
-(288, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 16, 3, 'UNIT III - E-MAIL MA', '\"Inventory/channels - Location based', '2026-02-05', 'Context based', 'Coupons and offers\"', 'C602.3', 'L2', 1, 16, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
-(289, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 17, 3, 'UNIT III - E-MAIL MA', '\"Mobile Apps', '2026-02-07', 'Mobile Commerce\"', 'C602.3', 'L2', 'BB', 1, 17, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
-(290, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 18, 3, 'UNIT III - E-MAIL MA', 'SMS Campaigns - Profiling and targeting', '2026-02-09', 'C602.3', 'L2', 'BB', 'T2 271', 1, 18, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
-(291, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 19, 4, 'UNIT IV - SOCIAL MED', 'Social Media Marketing', '2026-02-10', 'C602.4', 'L2', 'BB', 'T1 277', 1, 19, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
-(292, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 20, 4, 'UNIT IV - SOCIAL MED', 'Social Media Channels', '2026-02-10', 'C602.4', 'L2', 'BB', 'T1 286', 1, 20, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
-(293, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 21, 4, 'UNIT IV - SOCIAL MED', 'Leveraging Social media for brand conversations and buzz', '2026-02-12', 'C602.4', 'L2', 'BB', 'T1 301', 1, 21, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
-(294, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 22, 4, 'UNIT IV - SOCIAL MED', 'Successful/benchmark Social media campaigns', '2026-02-14', 'C602.4', 'L2', 'BB', 'T1 312', 1, 22, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
-(295, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 23, 4, 'UNIT IV - SOCIAL MED', 'Engagement Marketing - Building Customer relationships', '2026-02-24', 'C602.4', 'L2', 'BB', 'T2 345', 1, 23, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
-(296, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 24, 4, 'UNIT IV - SOCIAL MED', 'Creating Loyalty drivers - Influencer Marketing', '2026-02-28', 'C602.4', 'L2', 'BB', 'T1 364', 1, 24, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
-(297, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 25, 5, 'UNIT V - DIGITAL TRA', 'Digital Transformation & Channel Attribution', '2026-03-02', 'C602.5', 'L2', 'BB', 'T1 384', 1, 25, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
-(298, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 26, 5, 'UNIT V - DIGITAL TRA', 'Analytics', '2026-03-03', 'C602.5', 'L2', 'BB', 'T1 389', 1, 26, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
-(299, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 27, 5, 'UNIT V - DIGITAL TRA', '\"Ad-words', '2026-03-05', 'Email', 'Mobile\"', 'C602.5', 'L2', 1, 27, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
-(300, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 28, 5, 'UNIT V - DIGITAL TRA', '\"Social Media', '2026-03-09', 'Web Analytics\"', 'C602.5', 'L2', 'BB', 1, 28, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
-(301, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 29, 5, 'UNIT V - DIGITAL TRA', 'Changing your strategy based on analysis', '2026-03-12', 'C602.5', 'L2', 'BB', 'T2 403', 1, 29, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
-(302, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 30, 5, 'UNIT V - DIGITAL TRA', 'Recent trends in Digital marketing', '2026-03-14', 'C602.5', 'L2', 'SEM', 'T1 407', 1, 30, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL);
+	(243, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 1, 1, 'UNIT I - INTRO TO ON', 'Online Market space', '2026-01-05', 'C602.1', 'L2', 'BB', 'T1 3', 1, 1, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
+	(244, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 2, 1, 'UNIT I - INTRO TO ON', 'Digital Marketing Strategy', '2026-01-06', 'C602.1', 'L2', 'BB', 'T1 20', 1, 2, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
+	(245, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 3, 1, 'UNIT I - INTRO TO ON', 'Components', '2026-01-08', 'C602.1', 'L2', 'BB', 'T1 42', 1, 3, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
+	(246, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 4, 1, 'UNIT I - INTRO TO ON', 'Opportunities for building Brand Website', '2026-01-10', 'C602.1', 'L2', 'BB', 'T1 81', 1, 4, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
+	(247, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 5, 1, 'UNIT I - INTRO TO ON', 'Planning and Creation', '2026-01-12', 'C602.1', 'L2', 'BB', 'T1 92', 1, 5, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
+	(248, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 6, 1, 'UNIT I - INTRO TO ON', 'Content Marketing', '2026-01-13', 'C602.1', 'L2', 'BB', 'T1 100', 1, 6, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
+	(249, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 7, 2, 'UNIT II - SEARCH ENG', 'Search Engine optimization - Keyword Strategy', '2026-01-19', 'C602.2', 'L2', 'BB', 'T1 115', 1, 7, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
+	(250, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 8, 2, 'UNIT II - SEARCH ENG', 'SEO Strategy - SEO success factors', '2026-01-20', 'C602.2', 'L2', 'BB', 'T1 128', 1, 8, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
+	(251, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 9, 2, 'UNIT II - SEARCH ENG', 'On-Page Techniques - Off-Page Techniques', '2026-01-22', 'C602.2', 'L2', 'BB', 'T1 135', 1, 9, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
+	(252, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 10, 2, 'UNIT II - SEARCH ENG', 'Search Engine Marketing - How Search Engine work', '2026-01-24', 'C602.2', 'L2', 'BB', 'T1 142', 1, 10, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
+	(253, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 11, 2, 'UNIT II - SEARCH ENG', 'SEM components - PPC advertising', '2026-01-27', 'C602.2', 'L2', 'BB', 'T1 150', 1, 11, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
+	(254, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 12, 2, 'UNIT II - SEARCH ENG', 'Display Advertisement', '2026-01-29', 'C602.2', 'L2', 'BB', 'T1 153', 1, 12, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
+	(255, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 13, 3, 'UNIT III - E-MAIL MA', 'E-Mail Marketing - Types of E-Mail Marketing - Email Automation', '2026-01-31', 'C602.3', 'L2', 'BB', 'T1 202', 1, 13, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
+	(256, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 14, 3, 'UNIT III - E-MAIL MA', 'Lead Generation - Integrating Email with Social Media and Mobile', '2026-02-02', 'C602.3', 'L2', 'BB', 'T1 219', 1, 14, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
+	(257, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 15, 3, 'UNIT III - E-MAIL MA', '"Measuring and maximizing email campaign effectiveness', '2026-02-03', 'Mobile Marketing"', 'C602.3', 'L2', 'BB', 1, 15, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
+	(258, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 16, 3, 'UNIT III - E-MAIL MA', '"Inventory/channels - Location based', '2026-02-05', 'Context based', 'Coupons and offers"', 'C602.3', 'L2', 1, 16, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
+	(259, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 17, 3, 'UNIT III - E-MAIL MA', '"Mobile Apps', '2026-02-07', 'Mobile Commerce"', 'C602.3', 'L2', 'BB', 1, 17, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
+	(260, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 18, 3, 'UNIT III - E-MAIL MA', 'SMS Campaigns - Profiling and targeting', '2026-02-09', 'C602.3', 'L2', 'BB', 'T2 271', 1, 18, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
+	(261, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 19, 4, 'UNIT IV - SOCIAL MED', 'Social Media Marketing', '2026-02-10', 'C602.4', 'L2', 'BB', 'T1 277', 1, 19, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
+	(262, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 20, 4, 'UNIT IV - SOCIAL MED', 'Social Media Channels', '2026-02-10', 'C602.4', 'L2', 'BB', 'T1 286', 1, 20, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
+	(263, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 21, 4, 'UNIT IV - SOCIAL MED', 'Leveraging Social media for brand conversations and buzz', '2026-02-12', 'C602.4', 'L2', 'BB', 'T1 301', 1, 21, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
+	(264, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 22, 4, 'UNIT IV - SOCIAL MED', 'Successful/benchmark Social media campaigns', '2026-02-14', 'C602.4', 'L2', 'BB', 'T1 312', 1, 22, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
+	(265, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 23, 4, 'UNIT IV - SOCIAL MED', 'Engagement Marketing - Building Customer relationships', '2026-02-24', 'C602.4', 'L2', 'BB', 'T2 345', 1, 23, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
+	(266, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 24, 4, 'UNIT IV - SOCIAL MED', 'Creating Loyalty drivers - Influencer Marketing', '2026-02-28', 'C602.4', 'L2', 'BB', 'T1 364', 1, 24, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
+	(267, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 25, 5, 'UNIT V - DIGITAL TRA', 'Digital Transformation & Channel Attribution', '2026-03-02', 'C602.5', 'L2', 'BB', 'T1 384', 1, 25, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
+	(268, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 26, 5, 'UNIT V - DIGITAL TRA', 'Analytics', '2026-03-03', 'C602.5', 'L2', 'BB', 'T1 389', 1, 26, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
+	(269, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 27, 5, 'UNIT V - DIGITAL TRA', '"Ad-words', '2026-03-05', 'Email', 'Mobile"', 'C602.5', 'L2', 1, 27, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
+	(270, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 28, 5, 'UNIT V - DIGITAL TRA', '"Social Media', '2026-03-09', 'Web Analytics"', 'C602.5', 'L2', 'BB', 1, 28, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
+	(271, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 29, 5, 'UNIT V - DIGITAL TRA', 'Changing your strategy based on analysis', '2026-03-12', 'C602.5', 'L2', 'BB', 'T2 403', 1, 29, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
+	(272, 406, '406_98_21_1774158410975', 98, 21, '2026-2027', 6, 30, 5, 'UNIT V - DIGITAL TRA', 'Recent trends in Digital marketing', '2026-03-14', 'C602.5', 'L2', 'SEM', 'T1 407', 1, 30, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 05:46:50', '2026-03-22 05:47:26', NULL, 435, '2026-03-22 05:47:26', '2026-03-22 05:47:26', 'approved', NULL, NULL, NULL, NULL),
+	(273, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 1, 1, 'UNIT I - INTRO TO ON', 'Online Market space', '2026-01-05', 'C602.1', 'L2', 'BB', 'T1 3', 1, 1, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
+	(274, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 2, 1, 'UNIT I - INTRO TO ON', 'Digital Marketing Strategy', '2026-01-06', 'C602.1', 'L2', 'BB', 'T1 20', 1, 2, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
+	(275, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 3, 1, 'UNIT I - INTRO TO ON', 'Components', '2026-01-08', 'C602.1', 'L2', 'BB', 'T1 42', 1, 3, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
+	(276, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 4, 1, 'UNIT I - INTRO TO ON', 'Opportunities for building Brand Website', '2026-01-10', 'C602.1', 'L2', 'BB', 'T1 81', 1, 4, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
+	(277, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 5, 1, 'UNIT I - INTRO TO ON', 'Planning and Creation', '2026-01-12', 'C602.1', 'L2', 'BB', 'T1 92', 1, 5, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
+	(278, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 6, 1, 'UNIT I - INTRO TO ON', 'Content Marketing', '2026-01-13', 'C602.1', 'L2', 'BB', 'T1 100', 1, 6, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
+	(279, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 7, 2, 'UNIT II - SEARCH ENG', 'Search Engine optimization - Keyword Strategy', '2026-01-19', 'C602.2', 'L2', 'BB', 'T1 115', 1, 7, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
+	(280, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 8, 2, 'UNIT II - SEARCH ENG', 'SEO Strategy - SEO success factors', '2026-01-20', 'C602.2', 'L2', 'BB', 'T1 128', 1, 8, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
+	(281, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 9, 2, 'UNIT II - SEARCH ENG', 'On-Page Techniques - Off-Page Techniques', '2026-01-22', 'C602.2', 'L2', 'BB', 'T1 135', 1, 9, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
+	(282, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 10, 2, 'UNIT II - SEARCH ENG', 'Search Engine Marketing - How Search Engine work', '2026-01-24', 'C602.2', 'L2', 'BB', 'T1 142', 1, 10, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
+	(283, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 11, 2, 'UNIT II - SEARCH ENG', 'SEM components - PPC advertising', '2026-01-27', 'C602.2', 'L2', 'BB', 'T1 150', 1, 11, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
+	(284, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 12, 2, 'UNIT II - SEARCH ENG', 'Display Advertisement', '2026-01-29', 'C602.2', 'L2', 'BB', 'T1 153', 1, 12, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
+	(285, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 13, 3, 'UNIT III - E-MAIL MA', 'E-Mail Marketing - Types of E-Mail Marketing - Email Automation', '2026-01-31', 'C602.3', 'L2', 'BB', 'T1 202', 1, 13, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
+	(286, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 14, 3, 'UNIT III - E-MAIL MA', 'Lead Generation - Integrating Email with Social Media and Mobile', '2026-02-02', 'C602.3', 'L2', 'BB', 'T1 219', 1, 14, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
+	(287, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 15, 3, 'UNIT III - E-MAIL MA', '"Measuring and maximizing email campaign effectiveness', '2026-02-03', 'Mobile Marketing"', 'C602.3', 'L2', 'BB', 1, 15, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
+	(288, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 16, 3, 'UNIT III - E-MAIL MA', '"Inventory/channels - Location based', '2026-02-05', 'Context based', 'Coupons and offers"', 'C602.3', 'L2', 1, 16, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
+	(289, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 17, 3, 'UNIT III - E-MAIL MA', '"Mobile Apps', '2026-02-07', 'Mobile Commerce"', 'C602.3', 'L2', 'BB', 1, 17, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
+	(290, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 18, 3, 'UNIT III - E-MAIL MA', 'SMS Campaigns - Profiling and targeting', '2026-02-09', 'C602.3', 'L2', 'BB', 'T2 271', 1, 18, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
+	(291, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 19, 4, 'UNIT IV - SOCIAL MED', 'Social Media Marketing', '2026-02-10', 'C602.4', 'L2', 'BB', 'T1 277', 1, 19, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
+	(292, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 20, 4, 'UNIT IV - SOCIAL MED', 'Social Media Channels', '2026-02-10', 'C602.4', 'L2', 'BB', 'T1 286', 1, 20, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
+	(293, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 21, 4, 'UNIT IV - SOCIAL MED', 'Leveraging Social media for brand conversations and buzz', '2026-02-12', 'C602.4', 'L2', 'BB', 'T1 301', 1, 21, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
+	(294, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 22, 4, 'UNIT IV - SOCIAL MED', 'Successful/benchmark Social media campaigns', '2026-02-14', 'C602.4', 'L2', 'BB', 'T1 312', 1, 22, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
+	(295, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 23, 4, 'UNIT IV - SOCIAL MED', 'Engagement Marketing - Building Customer relationships', '2026-02-24', 'C602.4', 'L2', 'BB', 'T2 345', 1, 23, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
+	(296, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 24, 4, 'UNIT IV - SOCIAL MED', 'Creating Loyalty drivers - Influencer Marketing', '2026-02-28', 'C602.4', 'L2', 'BB', 'T1 364', 1, 24, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
+	(297, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 25, 5, 'UNIT V - DIGITAL TRA', 'Digital Transformation & Channel Attribution', '2026-03-02', 'C602.5', 'L2', 'BB', 'T1 384', 1, 25, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
+	(298, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 26, 5, 'UNIT V - DIGITAL TRA', 'Analytics', '2026-03-03', 'C602.5', 'L2', 'BB', 'T1 389', 1, 26, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
+	(299, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 27, 5, 'UNIT V - DIGITAL TRA', '"Ad-words', '2026-03-05', 'Email', 'Mobile"', 'C602.5', 'L2', 1, 27, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
+	(300, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 28, 5, 'UNIT V - DIGITAL TRA', '"Social Media', '2026-03-09', 'Web Analytics"', 'C602.5', 'L2', 'BB', 1, 28, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
+	(301, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 29, 5, 'UNIT V - DIGITAL TRA', 'Changing your strategy based on analysis', '2026-03-12', 'C602.5', 'L2', 'BB', 'T2 403', 1, 29, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL),
+	(302, 406, '406_98_21_1774160071732', 98, 21, '2025-2026', 6, 30, 5, 'UNIT V - DIGITAL TRA', 'Recent trends in Digital marketing', '2026-03-14', 'C602.5', 'L2', 'SEM', 'T1 407', 1, 30, 0, NULL, NULL, 0, NULL, 406, NULL, '2026-03-22 06:14:31', '2026-03-22 06:14:52', NULL, 435, '2026-03-22 06:14:52', '2026-03-22 06:14:52', 'approved', NULL, NULL, NULL, NULL);
 
--- --------------------------------------------------------
-
---
--- Stand-in structure for view `course_lesson_plan_progress`
--- (See below for the actual view)
---
-CREATE TABLE `course_lesson_plan_progress` (
-`faculty_id` int(11)
-,`subject_id` int(11)
-,`class_id` int(11)
-,`academic_year` varchar(9)
-,`semester` tinyint(2)
-,`subject_name` varchar(255)
-,`class_name` varchar(100)
-,`total_topics` bigint(21)
-,`total_periods_planned` decimal(25,0)
-,`total_periods_taught` decimal(25,0)
-,`topics_completed` decimal(22,0)
-,`completion_percentage` decimal(28,2)
-);
-
--- --------------------------------------------------------
-
---
--- Table structure for table `departments`
---
-
-CREATE TABLE `departments` (
-  `id` int(11) NOT NULL,
+-- Dumping structure for table eduvertex.departments
+CREATE TABLE IF NOT EXISTS `departments` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `short_name` varchar(50) NOT NULL,
-  `full_name` varchar(255) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `full_name` varchar(255) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `departments`
---
-
+-- Dumping data for table eduvertex.departments: ~11 rows (approximately)
 INSERT INTO `departments` (`id`, `short_name`, `full_name`) VALUES
-(1, 'CSE', 'B.E. Computer Science & Engineering'),
-(2, 'CIVIL', 'B.E. Civil Engineering'),
-(3, 'ECE', 'B.E. Electronics & Communication Engineering'),
-(4, 'EEE', 'B.E. Electrical and Electronics Engineering'),
-(5, 'MECH', 'B.E. Mechanical Engineering'),
-(6, 'AI&DS', 'B.Tech. Artificial Intelligence & Data Science'),
-(7, 'IT', 'B.Tech. Information Technology'),
-(8, 'STRUCTURE ENGINEERING', 'Structural Engineering'),
-(9, 'MFE', 'Manufacturing Engineering'),
-(10, 'S&H', 'Science and Humanities'),
-(11, 'PHYSICAL EDUCATION', 'PHYSICAL EDUCATION');
+	(1, 'CSE', 'B.E. Computer Science & Engineering'),
+	(2, 'CIVIL', 'B.E. Civil Engineering'),
+	(3, 'ECE', 'B.E. Electronics & Communication Engineering'),
+	(4, 'EEE', 'B.E. Electrical and Electronics Engineering'),
+	(5, 'MECH', 'B.E. Mechanical Engineering'),
+	(6, 'AI&DS', 'B.Tech. Artificial Intelligence & Data Science'),
+	(7, 'IT', 'B.Tech. Information Technology'),
+	(8, 'STRUCTURE ENGINEERING', 'Structural Engineering'),
+	(9, 'MFE', 'Manufacturing Engineering'),
+	(10, 'S&H', 'Science and Humanities'),
+	(11, 'PHYSICAL EDUCATION', 'PHYSICAL EDUCATION');
 
--- --------------------------------------------------------
-
---
--- Table structure for table `faculty_events`
---
-
-CREATE TABLE `faculty_events` (
-  `event_id` int(11) NOT NULL,
+-- Dumping structure for table eduvertex.faculty_events
+CREATE TABLE IF NOT EXISTS `faculty_events` (
+  `event_id` int(11) NOT NULL AUTO_INCREMENT,
   `faculty_id` int(11) NOT NULL,
   `category` enum('Resource Person','FDP','Seminar','Workshop') NOT NULL,
   `organizer_type` enum('organized','participated') DEFAULT 'participated',
@@ -360,17 +356,61 @@ CREATE TABLE `faculty_events` (
   `document_url` text DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  `url` text DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `url` text DEFAULT NULL,
+  PRIMARY KEY (`event_id`),
+  KEY `idx_faculty_id` (`faculty_id`),
+  KEY `idx_event_date` (`event_date`),
+  CONSTRAINT `faculty_events_ibfk_1` FOREIGN KEY (`faculty_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=63 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- --------------------------------------------------------
+-- Dumping data for table eduvertex.faculty_events: ~42 rows (approximately)
+INSERT INTO `faculty_events` (`event_id`, `faculty_id`, `category`, `organizer_type`, `event_name`, `organizer`, `event_date`, `document_url`, `created_at`, `updated_at`, `url`) VALUES
+	(21, 446, 'Resource Person', 'participated', 'Innaguration of Research and Development Cell', 'Holycross Engineering College, Thoothukudi', '2025-02-14', '/uploads/faculty/dr__n_mathavan/events/event_dr__n_mathavan_1774430400639_188290733.jpeg', '2026-03-25 09:20:00', '2026-03-25 09:20:00', NULL),
+	(22, 446, 'Resource Person', 'participated', 'Guest Lecturer on RFID applications', 'Sethu Institute of Technology, Virudhunagar', '2024-12-06', '/uploads/faculty/dr__n_mathavan/events/event_dr__n_mathavan_1774430461588_853071617.jpeg', '2026-03-25 09:21:01', '2026-03-25 09:21:01', NULL),
+	(23, 493, 'Workshop', 'participated', 'penmai2025', 'BHAVANI M', '2025-09-26', '/uploads/faculty/bhavani_m/events/event_bhavani_m_1774430554414_352386359.jpeg', '2026-03-25 09:22:34', '2026-03-25 09:22:34', NULL),
+	(24, 493, 'FDP', 'participated', 'Foundations and frontiers of cyber security', 'SRM INSTITUTE  OF SCIENCE AND TECHNOLOGY', '2025-12-12', '/uploads/faculty/bhavani_m/events/event_bhavani_m_1774432402286_769003221.pdf', '2026-03-25 09:53:22', '2026-03-25 09:53:22', NULL),
+	(25, 493, 'Workshop', 'participated', 'Cyber Security Tool Kit', 'ABV-IIITM,GWALIOR', '2025-12-06', '/uploads/faculty/bhavani_m/events/event_bhavani_m_1774432590430_632833429.pdf', '2026-03-25 09:56:30', '2026-03-25 09:56:30', NULL),
+	(26, 486, 'FDP', 'participated', '3D Printing and Design', 'WALCHAND INSTITUTE OF TECHNOLOGY', '2025-02-10', '/uploads/faculty/arun_kumar_g/events/event_arun_kumar_g_1774432854055_714776174.pdf', '2026-03-25 10:00:54', '2026-03-25 10:00:54', NULL),
+	(27, 493, 'FDP', 'participated', 'Al for Research paper writing & Summarization', 'Kai. Bhausaheb Hiray Smaranika Samiti Trust\'s INDIRA COLLEGE', '2025-12-10', '/uploads/faculty/bhavani_m/events/event_bhavani_m_1774432867172_815926853.jpeg', '2026-03-25 10:01:07', '2026-03-25 10:01:07', NULL),
+	(28, 486, 'FDP', 'participated', '“Advancements in AI-ML-IoT integration for Smart Mechanical Engineering Systems”', 'Lakireddy Bali Reddy College of Engineering', '2026-02-23', '/uploads/faculty/arun_kumar_g/events/event_arun_kumar_g_1774432929111_140683674.pdf', '2026-03-25 10:02:09', '2026-03-25 10:02:09', NULL),
+	(29, 486, 'Workshop', 'participated', 'Blockchain Technology', 'ARUN KUMAR.G', '2021-05-07', '/uploads/faculty/arun_kumar_g/events/event_arun_kumar_g_1774434540077_139079441.png', '2026-03-25 10:29:00', '2026-03-25 10:29:00', NULL),
+	(30, 493, 'FDP', 'participated', 'Cyber Securtiy using AI', 'E&ICT Academy,IIT Kanpur', '2026-01-11', '/uploads/faculty/bhavani_m/events/event_bhavani_m_1774434615960_660317307.pdf', '2026-03-25 10:30:15', '2026-03-25 10:30:15', NULL),
+	(31, 493, 'FDP', 'participated', 'Multimodal Generative Al and its recent Applications', 'VERITAZ INTERNATIONAL PRESS', '2026-02-07', '/uploads/faculty/bhavani_m/events/event_bhavani_m_1774434919485_237875315.jpeg', '2026-03-25 10:35:19', '2026-03-25 10:35:19', NULL),
+	(32, 446, 'FDP', 'participated', 'Smart Innovation Through AI and IoT  for Digital Transformation', 'Sethu Institute of Technology,  Virudhunagar', '2025-12-01', NULL, '2026-03-25 10:39:38', '2026-03-25 10:39:38', NULL),
+	(33, 446, 'FDP', 'participated', 'SDG, ESG & Industry Innovation', 'AICTE  & SRM Institute of Science & Technology & Brainovision Solution  India', '2025-09-15', NULL, '2026-03-25 10:40:15', '2026-03-25 10:40:15', NULL),
+	(34, 446, 'FDP', 'participated', 'Driving the Future with Software Defined Vehicles', 'EinNel Technologies, Chennai', '2025-08-11', NULL, '2026-03-25 10:40:47', '2026-03-25 10:40:47', NULL),
+	(35, 446, 'FDP', 'participated', 'Internship on Arduino + ESP 32', 'Pantech Solutions', '2025-08-10', NULL, '2026-03-25 10:41:27', '2026-03-25 10:41:27', NULL),
+	(36, 446, 'FDP', 'participated', 'The Modern Educator: From Etiquettes  to AI Integration & Research Guidance', 'Nadar Saraswathi College of Engineering & Technology', '2025-07-14', NULL, '2026-03-25 10:42:12', '2026-03-25 10:42:12', NULL),
+	(37, 446, 'FDP', 'participated', 'Internship on Arduino Master Class', 'Pantech Solutions', '2025-07-12', NULL, '2026-03-25 10:43:24', '2026-03-25 10:43:24', NULL),
+	(38, 446, 'FDP', 'participated', 'BRIGHT- 25 (Bring Ideas, Take Flight)', 'Sethu Institute of Technology', '2025-06-23', NULL, '2026-03-25 10:44:06', '2026-03-25 10:44:06', NULL),
+	(39, 446, 'FDP', 'participated', 'Trends in VLSI & Embedded Systems  Design Technologies', 'Sri Chandrasekharenra Saraswathi  Viswa Mahavidyalaya', '2025-06-13', NULL, '2026-03-25 10:44:44', '2026-03-25 10:44:44', NULL),
+	(40, 493, 'FDP', 'participated', 'Agentic & Generative Al for Societal Transformation', 'RAMCO INSTITUTE OF TECHNOLOGY ', '2026-02-02', '/uploads/faculty/bhavani_m/events/event_bhavani_m_1774435519247_154484498.jpeg', '2026-03-25 10:45:19', '2026-03-25 10:45:19', NULL),
+	(41, 446, 'FDP', 'participated', 'AI Tools', 'AICTE  & SRM Institute of Science & Technology & Brainovision Solution  India ', '2025-02-17', NULL, '2026-03-25 10:45:24', '2026-03-25 10:45:24', NULL),
+	(42, 446, 'Workshop', 'participated', 'IoT with Machine Learning', 'Excel Engineering College', '2020-01-28', NULL, '2026-03-25 10:47:17', '2026-03-25 10:47:17', NULL),
+	(43, 446, 'Workshop', 'participated', 'Python Workshop', 'Sethu Institute of Technology ', '2019-06-22', NULL, '2026-03-25 10:48:00', '2026-03-25 10:48:00', NULL),
+	(44, 446, 'Workshop', 'participated', 'NBA Accreditation ', 'National Institute of Technical Teachers’ Training and Research,  Kolkata', '2019-06-17', NULL, '2026-03-25 10:48:52', '2026-03-25 10:48:52', NULL),
+	(45, 446, 'Workshop', 'participated', 'ICT Enablement in Higher Education', 'MasterSoft Accelerating Education', '2019-05-03', NULL, '2026-03-25 10:49:36', '2026-03-25 10:49:36', NULL),
+	(46, 446, 'Workshop', 'participated', 'IoT Based Embedded System Design  Using Raspberry - Pi', 'Sri Vidya College of Engineering &  Technology', '2018-02-15', NULL, '2026-03-25 10:50:23', '2026-03-25 10:50:23', NULL),
+	(47, 446, 'Resource Person', 'participated', 'Winner in Brilliant Bharath Hackathon – 25 ', 'VHNSN, Virudhunagar', '2025-03-08', NULL, '2026-03-25 10:54:08', '2026-03-25 10:54:08', NULL),
+	(48, 446, 'Resource Person', 'organized', 'Resource Person for Value Added Course PCB Design ', 'DR. N MATHAVAN', '2025-02-03', NULL, '2026-03-25 10:54:50', '2026-03-25 10:54:50', NULL),
+	(49, 446, 'Resource Person', 'organized', 'Resource Person for Value Added Course  Crafting Circuits', 'DR. N MATHAVAN', '2025-02-05', NULL, '2026-03-25 10:55:26', '2026-03-25 10:55:26', NULL),
+	(50, 446, 'Resource Person', 'participated', 'Evaluator for IBM Professional Readiness  for Innovation', 'Naan Mudhalvan & IBM', '2024-03-08', NULL, '2026-03-25 10:55:58', '2026-03-25 10:55:58', NULL),
+	(51, 446, 'Resource Person', 'participated', 'Mentor in Smart India Hackathon - 2023', 'The Assam Royal Global University,  Guwahati', '2023-12-20', NULL, '2026-03-25 10:56:33', '2026-03-25 10:56:33', NULL),
+	(52, 446, 'Resource Person', 'participated', 'College SPOC', 'Smart India Hackathon, MoE Innovaton Cell (Gov. of India) ', '2023-08-30', NULL, '2026-03-25 10:57:18', '2026-03-25 10:57:18', NULL),
+	(53, 446, 'Resource Person', 'participated', 'Participant in G20 – Y20 Talk', 'Spacebasic & Rathinam College of Arts &  Science', '2023-08-10', NULL, '2026-03-25 10:57:47', '2026-03-25 10:57:47', NULL),
+	(54, 446, 'Resource Person', 'organized', 'Creative Mentor Award at Project Expo & Science Day – 2023 ', 'DR. N MATHAVAN', '2023-09-01', NULL, '2026-03-25 10:58:18', '2026-03-25 10:58:18', NULL),
+	(55, 446, 'Resource Person', 'participated', 'Resource Person  RF Technologies for 5G', 'Sethu Institute of Technology,  Virudhunagar ', '2022-12-27', NULL, '2026-03-25 10:58:56', '2026-03-25 10:58:56', NULL),
+	(56, 446, 'Resource Person', 'participated', 'Aptitude & Soft Skills', 'Government Polytechnic College, Kottur- Theni', '2014-02-17', NULL, '2026-03-25 10:59:22', '2026-03-25 10:59:22', NULL),
+	(57, 437, 'Resource Person', 'participated', 'Workshop for Guided Teachers', 'Tamilnadu Science Forum - Theni District', '2025-08-28', '/uploads/faculty/dr_david_mathan_n/events/event_dr_david_mathan_n_1774506069735_147528923.jpg', '2026-03-26 06:21:09', '2026-03-26 06:24:49', NULL),
+	(58, 437, 'Resource Person', 'participated', 'Workshop for Guided Teachers', 'Tamilnadu Science Forum - Theni District ', '2025-08-29', '/uploads/faculty/dr_david_mathan_n/events/event_dr_david_mathan_n_1774506217642_790973278.jpg', '2026-03-26 06:23:37', '2026-03-26 06:23:37', NULL),
+	(59, 461, 'FDP', 'participated', 'EEG BASED HUMAN COMPUTER INTERFACE', 'ABIRAMI KAYATHIRI S', '2025-12-08', NULL, '2026-03-26 09:33:11', '2026-03-26 09:33:11', NULL),
+	(60, 461, 'Seminar', 'participated', 'SMART REFERENCING WITH MENDELEY TOOLS FOR RESEARCHERS', 'ABIRAMI KAYATHIRI S', '2026-03-07', NULL, '2026-03-26 09:35:30', '2026-03-26 09:35:30', NULL),
+	(61, 461, 'Seminar', 'participated', 'LEVEL UP YOUR CAREER WITH GENERATIVE AI SKILLS', 'ABIRAMI KAYATHIRI S', '2026-03-13', NULL, '2026-03-26 09:36:34', '2026-03-26 09:36:34', NULL),
+	(62, 479, 'FDP', 'participated', 'Emerging Trends in Artificial Intelligence and Data-Driven Security for Real -World Applications', 'Department of CSE (IoT, CS, BT), Institute of Engineering and Management, Newtowνη  in association with HRDC, IEM-UEM Group', '2025-12-01', '/uploads/faculty/rajaguru_k/events/event_rajaguru_k_1774530877331_639096260.pdf', '2026-03-26 13:14:37', '2026-03-26 13:14:37', '.');
 
---
--- Table structure for table `faculty_experience`
---
-
-CREATE TABLE `faculty_experience` (
-  `exp_id` int(11) NOT NULL,
+-- Dumping structure for table eduvertex.faculty_experience
+CREATE TABLE IF NOT EXISTS `faculty_experience` (
+  `exp_id` int(11) NOT NULL AUTO_INCREMENT,
   `faculty_id` int(11) NOT NULL,
   `designation` varchar(100) NOT NULL,
   `institution_name` varchar(255) NOT NULL,
@@ -379,17 +419,107 @@ CREATE TABLE `faculty_experience` (
   `from_date` date DEFAULT NULL,
   `to_date` date DEFAULT NULL,
   `period` varchar(50) DEFAULT NULL,
-  `is_current` tinyint(1) DEFAULT 0
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `is_current` tinyint(1) DEFAULT 0,
+  PRIMARY KEY (`exp_id`),
+  KEY `idx_faculty_id` (`faculty_id`),
+  CONSTRAINT `faculty_experience_ibfk_1` FOREIGN KEY (`faculty_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=103 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- --------------------------------------------------------
+-- Dumping data for table eduvertex.faculty_experience: ~89 rows (approximately)
+INSERT INTO `faculty_experience` (`exp_id`, `faculty_id`, `designation`, `institution_name`, `university`, `department`, `from_date`, `to_date`, `period`, `is_current`) VALUES
+	(8, 406, 'Assistant Professor', 'Nadar Saraswathi College of Engineering and Technology', 'Anna University', 'Artificial Intelligence & Data Science', '2022-09-14', NULL, '3.7', 1),
+	(11, 462, 'Assistant Professor', 'Nadar Saraswathi College of Engineering and Technology', 'Anna University', 'Computer Science Engineering', '2025-11-17', '2026-03-25', '4 months', 1),
+	(12, 462, 'Head of the department', 'Jaya Polytechnic college', 'DOTE', 'Computer Science Engineering', '2018-07-02', '2019-02-28', '0 years7 months', 0),
+	(13, 446, 'Assistant Professor', 'Nadar Saraswathi College of Engineering and Technology', 'Anna University', 'Electronics & Communication Engineering', '2013-07-03', '2026-03-25', '12 Yr 08 M', 0),
+	(14, 435, 'Lecturer', 'Bharath Niketan Engineering College', 'Anna University, Chennai', 'Computer Science Engineering', '2009-07-31', '2010-06-11', '10 Months 10 Days', 0),
+	(15, 435, 'Senior Lecturer', 'Theni Kammavar Sangam College of Technology ', 'Anna University, Chennai', 'Computer Science Engineering', '2010-08-18', '2012-05-31', '1 year 9 months', 0),
+	(16, 435, 'Assistant Professor', 'Nadar Saraswathi College of Engineering and Technology', 'Anna University, Chennai', 'Artificial Intelligence & Data Science', '2013-07-24', '2026-03-25', '', 1),
+	(17, 493, 'Assistant Professor', 'Theni Kammavar Sangam College of Technology', 'Anna University', 'Computer Science Engineering', '2013-01-02', '2016-06-15', '3 yrs 5m', 0),
+	(18, 493, 'Assistant Professor', 'Veerammal Engineering College', 'Anna University', 'Computer Science Engineering', '2016-07-01', '2021-12-30', '5 yrs 5 m', 0),
+	(19, 494, 'Assistant Professor', 'Nadar Saraswathi College of Engineering and Technology', 'Anna University', 'Information Technology', '2024-12-02', '2026-03-25', '1year 3 month', 1),
+	(20, 434, 'Assistant Professor', 'CHRIST COLLEGE OF ENGINEERING AND TECHNOLOGY, PONDICHERRY', 'PONDICHERRY UNIVERSITY', 'Information Technology', '2011-06-15', '2015-06-01', '3 YR 11M', 0),
+	(21, 463, 'Assistant Professor', 'Theni Kammavar Sangam College of Technology', 'Anna University', 'Computer Science Engineering', '2008-06-23', '2022-03-15', '14', 0),
+	(22, 493, 'Assistant Professor', 'Nadar Saraswathi College of Engineering and Technology', 'Anna University', 'Information Technology', '2025-05-14', '2026-03-25', '10M', 1),
+	(23, 510, 'Assistant Professor', 'King College of Technology, Namakkal', 'Anna University', 'Electronics & Communication Engineering', '2017-07-11', '2018-05-17', '10 M', 0),
+	(24, 522, 'Assistant Professor', 'Mary Matha College of Arts and Science', 'Madurai kamaraj University', 'Computer SCience', '2019-04-30', '2025-03-31', '4 years', 0),
+	(25, 522, 'Assistant Professor', 'Nadar Saraswathi College of Engineering and Technology', 'Anna University', 'Artificial Intelligence & Data Science', '2025-05-02', '2026-03-25', '8 moths', 1),
+	(26, 474, 'Assistant Professor', 'Mary Matha College of Arts and Science', 'Madurai Kamaraj University', 'English', '2024-02-07', '2025-03-04', '1 year', 0),
+	(27, 510, 'Assistant Professor', 'RVS College of Engineering, Dindigul', 'Anna University', 'Electronics & Communication Engineering', '2018-08-21', '2019-11-18', '1 Yr 2 M', 0),
+	(28, 510, 'Assistant Professor', 'Nadar Saraswathi College of Engineering and Technology', 'Anna University', 'Electronics & Communication Engineering', '2020-02-03', '2026-03-25', '6 Yr 1 M', 1),
+	(29, 507, 'Assistant Professor', 'Nadar Saraswathi College of Engineering and Technology', 'Anna University', 'Electronics & Communication Engineering', '2024-01-29', '2026-03-25', '2 YR 2 M', 1),
+	(31, 480, 'Assistant Professor', 'SRI RAAJA RAAJAN COLLEGE OF ENGINEERING AND TECHNOLOGY', 'ANNA UNIVERSITY', 'PHYSICS', '2010-06-10', '2015-05-25', '4Y, 11 M', 0),
+	(32, 434, 'Assistant Professor', 'Nadar Saraswathi College of Engineering and Technology', 'ANNA UNIVERSITY', 'Information Technology', '2015-06-22', '2025-03-25', '10 Yrs 9 M', 0),
+	(33, 480, 'Assistant Professor', 'Nadar Saraswathi College of Engineering and Technology', 'ANNA UNIVERSITY', 'PHYSICS', '2015-07-16', '2019-04-24', '3Y, 8M', 0),
+	(34, 480, 'Assistant Professor', 'THENI KAMMAVAR SAANGAM COLLEGE OF ARTS AND SCIENCE', 'MADURAI KAMARAJ UNIVERSITY', 'PHYSICS', '2019-05-02', '2024-05-06', '5Y', 0),
+	(35, 442, 'Assistant Professor', 'Odaiyappa College of Engineering and Technology', 'Anna University', 'Mechanical Engineering', '2012-01-09', '2013-02-15', '1 year 1 Month', 0),
+	(36, 442, 'Assistant Professor', 'Nadar Saraswathi College of Engineering and Technology', 'Anna University', 'Mechanical Engineering', '2014-05-05', '2026-03-25', '12 Years', 1),
+	(37, 480, 'ASSOCIATE PROFESSOR', 'NADAR SARASWATHI COLLEGE OF ENGINEERING AND TECHNOLOGY', 'ANNA UNIVERSITY', 'PHYSICS', '2024-06-17', '2026-03-25', '1Y, 9M', 1),
+	(38, 486, 'Assistant Professor', 'Nadar Saraswathi College of Engineering and Technology', 'Anna University', 'Mechanical Engineering', '2018-05-16', '2026-03-25', '7 Yr 10 M', 1),
+	(39, 484, 'Assistant Professor', 'Nadar Saraswathi College of Engineering and Technology', 'Anna University Chennai', 'Mechanical Engineering', '2016-07-21', '2026-03-25', '10', 1),
+	(40, 497, 'Assistant Professor', 'Nadar Saraswathi College of Engineering and Technology', 'Anna University', 'Artificial Intelligence & Data Science', '2023-02-06', '2026-03-25', '3 YR 1 M', 1),
+	(41, 466, 'Lecturer', 'Maha College of Engineering and Technology', 'Anna University', 'Information Technology', '2012-06-05', '2014-02-01', '1.5 years', 0),
+	(42, 466, 'Assistant Professor', 'Nadar Saraswathi College of Engineering and Technology', 'Anna University', 'Computer Science Engineering', '2023-03-02', '2026-03-25', '3 years', 1),
+	(43, 517, 'Senior Lecturer', 'Theni Kammavar Sangam Polytechnic College', 'DoTE', 'Computer Science Engineering', '2007-06-01', '2010-12-12', '3 Years', 0),
+	(44, 514, 'Senior Lecturer', 'Theni Kammavar Sangam Polytechnic College, Theni', 'Directorate of Technical Education', 'Mechanical Engineering', '2008-06-02', '2010-06-30', '1 Yr 11 M', 0),
+	(45, 514, 'Assistant Professor', 'Nadar Saraswathi College of Engineering and Technology', 'Anna University', 'Mechanical Engineering', '2010-05-03', '2011-07-08', '1 Yr 2 M', 0),
+	(46, 514, 'Assistant Professor', 'Bharath Niketan Engineering College, Aundipatti', 'Anna University', 'Mechanical Engineering', '2010-07-08', '2013-12-26', '2 Yr 6 M', 0),
+	(47, 514, 'Assistant Professor', 'Nadar Saraswathi College of Engineering and Technology', 'Anna University', 'Mechanical Engineering', '2013-12-27', '2026-03-25', '12 Yr 3 M', 1),
+	(49, 470, ' Lecturer', 'Thai Moogambhigai Polytechnic, Mugappair –Chennai.', 'Directorate of Technical Institution.', 'Mathematics', '1999-07-14', '2001-09-13', '2 Yr 2 M', 0),
+	(50, 470, 'Senior Lecturer', 'Aalim Muhammed Salegh College of Engg,  Aavadi, I.A.F.,Chennai', 'Anna University, Chennai.', 'Science and Humanities', '2001-09-14', '2004-08-31', '2 Yr 11 M', 0),
+	(51, 470, 'Associate Professor', 'Sethu Institute of Technology-Kariyapatti,  Virudhunagar DT.', 'Anna University (2012-2013), Autonomous Institution (2013-2014)', 'Mathematics', '2007-08-09', '2019-05-22', '11 Yr 9 M', 0),
+	(52, 470, 'Assistant Professor', 'Theni Kammavar College of Arts and Science-Theni', 'Madurai Kamaraj University.', 'Mathematics', '2019-06-01', '2021-02-01', '1  Yr 7 M', 0),
+	(53, 470, 'Professor', 'Nadar Saraswathi College of Engineering and Technology, Theni.', 'Anna University, Chennai.', 'Science and Humanities', '2021-02-08', '2026-03-25', ' 5 Yr 1 M', 1),
+	(54, 455, 'Assistant Professor', 'Nadar Saraswathi College of Engineering and Technology', 'Anna university ', 'Civil Engineering', '2022-08-11', NULL, '2 years 9 months', 1),
+	(55, 515, 'Assistant Professor', 'Arunai College of Engineering', 'Anna University', 'Electronics & Communication Engineering', '2012-05-14', '2012-08-27', '3 M', 0),
+	(56, 515, 'Assistant Professor', 'Arunai Engineering College', 'Anna University', 'Electronics & Communication Engineering', '2012-08-28', '2013-05-24', '9 M', 0),
+	(57, 515, 'Assistant Professor', 'Sethu Institute of Technology', 'Anna University', 'Electronics & Communication Engineering', '2013-06-04', '2020-02-29', '6 Yr 9 M', 0),
+	(58, 515, 'Assistant Professor (SG)', 'Sethu Institute of Technology ', 'Anna University', 'Electronics & Communication Engineering', '2020-03-01', '2021-07-31', '1 Yr 4 M', 0),
+	(59, 515, 'Associate Professor', 'Nadar Saraswathi College of Engineering and Technology', 'Anna University', 'Electronics & Communication Engineering', '2021-08-04', '2025-05-01', '3 Yr 8 M', 0),
+	(60, 515, 'Professor', 'Nadar Saraswathi College of Engineering and Technology', 'Anna University', 'Electronics & Communication Engineering', '2025-05-02', '2026-03-25', '', 1),
+	(61, 449, 'Assistant Professor', 'Nadar Saraswathi College of Engineering and Technology', 'Anna University ', 'Electronics & Communication Engineering', '2014-06-17', '2020-01-03', '5yr 6 M', 0),
+	(62, 449, 'Assistant Professor', 'Bharathi Niketan Engineering College ', 'Anna University ', 'Electronics & Communication Engineering', '2020-03-10', '2024-07-31', '4Yr 4 M', 0),
+	(63, 449, 'Assistant Professor', 'Nadar Saraswathi College of Engineering and Technology', 'Anna University ', 'Electronics & Communication Engineering', '2024-08-08', NULL, '', 1),
+	(64, 475, 'Assistant Professor', 'Nadar Saraswathi College of Engineering and Technology', 'ANNA UNIVERSITY', 'SCIENCE AND HUMANITIES', '2025-05-16', NULL, '1O MONTHS', 1),
+	(65, 475, 'Assistant Professor', ' THENI KAMMAVAR SANGAM COLLEGE OF ARTS AND SCIENCE', 'MADURAI KAMARAJ UNIVERSITY', 'ENGLISH', '2014-06-04', '2025-04-30', '11 YEARS', 0),
+	(66, 471, 'lecturer', 'P.S.N.A COLLEGE OF ENGINEERING', 'ANNA UNIVERSITY', 'MATHEMATICS', '2008-07-01', '2010-08-02', '2 YEARS 3 MONTHS', 0),
+	(67, 471, 'Assistant Professor', 'SAKTHI MARIAMMAN COLLEGE OF ENGINEERING', 'ANNA UNIVERSITY', 'MATHEMATICS', '2011-04-18', '2017-06-01', '6 YEARS', 0),
+	(68, 471, 'Assistant Professor', 'Nadar Saraswathi College of Engineering and Technology', 'Anna University', 'MATHEMATICS', '2017-06-02', NULL, '', 1),
+	(69, 437, 'Professor', 'Nadar Saraswathi College of Engineering and Technology', 'Anna University', 'Chemistry', '2011-06-20', NULL, '15 Years', 1),
+	(70, 496, 'Assistant Professor', 'Ultra College of Engineering and Technology', 'Anna University', 'Computer Science Engineering', '2020-09-20', '2021-07-09', '10M', 0),
+	(71, 496, 'Assistant Professor', 'AAA College of Engineering and Technology', 'Anna University', 'Computer Science and Engineering', '2021-08-16', '2023-05-31', '1 Yr 10 M', 0),
+	(72, 496, 'Assistant Professor', 'Nadar Saraswathi College of Engineering and Technology', 'Anna University', 'Artificial Intelligence & Data Science', '2023-09-01', NULL, '', 1),
+	(73, 476, 'Assistant Professor', 'Don Bosco Arts and Science College, Karaikal ', 'Pondicherry University ', 'English ', '2015-05-13', '2016-05-06', '1 Y', 0),
+	(74, 476, 'Assistant Professor', 'Nadar Saraswathi College of Engineering and Technology', 'Anna University ', 'English', '2016-06-15', NULL, '9 Y 8 M', 1),
+	(75, 468, 'Assistant Professor', 'Nadar Saraswathi College of Engineering and Technology', 'Anna university', 'Science and Humanities', '2023-09-01', NULL, '2 years 6 months', 1),
+	(78, 468, 'Assistant Professor', 'Fatima Michael College of Engineering and Technology', 'Anna University', 'Mathematics', '2010-02-01', '2017-03-13', '6 years', 0),
+	(79, 482, 'Associate Professor', 'Nadar Saraswathi College of Engineering and Technology', 'Anna university ', 'Chemistry ', NULL, NULL, '', 1),
+	(80, 502, 'Assistant Professor', 'Nadar Saraswathi College of Engineering and Technology Theni', 'Anna University Chennai', 'Electrical & Electronics Engineering', '2024-01-27', NULL, '', 1),
+	(81, 502, 'Assistant Professor', 'SETHU Institute of Technology Kariappati Virudhunagar', 'Anna University Chennai', 'Electrical & Electronics Engineering', '2018-01-02', '2023-05-22', '4 year and 10 months', 0),
+	(82, 487, 'Assistant Professor', 'Nadar Saraswathi College of Engineering and Technology', 'Anna University', 'Mechanical Engineering', '2015-06-22', NULL, '10Yr 9M', 1),
+	(83, 461, 'Assistant Professor', 'Nadar Saraswathi College of Engineering and Technology', 'ANNA UNIVERSITY', 'Computer Science Engineering', '2024-08-14', NULL, '1 YR 7 M', 1),
+	(84, 436, 'Lecture ', 'Rev. Jacob Memorial Christian College, Ambilikkai, Odanchatram.', 'Madurai Kamaraj University, Madurai.', 'Mathematics ', '1999-07-02', '2008-04-30', '9Years', 0),
+	(85, 436, 'Assistant Professor', 'Theni Kammavar Sangam College of Technology, Koduvilarpatti, Theni.', 'Anna University ', 'Mathematics ', '2008-05-02', '2011-05-31', '3 Years ', 0),
+	(86, 436, 'Associate Professor', 'Nadar Saraswathi College of Engineering and Technology', 'Anna University ', 'Mathematics ', '2011-06-20', NULL, '15Yr', 1),
+	(87, 440, 'Assistant Professor', 'Nadar Saraswathi College of Engineering and Technology', 'Anna University', 'Mechanical Engineering', '2013-12-27', NULL, '12 years 3months', 1),
+	(88, 440, 'Assistant Professor', 'Bharath Niketan Engineering College', 'Anna University', 'Mechanical Engineering', '2012-08-01', '2013-12-27', '1 year 4 months', 0),
+	(89, 440, 'Lecturer', 'Bharath Niketan Engineering College', 'Anna University', 'Mechanical Engineering', '2010-02-26', '2010-08-30', '6 months', 0),
+	(90, 501, 'Assistant Professor', 'Nadar Saraswathi College of Engineering and Technology', 'Anna University', 'Electrical & Electronics Engineering', '2023-12-04', NULL, '', 1),
+	(91, 501, 'Assistant Professor', 'V. P. V. College of Engineering, Periyakulam.', 'Anna University ', 'Electrical & Electronics Engineering', '2015-07-01', '2016-04-30', '', 0),
+	(92, 499, 'Assistant Professor', 'Nadar Saraswathi College of Engineering and Technology', 'Anna University', 'Electrical & Electronics Engineering', '2021-11-11', NULL, '4 Yr 4M', 1),
+	(93, 505, 'Assistant Professor', 'Nadar Saraswathi College of Engineering and Technology', 'Anna university', 'Electrical & Electronics Engineering', '2025-02-19', NULL, '1 yr 1 month', 1),
+	(94, 498, 'Assistant Professor', 'Nadar Saraswathi College of Engineering and Technology', 'Anna University', 'Electrical & Electronics Engineering', '2016-07-08', NULL, '9 Years 8 Months', 1),
+	(95, 441, 'Assistant Professor', 'Kurinji College of Engineering and Technology, Manapparai, Trichy', 'Anna University', 'Mechanical Engineering', '2008-09-01', '2009-09-02', '1 Year', 0),
+	(96, 445, 'Assistant Professor', 'Nadar Saraswathi College of Engineering and Technology', 'Anna University', 'Electronics & Communication Engineering', '2012-06-26', NULL, '', 1),
+	(97, 441, 'Assistant Professor', 'Nadar Saraswathi College of Engineering and Technology', 'Anna University', 'Mechanical Engineering', '2014-05-02', NULL, '11 Years 10 Months', 1),
+	(98, 445, 'Assistant Professor', 'SBM College of Engineering and Technology', 'Anna University', 'Electronics & Communication Engineering', '2011-05-16', '2012-06-20', '1 Yr 1Month', 0),
+	(99, 447, 'Assistant Professor', 'Nadar Saraswathi College of Engineering and Technology', 'Anna University ', 'Electronics & Communication Engineering', '2014-01-03', NULL, '12 Years', 1),
+	(100, 479, 'Assistant Professor ', 'Nadar Saraswathi College of Engineering and Technology', 'Anna University', 'Physics', '2019-01-07', NULL, '7 Yr 02 Months', 1),
+	(101, 509, 'Assistant Professor', 'Nadar Saraswathi College of Engineering and Technology', 'Anna University', 'Electronics & Communication Engineering', '2018-06-07', NULL, '', 1),
+	(102, 509, 'Assistant Professor', 'Odaiyappa College of Engineering & Technology', 'Anna University', 'Bio Medical', '2015-08-04', '2016-12-02', '', 0);
 
---
--- Table structure for table `faculty_industry_experience`
---
-
-CREATE TABLE `faculty_industry_experience` (
-  `exp_id` int(11) NOT NULL,
+-- Dumping structure for table eduvertex.faculty_industry_experience
+CREATE TABLE IF NOT EXISTS `faculty_industry_experience` (
+  `exp_id` int(11) NOT NULL AUTO_INCREMENT,
   `faculty_id` int(11) NOT NULL,
   `job_title` varchar(150) DEFAULT NULL,
   `company` varchar(255) DEFAULT NULL,
@@ -398,17 +528,27 @@ CREATE TABLE `faculty_industry_experience` (
   `to_date` date DEFAULT NULL,
   `period` varchar(50) DEFAULT NULL,
   `is_current` tinyint(1) DEFAULT 0,
-  `status` enum('active','inactive') DEFAULT 'active'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `status` enum('active','inactive') DEFAULT 'active',
+  PRIMARY KEY (`exp_id`),
+  KEY `idx_faculty_id` (`faculty_id`),
+  CONSTRAINT `fk_industry_faculty` FOREIGN KEY (`faculty_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- --------------------------------------------------------
+-- Dumping data for table eduvertex.faculty_industry_experience: ~9 rows (approximately)
+INSERT INTO `faculty_industry_experience` (`exp_id`, `faculty_id`, `job_title`, `company`, `location`, `from_date`, `to_date`, `period`, `is_current`, `status`) VALUES
+	(6, 435, 'Web Developer', 'Effyiss Software Technologies', 'Chennai', '2012-06-04', '2013-03-27', '9 Months', 0, 'active'),
+	(7, 494, 'Web Developer', 'ASIndia Innovations ,', 'Bangalore', '2020-10-10', '2022-11-11', '2yrs', 0, 'active'),
+	(8, 514, 'Production Engineer', 'V.V.V. & Sons Edible Oils Limited, Virudhunagar', 'Virudhunagar', '2007-04-02', '2008-05-31', '1 Yr 2 M', 0, 'active'),
+	(9, 455, 'Rebar detailer ', 'Arrow Rebar Services ', 'Salem', '2013-09-04', '2015-12-31', '1 year 3 months', 0, 'active'),
+	(10, 487, 'PRODUCTION ENGINEER', 'PRIM ENGINEERING PVT LTD', ' COIMBATORE', '2009-05-02', '2013-06-21', '4 YR 3 MONTH', 0, 'active'),
+	(11, 440, 'Production Engineer', 'Sri Ranganathar Industries Private Limited', 'Coimbatore', '2004-02-02', '2009-06-06', '5 years 4 months', 0, 'active'),
+	(12, 501, 'Software Engineer Trainee', 'Jeyan Technologies, Theni', 'Theni', '2022-05-16', '2023-02-10', '', 0, 'active'),
+	(13, 498, 'GET', 'Hanil Tube India Private Limited', 'Chennai', '2012-07-02', '2013-09-27', '1 year 2 Months', 0, 'active'),
+	(15, 441, 'Maintenance Engineer', 'Prince Sulthan Cardiac Center', 'Riyath, Kingdom of Saudi Arabia.', '2010-02-01', '2011-12-31', '1 Year 11 Months', 0, 'active');
 
---
--- Table structure for table `faculty_leave_schedules`
---
-
-CREATE TABLE `faculty_leave_schedules` (
-  `id` int(11) NOT NULL,
+-- Dumping structure for table eduvertex.faculty_leave_schedules
+CREATE TABLE IF NOT EXISTS `faculty_leave_schedules` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `faculty_id` int(11) NOT NULL,
   `leave_id` int(11) DEFAULT NULL,
   `from_date` date NOT NULL,
@@ -416,36 +556,57 @@ CREATE TABLE `faculty_leave_schedules` (
   `is_active` tinyint(1) DEFAULT 1,
   `reason` text DEFAULT NULL,
   `createdAt` timestamp NOT NULL DEFAULT current_timestamp(),
-  `updatedAt` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+  `updatedAt` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_faculty` (`faculty_id`),
+  KEY `idx_date_range` (`from_date`,`to_date`),
+  KEY `leave_id` (`leave_id`),
+  CONSTRAINT `fk_fls_faculty` FOREIGN KEY (`faculty_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_fls_leave` FOREIGN KEY (`leave_id`) REFERENCES `leave_requests` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- --------------------------------------------------------
+-- Dumping data for table eduvertex.faculty_leave_schedules: ~0 rows (approximately)
 
---
--- Table structure for table `faculty_phd`
---
-
-CREATE TABLE `faculty_phd` (
-  `phd_id` int(11) NOT NULL,
+-- Dumping structure for table eduvertex.faculty_phd
+CREATE TABLE IF NOT EXISTS `faculty_phd` (
+  `phd_id` int(11) NOT NULL AUTO_INCREMENT,
   `faculty_id` int(11) NOT NULL,
   `status` varchar(100) DEFAULT NULL,
   `orcid_id` varchar(100) DEFAULT NULL,
   `thesis_title` text DEFAULT NULL,
   `register_no` varchar(100) DEFAULT NULL,
-  `guide_name` varchar(255) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `guide_name` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`phd_id`),
+  KEY `faculty_id` (`faculty_id`),
+  CONSTRAINT `faculty_phd_ibfk_1` FOREIGN KEY (`faculty_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=39 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- --------------------------------------------------------
+-- Dumping data for table eduvertex.faculty_phd: ~17 rows (approximately)
+INSERT INTO `faculty_phd` (`phd_id`, `faculty_id`, `status`, `orcid_id`, `thesis_title`, `register_no`, `guide_name`) VALUES
+	(8, 435, '', '1234567890123', 'deep learning', '32156468', 'ak'),
+	(11, 446, 'Completed', ' 0000-0003-3533-2921', 'Virtual Reference Tag Assisted Radio Frequency Identification Localization and Tracking Using Artificial Intellect Techniques in Indoor Environment', '17144797117', 'Dr.S.Siva Ranjani'),
+	(12, 494, '', '', '', '', 'Pandeeswari .N'),
+	(13, 510, '', '0000-0002-8011-4205', 'VLSI Design', '24239797132', 'Dr.R.Balakumaresan'),
+	(14, 434, '', '0009-0001-4154-1415', 'IOT Networking', '18144791317', 'Dr.S.Sivaranjini'),
+	(21, 434, '', '0009-0001-4154-1415', 'IOT Networking', '18144791317', 'Dr.S.Siva Ranjini'),
+	(22, 466, '', '', '', '', ''),
+	(23, 466, '', '', '', '', ''),
+	(24, 514, 'Completed', '0000-0003-0155-9247', 'Assessment on Tribology and Electrochemical corrosion over the copper - graphene base composite', '21142791249', 'Dr.C.Mathalai Sundaram'),
+	(30, 515, 'Completed', '0000-0002-7712-9748', 'Analytical Modeling and Simulation of AlInSb/InSb/AlInSb Based Symmetric and Asymmetric Double Gate High Electron Mobility Transistors', '', ''),
+	(31, 437, 'Completed', '0000-0003-0894-4260', 'Polymer Flame Retardancy', '', 'Dr. A. Thamaraichelvan'),
+	(32, 496, 'Confirmation', '', 'Deep Learning', '24144897551', 'Dr.J.Hemalatha'),
+	(33, 487, 'Thesis submitted', '0009-0003-8775-1965', 'Composite Materials', '21132797319', 'Dr.B.Radha Krishnan'),
+	(34, 461, 'Course work pursuing', '', 'VULNERABILITY DETECTION', '', 'Dr.M.P.RAM KUMAR'),
+	(35, 436, 'Completed', '', 'A Unified Study of the Notions in Ideal Topological Spaces ', 'P4947', 'Dr. O.Ravi'),
+	(37, 498, 'Confirmation', '', '', '', ''),
+	(38, 447, 'Pursuing', 'https://orcid.org/0000-0003-1267-753X', 'RF/Mixed Signal Circuit Design ', '', 'Dr A Kaleel Rahuman ');
 
---
--- Table structure for table `faculty_profiles`
---
-
-CREATE TABLE `faculty_profiles` (
-  `faculty_id` int(11) NOT NULL,
+-- Dumping structure for table eduvertex.faculty_profiles
+CREATE TABLE IF NOT EXISTS `faculty_profiles` (
+  `faculty_id` int(11) NOT NULL AUTO_INCREMENT,
   `faculty_college_code` varchar(50) NOT NULL,
-  `AICTE_ID` int(20) DEFAULT NULL,
-  `Anna_University_ID` int(25) DEFAULT NULL,
+  `AICTE_ID` varchar(100) DEFAULT NULL,
+  `Anna_University_ID` varchar(100) DEFAULT NULL,
   `Name` varchar(100) NOT NULL,
   `email` varchar(150) NOT NULL,
   `phone_number` varchar(20) DEFAULT NULL,
@@ -468,104 +629,115 @@ CREATE TABLE `faculty_profiles` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `linkedin_url` varchar(255) DEFAULT NULL,
-  `is_placement_coordinator` tinyint(1) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `is_placement_coordinator` tinyint(1) DEFAULT NULL,
+  `is_timetable_incharge` tinyint(1) DEFAULT 0 COMMENT 'Faculty is assigned as timetable incharge',
+  `is_class_incharge` tinyint(1) DEFAULT 0 COMMENT 'Faculty is assigned as class incharge',
+  PRIMARY KEY (`faculty_id`),
+  UNIQUE KEY `email` (`email`),
+  KEY `fk_department` (`department_id`),
+  KEY `idx_is_timetable_incharge` (`is_timetable_incharge`),
+  KEY `idx_is_class_incharge` (`is_class_incharge`),
+  CONSTRAINT `fk_fp_department` FOREIGN KEY (`department_id`) REFERENCES `departments` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB AUTO_INCREMENT=545 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `faculty_profiles`
---
+-- Dumping data for table eduvertex.faculty_profiles: ~92 rows (approximately)
+INSERT INTO `faculty_profiles` (`faculty_id`, `faculty_college_code`, `AICTE_ID`, `Anna_University_ID`, `Name`, `email`, `phone_number`, `password`, `role_id`, `department_id`, `designation`, `educational_qualification`, `phd_status`, `gender`, `date_of_birth`, `date_of_joining`, `profile_image_url`, `status`, `blood_group`, `aadhar_number`, `pan_number`, `perm_address`, `curr_address`, `created_at`, `updated_at`, `linkedin_url`, `is_placement_coordinator`, `is_timetable_incharge`, `is_class_incharge`) VALUES
+	(406, 'NS80T01', '2-341254635478657', '1-234234234234', 'NAGAJOTHI P', 'nagajothi@nscet.org', '8749655255', '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 6, 'Assistant Professor', NULL, 'No', NULL, '2006-03-28', '2026-03-25', '/uploads/faculty/nagajothi_p.JPG', 'active', NULL, NULL, NULL, NULL, 'periyakulam', '2026-03-14 13:13:50', '2026-03-26 13:33:02', NULL, NULL, 1, 1),
+	(434, 'NS20T11', '1-2651552423', '9210107', 'PRATHAP C', 'hodit@nscet.org', '+918667675692', '$2a$10$ix7Vg2NBz9QKyRwHY1eS4OISqGo10McE05vht1cyk3JpafK6JDoci', 7, 7, 'HEAD OF THE DEPARTMENT', NULL, 'Yes', NULL, '1985-06-10', '2015-06-22', '/uploads/faculty/prathap_c.jpg', 'active', NULL, NULL, NULL, 'S/O, K.P.Chandrasekaran, No-16 konduraja lane,Theni-625531', 'S/O, K.P.Chandrasekaran, No-16 konduraja lane,Theni-625531', '2026-03-14 13:13:50', '2026-03-26 09:01:22', 'https://www.linkedin.com/in/prathap-c-9302283b7/', NULL, 0, 0),
+	(435, 'NS20T09', '1-7450454038', '9210048', 'Vignesh L S', 'lsisreviving@gmail.com', '+919865717042', '$2a$10$7S/p6nWcvVCUlmMC8cFeZewetHGp6MkxvvJLKBlahtsGt/KcyqC5a', 7, 6, 'HEAD OF THE DEPARTMENT', NULL, 'Yes', 'Male', '1988-07-27', '2013-07-24', '/uploads/faculty/vignesh_l_s.jpg', 'active', NULL, NULL, NULL, 'Annanji, Theni', 'Annanji, Theni', '2026-03-14 13:13:50', '2026-03-26 04:46:39', 'https://www.linkedin.com/in/vignesh-ls-213b01a8/', NULL, 0, 0),
+	(436, 'SH1', '1-736760530', '9210004', 'DR.B.MALLAIYASAMY', 'mallaiyasamy@nscet.org', '9865959888', '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 10, 'Assistant Professor', NULL, 'No', 'Male', '1973-05-10', '1973-05-10', NULL, 'active', 'B+', NULL, NULL, NULL, 'FIRST CROSS STREET, W4-B8/22, RATHINAM NAGAR, THENI 625531.', '2026-02-19 11:08:21', '2026-03-26 09:24:10', 'https://www.linkedin.com/in/mallaiyasamy-b-04ab30113?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app', NULL, 0, 0),
+	(437, 'SH10', '1-3589577843', '9210179', 'DR.DAVID MATHAN.N', 'davidmathan@nscet.org', '9003554367', '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 10, 'Assistant Professor', NULL, 'No', NULL, '1985-05-31', '2011-06-20', '/uploads/faculty/dr_david_mathan_n.JPG', 'active', NULL, NULL, NULL, NULL, '238A/C14, Backside of Old Ragavendra School, Pandi Kovil Via, Valli Nagar, Theni - 625531', '2026-02-19 11:08:21', '2026-03-26 06:30:50', 'https://www.linkedin.com/in/david-mathan-n-6a83733ba', NULL, 0, 0),
+	(438, 'ME11', NULL, NULL, 'VEMBATHURAJESH.A', 'vembathurajesha.faculty@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 10, 'HEAD OF THE DEPARTMENT', NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:08:21', '2026-03-26 06:21:11', NULL, NULL, 0, 0),
+	(439, 'AA2', NULL, NULL, 'Dr.C.MATHALAI SUNDARAM', 'principal@nscet.org', '9842685138', '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 5, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:08:21', '2026-03-26 12:41:03', NULL, NULL, 0, 0),
+	(440, 'ME12', NULL, '9210067', 'SANTHASEELAN.R', 'santhaseelan@nscet.org', '9003398111', '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 5, NULL, NULL, 'No', NULL, '1981-05-25', NULL, '/uploads/faculty/santhaseelan_r.jpg', 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:08:21', '2026-03-26 10:37:37', NULL, NULL, 0, 0),
+	(441, 'ME14', '1-7374451770', '9210088', 'SIVAGANESAN.V', 'sivaganesan@nscet.org', '8678925269', '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 5, NULL, NULL, 'No', NULL, '1986-06-08', '2014-05-02', '/uploads/faculty/sivaganesan_v.JPG', 'active', NULL, NULL, NULL, NULL, '139/19, Sadayal Nagar 1st Street, Scheme Road, Near Niva Ice Creams, Balglowmedu, Theni.625531', '2026-02-19 11:08:21', '2026-03-26 11:56:55', NULL, NULL, 0, 0),
+	(442, 'ME16', NULL, NULL, 'NAGARAJA.R', 'nagaraja@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 5, NULL, NULL, 'No', NULL, NULL, NULL, '/uploads/faculty/nagaraja_r.JPG', 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:08:21', '2026-03-26 05:55:05', NULL, NULL, 0, 0),
+	(443, 'ME18', '1-735974194', '9210078', 'NAGARAJAN.B', 'nagarajan@nscet.org', '9894933543', '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 5, 'Assistant Professor ', 'Ph.D', 'No', 'Male', '1990-06-05', '2014-05-12', '/uploads/faculty/nagarajan_b.JPG', 'active', 'B-ve', '216857393576', 'AKYPN8427C', '10-3-10/C, Pandiya Nadar Street, Aundipatti ', '10-3-10/C, Pandiya Nadar Street, Aundipatti ', '2026-02-19 11:08:21', '2026-03-26 05:55:31', 'https://www.linkedin.com/me?trk=p_mwlite_feed-secondary_nav', NULL, 0, 0),
+	(444, 'CS4', NULL, NULL, 'UDHAYA KUMAR.R', 'udhayakumar@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 7, 'Assistant Professor', NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:08:21', '2026-03-24 13:50:43', NULL, NULL, 0, 0),
+	(445, 'EC4', '1-1443212434', '9210020', 'IDHAYACHANDRAN M', 'idhayachandran@nscet.org', '9629088748', '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 3, NULL, NULL, 'No', NULL, '1984-04-10', '2012-06-26', NULL, 'active', NULL, NULL, NULL, NULL, '4w, North Raja Street, B. Melachokkanathapuram, Bodinayakanur, Theni District-625582.', '2026-02-19 11:08:21', '2026-03-26 11:41:26', 'https://www.linkedin.com/in/idhayachandran-ece-a325562a3?utm_source=share_via&utm_content=profile&utm_medium=member_android', NULL, 0, 0),
+	(446, 'EC10', NULL, NULL, 'DR. N MATHAVAN', 'memathavan@gmail.com', NULL, '$2a$10$3ERu7SfdbSx5N4UdXRtTfO6hs6U8d4m4HR/I1GjWYetOLyb1tvSBa', 5, 3, NULL, NULL, 'No', NULL, NULL, NULL, '/uploads/faculty/dr__n_mathavan.jpg', 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:08:21', '2026-03-25 08:04:12', NULL, NULL, 0, 0),
+	(447, 'EC11', '1-3360065352', '9210170', 'TAMIL SELVI T', 'tamilselvi@nscet.org', '8015739129', '$2a$10$kqp51Ou..yyfnzSdj11l5uDrqYpuShAY4GKNn3Fct/Kqgzq9a0K62', 5, 3, NULL, NULL, 'Pursuing', NULL, '1989-10-29', '2014-01-03', NULL, 'active', NULL, NULL, NULL, NULL, 'Theni', '2026-02-19 11:08:21', '2026-03-26 12:41:13', 'https://www.linkedin.com/in/tamilselvi-thangamani-10212756/', NULL, 0, 0),
+	(448, 'EC13', NULL, NULL, 'PRATHAP S', 'prthpraja@gmail.com', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 3, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:08:21', '2026-03-23 15:40:52', NULL, NULL, 0, 0),
+	(449, 'EC14', '1-9321842836', '9210310', 'BHARATHI KANNAN K', 'bharathikannan@nscet.org', '9597504645', '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 3, 'Assistant professor', NULL, 'No', 'Male', '1990-07-07', '2024-08-08', NULL, 'active', NULL, NULL, NULL, NULL, '115 west street \nJeyamangalam ', '2026-02-19 11:08:21', '2026-03-26 04:38:19', NULL, NULL, 0, 0),
+	(450, 'NS10T18', NULL, NULL, 'GAYATHRI S', 'gayathri@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 2, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-03-23 15:33:55', NULL, NULL, 0, 0),
+	(451, 'NS303NT06', NULL, NULL, 'SHANMUGAPRIYAN.R', 'ns303nt06@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 2, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL, 0, 0),
+	(452, 'NS10T21', NULL, NULL, 'SINDHU M', 'sindhu@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 2, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-03-23 15:16:09', NULL, NULL, 0, 0),
+	(453, 'NS10T27', NULL, NULL, 'DR.E.ANANTHA KRISHNAN', 'ananthakrishnan.e@gmail.com', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 2, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-03-23 15:41:36', NULL, NULL, 0, 0),
+	(454, 'NS10T29', NULL, NULL, 'SOWMIYA B', 'ns10t29@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 2, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL, 0, 0),
+	(455, 'NS10T30', '1-43476250635', '9210278', 'KANIMOZHI M', 'Kanimozhi@nscet.org ', '6381304118', '$2a$10$oB66aRpFD1cLP4ybIvMEhO.COZ5SGvWWwYj23XUe66X8emQABpBHu', 5, 2, NULL, NULL, 'No', NULL, '1992-10-24', '2022-07-11', NULL, 'active', NULL, NULL, NULL, NULL, 'Mariyamman kovil street, Thevaram ', '2026-02-19 11:09:11', '2026-03-26 02:37:46', 'https://www.linkedin.com/in/kanimozhi-m-civil-6355a83b7', NULL, 0, 0),
+	(456, 'NS10T31', NULL, NULL, 'BENITA MERLIN ISABELLA K', 'ns10t31@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 2, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL, 0, 0),
+	(457, 'NS10T32', NULL, NULL, 'ARUL JEBARAJ P', 'ns10t32@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 2, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL, 0, 0),
+	(458, 'NS10T33', '144718497412', '9210301', 'NATHIRUN SABINASH', 'Nathirunsabinash@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 2, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-03-25 07:46:49', NULL, NULL, 0, 0),
+	(459, 'NS10T34', NULL, NULL, 'MANOJ PRABAKAR R', 'ns10t34@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 2, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL, 0, 0),
+	(460, 'NS10T35', NULL, NULL, 'HARI PRASATH T', 'ns10t35@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 2, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL, 0, 0),
+	(461, 'NS20T35', '1-44718722194', '9210307', 'ABIRAMI KAYATHIRI S', 'abiramikayathiri@nscet.org', '7530008380', '$2a$10$qAJBJq25HaxNu/PzbnGQKO62iomQaZ44CIBaGLUDZO40mrR6daDY6', 5, 1, NULL, NULL, 'No', NULL, '1999-03-26', '2024-08-14', '/uploads/faculty/abirami_kayathiri_s.jpeg', 'active', NULL, NULL, NULL, NULL, 'KODUVILARPATTY TO VAYALPATTY ROAD,SRI BHARATHI NAGAR,THENI-625531', '2026-02-19 11:09:11', '2026-03-26 09:29:45', NULL, NULL, 0, 0),
+	(462, 'NS20T41', NULL, NULL, 'ANUSUYA V', 'ns20t41@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 1, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL, 0, 0),
+	(463, 'NS20T25', NULL, NULL, 'VELKUMAR K', 'velkumar@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 1, NULL, NULL, 'No', NULL, NULL, NULL, '/uploads/faculty/velkumar_k.jpg', 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-03-25 09:11:23', NULL, NULL, 0, 0),
+	(464, 'NS20T33', '1-44718721918', '9210302', 'DEEPIGA K', 'deepiga.kece@gmail.com', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 1, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-03-25 07:36:10', NULL, NULL, 0, 0),
+	(465, 'NS20T40', '1-43705048522', '1133271', 'VENKATALAKSHMI M', 'venkatalakshmi@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 1, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-03-26 10:01:47', NULL, NULL, 0, 0),
+	(466, 'NS20T29', '1-43491562074', '9210287', 'ARCHANA R', 'archana@nscet.org', NULL, '$2a$10$hMddYs5H8X7wucpqeNZM7e3JWUCI9s3HyobpQUupSlfV4shvCeONC', 5, 1, NULL, NULL, 'No', NULL, NULL, NULL, '/uploads/faculty/archana_r.jpeg', 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-03-25 10:47:07', NULL, NULL, 0, 0),
+	(467, 'NS70T01', NULL, NULL, 'DR.M SATHYA', 'ns70t01@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 1, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL, 0, 0),
+	(468, 'NS61T20', '1-43807222781', '9210295', 'ARULVIZHI M', 'arulvizhi@nscet.org ', '9600719181', '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 10, NULL, NULL, 'No', NULL, '1986-03-16', '2023-09-01', '/uploads/faculty/arulvizhi_m.JPG', 'active', NULL, NULL, NULL, NULL, ' 24/8,old palyam road,K.K.kulam, Chinnamanur -625515', '2026-02-19 11:09:11', '2026-03-26 06:42:24', NULL, NULL, 0, 0),
+	(469, 'NS22T21', NULL, NULL, 'PREETHA J', 'preetha@nscet.org', NULL, '$2a$10$xDT/9YS7YygaUTSeF/Jb3OX/Z.2LeFlV9us00e/CWk7cRe/dXM49K', 5, 10, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-03-25 16:41:04', NULL, NULL, 0, 0),
+	(470, 'NS61T16', NULL, NULL, 'Dr.C.CHITHRA', 'chithra.c@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 10, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-03-23 15:37:40', NULL, NULL, 0, 0),
+	(471, 'NS61T09', '1-3545408572', '9210196', 'KARUNYAH R', 'ns61t09@nscet.org', '7338754171', '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 10, NULL, NULL, 'No', NULL, '1985-06-01', '2017-06-01', NULL, 'active', NULL, NULL, NULL, NULL, '63/9,South Car Street,\nKamayagoundan Patti,Cumbum', '2026-02-19 11:09:11', '2026-03-26 05:36:33', NULL, NULL, 0, 0),
+	(472, 'NS61T23', NULL, NULL, 'MUFEENA S', 'mufeenas@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 10, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-03-26 09:47:17', NULL, NULL, 0, 0),
+	(473, 'NS6606T17', NULL, NULL, 'SUBATHAMANI T', 'SUBATHAMANI T@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 10, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-03-26 08:52:19', NULL, NULL, 0, 0),
+	(474, 'NS6606T18', NULL, NULL, 'DR. MALARVIZHI P', 'malarvizhi@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 10, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-03-23 15:44:06', NULL, NULL, 0, 0),
+	(475, 'NS6606T19', '1-44391333634', '9210342', 'DR. VALARMATHI R', 'valarsendu93@gmail.com', '9715465937', '$2a$10$PGr0B91nOQPgsMCUkK6k2ebNnVgK/D8h8zDUJGBhUVQAeZ6bpWFqS', 5, 10, NULL, NULL, 'No', NULL, '1976-03-15', '2025-05-16', NULL, 'active', NULL, NULL, NULL, NULL, '302/6, SARUTHUPATTI ROAD, LAKSHMIPURAM, PERIYAKULAM, THENI. ', '2026-02-19 11:09:11', '2026-03-26 04:45:17', NULL, NULL, 0, 0),
+	(476, 'NS60T07', '1-3206423617', '9210136', 'RICHARD BRITTO.R.C', 'richardbritto@nscet.org', '8220109547', '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 10, 'Assistant Professor', NULL, 'No', 'Male', '1991-05-25', '2016-06-15', '/uploads/faculty/richard_britto_r_c.JPG', 'active', NULL, NULL, NULL, NULL, '33E, Konduraja Lane, Theni - 625531.', '2026-02-19 11:09:11', '2026-03-26 07:11:38', 'https://www.linkedin.com/in/richard-britto-r-c-english-585a1b358', NULL, 0, 0),
+	(477, 'NS7706T06', NULL, NULL, 'DR. M VEERA KUMAR', 'veerakumar@nscet.org', '7418271435', '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 10, 'Assistant Professor', NULL, 'No', NULL, '1985-05-15', '2025-08-25', NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-03-26 13:37:55', NULL, NULL, 0, 0),
+	(478, 'NS62T11', NULL, NULL, 'DHANDAYUTHAPANI', 'ns62t11@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 10, 'Assistant Professor', NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-03-26 06:04:32', NULL, NULL, 0, 0),
+	(479, 'NS62T10', '1-7360934322', '9210219', 'RAJAGURU K', 'rajaguru@nscet.org', '9150756519', '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 10, 'Assistant Professor', 'M.Phill', 'No', 'Male', '1995-04-06', '2019-01-07', '/uploads/faculty/rajaguru_k.png', 'active', 'B+ve', '379621716303', 'CWKPR1866H', '13B, 2W PONNAGAR, CHINNAMANUR', '13B, 2W PONNAGAR, CHINNAMANUR', '2026-02-19 11:09:11', '2026-03-26 13:16:25', 'https://in.linkedin.com/in/rajaguru-k-32a4893a3', NULL, 0, 0),
+	(480, 'NS7706T04', NULL, NULL, 'Dr.S.R.KRISHNAMOORTHI', 'krishnamoorthi@nscet.org', NULL, '$2a$10$hHInhidq.D6DMJw2UiZn6uiIkbuWNb02kUZaRMl/gKsD6fvou59Oq', 5, 10, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-03-25 09:56:30', NULL, NULL, 0, 0),
+	(481, 'NS63T13', NULL, NULL, 'ABINAYA B', 'ns63t13@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 10, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL, 0, 0),
+	(482, 'NS63T16', NULL, NULL, 'DR R SARAVANANKUMAR', 'saravanankumar@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 10, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-03-26 06:12:13', NULL, NULL, 0, 0),
+	(483, 'NS67T03', '1-45331256145', '9210340', 'THISHA N', 'thisha@nscet.org', '7994250899', '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 10, NULL, NULL, 'No', NULL, '1992-05-16', '2025-08-08', NULL, 'active', NULL, NULL, NULL, NULL, 'Nadakottai road, viruveedu, dindigul -624220', '2026-02-19 11:09:11', '2026-03-26 10:12:44', 'https://www.linkedin.com/in/n-thisha-2794873ba', NULL, 0, 0),
+	(484, 'NS50T16', NULL, NULL, 'HARIKISHORE.S', 'harikishore@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 5, NULL, NULL, 'No', NULL, NULL, NULL, '/uploads/faculty/harikishore_s.JPG', 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-03-25 10:26:18', NULL, NULL, 0, 0),
+	(485, 'NS50T21', NULL, NULL, 'VENNIMALAI RAJAN A', 'Vennimalairajan@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 5, NULL, NULL, 'No', NULL, NULL, NULL, '/uploads/faculty/vennimalai_rajan_a.JPG', 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-03-25 10:37:01', NULL, NULL, 0, 0),
+	(486, 'NS50T22', NULL, NULL, 'ARUN KUMAR.G', 'arunkumar@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 5, NULL, NULL, 'No', NULL, NULL, NULL, '/uploads/faculty/arun_kumar_g.JPG', 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-03-25 10:38:41', NULL, NULL, 0, 0),
+	(487, 'NS4407T020', '1-2669069913', ' 9210113', 'SURULIMANI. P', 'surulimani@nscet.org', '7667746191\n', '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 5, NULL, NULL, 'No', NULL, '1987-03-02', '2015-06-22', '/uploads/faculty/surulimani__p.JPG', 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-03-26 11:30:36', NULL, NULL, 0, 0),
+	(488, 'NS50T19', NULL, NULL, 'CHAKRAVARTHY SAMY DURAI J', 'ns50t19@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 5, NULL, NULL, 'No', NULL, NULL, NULL, '/uploads/faculty/chakravarthy_samy_durai_j.JPG', 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-03-25 10:39:23', NULL, NULL, 0, 0),
+	(489, 'NS70T07', '1-9593345041', '8120283', 'JASMINE JOSE P', 'jasminepercy16@gmail.com', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 7, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-03-25 07:27:09', NULL, NULL, 0, 0),
+	(490, 'NS20T34', '1-453158406', '9210300', 'KESAVAMOORTHY N', 'kesavamoorthy@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 7, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-03-25 07:35:44', NULL, NULL, 0, 0),
+	(491, 'NS20T14', NULL, NULL, 'ARUL JOTHI.S', 'ns20t14@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 7, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL, 0, 0),
+	(492, 'NS70T05', '7437427115', '9210322', 'MAHALAKSHMI S', 'mahalakshmi@nscet.org', '8248721606', '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 7, 'Assistant professor', NULL, 'No', 'Female', '1998-05-04', '2025-04-02', NULL, 'active', 'AB+', '321489215820', 'Bzkpm1362B', 'Balan nagar allinagaram', 'Balan nagar allinagaram', '2026-02-19 11:09:11', '2026-03-25 07:26:29', NULL, NULL, 0, 0),
+	(493, 'NS20T39', '1-11340852810', '9210338', 'BHAVANI M', 'bhavani@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 7, 'Assistant professor', NULL, 'No', 'Female', NULL, NULL, '/uploads/faculty/bhavani_m.jpg', 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-03-25 09:08:27', NULL, NULL, 0, 0),
+	(494, 'NS70T04', NULL, NULL, 'SAI SUGANYA B', 'saisuganya@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 7, 'Assistant professor', NULL, 'No', 'Female', NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-03-25 05:01:50', NULL, NULL, 0, 0),
+	(495, 'NS20T37', '1-44732668686', '9210321', 'GEERTHIGA G', 'geerthigubendran@gmail.com', NULL, '$2a$10$bhc8Pmm/b.9PQPCIuketCOvavM2wy4RCo3KcbzaC.LhWclP1CFoTC', 5, 6, NULL, NULL, 'No', NULL, NULL, NULL, '/uploads/faculty/geerthiga_g.JPG', 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-03-25 11:10:25', NULL, NULL, 0, 0),
+	(496, 'NS20T32', '1-10532725594', '9210294', 'VINOTH KUMAR J', 'vinothkumar@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 6, NULL, NULL, 'No', NULL, '1995-10-24', '2023-09-01', '/uploads/faculty/vinoth_kumar_j.JPG', 'active', NULL, NULL, NULL, NULL, '15-8-11, Sri Amman Nagar, Veerapandi,Theni.', '2026-02-19 11:09:11', '2026-03-26 06:33:30', NULL, NULL, 0, 0),
+	(497, 'NS70T02', '144007939451', '259605', 'KANIMOLI J', 'kanimoli@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 6, NULL, NULL, 'No', NULL, NULL, NULL, '/uploads/faculty/kanimoli_j.JPG', 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-03-25 10:42:02', NULL, NULL, 0, 0),
+	(498, 'NS30T03', '1-3175749327', '256931', 'GANESH.K', 'ganesh@nscet.org', '9566893474', '$2a$10$/4724t2D1Br31kfxCB/Vx./xwo0To.wzLxZksqormBLY5VGIoeLnG', 5, 4, NULL, NULL, 'No', NULL, '1989-09-21', NULL, NULL, 'active', NULL, NULL, NULL, NULL, '14/12 D Sales Society Street, Theni - 625531', '2026-02-19 11:09:11', '2026-03-26 11:42:35', NULL, NULL, 0, 0),
+	(499, 'NS30T19', '1-10734369291', '9210259', 'RAJA KARTHICK R', 'rajakarthick@nscet.org', '9944551172', '$2a$10$KRoGC4Buy6qcGIzecEZObO.ceRVr7nrFBz9NGWQzCacWbW59HFNb2', 5, 4, NULL, NULL, 'No', NULL, '1988-06-12', '2021-11-11', NULL, 'active', NULL, NULL, NULL, NULL, '41/2, North Street, Unjampatti, Annanji Po, Theni', '2026-02-19 11:09:11', '2026-03-26 10:54:45', NULL, NULL, 0, 0),
+	(500, 'NS30T20', '1-43491562001', '9210274', 'NISHETHA JEFLIN NIXON A', 'nishethajeflinixon@nscet.org', '9500095952', '$2a$10$z495HY0QoD74gLgn7IZ3nejBNi7y./BNigi8CU/d5ipY9tchcMMIW', 5, 4, NULL, NULL, 'No', NULL, '1992-08-19', '2022-07-11', NULL, 'active', NULL, NULL, NULL, NULL, '16 Rasi Nagar, Boothipuram Road, PC Patti, Theni.', '2026-02-19 11:09:11', '2026-03-26 13:59:06', 'https://www.linkedin.com/in/nishetha-jeflin-nixon', NULL, 0, 0),
+	(501, 'NS30T25', '1-43843091721', '257153', 'VIJAYALAKSHMI M', 'vijayalakshmi@nscet.org', '9791423467', '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 4, 'Assistant Professor', 'Master of Engineering', 'No', 'Female', '1991-11-06', '2023-12-04', NULL, 'active', NULL, NULL, NULL, NULL, 'No. 252 /1, Mirandalayan street, Theni - 31', '2026-02-19 11:09:11', '2026-03-26 10:36:04', NULL, NULL, 0, 0),
+	(502, 'NS30T26', '1-3582673746', '9210297', 'SHIVA C', 'shiva@nscet.org', '9677791274', '$2a$10$cbIVMYsoOFd6rKigor/Xb.HDbfydZ18zM.DMhluKPERLpy.7Rw9LO', 5, 4, NULL, NULL, 'No', NULL, '1993-05-22', '2024-01-27', '/uploads/faculty/shiva_c.jpeg', 'active', NULL, NULL, NULL, NULL, 'Uthamapalayam Theni 625533', '2026-02-19 11:09:11', '2026-03-26 08:26:32', NULL, NULL, 0, 0),
+	(503, 'NS30T27', NULL, NULL, 'ABIRAMI N', 'abiramin@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 4, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-03-23 15:56:10', NULL, NULL, 0, 0),
+	(504, 'NS30T30', '1-44731627274', '9210343', 'DR N PANDISELVI', 'pandiselvi@nscet.org', '6379000460', '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 4, NULL, NULL, 'No', NULL, '1988-04-07', '2025-08-29', NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-03-26 13:30:13', NULL, NULL, 0, 0),
+	(505, 'NS30T29', NULL, NULL, 'JURIYA BANU H', 'juriyabanu@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 4, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-03-23 15:57:03', NULL, NULL, 0, 0),
+	(506, 'NS40T24', NULL, NULL, 'KALAIVANI S', 'kalaivani@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 3, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-03-23 15:52:01', NULL, NULL, 0, 0),
+	(507, 'NS40T23', NULL, NULL, 'GOWTHAMI P', 'gowthami@nscet.org ', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 3, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-03-23 15:48:16', NULL, NULL, 0, 0),
+	(508, 'NS3306T14', NULL, NULL, 'PRADEEP KUMAR R', 'pradeepkumar@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 3, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-03-23 15:39:23', NULL, NULL, 0, 0),
+	(509, 'NS40NT16', '1-4490009812', '9210226', 'CHITRA R', 'Chitrar@nscet.org', '9500795012', '$2a$10$LWibNUfnFeKn5j8XoEjafu4yRmDxnBz5WQA76kBR5Clbl0177hlgi', 5, 3, NULL, NULL, 'No', NULL, '1988-11-18', '2018-06-07', NULL, 'active', NULL, NULL, NULL, NULL, 'Anna 2nd Street, Near Vetri Kali Amman Kovil, PC Patti, Theni', '2026-02-19 11:09:11', '2026-03-26 05:27:09', NULL, NULL, 0, 0),
+	(510, 'NS40T19', NULL, NULL, 'SHANTHA DEVI P', 'shanthadevi@nscet.org', NULL, '$2a$10$5xIL3.m4xg8pDoy0abkMOu42Z3OKGOZWaWxuRqQ7Yj2jJBcaVrz6C', 5, 3, NULL, NULL, 'No', NULL, NULL, NULL, '/uploads/faculty/shantha_devi_p.jpg', 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-03-25 09:41:48', NULL, NULL, 0, 0),
+	(511, 'NS40T27', NULL, NULL, 'RAJESHSHREE S', 'ns40t27@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 3, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL, 0, 0),
+	(512, 'NS20NT23', NULL, NULL, 'MUTHURAJ', 'muthuraj@nscet.org', NULL, '$2a$10$k11fL4/D18oKkI4IPTaZFeOK85BUoyOci1uEtMtDj7dksy3Wyl6Xm', 5, 2, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-03-25 11:40:17', NULL, NULL, 0, 0),
+	(513, 'SH1', NULL, NULL, 'MRS.Malini', 'malini@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 11, 'Assistant', NULL, 'No', 'Female', NULL, NULL, NULL, 'active', 'B+', NULL, NULL, NULL, NULL, '2026-02-19 11:08:21', '2026-03-14 16:24:24', NULL, NULL, 0, 0),
+	(514, 'NS50T01', '1-461036221', '9210068', 'Dr.A.Vembathurajesh', 'avr.krj@gmail.com', '9976412468', '$2a$10$KLG1yNJSXlh3syiwv3BNgeLY3jj8LVvkYI5NfV5M79mcWYjeGEqEK', 7, 10, 'HEAD OF THE DEPARTMENT', NULL, 'No', 'Male', '1985-05-01', '2013-12-23', '/uploads/faculty/dr_a_vembathurajesh.png', 'active', 'O+', '675602527444', 'ANGPV1921L', 'S/O, V.Asaithambi, 5-1-39/1, Meenatchi Sundara Nadar Street, Aundipatti-625512, Theni District', 'S/O, V.Asaithambi, 5-1-39/1, Meenatchi Sundara Nadar Street, Aundipatti-625512, Theni District', '2026-03-23 14:37:57', '2026-03-26 04:50:00', NULL, NULL, 0, 0),
+	(515, 'NS40T20', '1-2186295159', '9217269', 'Dr T Venish Kumar', 'venishkumar@nscet.org', '9095577477', '$2a$10$okGV8b6dEtar/1jo3M/jP.q6gducqB2Lk4zp1YG8Kgp8rYB8KK1AO', 7, 3, 'HEAD OF THE DEPARTMENT', NULL, 'No', 'Male', '1988-06-01', '2021-08-04', '/uploads/faculty/dr_t_venish_kumar.jpg', 'active', 'B+', '965064178922', 'ASIPV9743P', '7-1/1124 Saraswathi Illam, NGO Nagar, Vellachamy Thevar Street, Kondamanayakkan patti, Aundipatty, Theni 625512', '7-1/1124 Saraswathi Illam, NGO Nagar, Vellachamy Thevar Street, Kondamanayakkan patti, Aundipatty, Theni 625512', '2026-03-23 14:42:04', '2026-03-25 16:36:50', 'https://www.linkedin.com/mynetwork/grow/', NULL, 0, 0),
+	(516, 'NS40T16', '1354152', '9210193', 'Dr R Athilingam', 'athilingam@nscet.org', '9486825649', '$2a$10$fhsLEcZTbdEh8.dVqgAEKe4QmI8ShJdYu.3CsgdOcbDNcUJQdmI4.', 7, 4, 'HEAD OF THE DEPARTMENT ', NULL, 'No', 'Male', '1984-02-27', '2017-05-19', '/uploads/faculty/dr_r_athilingam.jpg', 'active', 'O+', '594069904608', 'AXVPA9633R', '177/A1, subban street, theni 625531', '177/A1, subban street, theni 625531', '2026-03-23 14:46:28', '2026-03-25 12:34:26', NULL, NULL, 0, 0),
+	(517, 'CS12', '1-564654654654', '1-8979874984954', 'Dr. J. Mathalai Raj', 'hodcse@nscet.org', '+919384114714', '$2a$10$eF1JPKAv7pZ45zZd7kqodOSY5Z8MM1abNErem9GmK3uysPTeSSRGO', 7, 1, 'HEAD OF THE DEPARTMENT', NULL, 'No', 'Male', '2006-03-28', '2022-02-01', '/uploads/faculty/dr__j__mathalai_raj.jpg', 'active', NULL, NULL, NULL, NULL, NULL, '2026-03-23 14:48:40', '2026-03-25 14:18:26', NULL, NULL, 0, 0),
+	(518, 'NS50T24', '126611', '8115194', 'Dr.B.Radha Krishnan ', 'radhakrishnan@nscet.org', '9159989767', '$2a$10$kDCEiwTJ6iAXOXmIKSfUE.rl/W4t0VWMXMroiPk6nCyeClQ9J1YJS', 7, 5, 'HEAD OF THE DEPARTMENT', NULL, 'No', 'Male', '1991-05-23', '2018-05-16', '/uploads/faculty/dr_b_radha_krishnan_.jpg', 'active', 'A+', '609400020469', 'BXJPR0486G', '11, Railway line Street, Boothipuram Post, Bodinayakanur Tk, Theni District - 625531', '11, Railway line Street, Boothipuram Post, Bodinayakanur Tk, Theni District - 625531', '2026-03-23 14:56:11', '2026-03-25 09:29:36', NULL, NULL, 0, 0),
+	(519, 'NS10T01', '75923', '9210103', 'N.Nagarathinam', 'naguhky@gmail.com', '9095100234', '$2a$10$fJM.rS2iqDezdIL.JI6FOOYT/uy04dYQsS1No4R.qBrFUfoIUduNu', 7, 2, 'HEAD OF THE DEPARTMENT', NULL, 'No', 'Male', '1984-11-19', '2015-01-22', '/uploads/faculty/n_nagarathinam.jpg', 'active', 'AB+', '468907562270', 'ANLPN2652F', '26/5, First Cross Street, Rathinam Nagar, Theni - 625531', '26/5, First Cross Street, Rathinam Nagar, Theni - 625531', '2026-03-23 15:02:52', '2026-03-25 09:30:04', NULL, NULL, 0, 0),
+	(520, 'NS20T41', '4803087809', '9210346', 'ANUSUYA V', 'anusuya@nscet.org', '8220698108', '$2a$10$cqK7Of3WK82Jbhhbq9X2auXSNBD93G3hsjyHMW8Ppufli5XlaA/py', 5, 1, 'Assistant Professor ', NULL, 'No', 'Female', '1989-06-03', '2025-11-17', '/uploads/faculty/anusuya_v.jpg', 'active', 'A+', '736147605279', 'BWKPA7012D', 'W/O. PANDIAN.M. , MELA STREET, MELMANGALAM.', 'W/O. PANDIAN.M. , MELA STREET, MELMANGALAM.', '2026-03-23 15:14:18', '2026-03-25 07:36:46', 'https://www.linkedin.com/in/anusuya-vairamuthu-61837a3b6?utm_source=share_via&utm_content=profile&utm_medium=member_android', NULL, 0, 0),
+	(521, 'Ns63T16', '1-10958035723', '272017', 'Dr.R.SARAVANA KUMAR ', 'saravanakumar@nscet.org', '9942368797', '$2a$10$mJ66sz53daGMVITpmbWG5ucgfSJQ/l9rxeRJpGjPmD3Tx1qPE6ye2', 5, 10, 'Assistant professor ', NULL, 'No', 'Male', '1975-09-28', '2025-11-19', NULL, 'active', 'A+', '482550583160', 'DGJPS4402L', '8/1,MIG Colony, Kurinji Nagar, madurai. ', '8/1,MIG Colony, Kurinji Nagar, madurai. ', '2026-03-23 15:55:40', '2026-03-26 06:47:54', NULL, NULL, 0, 0),
+	(522, 'NS', NULL, NULL, 'Pavithra', 'pavithra@nscet.org', NULL, '$2a$10$QSD.5akwDv22RpnZ3hh6tuj.Wlfa1NSGWI/mb9od7WHQnj0Ru/ghy', 5, 6, 'Assistant professor', NULL, 'No', 'Female', NULL, NULL, '/uploads/faculty/pavithra.JPG', 'active', NULL, NULL, NULL, NULL, NULL, '2026-03-25 05:00:36', '2026-03-25 10:44:40', NULL, NULL, 0, 0),
+	(543, 'NS001', NULL, NULL, 'DR. M. SATHYA', 'msathya@nscet.org', NULL, '$2a$10$IuC9mhxOvkCqJQF3A7Vagucpl84ZDEeaXInJTBPOZP/1oa7Kbdlw.', 5, 5, 'VICE PRINCIPAL', NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-03-25 08:06:57', '2026-03-26 10:31:46', NULL, NULL, 0, 0),
+	(544, 'NS6606T17', '1- 44721755526', '9210314', 'T.Subathamani', 'subathamani@nscet.org', '7200179450', '$2a$10$H.UqWCcJNiVF5LvtLPr31uDr/pxu.LfgBwRVze6MpCk/ByeU7lQD2', 5, 10, 'Assistant Professor ', NULL, 'No', 'Female', '1988-02-02', '1988-11-04', NULL, 'active', 'B+', '623076565105', 'GMTPS2066F', 'Doctor\'s Avenue, Mullainagar, Theni - 625531', 'Doctor\'s Avenue, Mullainagar, Theni - 625531', '2026-03-26 07:43:04', '2026-03-26 07:45:00', 'https://www.linkedin.com/in/subha-tamil-36b791348?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app', NULL, 0, 0);
 
-INSERT INTO `faculty_profiles` (`faculty_id`, `faculty_college_code`, `AICTE_ID`, `Anna_University_ID`, `Name`, `email`, `phone_number`, `password`, `role_id`, `department_id`, `designation`, `educational_qualification`, `phd_status`, `gender`, `date_of_birth`, `date_of_joining`, `profile_image_url`, `status`, `blood_group`, `aadhar_number`, `pan_number`, `perm_address`, `curr_address`, `created_at`, `updated_at`, `linkedin_url`, `is_placement_coordinator`) VALUES
-(406, 'NS80T01', NULL, NULL, 'NAGAJOTHI P', 'ns80t01@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 6, 'Assistant Professor', NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-03-14 13:13:50', '2026-03-14 13:13:50', NULL, NULL),
-(434, 'NS20T11', NULL, NULL, 'PRATHAP C', 'cprathap1985@gmail.com', NULL, '$2a$10$ix7Vg2NBz9QKyRwHY1eS4OISqGo10McE05vht1cyk3JpafK6JDoci', 7, 7, 'HEAD OF THE DEPARTMENT', NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-03-14 13:13:50', '2026-03-14 13:13:50', NULL, NULL),
-(435, 'NS20T09', NULL, NULL, 'Vignesh L S', 'lsisreviving@gmail.com', NULL, '$2a$10$7S/p6nWcvVCUlmMC8cFeZewetHGp6MkxvvJLKBlahtsGt/KcyqC5a', 7, 6, 'HEAD OF THE DEPARTMENT', NULL, 'No', NULL, NULL, NULL, '/uploads/faculty/vignesh_l_s.jpg', 'active', NULL, NULL, NULL, NULL, NULL, '2026-03-14 13:13:50', '2026-03-21 06:44:20', NULL, NULL),
-(436, 'SH1', NULL, NULL, 'DR.B.MALLAIYASAMY', 'drbmallaiyasamy.faculty@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 10, 'Assistant Professor', NULL, 'No', 'Male', NULL, NULL, NULL, 'active', 'B+', NULL, NULL, NULL, NULL, '2026-02-19 11:08:21', '2026-03-05 05:30:07', NULL, NULL),
-(437, 'SH10', NULL, NULL, 'DR.DAVID MATHAN.N', 'drdavid.mathann@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 10, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:08:21', '2026-02-20 01:13:32', NULL, NULL),
-(438, 'ME11', NULL, NULL, 'VEMBATHURAJESH.A', 'vembathurajesha.faculty@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 10, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:08:21', '2026-02-20 01:13:32', NULL, NULL),
-(439, 'AA2', NULL, NULL, 'Dr.C.MATHALAI SUNDARAM', 'drcmathalai.sundaram@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 5, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:08:21', '2026-02-20 01:13:32', NULL, NULL),
-(440, 'ME12', NULL, NULL, 'SANTHASEELAN.R', 'santhaseelanr.faculty@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 5, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:08:21', '2026-02-20 01:13:32', NULL, NULL),
-(441, 'ME14', NULL, NULL, 'SIVAGANESAN.V', 'sivaganesanv.faculty@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 5, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:08:21', '2026-02-20 01:13:32', NULL, NULL),
-(442, 'ME16', NULL, NULL, 'NAGARAJA.R', 'nagarajar.faculty@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 5, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:08:21', '2026-02-20 01:13:32', NULL, NULL),
-(443, 'ME18', NULL, NULL, 'NAGARAJAN.B', 'nagarajanb.faculty@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 5, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:08:21', '2026-02-20 01:13:32', NULL, NULL),
-(444, 'CS4', NULL, NULL, 'UDHAYA KUMAR.R', 'udhaya.kumarr@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 7, 'Assistant Professor', NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:08:21', '2026-02-21 09:22:40', NULL, NULL),
-(445, 'EC4', NULL, NULL, 'IDHAYACHANDRAN M', 'idhayachandran.m@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 3, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:08:21', '2026-02-20 01:13:32', NULL, NULL),
-(446, 'EC10', NULL, NULL, 'DR. N MATHAVAN', 'dr2.n@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 3, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:08:21', '2026-02-20 01:13:32', NULL, NULL),
-(447, 'EC11', NULL, NULL, 'TAMIL SELVI T', 'tamil.selvi@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 3, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:08:21', '2026-02-20 01:13:32', NULL, NULL),
-(448, 'EC13', NULL, NULL, 'PRATHAP S', 'prathap.s@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 3, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:08:21', '2026-02-20 01:13:32', NULL, NULL),
-(449, 'EC14', NULL, NULL, 'BHARATHI KANNAN K', 'bharathi.kannan@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 3, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:08:21', '2026-02-20 01:13:32', NULL, NULL),
-(450, 'NS10T18', NULL, NULL, 'GAYATHRI S', 'ns10t18@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 2, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL),
-(451, 'NS303NT06', NULL, NULL, 'SHANMUGAPRIYAN.R', 'ns303nt06@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 2, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL),
-(452, 'NS10T21', NULL, NULL, 'SINDHU M', 'ns10t21@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 2, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL),
-(453, 'NS10T27', NULL, NULL, 'DR.E.ANANTHA KRISHNAN', 'ns10t27@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 2, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL),
-(454, 'NS10T29', NULL, NULL, 'SOWMIYA B', 'ns10t29@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 2, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL),
-(455, 'NS10T30', NULL, NULL, 'KANIMOZHI M', 'ns10t30@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 2, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-21 13:05:32', NULL, NULL),
-(456, 'NS10T31', NULL, NULL, 'BENITA MERLIN ISABELLA K', 'ns10t31@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 2, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL),
-(457, 'NS10T32', NULL, NULL, 'ARUL JEBARAJ P', 'ns10t32@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 2, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL),
-(458, 'NS10T33', NULL, NULL, 'NATHIRUN SABINASH', 'ns10t33@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 2, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL),
-(459, 'NS10T34', NULL, NULL, 'MANOJ PRABAKAR R', 'ns10t34@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 2, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL),
-(460, 'NS10T35', NULL, NULL, 'HARI PRASATH T', 'ns10t35@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 2, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL),
-(461, 'NS20T35', NULL, NULL, 'ABIRAMI KAYATHIRI S', 'ns20t35@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 1, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-03-05 02:59:26', NULL, NULL),
-(462, 'NS20T41', NULL, NULL, 'ANUSUYA V', 'ns20t41@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 1, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL),
-(463, 'NS20T25', NULL, NULL, 'VELKUMAR K', 'ns20t25@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 1, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL),
-(464, 'NS20T33', NULL, NULL, 'DEEPIGA K', 'ns20t33@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 1, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL),
-(465, 'NS20T40', NULL, NULL, 'VENKATALAKSHMI M', 'ns20t40@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 1, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL),
-(466, 'NS20T29', NULL, NULL, 'ARCHANA R', 'ns20t29@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 1, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL),
-(467, 'NS70T01', NULL, NULL, 'DR.M SATHYA', 'ns70t01@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 1, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL),
-(468, 'NS61T20', NULL, NULL, 'ARULVIZHI M', 'ns61t20@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 10, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL),
-(469, 'NS22T21', NULL, NULL, 'PREETHA J', 'ns22t21@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 10, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL),
-(470, 'NS61T16', NULL, NULL, 'Dr.C.CHITHRA', 'ns61t16@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 10, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL),
-(471, 'NS61T09', NULL, NULL, 'KARUNYAH R', 'ns61t09@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 10, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL),
-(472, 'NS61T23', NULL, NULL, 'MUFEENA S', 'ns61t23@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 10, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL),
-(473, 'NS6606T17', NULL, NULL, 'SUBATHAMANI T', 'ns6606t17@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 10, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL),
-(474, 'NS6606T18', NULL, NULL, 'DR. MALARVIZHI P', 'ns6606t18@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 10, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL),
-(475, 'NS6606T19', NULL, NULL, 'DR. VALARMATHI R', 'ns6606t19@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 10, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL),
-(476, 'NS60T07', NULL, NULL, 'RICHARD BRITTO.R.C', 'ns60t07@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 10, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL),
-(477, 'NS7706T06', NULL, NULL, 'DR. M VEERA KUMAR', 'ns7706t06@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 10, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL),
-(478, 'NS62T11', NULL, NULL, 'DHANDAYUTHAPANI', 'ns62t11@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 10, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL),
-(479, 'NS62T10', NULL, NULL, 'RAJAGURU K', 'ns62t10@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 10, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL),
-(480, 'NS7706T04', NULL, NULL, 'Dr.S.R.KRISHNAMOORTHI', 'ns7706t04@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 10, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL),
-(481, 'NS63T13', NULL, NULL, 'ABINAYA B', 'ns63t13@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 10, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL),
-(482, 'NS63T16', NULL, NULL, 'DR R SARAVANANKUMAR', 'ns63t16@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 10, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL),
-(483, 'NS67T03', NULL, NULL, 'THISHA N', 'ns67t03@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 10, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL),
-(484, 'NS50T16', NULL, NULL, 'HARIKISHORE.S', 'ns50t16@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 5, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL),
-(485, 'NS50T21', NULL, NULL, 'VENNIMALAI RAJAN A', 'ns50t21@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 5, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL),
-(486, 'NS50T22', NULL, NULL, 'ARUN KUMAR.G', 'ns50t22@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 5, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL),
-(487, 'NS4407T020', NULL, NULL, 'SURULIMANI. P', 'ns4407t020@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 5, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL),
-(488, 'NS50T19', NULL, NULL, 'CHAKRAVARTHY SAMY DURAI J', 'ns50t19@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 5, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL),
-(489, 'NS70T07', NULL, NULL, 'JASMINE JOSE P', 'ns70t07@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 7, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL),
-(490, 'NS20T34', NULL, NULL, 'KESAVAMOORTHY N', 'ns20t34@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 7, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL),
-(491, 'NS20T14', NULL, NULL, 'ARUL JOTHI.S', 'ns20t14@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 7, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL),
-(492, 'NS70T05', NULL, NULL, 'MAHALAKSHMI S', 'mahalakshmi@nscet.org', '8248721606', '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 7, 'Assistant professor', NULL, 'No', 'Female', '1998-05-04', '2025-04-02', NULL, 'active', 'AB+', '321489215820', 'Bzkpm1362B', 'Balan nagar allinagaram', 'Balan nagar allinagaram', '2026-02-19 11:09:11', '2026-03-22 16:17:16', NULL, NULL),
-(493, 'NS20T39', NULL, NULL, 'BHAVANI M', 'ns20t39@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 7, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL),
-(494, 'NS70T04', NULL, NULL, 'SAI SUGANYA B', 'ns70t04@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 7, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL),
-(495, 'NS20T37', NULL, NULL, 'GEERTHIGA G', 'ns20t37@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 6, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-23 15:07:47', NULL, NULL),
-(496, 'NS20T32', NULL, NULL, 'VINOTH KUMAR J', 'ns20t32@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 6, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL),
-(497, 'NS70T02', NULL, NULL, 'KANIMOLI J', 'ns70t02@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 6, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-23 14:56:34', NULL, NULL),
-(498, 'NS30T03', NULL, NULL, 'GANESH.K', 'ns30t03@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 4, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL),
-(499, 'NS30T19', NULL, NULL, 'RAJA KARTHICK R', 'ns30t19@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 4, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL),
-(500, 'NS30T20', NULL, NULL, 'NISHETHA JEFLIN NIXON A', 'ns30t20@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 4, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL),
-(501, 'NS30T25', NULL, NULL, 'VIJAYALAKSHMI M', 'ns30t25@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 4, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL),
-(502, 'NS30T26', NULL, NULL, 'SHIVA C', 'ns30t26@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 4, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL),
-(503, 'NS30T27', NULL, NULL, 'ABIRAMI N', 'ns30t27@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 4, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL),
-(504, 'NS30T30', NULL, NULL, 'DR N PANDISELVI', 'ns30t30@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 4, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL),
-(505, 'NS30T29', NULL, NULL, 'JURIYA BANU H', 'ns30t29@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 4, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL),
-(506, 'NS40T24', NULL, NULL, 'KALAIVANI S', 'ns40t24@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 3, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL),
-(507, 'NS40T23', NULL, NULL, 'GOWTHAMI P', 'ns40t23@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 3, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL),
-(508, 'NS3306T14', NULL, NULL, 'PRADEEP KUMAR R', 'ns3306t14@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 3, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL),
-(509, 'NS40NT16', NULL, NULL, 'CHITRA R', 'ns40nt16@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 3, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL),
-(510, 'NS40T19', NULL, NULL, 'SHANTHA DEVI P', 'ns40t19@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 3, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL),
-(511, 'NS40T27', NULL, NULL, 'RAJESHSHREE S', 'ns40t27@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 3, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL),
-(512, 'NS20NT23', NULL, NULL, 'MUTHURAJ', 'ns20nt23@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 2, NULL, NULL, 'No', NULL, NULL, NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, '2026-02-19 11:09:11', '2026-02-20 01:13:32', NULL, NULL),
-(513, 'SH1', NULL, NULL, 'MRS.Malini', 'malini@nscet.org', NULL, '$2a$10$IlcgP8INGp8gPWVOAEloreSUEPPWVYQ.q5II/KWESGDGIlmzrzv0e', 5, 11, 'Assistant', NULL, 'No', 'Female', NULL, NULL, NULL, 'active', 'B+', NULL, NULL, NULL, NULL, '2026-02-19 11:08:21', '2026-03-14 16:24:24', NULL, NULL);
-
--- --------------------------------------------------------
-
---
--- Table structure for table `faculty_research`
---
-
-CREATE TABLE `faculty_research` (
-  `research_id` int(11) NOT NULL,
+-- Dumping structure for table eduvertex.faculty_research
+CREATE TABLE IF NOT EXISTS `faculty_research` (
+  `research_id` int(11) NOT NULL AUTO_INCREMENT,
   `ORCID_ID` varchar(50) DEFAULT NULL,
   `faculty_id` int(11) NOT NULL,
   `category` enum('Conference','Journal','Patent','Book Chapter') NOT NULL,
@@ -587,34 +759,51 @@ CREATE TABLE `faculty_research` (
   `document_url` text DEFAULT NULL,
   `type` enum('International','National') DEFAULT 'International',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`research_id`),
+  UNIQUE KEY `uq_orcid` (`ORCID_ID`),
+  KEY `idx_faculty_id` (`faculty_id`),
+  KEY `idx_category` (`category`),
+  CONSTRAINT `faculty_research_ibfk_1` FOREIGN KEY (`faculty_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=34 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- --------------------------------------------------------
+-- Dumping data for table eduvertex.faculty_research: ~30 rows (approximately)
+INSERT INTO `faculty_research` (`research_id`, `ORCID_ID`, `faculty_id`, `category`, `title`, `author_names`, `abstract`, `keywords`, `issn_isbn`, `volume_issue`, `pages`, `status`, `research_type`, `impact_factor`, `citations`, `indexed_in`, `publication_date`, `publisher_organizer`, `url`, `document_url`, `type`, `created_at`, `updated_at`) VALUES
+	(3, NULL, 446, 'Journal', 'Virtual Reference Tag Assisted Radio Frequency Identification Localization  and Tracking Using Artificial Intellect  Techniques in Indoor Environment', 'Mathavan, N., Sivaranjani, S.', 'Abstract: The application of Radio Frequency Identification (RFID) technology for localizing and tracking mobile objects within indoor\r\nenvironments, primarily relying on Received Signal Strength Indicator (RSSI) readings, poses challenges in enhancing tracking accuracy\r\nand minimizing errors. In response, we present the VIRALTRACK (Virtual Reference Tag Localization and Tracking) model, comprising\r\nfour key processes: signal improvement, optimization-based virtual reference tag allocation, quantum-based localization, and deep\r\nreinforcement learning-based tracking. The Extended Gradient Filter (EGF) algorithm is introduced to mitigate RSSI fluctuations,\r\nthereby enhancing signal efficiency. The Emperor Penguin Colony (EPC) optimization algorithm allocates virtual reference tags,\r\nfactoring in Signal-to-Noise Ratio (SNR), tag quantity, and environmental conditions, elevating tracking accuracy. Quantum Neural\r\nNetwork (QNN) facilitates precise position estimation for moving targets, with the SignRank algorithm optimizing virtual reference tag\r\nselection to reduce tracking errors. The Twin Delayed Deep Deterministic Policy Gradient (TD3) algorithm ensures effective tracking\r\nby considering distance, phase, orientation, and previous coordinates. Simulations conducted using the NS3.26 network simulator\r\nevaluate performance metrics, including tracking accuracy, tracking error, and cumulative probability, validating the efficacy of the\r\nproposed VIRALTRACK model in RFID-based indoor localization and tracking. ', 'Keywords: Radio Frequency Identification (RFID), Virtual Reference Tag Allocation, RFID reader, Quantum Neural Network (QNN), Extended Gradient Filter (EGF)', '10.33180/InfMIDEM2023.401', '53, 4', '207-223', 'Published', 'Original Research', NULL, 0, 'SCI', '2023-04-01', 'Informacije MIDEM', 'https://doi.org/1 0.33180/InfMIDE M2023.401', '/uploads/faculty/dr__n_mathavan/research/research_dr__n_mathavan_1774427173635_239005066.pdf', 'International', '2026-03-25 08:26:13', '2026-03-25 08:26:13'),
+	(4, NULL, 446, 'Journal', 'Application of optimization algorithm for virtual  reference tag assisted localization and tracking of  RFID', 'Nagaraj Mathavan, Seenivasan Siva Ranjani, Seetharaman Suresh, Ananthan Bhuvanesh', 'In an indoor setting, the radio frequency communication is utilized to locateand track mobile objects utilizing Radio Frequency Identification (RFID) tech-nology. Measurements from the Received Signal Strength Indicator (RSSI) aretypically the foundation of the localization technique. In an RFID-based inte-rior setting, lowering tracking mistakes and increasing the precision of track-ing remain difficult tasks. In order to address these issues, we developed theVIRALTRACK (Virtual Reference Tag Localization and Tracking) frameworkthat consists of four procedures: deep reinforced learning-based tracking,quantum-based localization, optimization-based virtual reference tag alloca-tion, and signal enhancement. In order to increase the signal\'s effectiveness,we initially suggested using the Extended Gradient Filter (EGF) technique toeliminate RSSI oscillations. In the second step, we suggested using theEmperor Penguin Colony (EPC) optimization technique to allocate the virtualreference tag while taking the number of tags, SNR, and temperature andhumidity of the surroundings into account. In the third phase, we use a quan-tum neural network (QNN) for localization in order to estimate the position ofthe moving target. We introduced the SignRank approach to select the best vir-tual reference tag for localization, which lowers tracking mistakes. In conclu-sion, we presented the Twin Delayed Deep Deterministic Policy Gradient(TD3) method that boosts the tracking precision by tracking the moving targettag efficiently and taking into account stage, the orientation, distance, andvaluable coordinates. The NS3.26 network simulator is used to run the simula-tion, and tracking precision, tracking error, and accumulated probabilities areused to assess effectiveness', 'K E Y W O R D Sextended gradient filter (EGF), quantum neural network (QNN), radio frequency identification RFID,  RFID reader, virtual reference tag allocation', 'https://doi.org/10.1002/dac.5807', 'Volume37, Issue12', NULL, 'Published', 'Original Research', NULL, 0, 'SCI', '2024-05-24', 'John Wiley & Sons Ltd', NULL, '/uploads/faculty/dr__n_mathavan/research/research_dr__n_mathavan_1774430810638_395055096.pdf', 'International', '2026-03-25 09:26:50', '2026-03-25 09:26:50'),
+	(5, NULL, 446, 'Journal', 'Efficient indoor localization by integrating RFID with adaptive emperor penguincolony-based deep Q learning', 'N. Mathavan, P. Sampath, K. Vijayalakshmi, M. Kala Rathi', 'Radio Frequency Identification (RFID) is exploited for localizing objects in an indoor environment. Indoor localization is a critical component of various applications, ranging from smart homes to industrial automation. Traditional methods often suffer from limitations in accuracy and scalability. The existing models found it complex to develop a map approach of the tag received signal strength indicator (RSSI) and the distance of the tag and reader in an indoor nature. This work presents an enhanced model that integrates RFID technology using deep Q learning (DQL) and adaptive emperor penguin colony optimizer (AEPCO) for improving the relationship between tag position and RFID signals. By utilizing RFID tags and readers, spatial data are collected and then processed through a proposed DQL-AEPCO designed to accurately estimate positions within indoor environments. Moreover, for enhancing the training quality, the dataset pre-processed using Gaussian filtering (GF) is presented for eliminating RSSI faults. The demonstration proved that the suggested DQL-AEPCO can able to locate the multi-tags with high stability and robustness and outperformed the conventional models.', 'Radio frequencyidentification; received signalstrength indicator; deepQ learning; adaptiveemperor penguin colonyoptimizer; indoor localization', 'https://doi.org/10.1080/02533839.2025.2458073', 'Vol 48, Issu 2', '183-194', 'Published', 'Orginal', NULL, 0, 'SCI', '2025-02-07', 'Taylor & Francis', NULL, '/uploads/faculty/dr__n_mathavan/research/research_dr__n_mathavan_1774431523818_258839126.pdf', 'International', '2026-03-25 09:38:43', '2026-03-25 09:38:43'),
+	(6, NULL, 446, 'Journal', 'Energy-optimal scheduling with dynamic channel attainment in wireless downlinks', 'N. Mathavan, J. Rajalakshmi, T. Venkatesh', 'Channel acquisition is central to opportunistic scheduling for transmission over wireless channels. Practically it comes with probing power overhead. In low traffic regime, disregarding the channel and transmitting packets blindly may suffice to stabilize the network, and it wastes no probing power. Under the additional probing power cost assumption, we explore when is appropriate to probe the channel so that the network capacity can be achieved with minimum power consumption.', NULL, '10.1109/GET.2015.7453843', NULL, NULL, 'Published', 'Original', NULL, 0, 'Scopus', '2016-04-19', 'IEEE', NULL, NULL, 'International', '2026-03-25 09:42:37', '2026-03-25 09:42:37'),
+	(7, NULL, 493, 'Journal', 'Deep Neural Graph-Based Recommendation System for Scholarly Paper Retrieval', 'Author 4', NULL, NULL, NULL, NULL, NULL, 'Published', NULL, NULL, 0, NULL, '2025-09-05', 'International Journal of Basic and Applied Sciences', NULL, '/uploads/faculty/bhavani_m/research/research_bhavani_m_1774432111769_776887574.jpeg', 'International', '2026-03-25 09:48:31', '2026-03-25 09:48:31'),
+	(8, NULL, 446, 'Journal', 'Artificial Intelligence and Deep Learning-based Model for Indoor Environment: with Virtual Reference Tag Allocation', 'N.Mathavan, Dr.S.Sivaranjani', 'By the evolution of context-aware application, indoor location positioning gains much more attention worldwide. Radio Frequency Identification (RFID) is one such wireless positioning technology adopted widely. Moreover, enhancing the tracking accuracy and thus reducing the tracking error remains a challenging task in RFID based indoor environment. So as to overcome this aspect, a localization and tracking method depending on virtual reference tag (VRT) is employed in the indoor environment. This research work includes four modules like (i) data collection and Received Signal Strength Indication (RSSI) estimation;(ii) Optimal allocation of VRT using Spider Monkey Optimization (SMO) at which the allocation of VRT is made by considering number of tags, environmental factors (humidity and temperature), and SNR. Based on this data, the RFID reader allocates VRT for each grid so as to increase the tracking accuracy; (iii) Artificial Neural Network (ANN) module-based localization at which the localization of unknown tags is made; and (iv) tracking of moving target tag is carried based on Aquila Swarm Optimization-Long short-term memory (ASO-LSTM) approach. The optimization at this stage is employed to choose optimal position which enhances the accuracy of tracking. Thus, finally the location estimation is carried by this approach. The simulation is carried in NS3.26 network simulator and the performance are estimated in terms of SNR, tracking error, mean error, tracking accuracy, mean time, and standard deviation. The performance value is then compared with traditional models to show the enhancement of proposed mode over the other conventional techniques.', 'Radio Frequency Identification (RFID)Received Signal Strength Indication (RSSI)localizationtrackingmoving targetvirtual reference tagSpider Monkey Optimization (SMO)Artificial Neural Network (ANN)Aquila Swarm Optimization-Long short-term memory (ASO-LSTM)tracking errortracking accuracy', 'https://doi.org/10.1016/j.procs.2024.03.215', 'Vol 233', '254-268', 'Published', 'Original', NULL, 0, 'Scopus', '2024-03-02', ' Elsevier B.V.', NULL, '/uploads/faculty/dr__n_mathavan/research/research_dr__n_mathavan_1774432317057_10483063.pdf', 'International', '2026-03-25 09:51:57', '2026-03-25 09:51:57'),
+	(9, NULL, 493, 'Conference', 'Smart and Secure Insurance Claim System Using Blockchain and Machine Learning', NULL, NULL, NULL, NULL, NULL, NULL, 'Accepted', NULL, NULL, 0, NULL, '2025-12-13', '3" International Conference on Emerging Research in Computational Science ICE Karpagam Academy of Higher Education, Coimbatore-641021, Tamil Nadu, India.', NULL, '/uploads/faculty/bhavani_m/research/research_bhavani_m_1774433141881_881500788.jpeg', 'International', '2026-03-25 10:05:41', '2026-03-25 10:05:41'),
+	(10, NULL, 493, 'Conference', 'Smart and Secure Insurance Claim System Using Blockchain and Machine Learning', NULL, NULL, NULL, NULL, NULL, NULL, 'Accepted', NULL, NULL, 0, NULL, '2025-12-13', '3" International Conference on Emerging Research in Computational Science ICE Karpagam Academy of Higher Education, Coimbatore-641021, Tamil Nadu, India.', NULL, '/uploads/faculty/bhavani_m/research/research_bhavani_m_1774433142229_148191344.jpeg', 'International', '2026-03-25 10:05:42', '2026-03-25 10:05:42'),
+	(11, NULL, 434, 'Journal', 'Multi-objective optimization-based task offloading with OFDM in large-scale industrial internet of things', 'C.PRATHAP , Dr. S. Siva Ranjani', 'The Industrial Internet of Things (IIoT) has brought about a profound transformation in industries by facilitating intelligent data exchange among interconnected devices. However, optimizing performance, reliability, and efficiency in IIoT systems involves overcoming several obstacles, including energy consumption, latency, and scalability, which are still open issues. To overcome these challenges, we propose an improvised IIoT-Multiaccess Edge Computing model by tackling task offloading while considering load balancing and dependency of tasks in a heterogeneous environment. The proposed approach addresses load balancing and computation offloading in an orthogonal frequency division multiplexing (OFDM) network with multiple IIoT end devices connected to a single base station with an edge server. We have used ordinal multi-objective optimization (OMOO) for load balancing to effectively identify high-quality solutions for optimized queue span and link quality. The optimal offloading decision algorithm (OODA) is employed to minimize long-term energy utilization while reducing average traffic congestion. The proposed model is evaluated by comparing it with various offloading systems based on multiple metrics, such as energy consumption and traffic delay, to understand how well the model performs relative to others. The simulation results show that the proposed model excels in energy savings, scalability, and latency reduction for IIoT-edge systems. It effectively satisfies quality of service (QoS) specifications and enhances energy conversion efficiency.', 'Industrial internet of things Multiaccess edge computing Optimal offloading decision algorithm Ordinal multi-objective optimization Orthogonal frequency division multiplexing', '0219-1377', '67/October 2025', '8843–8867', 'Published', 'Original', 3.40, 0, 'SCI', '2025-07-05', 'SPRINGER', 'https://link.springer.com/article/10.1007/s10115-025-02487-2', NULL, 'International', '2026-03-25 10:20:54', '2026-03-25 10:20:54'),
+	(12, NULL, 486, 'Journal', 'Optimization of machining parameters in plane surface grinding process by response surface methodology', 'Author 2', 'This paper aims to predict the optimal solution of surface roughness using Response Surface 24\r\nMethodology in surface grinding machining process. Response surface Methodology extracted for input 25\r\nparameters preparation to surface grinding process. EN 24 steel machining with various speed, depth of 26\r\ncut and feed rate timing. The surface roughness of the machined workpiece measured by the conven- 27\r\ntional stylus probe. Then input and output parameters feed into the RSM and developed ANOVA and 28\r\nregression equation to produce the optimal solution.', 'Composite Materials ', 'MATPR 14003', 'P-authorquery-v14', '04', 'Published', NULL, NULL, 0, NULL, '2020-04-18', 'MATPR', 'https://doi.org/10.1016/j.matpr.2020.04.075', '/uploads/faculty/arun_kumar_g/research/research_arun_kumar_g_1774434393847_224537870.pdf', 'National', '2026-03-25 10:26:33', '2026-03-25 10:26:33'),
+	(13, NULL, 493, 'Conference', 'Zero Defend: Enhancing Cloud Security through AI-Powered Anomaly Detection', 'Author 3', NULL, NULL, NULL, NULL, NULL, 'Accepted', NULL, NULL, 0, NULL, '2026-02-26', 'FRANCIS XAVIER ENGINEERING COLLEGE AN AUTONOMOUS INSTITUTION', NULL, '/uploads/faculty/bhavani_m/research/research_bhavani_m_1774435171600_227806866.pdf', 'International', '2026-03-25 10:39:31', '2026-03-25 10:39:31'),
+	(14, NULL, 514, 'Conference', 'Characterization and Evaluation of corrosion behavior and Mechanical Properties of ZrO2 reinforced Copper / Graphene Composites', 'Mr.A.Vembathurajesh', 'The present work aims to investigate the corrosion behavior and mechanical properties of copper-based hybrid composites reinforced with different proportions of ZrO2 and graphene prepared via powder metallurgy process. ZrO2 (7, 5 and 3 wt%) and graphene reinforcements were added (3, 5, 7 wt%) in the base copper composite samples. Microstructure development during preparation of the composites was investigated by X-ray diffraction and particle size analysis and after fabrication the composites were investigated by scanning electron microscope. The results show an improved distribution of zirconium dioxide (ZrO2) and graphene (Gr) particles in the copper matrix, which resulted in the improvement of mechanical properties of Cu/ZrO2/Gr composites. The Cu-ZrO2/graphene composites\' microhardness, surface roughness, and density were assessed as per the ASTM standard approach in order to support their quality. When graphene content increases, the Cu/ZrO2 composites exhibited high hardness (51 Hv) and a maximum density of 8.67 g/cc. The density of the samples was found to decrease with an increase in the reinforcement’s content. The\r\nmaterials machinability was assessed in terms of topography and surface roughness after the sample was sliced using wire electrical discharge machining. The Cu/ZrO2(7%)/Gr(3%) composite has a lower corrosion rate compared to the other Cu/ZrO2/Gr composites. These composites can therefore be recommended for corrosion-related applications. ', 'Graphene, ZrO2', '978-81-98-3005', 'Vol 3, Iss 9', '1', 'Published', 'Original', NULL, 0, NULL, '2025-05-15', 'J.P.College of Engineering, Tenkasi', NULL, '/uploads/department-admins/dr_a_vembathurajesh/research/research_dr_a_vembathurajesh_1774445199223_481824534.jpg', 'International', '2026-03-25 13:26:39', '2026-03-25 13:26:39'),
+	(15, NULL, 515, 'Journal', 'Three-dimensional analytical modeling for small-geometry AlInSb/AlSb/InSb double-gate high-electron-mobility transistors (DG-HEMTs)', 'Venish Kumar, T., Balamurugan, N.B', NULL, NULL, NULL, '19', '1107–1115 ', 'Published', 'Original Research', NULL, 0, 'SCI', '2020-04-22', ' J Comput Electron', NULL, NULL, 'International', '2026-03-25 16:19:29', '2026-03-25 16:19:29'),
+	(16, NULL, 515, 'Journal', 'Synthesis and investigation of Sm3+-doped Mn0.5Cu0.5Fe2O4 nanoferrites for microstrip patch antenna application', '1	R. Rajesh Kanna,  P. Jeyakumar, N. Lenin, G. Marimuthu,   Mookkandi Palsamy Kesavan &  T. Venish Kumar', NULL, NULL, NULL, '34', '1417', 'Published', NULL, NULL, 0, NULL, NULL, 'Springer : Journal of Materials Science: Materials in Electronics', NULL, NULL, 'International', '2026-03-25 16:30:08', '2026-03-25 16:30:08'),
+	(17, NULL, 515, 'Journal', 'Charge Density Based Small Signal Modeling for InSb/AlInSb Asymmetric Double Gate Silicon Substrate HEMT for High Frequency Applications', 'Venish Kumar T, Vengatesh, Muthupandian, Lakshmi Priya', NULL, NULL, NULL, NULL, NULL, 'Published', NULL, NULL, 0, NULL, NULL, 'Springer, Silicon', NULL, NULL, 'International', '2026-03-25 16:30:47', '2026-03-25 16:30:47'),
+	(18, NULL, 515, 'Journal', 'Analytical modeling of InSb/AlInSb heterostructure dual gate high electron mobility transistors', 'Venish Kumar T, N B Balamurugan', NULL, NULL, NULL, '94', '19-25', 'Published', NULL, NULL, 0, NULL, NULL, 'Elsevier, AEU - International Journal of Electronics and Communications', NULL, NULL, 'International', '2026-03-25 16:31:28', '2026-03-25 16:31:28'),
+	(19, NULL, 515, 'Journal', 'Cylindrical Dielectric Resonator Antenna with a Key-Shaped Microstrip Line for 2.4 GHz Wireless Applications ', 'B. Manikandan, D. Thiripurasundari, R. Athilingam, G. Karthikeyan & T. Venish Kumar', NULL, NULL, NULL, NULL, NULL, 'Published', NULL, NULL, 0, NULL, NULL, 'Springer Nature Link', NULL, NULL, 'International', '2026-03-25 16:31:57', '2026-03-25 16:31:57'),
+	(20, NULL, 515, 'Journal', 'TCAD Simulation Study of AlGaN/GaN High Electron Mobility Transistors HEMT)', 'Venish Kumar T, N B Balamurugan', NULL, NULL, NULL, '10 (11)', '30083-30089', 'Published', NULL, NULL, 0, NULL, NULL, 'International Journal of Applied Engineering Research', NULL, NULL, 'International', '2026-03-25 16:32:47', '2026-03-25 16:32:47'),
+	(21, NULL, 515, 'Journal', 'A Design of Quadded Logic with Quadded Transistor Circuit Using Dynamic Voltage Scaling-  International Journal of Engineering Science', 'T . Venish Kumar', NULL, NULL, NULL, NULL, NULL, 'Published', NULL, NULL, 0, NULL, NULL, 'International Journal of Engineering Science', NULL, NULL, 'International', '2026-03-25 16:33:22', '2026-03-25 16:33:22'),
+	(22, NULL, 434, 'Journal', ' An Intelligent Agent Based Optimal Scheduling & Congestion Free Routing Scheme to Enhance QoS of NFV Enabled Heterogeneous Wireless Sensor Network Framework', 'Prathap C; S Sivaranjani; Sathya M; Prabhakaran G; Rajalakshmi J; Kavin Kumar K', NULL, 'Wireless sensor networks , Energy consumption , Protocols , Quality of service , Optimal scheduling , Routing , Throughput , Scheduling , Delays , Intelligent agents', '2473-7674', NULL, '1-10', 'Published', NULL, NULL, 0, 'SCOPUS', '2024-06-28', 'IEEE', 'https://ieeexplore.ieee.org/document/10725712', NULL, 'International', '2026-03-26 07:33:56', '2026-03-26 07:33:56'),
+	(23, NULL, 434, 'Journal', 'ML-Based Yield Prediction in Smart Agriculture Systems Using IoT', 'C. Prathap; S. Sivaranjani; M. Sathya', NULL, ' Wireless sensor networks , Energy consumption , Protocols , Quality of service , Optimal scheduling , Routing , Throughput , Scheduling , Delays , Intelligent agents', '2473-7674', NULL, NULL, 'Published', NULL, NULL, 0, 'SCOPUS', '2024-03-16', 'IEEE', 'https://ieeexplore.ieee.org/document/10725712', NULL, 'International', '2026-03-26 07:37:16', '2026-03-26 07:37:16'),
+	(24, NULL, 434, 'Journal', ' Raspberry Pi-Based Smart Energy Meter Using Internet of Things with Artificial Intelligence', 'M Sathya; S Sivananda; R. Mekala; R. Chinnaiyan; C. Prathap; R. Muthulakshmi', NULL, 'Meters , Wireless communication , Power demand , Electricity , Market research , Regulation , Power markets', '979-8-3503-1706-0', NULL, '1-7', 'Published', NULL, NULL, 0, 'SCOPUS', '2023-10-28', 'IEEE', 'https://ieeexplore.ieee.org/document/10525946/', NULL, 'International', '2026-03-26 07:44:54', '2026-03-26 07:44:54'),
+	(25, NULL, 502, 'Journal', 'Influence of gadolinium doped in nickel nanoferrites on structural, optical, electrical, and magnetic properties', NULL, NULL, NULL, '09215107', 'Vol 288', '10', 'Published', NULL, 4.60, 0, 'SCI ', '2023-01-02', 'Materials Science and Engineering: B, Elsevier ', 'https://pdf.sciencedirectassets.com/271378/1-s2.0-S0921510722X00093/1-s2.0-S0921510722005724/main.pdf?X-Amz-Security-Token=IQoJb3JpZ2luX2VjEPf%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXVzLWVhc3QtMSJHMEUCIQDGY3afgIpH1pVcZCQI0bTWy7ZXZRe99noSel22BDe5BAIgRcEkzUEW5uGRnIF6ht78SzGMeKAZF%2BiXl%2FMjrkwaXT4qvAUIwP%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FARAFGgwwNTkwMDM1NDY4NjUiDItSf7ixGIQJIT79MiqQBYk%2BZhwcGF%2Bmktb1TjqV5V62ca5zcSc%2F5HDghS9UF1BqINlx1hzMg8544iJYYT4MU8tVwEtOebBjekZZkJ9kCrM2PG%2Fw6rVLEQyyM3o4oZpUxAzzeAl8yvG6D8fNbgUtDwe5MBTx67L2VDaQrgv8jWqE0G0xhOgn2vFe%2FqhF9b1he3I5yIaliuHIoA%2BS5c3jqhsIFipzl2JoE%2BX4w7s8pONjTJdMRX%2B9eY1WHfTG4zgV3iRlg8K2dBGQJSCKItP4yEKIjKoEtAS0%2BhdWz%2FCsqMwbBhrqNI9ZGRiUynMHiBMw%2FzNGh2YmpTnM%2B9kL4%2FfwIYXPvu%2BCSL3Vx0jK%2B3Teop5WY0Nri8RQDHpDdbu1ptqxURWbQk3WC8s6TrRpoDqUL1V7zFAl%2Fn4nO41H3tvnYyMU%2B4NseSb%2F%2FhgBWPToUYgJckF1Nk2Y6TFwwObDN8N%2FwVg8sMpTbM2YqrHaR5BceVjp%2Fs9%2B5mnzz5w6TQEJ%2By2Vr1YfSM%2FWD2J%2BUbjgn9kezMc4lzz7LQ1Uh3%2BCieLFXY%2FeFn%2B5JlAoAb%2FezOMEGA%2BXX%2BLbTcs45CQ7q4k6kr0LrGKktZlwZZPdMFBg2PdPeSkD5duuFGuRoO9geX6f6IOHzNZ78ZpHw1R8nE5DqiiNxZejJ%2FEOGrf5cPNifVnxypErtELz0kZcfc4o4kJy7ehv4CJ%2FL9qNDLvA%2FdtXRe6uL7LgiLQ3Ma2L%2Fy6aa1it4UKHlYVSUwuLzAPybi%2Bmd%2BmRjRtvaQZlJc0zK%2Bc4Vq42khuUUrd0%2FhwBphlZabyq0k7GKGksQ0eFnaXZsCjpzLRQuGcwoQhUjeYcRWamLxf9luj7kNvVq46L9XaPtEtXJZBvYCLfVq89Qu0GsntK9JHTMKGrk84GOrEBO2rq2CPxQYNpsLJlKo8l4AAki4YDsFlpC54jy8G8FUVPU7SPuMcr74gPaP7L21cpyX%2FUhp7qD7O%2BOuOgcgKGFgtWhGa511Zy5bTDw0McN5efQrsfF3lhrSzD126tEA82oVP0WJPkU0%2FEgEz7BXd2viL0mNHc1uXu5vTty2HTTzzEQ3LmdcRxlBwIf%2B%2BaU2zItkSWyGf4jEi6sMqcWHzm%2FF4X6ltU6wJBVVhkDDdNHF%2FV&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20260326T080308Z&X-Amz-SignedHeaders=host&X-Amz-Expires=300&X-Amz-Credential=ASIAQ3PHCVTYQYKSG7EF%2F20260326%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Signature=c74e723875b0e8a1edbbe3caa69aa631e14b47c079ca1eef46998d9b6977f6b3&hash=5c13284fe86979e9950f40ed6f81e64bb14cb8920ace25e5eeeb0abf7a31201a&host=68042c943591013ac2b2430a89b270f6af2c76d8dfd086a07176afe7c76c2c61&pii=S0921510722005724&tid=spdf-9a7da8d8-d23b-4271-ba6e-fb05123e52de&sid=2589bbef7c8e034b3d4bf6e545c4edff1f44gxrqb&type=client&tsoh=d3d3LnNjaWVuY2VkaXJlY3QuY29t&rh=d3d3LnNjaWVuY2VkaXJlY3QuY29t&ua=0c005f0a525202535e&rr=9e24a3167c74a8f6&cc=in', NULL, 'International', '2026-03-26 08:07:26', '2026-03-26 08:17:50'),
+	(26, NULL, 502, 'Conference', 'Power quality improvement in a grid integrated solar PV system', 'C. Shiva,R. Bhavani,N. Rathina Prabha', NULL, NULL, '978-1-5090-4779-6', NULL, NULL, 'Published', NULL, NULL, 0, 'SCOPUS', NULL, 'IEEE', 'https://ieeexplore.ieee.org/document/8303144', NULL, 'International', '2026-03-26 08:11:54', '2026-03-26 08:11:54'),
+	(27, NULL, 502, 'Conference', 'All Weather Affordable Solar Hybrid Induction Heating Stove', 'C Shiva', NULL, NULL, NULL, NULL, NULL, 'Published', 'AICTE Sponsored International Conference on Innovative Research In Thermal And Manufacturing', NULL, 0, 'AICTE Sponsored International Conference on Innovative Research In Thermal And Manufacturing', '2019-10-17', NULL, NULL, NULL, 'International', '2026-03-26 08:15:03', '2026-03-26 08:15:50'),
+	(28, NULL, 502, 'Book Chapter', 'Power Electronics for renewable energy system', 'C Shiva', 'Power Electronics for renewable energy system', NULL, '978=93-48254-01-6', NULL, NULL, 'Published', 'Power Electronics for renewable energy system', NULL, 0, NULL, NULL, NULL, NULL, NULL, 'International', '2026-03-26 08:25:22', '2026-03-26 08:25:22'),
+	(29, NULL, 502, 'Patent', 'MACHINE LEARNING DRIVEN PEDAGOGICAL INNOVATIONS FOR CURRICULUM DESIGNAND STUDENT SUCCESS IN HIGHER EDUCATION', 'C Shiva', NULL, NULL, '202521014574 A', NULL, NULL, 'Published', NULL, NULL, 0, NULL, '2025-07-03', 'Indian Patent ', NULL, NULL, 'International', '2026-03-26 08:38:54', '2026-03-26 08:38:54'),
+	(30, NULL, 502, 'Patent', 'IOT based Smart Campus Renewable Energy Utilization and Power Saving Using Machine Learning', 'C Shiva', NULL, NULL, '202611009533 A', NULL, NULL, 'Published', NULL, NULL, 0, NULL, '2026-03-13', 'Indian Patent ', NULL, NULL, 'International', '2026-03-26 08:40:25', '2026-03-26 08:40:25'),
+	(31, NULL, 502, 'Journal', 'A REVIEW ON NON-INVASIVE TECHNOLOGY FOR MONITORING BLOOD GLUCOSE IN THE MANAGEMENT OF DIABETES', 'C Shiva', NULL, NULL, 'https://www.doi.org/10.56726/IRJMETS60492', NULL, NULL, 'Published', NULL, NULL, 0, 'WoS', '2024-07-07', 'International Research Journal of Modernization in Engineering Technology and Science', 'https://www.irjmets.com/uploadedfiles/paper//issue_7_july_2024/60492/final/fin_irjmets1721815339.pdf', NULL, 'International', '2026-03-26 08:42:57', '2026-03-26 08:42:57'),
+	(32, NULL, 447, 'Conference', 'AECE-2024 IEEE Conference ', 'Tamilselvi T', NULL, NULL, NULL, NULL, NULL, 'Published', 'Original Research ', NULL, 0, 'Scopus ', '2024-11-22', 'IEEE Xplore ', NULL, NULL, 'International', '2026-03-26 12:42:25', '2026-03-26 12:42:25'),
+	(33, NULL, 509, 'Conference', 'IOT Based Cloud Computed Automation in Energy Meter', 'R.Chitra', NULL, NULL, NULL, NULL, NULL, 'Published', NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, 'International', '2026-03-26 13:50:30', '2026-03-26 13:50:30');
 
---
--- Table structure for table `faculty_subjects_handled`
---
-
-CREATE TABLE `faculty_subjects_handled` (
-  `faculty_id` int(11) NOT NULL,
-  `program` varchar(100) DEFAULT NULL,
-  `semester` varchar(10) DEFAULT NULL,
-  `subject_code` varchar(20) DEFAULT NULL,
-  `subject_name` varchar(255) DEFAULT NULL,
-  `academic_year` varchar(20) DEFAULT NULL,
-  `pass_percentage` decimal(5,2) DEFAULT NULL,
-  `document_url` text DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- --------------------------------------------------------
-
---
--- Table structure for table `faculty_subject_assignments`
---
-
-CREATE TABLE `faculty_subject_assignments` (
-  `id` int(11) NOT NULL,
+-- Dumping structure for table eduvertex.faculty_subject_assignments
+CREATE TABLE IF NOT EXISTS `faculty_subject_assignments` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `faculty_id` int(11) NOT NULL,
   `subject_id` int(11) NOT NULL,
   `assigned_by` int(11) DEFAULT NULL,
@@ -628,32 +817,73 @@ CREATE TABLE `faculty_subject_assignments` (
   `total_hours` int(11) DEFAULT 0,
   `no_of_periods` int(11) DEFAULT 0,
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
-  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_faculty_subject_class` (`faculty_id`,`subject_id`,`class_id`,`academic_year`),
+  KEY `idx_fsa_subject` (`subject_id`),
+  KEY `idx_fsa_class` (`class_id`),
+  KEY `idx_fsa_academic_year` (`academic_year`),
+  KEY `idx_fsa_status` (`status`),
+  CONSTRAINT `fk_fsa_class` FOREIGN KEY (`class_id`) REFERENCES `classes` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_fsa_faculty` FOREIGN KEY (`faculty_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_fsa_subject` FOREIGN KEY (`subject_id`) REFERENCES `subjects` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=64 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Dumping data for table eduvertex.faculty_subject_assignments: ~34 rows (approximately)
+INSERT INTO `faculty_subject_assignments` (`id`, `faculty_id`, `subject_id`, `assigned_by`, `assigned_at`, `academic_year`, `semester`, `class_id`, `batch`, `allocation_date`, `status`, `total_hours`, `no_of_periods`, `created_at`, `updated_at`) VALUES
+	(24, 435, 90, 435, '2026-03-14 16:04:05', '2025-2026', 6, 21, '2023-2027', '2026-03-14', 'active', 50, 5, '2026-03-14 15:41:31', '2026-03-14 16:04:05'),
+	(25, 406, 95, 435, '2026-03-14 16:06:06', '2026-2027', 6, 21, '2023-2027', '2026-03-14', 'active', 50, 3, '2026-03-14 16:04:40', '2026-03-14 16:06:06'),
+	(26, 406, 98, 435, '2026-03-14 16:18:39', '2025-2026', 6, 21, '2023-2027', '2026-03-14', 'active', 45, 3, '2026-03-14 16:18:39', '2026-03-14 16:18:39'),
+	(31, 507, 102, 435, '2026-03-14 17:16:59', '2026-2027', 6, 21, '2023-2027', '2026-03-14', 'active', 45, 3, '2026-03-14 17:16:59', '2026-03-14 17:16:59'),
+	(32, 513, 103, 435, '2026-03-14 17:17:07', '2026-2027', 6, 21, NULL, '2026-03-14', 'active', 45, 3, '2026-03-14 17:17:07', '2026-03-14 17:17:07'),
+	(34, 435, 90, 435, '2026-03-14 17:17:27', '2026-2027', 6, 21, NULL, '2026-03-14', 'active', 45, 3, '2026-03-14 17:17:27', '2026-03-14 17:17:27'),
+	(35, 406, 98, 435, '2026-03-14 17:17:31', '2026-2027', 6, 21, NULL, '2026-03-14', 'active', 45, 3, '2026-03-14 17:17:31', '2026-03-14 17:17:31'),
+	(36, 496, 94, 435, '2026-03-15 08:06:06', '2026-2027', 6, 21, '2023-2027', '2026-03-15', 'active', 45, 3, '2026-03-15 08:06:06', '2026-03-15 08:06:06'),
+	(37, 406, 107, 435, '2026-03-17 04:05:30', '2026-2027', 6, 21, '2023-2027', '2026-03-17', 'active', 45, 3, '2026-03-17 04:05:30', '2026-03-17 04:05:30'),
+	(38, 466, 111, 517, '2026-03-25 07:30:26', '2025-2026', 6, 25, NULL, '2026-03-25', 'active', 45, 3, '2026-03-25 07:30:26', '2026-03-25 07:30:26'),
+	(39, 485, 115, 517, '2026-03-25 07:30:52', '2025-2026', 6, 25, NULL, '2026-03-25', 'active', 45, 3, '2026-03-25 07:30:52', '2026-03-25 07:30:52'),
+	(40, 463, 114, 517, '2026-03-25 07:31:03', '2025-2026', 6, 25, NULL, '2026-03-25', 'active', 45, 3, '2026-03-25 07:31:03', '2026-03-25 07:31:03'),
+	(41, 465, 120, 517, '2026-03-25 07:31:15', '2025-2026', 6, 25, NULL, '2026-03-25', 'active', 45, 3, '2026-03-25 07:31:15', '2026-03-25 07:31:15'),
+	(42, 468, 117, 517, '2026-03-25 07:31:29', '2025-2026', 6, 25, NULL, '2026-03-25', 'active', 45, 3, '2026-03-25 07:31:29', '2026-03-25 07:31:29'),
+	(43, 461, 112, 517, '2026-03-25 07:31:40', '2025-2026', 6, 25, NULL, '2026-03-25', 'active', 45, 3, '2026-03-25 07:31:40', '2026-03-25 07:31:40'),
+	(44, 510, 116, 517, '2026-03-25 07:31:49', '2025-2026', 6, 25, NULL, '2026-03-25', 'active', 45, 3, '2026-03-25 07:31:49', '2026-03-25 07:31:49'),
+	(45, 464, 123, 517, '2026-03-25 10:25:55', '2026-2027', 4, 24, NULL, '2026-03-25', 'active', 45, 3, '2026-03-25 10:25:55', '2026-03-25 10:25:55'),
+	(46, 434, 122, 517, '2026-03-25 10:27:10', '2026-2027', 4, 24, NULL, '2026-03-25', 'active', 45, 3, '2026-03-25 10:27:10', '2026-03-25 10:27:10'),
+	(47, 465, 125, 517, '2026-03-25 10:28:29', '2026-2027', 4, 24, NULL, '2026-03-25', 'active', 45, 3, '2026-03-25 10:28:29', '2026-03-25 10:28:29'),
+	(48, 463, 124, 517, '2026-03-25 10:28:39', '2026-2027', 4, 24, NULL, '2026-03-25', 'active', 45, 3, '2026-03-25 10:28:39', '2026-03-25 10:28:39'),
+	(49, 465, 120, 517, '2026-03-25 10:30:37', '2026-2027', 6, 25, '2023-2027', '2026-03-25', 'active', 45, 3, '2026-03-25 10:30:37', '2026-03-25 10:30:37'),
+	(50, 468, 117, 517, '2026-03-25 10:31:03', '2026-2027', 6, 25, NULL, '2026-03-25', 'active', 45, 3, '2026-03-25 10:31:03', '2026-03-25 10:31:03'),
+	(51, 510, 116, 517, '2026-03-25 10:31:17', '2026-2027', 6, 25, NULL, '2026-03-25', 'active', 45, 3, '2026-03-25 10:31:17', '2026-03-25 10:31:17'),
+	(52, 463, 114, 517, '2026-03-25 10:33:45', '2026-2027', 6, 25, '2023-2027', '2026-03-25', 'active', 45, 3, '2026-03-25 10:31:35', '2026-03-25 10:33:45'),
+	(53, 461, 112, 517, '2026-03-25 10:32:13', '2026-2027', 6, 25, '2023-2027', '2026-03-25', 'active', 45, 3, '2026-03-25 10:32:13', '2026-03-25 10:32:13'),
+	(54, 466, 111, 517, '2026-03-25 10:32:24', '2026-2027', 6, 25, NULL, '2026-03-25', 'active', 45, 3, '2026-03-25 10:32:24', '2026-03-25 10:32:24'),
+	(55, 463, 121, 517, '2026-03-25 10:32:49', '2025-2026', 6, 25, NULL, '2026-03-25', 'active', 45, 3, '2026-03-25 10:32:49', '2026-03-25 10:32:49'),
+	(56, 463, 118, 517, '2026-03-25 10:33:03', '2025-2026', 6, 25, NULL, '2026-03-25', 'active', 45, 3, '2026-03-25 10:33:03', '2026-03-25 10:33:03'),
+	(58, 462, 128, 517, '2026-03-25 10:43:51', '2026-2027', 4, 24, NULL, '2026-03-25', 'active', 45, 3, '2026-03-25 10:43:51', '2026-03-25 10:43:51'),
+	(59, 456, 127, 517, '2026-03-25 10:44:10', '2026-2027', 4, 24, NULL, '2026-03-25', 'active', 45, 3, '2026-03-25 10:44:10', '2026-03-25 10:44:10'),
+	(60, 462, 126, 517, '2026-03-25 10:44:24', '2026-2027', 4, 24, NULL, '2026-03-25', 'active', 45, 3, '2026-03-25 10:44:24', '2026-03-25 10:44:24'),
+	(61, 466, 129, 517, '2026-03-25 10:44:37', '2026-2027', 4, 24, NULL, '2026-03-25', 'active', 45, 3, '2026-03-25 10:44:37', '2026-03-25 10:44:37'),
+	(62, 485, 115, 517, '2026-03-25 10:45:04', '2026-2027', 6, 25, '2023-2027', '2026-03-25', 'active', 45, 3, '2026-03-25 10:45:04', '2026-03-25 10:45:04'),
+	(63, 463, 114, 517, '2026-03-25 10:45:17', '2023-2027', 6, 25, NULL, '2026-03-25', 'active', 45, 3, '2026-03-25 10:45:17', '2026-03-25 10:45:17');
+
+-- Dumping structure for table eduvertex.faculty_subjects_handled
+CREATE TABLE IF NOT EXISTS `faculty_subjects_handled` (
+  `faculty_id` int(11) NOT NULL,
+  `program` varchar(100) DEFAULT NULL,
+  `semester` varchar(10) DEFAULT NULL,
+  `subject_code` varchar(20) DEFAULT NULL,
+  `subject_name` varchar(255) DEFAULT NULL,
+  `academic_year` varchar(20) DEFAULT NULL,
+  `pass_percentage` decimal(5,2) DEFAULT NULL,
+  `document_url` text DEFAULT NULL,
+  PRIMARY KEY (`faculty_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `faculty_subject_assignments`
---
+-- Dumping data for table eduvertex.faculty_subjects_handled: ~0 rows (approximately)
 
-INSERT INTO `faculty_subject_assignments` (`id`, `faculty_id`, `subject_id`, `assigned_by`, `assigned_at`, `academic_year`, `semester`, `class_id`, `batch`, `allocation_date`, `status`, `total_hours`, `no_of_periods`, `created_at`, `updated_at`) VALUES
-(24, 435, 90, 435, '2026-03-14 16:04:05', '2025-2026', 6, 21, '2023-2027', '2026-03-14', 'active', 50, 5, '2026-03-14 15:41:31', '2026-03-14 16:04:05'),
-(25, 406, 95, 435, '2026-03-14 16:06:06', '2026-2027', 6, 21, '2023-2027', '2026-03-14', 'active', 50, 3, '2026-03-14 16:04:40', '2026-03-14 16:06:06'),
-(26, 406, 98, 435, '2026-03-14 16:18:39', '2025-2026', 6, 21, '2023-2027', '2026-03-14', 'active', 45, 3, '2026-03-14 16:18:39', '2026-03-14 16:18:39'),
-(31, 507, 102, 435, '2026-03-14 17:16:59', '2026-2027', 6, 21, '2023-2027', '2026-03-14', 'active', 45, 3, '2026-03-14 17:16:59', '2026-03-14 17:16:59'),
-(32, 513, 103, 435, '2026-03-14 17:17:07', '2026-2027', 6, 21, NULL, '2026-03-14', 'active', 45, 3, '2026-03-14 17:17:07', '2026-03-14 17:17:07'),
-(34, 435, 90, 435, '2026-03-14 17:17:27', '2026-2027', 6, 21, NULL, '2026-03-14', 'active', 45, 3, '2026-03-14 17:17:27', '2026-03-14 17:17:27'),
-(35, 406, 98, 435, '2026-03-14 17:17:31', '2026-2027', 6, 21, NULL, '2026-03-14', 'active', 45, 3, '2026-03-14 17:17:31', '2026-03-14 17:17:31'),
-(36, 496, 94, 435, '2026-03-15 08:06:06', '2026-2027', 6, 21, '2023-2027', '2026-03-15', 'active', 45, 3, '2026-03-15 08:06:06', '2026-03-15 08:06:06'),
-(37, 406, 107, 435, '2026-03-17 04:05:30', '2026-2027', 6, 21, '2023-2027', '2026-03-17', 'active', 45, 3, '2026-03-17 04:05:30', '2026-03-17 04:05:30');
-
--- --------------------------------------------------------
-
---
--- Table structure for table `faculty_substitutes`
---
-
-CREATE TABLE `faculty_substitutes` (
-  `id` int(11) NOT NULL,
+-- Dumping structure for table eduvertex.faculty_substitutes
+CREATE TABLE IF NOT EXISTS `faculty_substitutes` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `faculty_id` int(11) NOT NULL,
   `substitute_faculty_id` int(11) NOT NULL,
   `start_date` date NOT NULL,
@@ -665,17 +895,23 @@ CREATE TABLE `faculty_substitutes` (
   `approved_by` int(11) DEFAULT NULL,
   `approval_date` datetime DEFAULT NULL,
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
-  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `faculty_id` (`faculty_id`),
+  KEY `substitute_faculty_id` (`substitute_faculty_id`),
+  KEY `requested_by` (`requested_by`),
+  KEY `leave_id` (`leave_id`),
+  CONSTRAINT `fk_fsub_faculty` FOREIGN KEY (`faculty_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_fsub_leave` FOREIGN KEY (`leave_id`) REFERENCES `leave_requests` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_fsub_requested_by` FOREIGN KEY (`requested_by`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_fsub_substitute` FOREIGN KEY (`substitute_faculty_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- --------------------------------------------------------
+-- Dumping data for table eduvertex.faculty_substitutes: ~0 rows (approximately)
 
---
--- Table structure for table `faculy_edu_qualification`
---
-
-CREATE TABLE `faculy_edu_qualification` (
-  `membership_id` int(11) NOT NULL,
+-- Dumping structure for table eduvertex.faculy_edu_qualification
+CREATE TABLE IF NOT EXISTS `faculy_edu_qualification` (
+  `membership_id` int(11) NOT NULL AUTO_INCREMENT,
   `faculty_id` int(11) NOT NULL,
   `degree` varchar(100) NOT NULL,
   `branch` varchar(150) NOT NULL,
@@ -684,17 +920,332 @@ CREATE TABLE `faculy_edu_qualification` (
   `year` varchar(50) DEFAULT NULL,
   `percentage` varchar(20) DEFAULT NULL,
   `society_name` varchar(255) NOT NULL,
-  `status` enum('Active','Inactive') DEFAULT 'Active'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `status` enum('Active','Inactive') DEFAULT 'Active',
+  PRIMARY KEY (`membership_id`),
+  KEY `idx_faculty_id` (`faculty_id`),
+  CONSTRAINT `faculy_edu_qualification_ibfk_1` FOREIGN KEY (`faculty_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=203 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- --------------------------------------------------------
+-- Dumping data for table eduvertex.faculy_edu_qualification: ~172 rows (approximately)
+INSERT INTO `faculy_edu_qualification` (`membership_id`, `faculty_id`, `degree`, `branch`, `college`, `university`, `year`, `percentage`, `society_name`, `status`) VALUES
+	(24, 462, 'M.E.', 'Computer Science Engineering', 'Annai Mathammal Sheela Engineering College, Namakkal', 'Anna University', '2015', '7.8', '', 'Active'),
+	(26, 461, 'Ph.D.', 'Computer Science Engineering', 'Nadar Saraswathi College of Engineering and Technology', 'Anna University', 'July-2025', '8.00 ', '', 'Active'),
+	(27, 406, 'M.E.', 'Software Engineering', 'Bharath Niketan Engineering College', 'Anna University', '2022', '87', '', 'Active'),
+	(29, 434, 'B.E.', 'Computer Science Engineering', 'MAILAM ENGINEERING COLLEGE', 'ANNA UNIVERSITY', '2008', '63', '', 'Active'),
+	(30, 434, 'M.Tech', 'Computer Science Engineering', 'Vel Tech Rangarajan Dr.Sagunthala R&D Institute of Science and Technology, Avadi, Chennai', 'VELTECH UNIVERSITY', '2011', '80', '', 'Active'),
+	(31, 434, 'Membership', 'Professional Membership', '', 'Professional Organization', NULL, NULL, 'ISTE', 'Active'),
+	(32, 435, 'B.E.', 'Computer Science Engineering', 'Bharath Niketan Engineering College', 'Anna University, Chennai', '2009', '73', '', 'Active'),
+	(33, 435, 'M.E.', 'Computer Science Engineering', 'Anna University of Technology, Madurai', 'Anna University, Chennai', '2014', '79', '', 'Active'),
+	(34, 435, 'Membership', 'Professional Membership', '', 'Professional Organization', NULL, NULL, 'IAENG', 'Active'),
+	(35, 444, 'M.B.A', 'ITM', 'MIT School of Distance Education', 'Assam down town university', '2014', '8.7', '', 'Active'),
+	(36, 444, 'M.E.', 'Computer Science Engineering', 'MAM College of Engineering', 'Ana University', '2012', '8.21', '', 'Active'),
+	(37, 444, 'B.E.', 'Computer Science Engineering', 'Vickram College of Engineering', 'Anna University ', '2010', '75', '', 'Active'),
+	(38, 515, 'B.E.', 'Electronics & Communication Engineering', 'Bharath Niketan Engineering College ', 'Anna University ', '2009', '75%', '', 'Active'),
+	(39, 515, 'M.E.', 'VLSI DESIGN ', 'KCG College of Engineering and Technology ', 'Anna University ', '2013', '80%', '', 'Active'),
+	(40, 444, 'Membership', 'Professional Membership', '', '', '', '', 'IAENG', 'Active'),
+	(41, 462, 'B.E.', 'Computer Science Engineering', 'K.L.N college of Information Technology', 'Anna University', '2010', '77', '', 'Active'),
+	(42, 446, 'B.Tech', 'Electronics & Communication Engineering', 'Kalasalingam University', 'Kalasalingam University', '2011', '65', '', 'Active'),
+	(43, 446, 'M.E.', 'Computer and Communication', 'PSNA College of Engineering and Technology', 'Anna University', '2013', '77', '', 'Active'),
+	(44, 446, 'Ph.D.', 'Information and Communication', 'Anna University', 'Anna University', '2024', '77', '', 'Active'),
+	(45, 446, 'AICTE PG Programe - Internet of Things', 'Electronics & Communication Engineering', 'Indian Institute of Technology, Jammu', 'Indian Institute of Technology, Jammu', '2024', '-', '', 'Active'),
+	(46, 446, 'Membership', 'Professional Membership', '', '', '', '', 'The Indian Society for Technical Education', 'Active'),
+	(47, 446, 'Membership', 'Professional Membership', '', '', '', '', 'International Association of Engineers', 'Active'),
+	(48, 446, 'Membership', 'Professional Membership', '', '', '', '', 'Institute of Electrical & Electronics Engineering ', 'Inactive'),
+	(49, 493, 'M.Tech', 'Computer Science Engineering', 'Dr.M.G.R University Educational and Research Institute', 'Dr.M.G.R University Educational and Research Institute', '2013', '8.72', '', 'Active'),
+	(50, 494, 'M.E.', 'Information Technology', 'PSN College of Engineering and Technology', 'Anna University', '2014', '8.9', '', 'Active'),
+	(51, 463, 'B.Tech', 'Information Technology', 'Rajalakshmi Engineering College', 'Anna University', '2005', '60%', '', 'Active'),
+	(52, 463, 'M.E.', 'Computer Science Engineering', 'Anna University Regional Campus, Trichy', 'Anna University', '2012', '6.79', '', 'Active'),
+	(53, 510, 'B.E.', 'Electronics & Communication Engineering', 'Nadar Saraswathi College of Engineering and Technology', 'Anna University', '2015', '80.2%', '', 'Active'),
+	(54, 493, 'B.E.', 'Computer Science Engineering', 'Theni Kammavar Sangama College Of Technology', 'Anna University', '2007', '79.84%', '', 'Active'),
+	(55, 517, 'B.Tech', 'Information Technology', 'Nadar Saraswathi College of Engineering and Technology', 'Anna University', '2006', '62', '', 'Active'),
+	(56, 510, 'M.E.', 'VLSI DESIGN', 'Theni Kammavar Sangam College of Technology', 'Anna University', '2017', '82.1%', '', 'Active'),
+	(57, 517, 'M.E.', 'Computer Science Engineering', 'Nadar Saraswathi College of Engineering and Technology', 'Anna University', '2012', '69', '', 'Active'),
+	(58, 517, 'Ph.D.', 'Computer Science Engineering', 'Nadar Saraswathi College of Engineering and Technology', 'Anna University', '2024', '', '', 'Active'),
+	(59, 517, 'Membership', 'Professional Membership', '', 'Professional Organization', NULL, NULL, 'MISTE', 'Active'),
+	(60, 522, 'B.E.', 'Information Technology', 'RVS College of Engineering And Technology', 'Anna unniversity', '2015', NULL, '', 'Active'),
+	(61, 522, 'M.E.', 'Computer Science Engineering', 'Thiagarajar College of Engineering and Technology ', 'Anna University', '2019', '8.9', '', 'Active'),
+	(62, 474, 'B.A', 'English', 'Jayaraj Annapackiam College of Arts and Science', 'Kamaraj Univerrsity Madurai', '1983', '80', '', 'Active'),
+	(63, 507, 'M.E.', 'Electronics & Communication Engineering', 'RVS school of Engineering', 'Anna University', '2016', '7 CGPA', '', 'Active'),
+	(64, 480, 'B.Sc', 'PHYSICS', 'VIVEKANANDA COLLEGE', 'MADURAI KAMARAJ UNIVERSITY', '2002', '75.92', '', 'Active'),
+	(65, 480, 'M.Sc', 'PHYSICS', 'S.V.N COLLEGE ', 'MADURAI KAMARAJ UNIVERSITY', '2004', '73', '', 'Active'),
+	(66, 480, 'M.Phil', 'PHYSICS', 'ALAGAPPA UNIVERSITY', 'ALAGAPPA UNIVERSITY', '2005', '7.9', '', 'Active'),
+	(67, 480, 'Ph.D.', 'PHYSICS', 'ALAGAPPA UNIVERSITY', 'ALAGAPPA UNIVERSITY', '2015', '8.5', '', 'Active'),
+	(68, 490, 'B.E.', 'Computer Science Engineering', 'R.V.S College of Engineering and Technology', 'Anna university', '2006', '66', '', 'Active'),
+	(69, 480, 'Membership', 'Professional Membership', '', '', '', '', 'INDIAN SOCIETY FOR TECHNICAL EDUCTAION ', 'Active'),
+	(70, 480, 'Membership', 'Professional Membership', '', '', '', '', 'THENI POLLUTION CONTROL DEPARTMENT ', 'Inactive'),
+	(71, 490, 'M.E.', 'Computer Science Engineering', 'Regional Center Anna University Madurai', 'Anna University', '2014', '72', '', 'Active'),
+	(72, 442, 'B.E.', 'Mechanical Engineering', 'Odaiyappa College of Engineering and Technology', 'Anna University', '2010', '70', '', 'Active'),
+	(73, 442, 'M.E.', 'Engineering Design', 'Theni Kammavar Sangam College of Technology', 'Anna University', '2014', '7.8', '', 'Active'),
+	(74, 442, 'Membership', 'Professional Membership', '', '', '', '', 'IAENG', 'Active'),
+	(75, 442, 'Membership', 'Professional Membership', '', '', '', '', 'ISTE', 'Active'),
+	(76, 486, 'M.E.', 'Mechanical Engineering', 'Nadar Saraswathi College of Engineering and Technology', 'Anna University', '2016', '76.9', '', 'Active'),
+	(77, 497, 'M.E.', 'Computer Science Engineering', 'Nadar Saraswathi College of Engineering and Technology', 'AnnaUniversity', '2022', '80', '', 'Active'),
+	(78, 484, 'M.E.', 'Mechanical Engineering', 'Nadar Saraswathi College of Engineering and Technology', 'Anna University Chennai', '2016', '77', '', 'Active'),
+	(79, 497, 'Membership', 'Professional Membership', '', '', '', '', 'IAENG', 'Active'),
+	(80, 484, 'B.E.', 'Mechanical Engineering', 'Nadar Saraswathi College of Engineering and Technology', 'Anna University ', '2014', '72', '', 'Active'),
+	(81, 474, 'M.A', 'English', 'M.V.M. College of Arts and Science Dindigul', 'Kamaraj University Madurai', '2003', '75', '', 'Active'),
+	(82, 474, 'B.Ed.', 'English', 'Government college of Education  Coimbatore', 'Bharathiyar University', '1990', '89', '', 'Active'),
+	(83, 486, 'Membership', 'Professional Membership', '', '', '', '', 'IAENG ', 'Active'),
+	(84, 486, 'Membership', 'Professional Membership', '', '', '', '', 'IRED', 'Active'),
+	(85, 486, 'Membership', 'Professional Membership', '', '', '', '', 'IFERP', 'Inactive'),
+	(86, 474, 'M.Ed.', 'English', 'Madurai Kamaraj University', 'Madurai Kamaraj University', '2002', '81', '', 'Active'),
+	(87, 474, 'M.Phil.', 'English', 'Alagappa University Karaikudi', 'Alagappa University Karaikudi', '2012', '60', '', 'Active'),
+	(88, 474, 'Ph.D.', 'English', 'Seetha Lakshmi Achi College for Women', 'Alagappa University Karaikudi', '2022', '85', '', 'Active'),
+	(89, 489, 'M.E.', 'Computer Science and Engineering', 'Nadar Saraswathi College of Engineering and Technology', 'Anna University', NULL, NULL, '', 'Active'),
+	(90, 474, 'Diploma', '500 Hour International Advanced Post Graduate diploma TESOL/ TEFL COURSE', 'Asian college of Teachers', 'Bangkok', '2024', '80', '', 'Active'),
+	(91, 474, 'Diploma', 'Online Certificate Course in  English', 'Regional Institute of English Bengaluru', 'Regional Institute of English Bengaluru', '2021', NULL, '', 'Active'),
+	(92, 466, 'M.E.', 'Computer Science Engineering', 'Salem College of Engineering and Technology', 'Anna University,Chennai', '2015', '8.7', '', 'Active'),
+	(93, 474, 'Diploma', 'Computer on Office Automation', 'Government of Tamilnadu', 'Government of Tamilnadu', '2018', 'Distinction', '', 'Active'),
+	(95, 446, 'NPTEL - Internet of Things', 'Electronics & Communication Engineering', 'NPTEL', 'AICTE', '2017', NULL, '', 'Active'),
+	(96, 495, 'M.E.', 'software engineering', 'bharath niketan engineering college,auntipatti.', 'anna university ', '2023', '7.8', '', 'Active'),
+	(97, 516, 'B.E.', 'Electronics & Communication Engineering', 'Kamaraj College of Engineering and Technology', 'Anna university', '2006', '73', '', 'Active'),
+	(98, 516, 'M.E.', 'Electronics & Communication Engineering', 'PSN College of Engineering and Technology', 'Anna University', '2009', '76', '', 'Active'),
+	(99, 516, 'Ph.D.', 'Electronics & Communication Engineering', 'Madras Institute of Technology', 'Anna University', '2015', '-', '', 'Active'),
+	(100, 514, 'B.E.', 'Mechanical Engineering', 'Bharath Niketan Engineering College, Aundipatti', 'Anna University', '2006', '75', '', 'Active'),
+	(101, 514, 'M.E.', 'Thermal Engineering', 'University College of Engineering, Trichirappalli', 'Anna University', '2013', '8.11', '', 'Active'),
+	(102, 516, 'PG Certificate', 'Internet of Things', 'Indian Institute of Information Technology Design and Manufacturing, Kurnool', 'AICTE', '2025', '90', '', 'Active'),
+	(103, 514, 'Ph.D.', 'Mechanical Engineering', 'Anna University, Chennai (Part Time)', 'Anna University', '2026', '-', '', 'Active'),
+	(104, 514, 'Membership', 'Professional Membership', '', 'Professional Organization', NULL, NULL, 'Indian Society for Technical Education (ISTE)', 'Active'),
+	(105, 514, 'Membership', 'Professional Membership', '', 'Professional Organization', NULL, NULL, 'International Association of Engineers (IAENG)', 'Active'),
+	(106, 514, 'Membership', 'Professional Membership', '', 'Professional Organization', NULL, NULL, 'Institute for Engineering Research and Publication (IFERP)', 'Active'),
+	(107, 470, 'B.Sc', 'Mathematics', 'Jeyaraj Annapackiam College for Women, Periyakulam.', 'Madurai Kamaraj University', '1994', '79%', '', 'Active'),
+	(108, 470, 'M.Sc', 'Mathematics', 'Jeyaraj Annapackiam College for Women, Periyakulam.', 'Madurai Kamaraj University', '1996', '74%', '', 'Active'),
+	(110, 470, 'M.Phil', 'Mathematics', 'Madurai Kamaraj University', 'Madurai Kamaraj University', '2000', '62%', '', 'Active'),
+	(111, 470, 'B.Ed', 'Mathematics', 'Parasakthi College of Education, Kottaipatti, Peraiyur.', 'Tamilnadu Teachers Education University, Chennai.', '2010', '60%', '', 'Active'),
+	(112, 470, 'Ph.D.', 'Graph Theory / Mathematics', 'Manonmaiam Sundaranar University, Tirunelveli.', 'Manonmaiam Sundaranar University, Tirunelveli.', '2020', NULL, '', 'Active'),
+	(113, 455, 'M.E.', 'Civil Engineering', 'Nadar Saraswathi College of Engineering and Technology', 'Anna university ', '2013', '88.6%', '', 'Active'),
+	(114, 515, 'Ph.D.', 'Information and Communication Engineering', 'Thiagarajan College of Engineering ', 'Anna University', '2019', '8 CGPA', '', 'Active'),
+	(115, 455, 'Membership', 'Professional Membership', '', '', '', '', 'IAENG', 'Active'),
+	(116, 455, 'B.E.', 'Civil Engineering', 'University college of engineering, Dindigul', 'Anna university ', '2013', '81.3', '', 'Active'),
+	(117, 475, 'M.A.', 'ENGLISH', ' ANNAMALAI UNIVERSITY', 'ANNAMALAI UNIVERSITY', '2008', '59%', '', 'Active'),
+	(118, 475, 'Ph.D.', 'ENGLISH', ' TAMIL NADU OPEN UNIVERSITY', ' TAMIL NADU OPEN UNIVERSITY', '2023', NULL, '', 'Active'),
+	(119, 449, 'M.E.', 'Electronics & Communication Engineering', 'Nadar Saraswathi College of Engineering and Technology', 'Anna University ', '2013', '77', '', 'Active'),
+	(120, 471, 'B.SC', 'MATHEMATICS', 'GANDHIGRAM RURAL UNIVERSITY', 'GANDHIGRAM RURAL UNIVERSITY,GANDHIGRAM', '2005', '68', '', 'Active'),
+	(121, 471, 'M.SC', 'MATHEMATICS', 'GANDHIGRAM RURAL UNIVERSITY', 'GANDHIGRAM RURAL UNIVERSITY, GANDHIGRAM', '2008', '73', '', 'Active'),
+	(122, 471, 'M.PHIL', 'MATHEMATICS', 'GANDHIGRAM RURAL UNIVERSITY', 'GANDHIGRAM RURAL UNIVERSITY, GANDHIGRAM', '2012', '70', '', 'Active'),
+	(123, 471, 'Membership', 'Professional Membership', '', '', '', '', 'ISTE', 'Active'),
+	(124, 437, 'Ph.D.', 'Chemistry', 'Thiagarajr College', 'Madurai Kamaraj University', '2014', NULL, '', 'Active'),
+	(125, 437, 'Membership', 'Professional Membership', '', '', '', '', 'The Indian Society for Technical Education', 'Active'),
+	(126, 496, 'B.E.', 'ECE', 'Nehru Institute of Technology', 'Anna University', '2013-2017', '68%', '', 'Active'),
+	(127, 496, 'M.Tech', 'CSE', 'Nehru Institute of Technology', 'Anna University', '2017-2019', '81%', '', 'Active'),
+	(128, 476, 'M.A', 'English ', 'St. Joseph\'s College, Trichy', 'Bharathidasan University ', '2014', '67%', '', 'Active'),
+	(129, 476, 'M.Phil', 'English ', 'St. Joseph\'s College, Trichy ', 'Bharathidasan University ', '2015', '72', '', 'Active'),
+	(130, 496, 'Membership', 'Professional Membership', '', '', '', '', 'IAENG', 'Active'),
+	(131, 476, 'Membership', 'Professional Membership', '', '', '', '', 'ISTE', 'Active'),
+	(132, 468, 'M.Sc.,', 'Mathematics', 'Sri.S.R.N.M College,Sattur', 'Madurai Kamarajar University', '2000', '87%', '', 'Active'),
+	(133, 468, 'M.Phil', 'Mathematics', 'Sri.S.R.N.M.College,Sattur', 'Madurai Kamarajar University', '2013', '9.1', '', 'Active'),
+	(134, 482, 'Ph.D.', 'Chemistry ', NULL, 'Manonmanium sundaranar university ', '2015', NULL, '', 'Active'),
+	(135, 502, 'Ph.D.', 'Electrical & Electronics Engineering', 'SRM Institute of Science and Technology Ramapuram Campus Chennai', 'SRM University Chennai', '2025', 'pursuing', '', 'Active'),
+	(136, 502, 'M.E.', 'Electrical & Electronics Engineering', 'Mepco Schlenk Engineering College Sivakasi', 'Anna University Chennai', '2017', '82 %', '', 'Active'),
+	(137, 502, 'B.E.', 'Electrical & Electronics Engineering', 'Dr Mahalingam College of Engineering and Technology Pollachi', 'Anna University Chennai', '2014', '75 %', '', 'Active'),
+	(138, 502, 'Membership', 'Professional Membership', '', '', '', '', 'IAENG', 'Active'),
+	(139, 436, 'B.Sc', 'Mathematics ', 'ARUL ANANDAR COLLEGE KARUMATHIR.', 'MADURAI KAMARAJ UNIVERSITY ', '1993', '75.33', '', 'Active'),
+	(140, 487, 'Diploma', 'Mechanical Engineering', 'Virudhunagar S.Vellaisaami Nadar Polytechnic College, Virudhunagar', 'DOTE', '2006', '91.46%', '', 'Active'),
+	(141, 487, 'B.E.', 'Mechanical Engineering', 'Government College of Engineering (IRTT), Erode', 'Anna University, Chennai', '2009', '74%', '', 'Active'),
+	(142, 487, 'M.E.', 'Manufacturing Engineering', 'Chendhuran College of Engineering and Technology', 'Anna University, Chennai', '2015', '79.4%', '', 'Active'),
+	(143, 487, 'Membership', 'Professional Membership', '', '', '', '', 'MISTE', 'Active'),
+	(144, 487, 'Membership', 'Professional Membership', '', '', '', '', 'IAENG', 'Active'),
+	(145, 461, 'B.E.', 'Computer Science Engineering', 'HINDUSTHAN INSTITUTE OF TECHNOLOGY ', 'ANNA UNIVERSITY', '2020', '82', '', 'Active'),
+	(146, 461, 'M.E.', 'Computer Science Engineering', 'HINDUSTHAN COLLEGE OF ENGINEERING AND TECHNOLOGY', 'ANNA UNIVERSITY', '2023', '85', '', 'Active'),
+	(147, 436, 'M.Sc.', 'Mathematics ', 'Ayya Nadar Janaki Ammal College, Sivakasi.', 'Madurai Kamaraj University, Madurai.', '1997', '60%', '', 'Active'),
+	(148, 436, 'M.Phill', 'Mathematics ', 'Ayya Nadar Janaki Ammal College, Sivakasi.', 'Madurai Kamaraj University, Madurai.', '1998', '65.8,%', '', 'Active'),
+	(149, 436, 'M.Ed', 'Mathematics ', 'Madurai Kamaraj University, Madurai ', 'Madurai Kamaraj University, Madurai ', '1997', '53.7%', '', 'Active'),
+	(150, 436, 'B.Ed.', 'Mathematics ', 'Lakshmi College of Education, Gandigramam.', 'Madurai Kamaraj University, Madurai.', '1996', 'T-53.9%,P-58.4%', '', 'Active'),
+	(151, 436, 'PGDCA', 'Computer Application ', 'Madurai Kamaraj University, Madurai.', 'Madurai Kamaraj University, Madurai.', '2002', '53.125', '', 'Active'),
+	(152, 436, 'Ph.D', 'Mathematics ', 'Madurai Kamaraj University, Madurai.', 'Madurai Kamaraj University Madurai.', '2023', 'Highly Commented ', '', 'Active'),
+	(153, 483, 'Phd', 'Tamil', 'Alagappa university ', 'Alagappa university ', 'During ', 'Nil', '', 'Active'),
+	(154, 436, 'Membership', 'Professional Membership', '', '', '', '', 'MISTE', 'Active'),
+	(155, 440, 'B.E.', 'Mechanical Engineering', 'PSNA College of Engineering & Technology', 'Madurai Kamaraj University', '2002', '70.08', '', 'Active'),
+	(156, 440, 'M.E.', 'Industrial Safety Engineering', 'Bharath Niketan Engineering College', 'Anna University', '2012', '8.71', '', 'Active'),
+	(157, 440, 'Membership', 'Professional Membership', '', '', '', '', 'MISTE ', 'Active'),
+	(158, 440, 'Membership', 'Professional Membership', '', '', '', '', 'IAENG', 'Active'),
+	(159, 501, 'B.E.', 'Electrical & Electronics Engineering', 'Mepco Schlenk Engineering College, Sivakasi.', 'Anna University', '2012', '8.69 CGPA', '', 'Active'),
+	(160, 501, 'M.E.', 'Power Systems Engineering', 'K. L. N. College of Engineering, Pottapalayam, Sivagangai.', 'Anna University', '2015', '8.48 CGPA', '', 'Active'),
+	(161, 501, 'Membership', 'Professional Membership', '', '', '', '', 'IAENG', 'Active'),
+	(163, 499, 'M.E.', 'Applied Electronics', 'Nadar Saraswathi College of Engineering and Technology', 'Anna University', '2014', '8.06 CGPA', '', 'Active'),
+	(164, 518, 'Ph.D.', 'Mechanical Engineering', 'Anna University', 'Anna University', '2020', '8.0', '', 'Active'),
+	(165, 518, 'M.E.', 'Mechanical Engineering', 'Velammal College of Engineering and Technology', 'Anna University', '2014', '8.81', '', 'Active'),
+	(166, 518, 'B.E.', 'Mechanical Engineering', 'Nadar Saraswathi College of Engineering and Technology', 'Anna University', '2012', '7.55', '', 'Active'),
+	(167, 499, 'Membership', 'Professional Membership', '', '', '', '', 'IAENG', 'Active'),
+	(168, 499, 'Membership', 'Professional Membership', '', '', '', '', 'IFERP', 'Active'),
+	(169, 499, 'B.E.', 'Instrumentation & Control Engineering', 'Nadar Saraswathi College of Engineering and Technology', 'Anna University', '2009', '69', '', 'Active'),
+	(170, 498, 'B.E.', 'Electrical & Electronics Engineering', 'RMK Engineering College', 'Anna University', '2011', '67%', '', 'Active'),
+	(171, 498, 'M.Tech', 'Electrical & Electronics Engineering', 'Dr MGR Educational and Research Institute', 'Dr MGR Educational and Research Institute', '2016', '8.59 CGPA', '', 'Active'),
+	(172, 505, 'B.E.', 'Electrical & Electronics Engineering', 'K.L.N.College of Engineering', 'Anna university', '2015', '78', '', 'Active'),
+	(173, 505, 'M.E.', 'Power systems Engineering', 'K.L.N.College of Engineering', 'Anna university', '2017', '84.8', '', 'Active'),
+	(174, 498, 'Diploma', 'Electrical & Electronics Engineering', 'Lakshmi Ammal Polytechnic College, Kovilpatti', 'Department of Technical Education', '2008', '78.62%', '', 'Active'),
+	(175, 505, 'Membership', 'Professional Membership', '', '', '', '', 'IAENG', 'Active'),
+	(176, 441, 'Diploma', 'Mechanical Engineering', 'Virudhunagar S.Vellaisamy Nadar Polytechnic College. Virudhunagar', 'State Board of Technical Education and Training', '2005', '79.12%', '', 'Active'),
+	(177, 441, 'B.E.', 'Mechanical Engineering', 'Kurinji College of Engineering and Technology, Manapparai, Trichy', 'Anna University', '2008', '72%', '', 'Active'),
+	(178, 441, 'M.E.', 'Mechanical Engineering', 'Kurinji College of Engineering and Technology, Manapparai, Trichy', 'Anna University', '2014', '8.28 CGPA', '', 'Active'),
+	(179, 441, 'Membership', 'Professional Membership', '', '', '', '', 'The Indian Society for Technical Education', 'Active'),
+	(180, 441, 'Membership', 'Professional Membership', '', '', '', '', 'International Association of Engineers', 'Active'),
+	(181, 445, 'M.E.', 'VLSI Design', 'Government College of Technology', 'Anna University Coimbatore', '2011', '86', '', 'Active'),
+	(182, 445, 'B.E.', 'Electronics & Communication Engineering', 'VLB Janakiammal College of Engineering and Technology', 'Anna University', '2005', '76.7', '', 'Active'),
+	(183, 498, 'Membership', 'Professional Membership', '', '', '', '', 'The Indian Society for Technical Educations', 'Active'),
+	(184, 498, 'Membership', 'Professional Membership', '', '', '', '', 'IAENG', 'Active'),
+	(185, 447, 'B.E.', 'Electronics & Communication Engineering', 'Odaiyappa College of Engineering and Technology', 'Anna University ', '2011', '77.7%', '', 'Active'),
+	(186, 447, 'M.Tech', 'VLSI Design ', 'Kalasalingam University ', 'Kalasalingam University ', '2013', '8.56', '', 'Active'),
+	(188, 447, 'Membership', 'Professional Membership', '', '', '', '', 'ISTE ', 'Active'),
+	(189, 509, 'M.E.', 'Applied Electronics', 'R.V.S College of  Engineering & Technology', 'Anna University', '2015', '77', '', 'Active'),
+	(191, 479, 'M.Sc', 'Physics', 'Nadar Mahajana Sangam S.Vellaichamy Nadar College, Nagamalai', 'Madurai Kamaraj University', '2017', '68', '', 'Active'),
+	(192, 479, 'M.Phill', 'Physics', 'St. Joseph\'s College, Tiruchirappalli', 'Bharathidasan university, Tiruchirapalli', '2018', '65', '', 'Active'),
+	(193, 509, 'Membership', 'Professional Membership', '', '', '', '', 'Universal Association of computer and electronics Engineers ', 'Active'),
+	(194, 509, 'B.E.', 'Bio Medical Engineering', 'Odaiyappa College of Engineering & Technology', 'Anna University', '2010', '70', '', 'Active'),
+	(195, 509, 'Membership', 'Professional Membership', '', '', '', '', 'Indian Engineering Research & Development ', 'Active'),
+	(196, 509, 'Membership', 'Professional Membership', '', '', '', '', 'Life Time International Association of Engineers (IAENG)', 'Active'),
+	(197, 509, 'Membership', 'Professional Membership', '', '', '', '', 'Vidwan', 'Active'),
+	(198, 504, 'B.E.', 'Electrical & Electronics Engineering', 'sethu institute of technology ', 'anna university', '2009', '66 %', '', 'Active'),
+	(199, 504, 'M.Tech', 'Power systems ', 'Nadar Saraswathi College of Engineering and Technology', 'kalasalingam university', '2012', '8.1 CGPA', '', 'Active'),
+	(200, 504, 'Ph.D.', 'Electrical & Electronics Engineering', 'Thiagarajar College of Engineering', 'anna university', '2019', '8.75 CGPA', '', 'Active'),
+	(201, 477, 'Ph.D.', 'Electronics & Communication Engineering', 'School of Electrical and Electronics Engineering', 'SASTRA Deemed auniversity, Thanjavur', '2024', '62 %', '', 'Active'),
+	(202, 477, 'M.Tech', 'Remote sensing', 'College of Engineering, Guindy', 'Anna university', '2010', '73.80 %', '', 'Active');
 
---
--- Table structure for table `leaves`
---
+-- Dumping structure for table eduvertex.leave_approval_levels
+CREATE TABLE IF NOT EXISTS `leave_approval_levels` (
+  `id` tinyint(3) unsigned NOT NULL AUTO_INCREMENT,
+  `applicant_type` enum('student','faculty') NOT NULL,
+  `level_number` tinyint(3) unsigned NOT NULL,
+  `approver_role` varchar(50) NOT NULL,
+  `level_label` varchar(100) NOT NULL,
+  `is_mandatory` tinyint(1) NOT NULL DEFAULT 1,
+  `sequence` tinyint(3) unsigned NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_type_level` (`applicant_type`,`level_number`)
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE `leaves` (
-  `id` int(11) NOT NULL,
+-- Dumping data for table eduvertex.leave_approval_levels: ~4 rows (approximately)
+INSERT INTO `leave_approval_levels` (`id`, `applicant_type`, `level_number`, `approver_role`, `level_label`, `is_mandatory`, `sequence`) VALUES
+	(1, 'student', 1, 'class_incharge', 'Class Incharge', 1, 1),
+	(2, 'student', 2, 'hod', 'Head of Department', 1, 2),
+	(3, 'faculty', 1, 'hod', 'Head of Department', 1, 1),
+	(4, 'faculty', 2, 'principal', 'Principal', 1, 2);
+
+-- Dumping structure for table eduvertex.leave_approvals
+CREATE TABLE IF NOT EXISTS `leave_approvals` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `leave_request_id` int(11) NOT NULL,
+  `level_number` tinyint(3) unsigned NOT NULL,
+  `approver_role` varchar(50) NOT NULL,
+  `approver_id` int(11) NOT NULL,
+  `approver_name` varchar(150) DEFAULT NULL,
+  `status` enum('pending','approved','rejected','forwarded') NOT NULL DEFAULT 'pending',
+  `action_date` datetime DEFAULT NULL,
+  `remarks` text DEFAULT NULL,
+  `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_request_level` (`leave_request_id`,`level_number`),
+  KEY `idx_la_request` (`leave_request_id`),
+  KEY `idx_la_approver` (`approver_id`),
+  KEY `idx_la_status` (`status`),
+  CONSTRAINT `fk_la_request` FOREIGN KEY (`leave_request_id`) REFERENCES `leave_requests` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Dumping data for table eduvertex.leave_approvals: ~0 rows (approximately)
+
+-- Dumping structure for table eduvertex.leave_balance_v2
+CREATE TABLE IF NOT EXISTS `leave_balance_v2` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `applicant_type` enum('student','faculty') NOT NULL,
+  `applicant_id` int(11) NOT NULL,
+  `leave_type_id` tinyint(3) unsigned NOT NULL,
+  `academic_year` varchar(9) NOT NULL,
+  `total_allocated` decimal(5,1) NOT NULL DEFAULT 0.0,
+  `total_used` decimal(5,1) NOT NULL DEFAULT 0.0,
+  `total_pending` decimal(5,1) NOT NULL DEFAULT 0.0,
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_balance` (`applicant_type`,`applicant_id`,`leave_type_id`,`academic_year`),
+  KEY `idx_lb_applicant` (`applicant_type`,`applicant_id`),
+  KEY `idx_lb_type` (`leave_type_id`),
+  CONSTRAINT `fk_lb_type` FOREIGN KEY (`leave_type_id`) REFERENCES `leave_types` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Dumping data for table eduvertex.leave_balance_v2: ~0 rows (approximately)
+
+-- Dumping structure for table eduvertex.leave_notifications_v2
+CREATE TABLE IF NOT EXISTS `leave_notifications_v2` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `leave_request_id` int(11) NOT NULL,
+  `recipient_type` enum('student','faculty','hod','principal','class_incharge') NOT NULL,
+  `recipient_id` int(11) NOT NULL,
+  `notification_type` enum('submitted','approved','rejected','forwarded','reminder','cancelled') NOT NULL,
+  `title` varchar(200) NOT NULL,
+  `message` text NOT NULL,
+  `is_read` tinyint(1) NOT NULL DEFAULT 0,
+  `sent_at` datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_ln_recipient` (`recipient_id`,`recipient_type`),
+  KEY `idx_ln_request` (`leave_request_id`),
+  CONSTRAINT `fk_ln_request` FOREIGN KEY (`leave_request_id`) REFERENCES `leave_requests` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=58 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Dumping data for table eduvertex.leave_notifications_v2: ~0 rows (approximately)
+
+-- Dumping structure for table eduvertex.leave_requests
+CREATE TABLE IF NOT EXISTS `leave_requests` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `applicant_type` enum('student','faculty') NOT NULL,
+  `applicant_id` int(11) NOT NULL,
+  `department_id` int(11) NOT NULL,
+  `class_id` int(11) DEFAULT NULL,
+  `leave_type_id` tinyint(3) unsigned NOT NULL,
+  `start_date` date NOT NULL,
+  `end_date` date NOT NULL,
+  `total_days` decimal(4,1) NOT NULL,
+  `reason` text NOT NULL,
+  `document_url` varchar(500) DEFAULT NULL,
+  `affected_periods` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`affected_periods`)),
+  `overall_status` enum('pending','approved','rejected','cancelled','withdrawn') NOT NULL DEFAULT 'pending',
+  `substitute_faculty_id` int(11) DEFAULT NULL,
+  `substitute_accepted` tinyint(1) DEFAULT NULL,
+  `submitted_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `remarks` text DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_lr_applicant` (`applicant_type`,`applicant_id`),
+  KEY `idx_lr_dept` (`department_id`),
+  KEY `idx_lr_class` (`class_id`),
+  KEY `idx_lr_status` (`overall_status`),
+  KEY `idx_lr_dates` (`start_date`,`end_date`),
+  KEY `idx_lr_type` (`leave_type_id`),
+  KEY `idx_lr_sub_fac` (`substitute_faculty_id`),
+  CONSTRAINT `fk_lr_class` FOREIGN KEY (`class_id`) REFERENCES `classes` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_lr_dept` FOREIGN KEY (`department_id`) REFERENCES `departments` (`id`),
+  CONSTRAINT `fk_lr_sub_fac` FOREIGN KEY (`substitute_faculty_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_lr_type` FOREIGN KEY (`leave_type_id`) REFERENCES `leave_types` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Dumping data for table eduvertex.leave_requests: ~0 rows (approximately)
+
+-- Dumping structure for table eduvertex.leave_types
+CREATE TABLE IF NOT EXISTS `leave_types` (
+  `id` tinyint(3) unsigned NOT NULL AUTO_INCREMENT,
+  `code` varchar(20) NOT NULL,
+  `name` varchar(100) NOT NULL,
+  `applicable_to` set('student','faculty') NOT NULL,
+  `max_days_once` tinyint(3) unsigned DEFAULT NULL,
+  `max_days_year` smallint(5) unsigned DEFAULT NULL,
+  `requires_document` tinyint(1) NOT NULL DEFAULT 0,
+  `is_paid` tinyint(1) NOT NULL DEFAULT 1,
+  `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_code` (`code`)
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Dumping data for table eduvertex.leave_types: ~7 rows (approximately)
+INSERT INTO `leave_types` (`id`, `code`, `name`, `applicable_to`, `max_days_once`, `max_days_year`, `requires_document`, `is_paid`, `is_active`) VALUES
+	(1, 'CL', 'Casual Leave', 'student,faculty', 3, 12, 0, 1, 1),
+	(2, 'ML', 'Medical Leave', 'student,faculty', 15, 15, 1, 1, 1),
+	(3, 'OD', 'On Duty', 'student,faculty', 5, 30, 0, 1, 1),
+	(4, 'SL', 'Special Leave', 'student', 7, 7, 0, 1, 1),
+	(5, 'EL', 'Earned Leave', 'faculty', 15, 30, 0, 1, 1),
+	(6, 'MAT', 'Maternity Leave', 'faculty', 90, 90, 1, 1, 1),
+	(7, 'COMP', 'Compensatory Off', 'faculty', 3, 10, 0, 1, 1);
+
+-- Dumping structure for table eduvertex.leaves
+CREATE TABLE IF NOT EXISTS `leaves` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `applicantId` int(11) NOT NULL,
   `departmentId` int(11) DEFAULT NULL,
   `leaveType` enum('Medical','Casual','Earned','On-Duty','Personal','Maternity','Comp-Off') NOT NULL,
@@ -735,193 +1286,58 @@ CREATE TABLE `leaves` (
   `dept_admin_notified` tinyint(1) DEFAULT 0 COMMENT 'Whether department admin has been notified of alteration',
   `dept_admin_notified_at` datetime DEFAULT NULL COMMENT 'Timestamp when department admin was notified',
   `createdAt` datetime NOT NULL,
-  `updatedAt` datetime NOT NULL
+  `updatedAt` datetime NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `applicantId` (`applicantId`),
+  KEY `departmentId` (`departmentId`),
+  KEY `reassign_faculty_id` (`reassign_faculty_id`),
+  KEY `substitute_faculty_id` (`substitute_faculty_id`),
+  KEY `timetable_incharge_id` (`timetable_incharge_id`),
+  KEY `executive_admin_id` (`executive_admin_id`),
+  CONSTRAINT `leaves_ibfk_1` FOREIGN KEY (`applicantId`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE NO ACTION ON UPDATE CASCADE,
+  CONSTRAINT `leaves_ibfk_2` FOREIGN KEY (`departmentId`) REFERENCES `departments` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `leaves_ibfk_3` FOREIGN KEY (`reassign_faculty_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `leaves_ibfk_4` FOREIGN KEY (`substitute_faculty_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `leaves_ibfk_5` FOREIGN KEY (`timetable_incharge_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `leaves_ibfk_6` FOREIGN KEY (`executive_admin_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- --------------------------------------------------------
+-- Dumping data for table eduvertex.leaves: ~0 rows (approximately)
 
---
--- Table structure for table `leave_approvals`
---
-
-CREATE TABLE `leave_approvals` (
-  `id` int(11) NOT NULL,
-  `leave_request_id` int(11) NOT NULL,
-  `level_number` tinyint(3) UNSIGNED NOT NULL,
-  `approver_role` varchar(50) NOT NULL,
-  `approver_id` int(11) NOT NULL,
-  `approver_name` varchar(150) DEFAULT NULL,
-  `status` enum('pending','approved','rejected','forwarded') NOT NULL DEFAULT 'pending',
-  `action_date` datetime DEFAULT NULL,
-  `remarks` text DEFAULT NULL,
-  `is_active` tinyint(1) NOT NULL DEFAULT 1
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- --------------------------------------------------------
-
---
--- Table structure for table `leave_approval_levels`
---
-
-CREATE TABLE `leave_approval_levels` (
-  `id` tinyint(3) UNSIGNED NOT NULL,
-  `applicant_type` enum('student','faculty') NOT NULL,
-  `level_number` tinyint(3) UNSIGNED NOT NULL,
-  `approver_role` varchar(50) NOT NULL,
-  `level_label` varchar(100) NOT NULL,
-  `is_mandatory` tinyint(1) NOT NULL DEFAULT 1,
-  `sequence` tinyint(3) UNSIGNED NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Dumping data for table `leave_approval_levels`
---
-
-INSERT INTO `leave_approval_levels` (`id`, `applicant_type`, `level_number`, `approver_role`, `level_label`, `is_mandatory`, `sequence`) VALUES
-(1, 'student', 1, 'class_incharge', 'Class Incharge', 1, 1),
-(2, 'student', 2, 'hod', 'Head of Department', 1, 2),
-(3, 'faculty', 1, 'hod', 'Head of Department', 1, 1),
-(4, 'faculty', 2, 'principal', 'Principal', 1, 2);
-
--- --------------------------------------------------------
-
---
--- Table structure for table `leave_balance_v2`
---
-
-CREATE TABLE `leave_balance_v2` (
-  `id` int(11) NOT NULL,
-  `applicant_type` enum('student','faculty') NOT NULL,
-  `applicant_id` int(11) NOT NULL,
-  `leave_type_id` tinyint(3) UNSIGNED NOT NULL,
-  `academic_year` varchar(9) NOT NULL,
-  `total_allocated` decimal(5,1) NOT NULL DEFAULT 0.0,
-  `total_used` decimal(5,1) NOT NULL DEFAULT 0.0,
-  `total_pending` decimal(5,1) NOT NULL DEFAULT 0.0,
-  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- --------------------------------------------------------
-
---
--- Table structure for table `leave_notifications_v2`
---
-
-CREATE TABLE `leave_notifications_v2` (
-  `id` int(11) NOT NULL,
-  `leave_request_id` int(11) NOT NULL,
-  `recipient_type` enum('student','faculty','hod','principal','class_incharge') NOT NULL,
-  `recipient_id` int(11) NOT NULL,
-  `notification_type` enum('submitted','approved','rejected','forwarded','reminder','cancelled') NOT NULL,
-  `title` varchar(200) NOT NULL,
-  `message` text NOT NULL,
-  `is_read` tinyint(1) NOT NULL DEFAULT 0,
-  `sent_at` datetime NOT NULL DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- --------------------------------------------------------
-
---
--- Table structure for table `leave_requests`
---
-
-CREATE TABLE `leave_requests` (
-  `id` int(11) NOT NULL,
-  `applicant_type` enum('student','faculty') NOT NULL,
-  `applicant_id` int(11) NOT NULL,
-  `department_id` int(11) NOT NULL,
-  `class_id` int(11) DEFAULT NULL,
-  `leave_type_id` tinyint(3) UNSIGNED NOT NULL,
-  `start_date` date NOT NULL,
-  `end_date` date NOT NULL,
-  `total_days` decimal(4,1) NOT NULL,
-  `reason` text NOT NULL,
-  `document_url` varchar(500) DEFAULT NULL,
-  `affected_periods` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`affected_periods`)),
-  `overall_status` enum('pending','approved','rejected','cancelled','withdrawn') NOT NULL DEFAULT 'pending',
-  `substitute_faculty_id` int(11) DEFAULT NULL,
-  `substitute_accepted` tinyint(1) DEFAULT NULL,
-  `submitted_at` datetime NOT NULL DEFAULT current_timestamp(),
-  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  `remarks` text DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- --------------------------------------------------------
-
---
--- Table structure for table `leave_types`
---
-
-CREATE TABLE `leave_types` (
-  `id` tinyint(3) UNSIGNED NOT NULL,
-  `code` varchar(20) NOT NULL,
-  `name` varchar(100) NOT NULL,
-  `applicable_to` set('student','faculty') NOT NULL,
-  `max_days_once` tinyint(3) UNSIGNED DEFAULT NULL,
-  `max_days_year` smallint(5) UNSIGNED DEFAULT NULL,
-  `requires_document` tinyint(1) NOT NULL DEFAULT 0,
-  `is_paid` tinyint(1) NOT NULL DEFAULT 1,
-  `is_active` tinyint(1) NOT NULL DEFAULT 1
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Dumping data for table `leave_types`
---
-
-INSERT INTO `leave_types` (`id`, `code`, `name`, `applicable_to`, `max_days_once`, `max_days_year`, `requires_document`, `is_paid`, `is_active`) VALUES
-(1, 'CL', 'Casual Leave', 'student,faculty', 3, 12, 0, 1, 1),
-(2, 'ML', 'Medical Leave', 'student,faculty', 15, 15, 1, 1, 1),
-(3, 'OD', 'On Duty', 'student,faculty', 5, 30, 0, 1, 1),
-(4, 'SL', 'Special Leave', 'student', 7, 7, 0, 1, 1),
-(5, 'EL', 'Earned Leave', 'faculty', 15, 30, 0, 1, 1),
-(6, 'MAT', 'Maternity Leave', 'faculty', 90, 90, 1, 1, 1),
-(7, 'COMP', 'Compensatory Off', 'faculty', 3, 10, 0, 1, 1);
-
--- --------------------------------------------------------
-
---
--- Table structure for table `period_slots`
---
-
-CREATE TABLE `period_slots` (
-  `id` tinyint(3) UNSIGNED NOT NULL,
-  `slot_order` tinyint(3) UNSIGNED NOT NULL,
+-- Dumping structure for table eduvertex.period_slots
+CREATE TABLE IF NOT EXISTS `period_slots` (
+  `id` tinyint(3) unsigned NOT NULL AUTO_INCREMENT,
+  `slot_order` tinyint(3) unsigned NOT NULL,
   `slot_type` enum('teaching','break') NOT NULL DEFAULT 'teaching',
-  `period_number` tinyint(3) UNSIGNED DEFAULT NULL COMMENT 'I=1..VII=7; NULL for breaks',
+  `period_number` tinyint(3) unsigned DEFAULT NULL COMMENT 'I=1..VII=7; NULL for breaks',
   `period_label` varchar(20) NOT NULL,
   `start_time` time NOT NULL,
   `end_time` time NOT NULL,
-  `duration_minutes` tinyint(3) UNSIGNED NOT NULL,
+  `duration_minutes` tinyint(3) unsigned NOT NULL,
   `break_name` varchar(50) DEFAULT NULL,
-  `is_active` tinyint(1) NOT NULL DEFAULT 1
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_slot_order` (`slot_order`)
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
---
--- Dumping data for table `period_slots`
---
-
+-- Dumping data for table eduvertex.period_slots: ~10 rows (approximately)
 INSERT INTO `period_slots` (`id`, `slot_order`, `slot_type`, `period_number`, `period_label`, `start_time`, `end_time`, `duration_minutes`, `break_name`, `is_active`) VALUES
-(1, 1, 'teaching', 1, 'I', '09:30:00', '10:20:00', 50, NULL, 1),
-(2, 2, 'teaching', 2, 'II', '10:20:00', '11:10:00', 50, NULL, 1),
-(3, 3, 'break', NULL, 'Break', '11:10:00', '11:30:00', 20, 'Tea Break', 1),
-(4, 4, 'teaching', 3, 'III', '11:30:00', '12:25:00', 55, NULL, 1),
-(5, 5, 'break', NULL, 'Lunch', '12:25:00', '13:10:00', 45, 'Lunch Break', 1),
-(6, 6, 'teaching', 4, 'IV', '13:10:00', '14:00:00', 50, NULL, 1),
-(7, 7, 'teaching', 5, 'V', '14:00:00', '14:50:00', 50, NULL, 1),
-(8, 8, 'break', NULL, 'Break', '14:50:00', '15:10:00', 20, 'Short Break', 1),
-(9, 9, 'teaching', 6, 'VI', '15:10:00', '16:00:00', 50, NULL, 1),
-(10, 10, 'teaching', 7, 'VII', '16:00:00', '16:45:00', 45, NULL, 1);
+	(1, 1, 'teaching', 1, 'I', '09:30:00', '10:20:00', 50, NULL, 1),
+	(2, 2, 'teaching', 2, 'II', '10:20:00', '11:10:00', 50, NULL, 1),
+	(3, 3, 'break', NULL, 'Break', '11:10:00', '11:30:00', 20, 'Tea Break', 1),
+	(4, 4, 'teaching', 3, 'III', '11:30:00', '12:25:00', 55, NULL, 1),
+	(5, 5, 'break', NULL, 'Lunch', '12:25:00', '13:10:00', 45, 'Lunch Break', 1),
+	(6, 6, 'teaching', 4, 'IV', '13:10:00', '14:00:00', 50, NULL, 1),
+	(7, 7, 'teaching', 5, 'V', '14:00:00', '14:50:00', 50, NULL, 1),
+	(8, 8, 'break', NULL, 'Break', '14:50:00', '15:10:00', 20, 'Short Break', 1),
+	(9, 9, 'teaching', 6, 'VI', '15:10:00', '16:00:00', 50, NULL, 1),
+	(10, 10, 'teaching', 7, 'VII', '16:00:00', '16:45:00', 45, NULL, 1);
 
--- --------------------------------------------------------
-
---
--- Table structure for table `period_topic_log`
---
-
-CREATE TABLE `period_topic_log` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+-- Dumping structure for table eduvertex.period_topic_log
+CREATE TABLE IF NOT EXISTS `period_topic_log` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `attendance_date` date NOT NULL,
-  `period_slot_id` tinyint(3) UNSIGNED NOT NULL,
+  `period_slot_id` tinyint(3) unsigned NOT NULL,
   `faculty_id` int(11) NOT NULL,
   `class_id` int(11) NOT NULL,
   `subject_id` int(11) NOT NULL,
@@ -935,41 +1351,91 @@ CREATE TABLE `period_topic_log` (
   `deviation_note` varchar(500) DEFAULT NULL,
   `master_slot_id` int(11) DEFAULT NULL,
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
-  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_ptl_date_period_class_subj` (`attendance_date`,`period_slot_id`,`class_id`,`subject_id`),
+  KEY `idx_ptl_faculty` (`faculty_id`),
+  KEY `idx_ptl_date` (`attendance_date`),
+  KEY `idx_ptl_lesson_plan` (`lesson_plan_id`),
+  KEY `idx_ptl_subject` (`subject_id`),
+  KEY `fk_ptl_class` (`class_id`),
+  KEY `fk_ptl_period` (`period_slot_id`),
+  KEY `fk_ptl_slot` (`master_slot_id`),
+  KEY `idx_date_faculty_subject` (`attendance_date`,`faculty_id`,`subject_id`),
+  CONSTRAINT `fk_ptl_class` FOREIGN KEY (`class_id`) REFERENCES `classes` (`id`),
+  CONSTRAINT `fk_ptl_faculty` FOREIGN KEY (`faculty_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_ptl_lesson_plan` FOREIGN KEY (`lesson_plan_id`) REFERENCES `course_lesson_plans` (`id`),
+  CONSTRAINT `fk_ptl_period` FOREIGN KEY (`period_slot_id`) REFERENCES `period_slots` (`id`),
+  CONSTRAINT `fk_ptl_slot` FOREIGN KEY (`master_slot_id`) REFERENCES `timetable_master_slots` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_ptl_subject` FOREIGN KEY (`subject_id`) REFERENCES `subjects` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- --------------------------------------------------------
+-- Dumping data for table eduvertex.period_topic_log: ~0 rows (approximately)
 
---
--- Table structure for table `roles`
---
+-- Dumping structure for table eduvertex.portfolio_notifications
+CREATE TABLE IF NOT EXISTS `portfolio_notifications` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `student_id` int(11) NOT NULL,
+  `portfolio_type` enum('sports','events','certifications','projects') NOT NULL,
+  `portfolio_item_id` int(11) NOT NULL,
+  `status` enum('pending','approved','rejected','commented') NOT NULL DEFAULT 'pending',
+  `approval_status` varchar(50) DEFAULT NULL,
+  `class_incharge_id` int(11) DEFAULT NULL,
+  `remarks` text DEFAULT NULL,
+  `reviewed_at` datetime DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_student_status` (`student_id`,`status`),
+  KEY `idx_portfolio_type` (`portfolio_type`),
+  KEY `idx_created_at` (`created_at`),
+  KEY `idx_class_incharge` (`class_incharge_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=33 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Notifications for portfolio item approvals';
 
-CREATE TABLE `roles` (
-  `role_id` int(11) NOT NULL,
-  `role_name` varchar(50) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+-- Dumping data for table eduvertex.portfolio_notifications: ~21 rows (approximately)
+INSERT INTO `portfolio_notifications` (`id`, `student_id`, `portfolio_type`, `portfolio_item_id`, `status`, `approval_status`, `class_incharge_id`, `remarks`, `reviewed_at`, `created_at`, `updated_at`) VALUES
+	(1, 3975, 'sports', 2, 'pending', 'pending', NULL, NULL, NULL, '2026-03-26 13:48:05', '2026-03-26 13:48:05'),
+	(2, 4129, 'sports', 3, 'pending', 'pending', NULL, NULL, NULL, '2026-03-26 13:48:05', '2026-03-26 13:48:05'),
+	(3, 3763, 'sports', 4, 'pending', 'pending', NULL, NULL, NULL, '2026-03-26 13:48:05', '2026-03-26 13:48:05'),
+	(4, 3975, 'sports', 5, 'pending', 'pending', NULL, NULL, NULL, '2026-03-26 13:48:05', '2026-03-26 13:48:05'),
+	(8, 3702, 'events', 1, 'pending', 'pending', NULL, NULL, NULL, '2026-03-26 13:48:05', '2026-03-26 13:48:05'),
+	(9, 3713, 'events', 2, 'pending', 'pending', NULL, NULL, NULL, '2026-03-26 13:48:05', '2026-03-26 13:48:05'),
+	(10, 3713, 'events', 3, 'pending', 'pending', NULL, NULL, NULL, '2026-03-26 13:48:05', '2026-03-26 13:48:05'),
+	(11, 3713, 'events', 4, 'pending', 'pending', NULL, NULL, NULL, '2026-03-26 13:48:05', '2026-03-26 13:48:05'),
+	(15, 3975, 'certifications', 2, 'approved', 'approved', NULL, NULL, NULL, '2026-03-26 13:48:05', '2026-03-26 13:48:05'),
+	(16, 3702, 'certifications', 3, 'pending', 'pending', NULL, NULL, NULL, '2026-03-26 13:48:05', '2026-03-26 13:48:05'),
+	(17, 3992, 'certifications', 4, 'pending', 'pending', NULL, NULL, NULL, '2026-03-26 13:48:05', '2026-03-26 13:48:05'),
+	(18, 3987, 'certifications', 5, 'pending', 'pending', NULL, NULL, NULL, '2026-03-26 13:48:05', '2026-03-26 13:48:05'),
+	(19, 3713, 'certifications', 6, 'pending', 'pending', NULL, NULL, NULL, '2026-03-26 13:48:05', '2026-03-26 13:48:05'),
+	(20, 3713, 'certifications', 7, 'pending', 'pending', NULL, NULL, NULL, '2026-03-26 13:48:05', '2026-03-26 13:48:05'),
+	(21, 3713, 'certifications', 8, 'pending', 'pending', NULL, NULL, NULL, '2026-03-26 13:48:05', '2026-03-26 13:48:05'),
+	(22, 3713, 'certifications', 9, 'pending', 'pending', NULL, NULL, NULL, '2026-03-26 13:48:05', '2026-03-26 13:48:05'),
+	(23, 3713, 'certifications', 10, 'pending', 'pending', NULL, NULL, NULL, '2026-03-26 13:48:05', '2026-03-26 13:48:05'),
+	(24, 3713, 'certifications', 11, 'pending', 'pending', NULL, NULL, NULL, '2026-03-26 13:48:05', '2026-03-26 13:48:05'),
+	(25, 3713, 'certifications', 12, 'pending', 'pending', NULL, NULL, NULL, '2026-03-26 13:48:05', '2026-03-26 13:48:05'),
+	(30, 3992, 'projects', 1, 'pending', 'pending', NULL, NULL, NULL, '2026-03-26 13:48:05', '2026-03-26 13:48:05'),
+	(31, 3744, 'projects', 2, 'pending', 'pending', NULL, NULL, NULL, '2026-03-26 13:48:05', '2026-03-26 13:48:05');
 
---
--- Dumping data for table `roles`
---
+-- Dumping structure for table eduvertex.roles
+CREATE TABLE IF NOT EXISTS `roles` (
+  `role_id` int(11) NOT NULL AUTO_INCREMENT,
+  `role_name` varchar(50) NOT NULL,
+  PRIMARY KEY (`role_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 
+-- Dumping data for table eduvertex.roles: ~7 rows (approximately)
 INSERT INTO `roles` (`role_id`, `role_name`) VALUES
-(1, 'super-admin'),
-(2, 'super-admin'),
-(3, 'executive-admin'),
-(4, 'IQAC-Admin'),
-(5, 'faculty'),
-(6, 'student'),
-(7, 'department-admin');
+	(1, 'super-admin'),
+	(2, 'super-admin'),
+	(3, 'executive-admin'),
+	(4, 'IQAC-Admin'),
+	(5, 'faculty'),
+	(6, 'student'),
+	(7, 'department-admin');
 
--- --------------------------------------------------------
-
---
--- Table structure for table `staff_attendance`
---
-
-CREATE TABLE `staff_attendance` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+-- Dumping structure for table eduvertex.staff_attendance
+CREATE TABLE IF NOT EXISTS `staff_attendance` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `faculty_id` int(11) NOT NULL,
   `department_id` int(11) NOT NULL,
   `attendance_date` date NOT NULL,
@@ -979,17 +1445,24 @@ CREATE TABLE `staff_attendance` (
   `marked_by` int(11) DEFAULT NULL,
   `marked_at` datetime NOT NULL DEFAULT current_timestamp(),
   `leave_request_id` int(11) DEFAULT NULL,
-  `remarks` varchar(255) DEFAULT NULL
+  `remarks` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_staff_date` (`faculty_id`,`attendance_date`),
+  KEY `idx_stf_faculty` (`faculty_id`),
+  KEY `idx_stf_date` (`attendance_date`),
+  KEY `idx_stf_dept` (`department_id`),
+  KEY `idx_stf_status` (`day_status`),
+  KEY `idx_stf_leave` (`leave_request_id`),
+  CONSTRAINT `fk_stf_dept` FOREIGN KEY (`department_id`) REFERENCES `departments` (`id`),
+  CONSTRAINT `fk_stf_faculty` FOREIGN KEY (`faculty_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_stf_leave` FOREIGN KEY (`leave_request_id`) REFERENCES `leave_requests` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- --------------------------------------------------------
+-- Dumping data for table eduvertex.staff_attendance: ~0 rows (approximately)
 
---
--- Table structure for table `staff_attendance_entry`
---
-
-CREATE TABLE `staff_attendance_entry` (
-  `staff_attendance_id` int(11) NOT NULL,
+-- Dumping structure for table eduvertex.staff_attendance_entry
+CREATE TABLE IF NOT EXISTS `staff_attendance_entry` (
+  `staff_attendance_id` int(11) NOT NULL AUTO_INCREMENT,
   `staff_id` int(11) NOT NULL,
   `department_id` int(11) NOT NULL,
   `subject_id` int(11) DEFAULT NULL,
@@ -999,50 +1472,62 @@ CREATE TABLE `staff_attendance_entry` (
   `attendance_status` enum('Present','Absent','Late','Half-Day','On-Leave','On-Duty') NOT NULL,
   `check_in_time` time DEFAULT NULL,
   `check_out_time` time DEFAULT NULL,
-  `marked_timestamp` datetime NOT NULL DEFAULT current_timestamp()
+  `marked_timestamp` datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`staff_attendance_id`),
+  UNIQUE KEY `uq_staff_date_period` (`staff_id`,`work_date`,`period_session_number`),
+  KEY `idx_stf_att_work_date` (`work_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- --------------------------------------------------------
+-- Dumping data for table eduvertex.staff_attendance_entry: ~0 rows (approximately)
 
---
--- Table structure for table `staff_period_attendance`
---
-
-CREATE TABLE `staff_period_attendance` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `staff_att_id` bigint(20) UNSIGNED NOT NULL,
+-- Dumping structure for table eduvertex.staff_period_attendance
+CREATE TABLE IF NOT EXISTS `staff_period_attendance` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `staff_att_id` bigint(20) unsigned NOT NULL,
   `faculty_id` int(11) NOT NULL,
   `class_id` int(11) NOT NULL,
   `subject_id` int(11) NOT NULL,
   `attendance_date` date NOT NULL,
-  `period_slot_id` tinyint(3) UNSIGNED NOT NULL,
-  `period_number` tinyint(3) UNSIGNED NOT NULL,
+  `period_slot_id` tinyint(3) unsigned NOT NULL,
+  `period_number` tinyint(3) unsigned NOT NULL,
   `session_type` enum('theory','lab','tutorial','activity','project') NOT NULL DEFAULT 'theory',
   `status` enum('conducted','cancelled','substitute_taken') NOT NULL DEFAULT 'conducted',
   `substitute_faculty_id` int(11) DEFAULT NULL,
-  `students_present` smallint(5) UNSIGNED DEFAULT NULL,
-  `students_total` smallint(5) UNSIGNED DEFAULT NULL,
-  `remarks` varchar(255) DEFAULT NULL
+  `students_present` smallint(5) unsigned DEFAULT NULL,
+  `students_total` smallint(5) unsigned DEFAULT NULL,
+  `remarks` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_staff_period` (`faculty_id`,`attendance_date`,`period_slot_id`,`class_id`),
+  KEY `idx_spa_staff_att` (`staff_att_id`),
+  KEY `idx_spa_faculty` (`faculty_id`),
+  KEY `idx_spa_class` (`class_id`),
+  KEY `idx_spa_subject` (`subject_id`),
+  KEY `idx_spa_date` (`attendance_date`),
+  KEY `idx_spa_period` (`period_slot_id`),
+  KEY `fk_spa_sub_fac` (`substitute_faculty_id`),
+  CONSTRAINT `fk_spa_class` FOREIGN KEY (`class_id`) REFERENCES `classes` (`id`),
+  CONSTRAINT `fk_spa_faculty` FOREIGN KEY (`faculty_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_spa_period` FOREIGN KEY (`period_slot_id`) REFERENCES `period_slots` (`id`),
+  CONSTRAINT `fk_spa_staff_att` FOREIGN KEY (`staff_att_id`) REFERENCES `staff_attendance` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_spa_sub_fac` FOREIGN KEY (`substitute_faculty_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_spa_subject` FOREIGN KEY (`subject_id`) REFERENCES `subjects` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- --------------------------------------------------------
+-- Dumping data for table eduvertex.staff_period_attendance: ~0 rows (approximately)
 
---
--- Table structure for table `student_attendance`
---
-
-CREATE TABLE `student_attendance` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+-- Dumping structure for table eduvertex.student_attendance
+CREATE TABLE IF NOT EXISTS `student_attendance` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `student_id` int(11) NOT NULL,
   `class_id` int(11) NOT NULL,
   `subject_id` int(11) NOT NULL,
   `faculty_id` int(11) NOT NULL,
   `master_slot_id` int(11) DEFAULT NULL,
   `attendance_date` date NOT NULL,
-  `period_slot_id` tinyint(3) UNSIGNED NOT NULL,
-  `period_number` tinyint(3) UNSIGNED NOT NULL,
+  `period_slot_id` tinyint(3) unsigned NOT NULL,
+  `period_number` tinyint(3) unsigned NOT NULL,
   `academic_year` varchar(9) NOT NULL,
-  `semester` tinyint(2) UNSIGNED NOT NULL,
+  `semester` tinyint(2) unsigned NOT NULL,
   `status` enum('present','absent','late','od','medical_leave','duty_leave') NOT NULL DEFAULT 'absent',
   `is_lab_session` tinyint(1) NOT NULL DEFAULT 0,
   `lab_group` varchar(20) DEFAULT NULL,
@@ -1053,34 +1538,46 @@ CREATE TABLE `student_attendance` (
   `modified_by` int(11) DEFAULT NULL,
   `modified_at` datetime DEFAULT NULL,
   `remarks` varchar(255) DEFAULT NULL,
-  `lesson_plan_id` int(11) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `lesson_plan_id` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_student_date_period_subject` (`student_id`,`attendance_date`,`period_slot_id`,`subject_id`),
+  KEY `idx_sa_student` (`student_id`),
+  KEY `idx_sa_subject` (`subject_id`),
+  KEY `idx_sa_class` (`class_id`),
+  KEY `idx_sa_faculty` (`faculty_id`),
+  KEY `idx_sa_date` (`attendance_date`),
+  KEY `idx_sa_sem` (`academic_year`,`semester`),
+  KEY `idx_sa_status` (`status`),
+  KEY `idx_sa_date_class` (`attendance_date`,`class_id`,`period_slot_id`),
+  KEY `idx_sa_period` (`period_slot_id`),
+  KEY `idx_sa_slot` (`master_slot_id`),
+  KEY `idx_student_attendance_lesson_plan` (`lesson_plan_id`),
+  CONSTRAINT `fk_sa_class` FOREIGN KEY (`class_id`) REFERENCES `classes` (`id`),
+  CONSTRAINT `fk_sa_faculty` FOREIGN KEY (`faculty_id`) REFERENCES `faculty_profiles` (`faculty_id`),
+  CONSTRAINT `fk_sa_period` FOREIGN KEY (`period_slot_id`) REFERENCES `period_slots` (`id`),
+  CONSTRAINT `fk_sa_slot` FOREIGN KEY (`master_slot_id`) REFERENCES `timetable_master_slots` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_sa_student` FOREIGN KEY (`student_id`) REFERENCES `student_profile` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_sa_subject` FOREIGN KEY (`subject_id`) REFERENCES `subjects` (`id`),
+  CONSTRAINT `fk_student_attendance_lesson_plan` FOREIGN KEY (`lesson_plan_id`) REFERENCES `course_lesson_plans` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB AUTO_INCREMENT=34 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
---
--- Dumping data for table `student_attendance`
---
-
+-- Dumping data for table eduvertex.student_attendance: ~11 rows (approximately)
 INSERT INTO `student_attendance` (`id`, `student_id`, `class_id`, `subject_id`, `faculty_id`, `master_slot_id`, `attendance_date`, `period_slot_id`, `period_number`, `academic_year`, `semester`, `status`, `is_lab_session`, `lab_group`, `session_type`, `marked_by`, `marked_at`, `is_modified`, `modified_by`, `modified_at`, `remarks`, `lesson_plan_id`) VALUES
-(1, 4159, 21, 98, 406, NULL, '2026-03-19', 1, 1, '2025-2026', 6, 'present', 0, NULL, 'theory', 435, '2026-03-21 07:13:28', 1, 435, '2026-03-21 07:13:28', NULL, NULL),
-(2, 3967, 21, 98, 406, NULL, '2026-03-19', 1, 1, '2025-2026', 6, 'present', 0, NULL, 'theory', 435, '2026-03-21 07:13:27', 1, 435, '2026-03-21 07:13:27', NULL, NULL),
-(3, 3968, 21, 98, 406, NULL, '2026-03-19', 1, 1, '2025-2026', 6, 'present', 0, NULL, 'theory', 435, '2026-03-21 07:13:28', 1, 435, '2026-03-21 07:13:28', NULL, NULL),
-(4, 3969, 21, 98, 406, NULL, '2026-03-19', 1, 1, '2025-2026', 6, 'present', 0, NULL, 'theory', 435, '2026-03-21 07:13:28', 1, 435, '2026-03-21 07:13:28', NULL, NULL),
-(5, 3970, 21, 98, 406, NULL, '2026-03-19', 1, 1, '2025-2026', 6, 'present', 0, NULL, 'theory', 435, '2026-03-21 07:13:28', 1, 435, '2026-03-21 07:13:28', NULL, NULL),
-(6, 3971, 21, 98, 406, NULL, '2026-03-19', 1, 1, '2025-2026', 6, 'present', 0, NULL, 'theory', 435, '2026-03-21 07:13:28', 1, 435, '2026-03-21 07:13:28', NULL, NULL),
-(7, 3972, 21, 98, 406, NULL, '2026-03-19', 1, 1, '2025-2026', 6, 'present', 0, NULL, 'theory', 435, '2026-03-21 07:13:28', 1, 435, '2026-03-21 07:13:28', NULL, NULL),
-(8, 3973, 21, 98, 406, NULL, '2026-03-19', 1, 1, '2025-2026', 6, 'present', 0, NULL, 'theory', 435, '2026-03-21 07:13:28', 1, 435, '2026-03-21 07:13:28', NULL, NULL),
-(9, 3974, 21, 98, 406, NULL, '2026-03-19', 1, 1, '2025-2026', 6, 'absent', 0, NULL, 'theory', 435, '2026-03-21 07:13:28', 1, 435, '2026-03-21 07:13:28', NULL, NULL),
-(10, 3975, 21, 98, 406, NULL, '2026-03-19', 1, 1, '2025-2026', 6, 'absent', 0, NULL, 'theory', 435, '2026-03-21 07:13:28', 1, 435, '2026-03-21 07:13:28', NULL, NULL),
-(11, 3976, 21, 98, 406, NULL, '2026-03-19', 1, 1, '2025-2026', 6, 'present', 0, NULL, 'theory', 435, '2026-03-21 07:13:28', 1, 435, '2026-03-21 07:13:28', NULL, NULL);
+	(1, 4159, 21, 98, 406, NULL, '2026-03-19', 1, 1, '2025-2026', 6, 'present', 0, NULL, 'theory', 435, '2026-03-21 07:13:28', 1, 435, '2026-03-21 07:13:28', NULL, NULL),
+	(2, 3967, 21, 98, 406, NULL, '2026-03-19', 1, 1, '2025-2026', 6, 'present', 0, NULL, 'theory', 435, '2026-03-21 07:13:27', 1, 435, '2026-03-21 07:13:27', NULL, NULL),
+	(3, 3968, 21, 98, 406, NULL, '2026-03-19', 1, 1, '2025-2026', 6, 'present', 0, NULL, 'theory', 435, '2026-03-21 07:13:28', 1, 435, '2026-03-21 07:13:28', NULL, NULL),
+	(4, 3969, 21, 98, 406, NULL, '2026-03-19', 1, 1, '2025-2026', 6, 'present', 0, NULL, 'theory', 435, '2026-03-21 07:13:28', 1, 435, '2026-03-21 07:13:28', NULL, NULL),
+	(5, 3970, 21, 98, 406, NULL, '2026-03-19', 1, 1, '2025-2026', 6, 'present', 0, NULL, 'theory', 435, '2026-03-21 07:13:28', 1, 435, '2026-03-21 07:13:28', NULL, NULL),
+	(6, 3971, 21, 98, 406, NULL, '2026-03-19', 1, 1, '2025-2026', 6, 'present', 0, NULL, 'theory', 435, '2026-03-21 07:13:28', 1, 435, '2026-03-21 07:13:28', NULL, NULL),
+	(7, 3972, 21, 98, 406, NULL, '2026-03-19', 1, 1, '2025-2026', 6, 'present', 0, NULL, 'theory', 435, '2026-03-21 07:13:28', 1, 435, '2026-03-21 07:13:28', NULL, NULL),
+	(8, 3973, 21, 98, 406, NULL, '2026-03-19', 1, 1, '2025-2026', 6, 'present', 0, NULL, 'theory', 435, '2026-03-21 07:13:28', 1, 435, '2026-03-21 07:13:28', NULL, NULL),
+	(9, 3974, 21, 98, 406, NULL, '2026-03-19', 1, 1, '2025-2026', 6, 'absent', 0, NULL, 'theory', 435, '2026-03-21 07:13:28', 1, 435, '2026-03-21 07:13:28', NULL, NULL),
+	(10, 3975, 21, 98, 406, NULL, '2026-03-19', 1, 1, '2025-2026', 6, 'absent', 0, NULL, 'theory', 435, '2026-03-21 07:13:28', 1, 435, '2026-03-21 07:13:28', NULL, NULL),
+	(11, 3976, 21, 98, 406, NULL, '2026-03-19', 1, 1, '2025-2026', 6, 'present', 0, NULL, 'theory', 435, '2026-03-21 07:13:28', 1, 435, '2026-03-21 07:13:28', NULL, NULL);
 
--- --------------------------------------------------------
-
---
--- Table structure for table `student_bio`
---
-
-CREATE TABLE `student_bio` (
-  `id` int(11) NOT NULL,
+-- Dumping structure for table eduvertex.student_bio
+CREATE TABLE IF NOT EXISTS `student_bio` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `studentId` int(11) NOT NULL,
   `alternatePhone` varchar(20) DEFAULT NULL,
   `linkedinUrl` varchar(255) DEFAULT NULL,
@@ -1100,24 +1597,257 @@ CREATE TABLE `student_bio` (
   `scholarshipDetails` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`scholarshipDetails`)),
   `documents` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`documents`)),
   `createdAt` datetime NOT NULL DEFAULT current_timestamp(),
-  `updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `family_photo` varchar(255) DEFAULT NULL COMMENT 'Path to family photo',
+  `siblings` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT 'JSON array of sibling information including name, age, education, and occupation' CHECK (json_valid(`siblings`)),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_studentId` (`studentId`),
+  KEY `idx_family_photo` (`family_photo`),
+  CONSTRAINT `fk_bio_student` FOREIGN KEY (`studentId`) REFERENCES `student_profile` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=237 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `student_bio`
---
+-- Dumping data for table eduvertex.student_bio: ~229 rows (approximately)
+INSERT INTO `student_bio` (`id`, `studentId`, `alternatePhone`, `linkedinUrl`, `dateOfBirth`, `bloodGroup`, `nationality`, `religion`, `category`, `aadharNo`, `motherTongue`, `residenceType`, `address`, `permanentAddress`, `parentInfo`, `references`, `previousEducation`, `scholarshipDetails`, `documents`, `createdAt`, `updatedAt`, `family_photo`, `siblings`) VALUES
+	(1, 3975, '9360049563', 'https://www.linkedin.com/in/r-logesh-kumar-74566a2a3/', '2006-02-20', 'A+', 'Indian', 'Muslim', 'General', NULL, 'Tamil', 'day_scholar', '{"street":"sic","city":"Chengalpattu","state":"Arunachal Pradesh","pincode":"925602"}', NULL, '{"father":{"name":"","phone":"","email":"","occupation":"","qualification":"","annualIncome":""},"mother":{"name":"","phone":"","email":"","occupation":"","qualification":"","annualIncome":""},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[{"name":"R.Rooban Kumar","phone":"1234567890","age":19,"education":"b.sc"}]}', NULL, NULL, NULL, NULL, '2026-03-18 05:26:59', '2026-03-26 07:21:01', '/uploads/photos/family/family_3975_logesh_kumar_r.png', '[{"name":"R.Rooban Kumar","age":"19","education":"b.sc","occupation":"Student"}]'),
+	(2, 4159, '9342516261', 'https://www.linkedin.com/in/shrimathi-ravi2201/', '2005-06-01', 'B+', 'Indian', 'HIndhu', NULL, NULL, 'Tamil', 'day_scholar', NULL, NULL, '{"father":{"name":"RAVI K","phone":"9942138769","email":"CAR MECHANIC","occupation":"","qualification":"","annualIncome":"80,000"},"mother":{"name":"JAMUNA R","phone":"9342516261","email":"","occupation":"","qualification":"","annualIncome":"80,000"},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-23 15:22:36', '2026-03-23 15:27:39', NULL, NULL),
+	(3, 4161, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{"father":{"name":"","phone":"","email":"","occupation":"","qualification":"","annualIncome":""},"mother":{"name":"","phone":"","email":"","occupation":"","qualification":"","annualIncome":""},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-24 04:53:05', '2026-03-24 04:53:05', NULL, NULL),
+	(4, 4162, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{"father":{"name":"","phone":"","email":"","occupation":"","qualification":"","annualIncome":""},"mother":{"name":"","phone":"","email":"","occupation":"","qualification":"","annualIncome":""},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-24 04:53:22', '2026-03-24 04:53:22', NULL, NULL),
+	(5, 4170, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{"father":{"name":"","phone":"","email":"","occupation":"","qualification":"","annualIncome":""},"mother":{"name":"","phone":"","email":"","occupation":"","qualification":"","annualIncome":""},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-24 04:59:27', '2026-03-24 04:59:27', NULL, NULL),
+	(6, 4171, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{"father":{"name":"","phone":"","email":"","occupation":"","qualification":"","annualIncome":""},"mother":{"name":"","phone":"","email":"","occupation":"","qualification":"","annualIncome":""},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-24 05:01:37', '2026-03-24 05:01:37', NULL, NULL),
+	(7, 4169, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{"father":{"name":"","phone":"","email":"","occupation":"","qualification":"","annualIncome":""},"mother":{"name":"","phone":"","email":"","occupation":"","qualification":"","annualIncome":""},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-24 05:01:48', '2026-03-24 05:01:48', NULL, NULL),
+	(8, 3971, NULL, NULL, '2005-11-21', 'O+', 'Indian', 'Hindu', 'General', NULL, 'Tamil', 'day_scholar', '{"street":"04-03-49,theleungar street,vadugapatti,periyakulam,theni","city":"Theni","state":"Tamil Nadu","pincode":"620603"}', NULL, '{"father":{"name":"PRABHAKARAN K","phone":"","email":"dev2111moi@gmail.com","occupation":"BDO-GOVT","qualification":"","annualIncome":""},"mother":{"name":"RENUGADEVI R","phone":"","email":"","occupation":"superintendent","qualification":"","annualIncome":""},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-24 05:06:03', '2026-03-25 08:52:08', '/uploads/photos/family/family_3971_devendra_kumar_p.JPG', NULL),
+	(9, 4176, '6381948663', '', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{"street":"vairava linga aasari street ,TB road","city":"usilampatti","state":"tamilnadu","pincode":"625532"}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-24 05:14:44', '2026-03-24 05:18:54', NULL, NULL),
+	(10, 3970, '7904416662', '', '2006-05-06', 'A+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"78/9 , Pallivasal Opposite, 5th cross street, Rathna nagar","city":"Theni","state":"Tamil Nadu","pincode":"625531"}', NULL, '{"father":{"name":"Baskaran R","phone":"7094170817","email":"","occupation":"Shop Keeper","qualification":"B.com","annualIncome":"72000"},"mother":{"name":"Maduravalli R","phone":"9345752721","email":"","occupation":"House Wife","qualification":"M.A History","annualIncome":""},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-24 05:15:49', '2026-03-26 03:02:58', NULL, '[{"name":"Yuvashree R","age":"22","education":"UG","occupation":"Student"}]'),
+	(11, 3967, '8903076828', '', '2004-12-27', 'B+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'hosteller', '{"street":"2/188, Pallthu Kaluai, Kodaikanal","city":"Dindigul","state":"Tamil Nadu","pincode":"624101"}', NULL, '{"father":{"name":"","phone":"","email":"","occupation":"","qualification":"","annualIncome":""},"mother":{"name":"","phone":"","email":"","occupation":"","qualification":"","annualIncome":""},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-24 05:17:00', '2026-03-25 08:07:32', NULL, NULL),
+	(12, 3973, '6382306849', 'https://www.linkedin.com/in/hari-prabha-s-a9b332291/', '2005-07-07', 'AB+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"60, Patchayappa 1st Street, Kamatchipuram, Theni","city":"Theni","state":"Tamil Nadu","pincode":"625520"}', NULL, '{"father":{"name":"Selva Muthukumar B","phone":"8344152885","email":"","occupation":"Retail Store Owner","qualification":"BA History","annualIncome":"96000"},"mother":{"name":"Thangameenakshi S","phone":"6382306849","email":"","occupation":"House Maker","qualification":"B.ed","annualIncome":"-"},"guardian":{"name":"Thiripurasundari R","relation":"Grandmother","phone":"9003018484","address":"60, Patchayappa 1st Street, Kamatchipuram, Theni"},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-24 05:17:47', '2026-03-26 10:06:12', NULL, '[{"name":"Pughazhini S","age":"15","education":"9th Std","occupation":"Student"}]'),
+	(13, 3972, '9842186613', '', '2005-08-26', 'B+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"Annamalai nagar,veerapandi,theni","city":"Theni","state":"Tamil Nadu","pincode":"625531"}', NULL, '{"father":{"name":"S.Muthu","phone":"8072908916","email":"gokulgokul501234@gmail.com","occupation":"police","qualification":"+2 completed","annualIncome":"8,00,000"},"mother":{"name":"M.Deepa","phone":"9842186613","email":"muthugokul886@gmail.com","occupation":"house wife","qualification":"+2 completed","annualIncome":"-"},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-24 05:20:01', '2026-03-25 08:28:28', NULL, NULL),
+	(14, 3976, '9994863435', 'https://www.linkedin.com/in/malarvizhi-selvaraj-1151a7308/', '2005-11-22', 'B+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"Matha Kovil Street , Thenkarai , Periyakuam","city":"Theni","state":"Tamil Nadu","pincode":"625601"}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-24 05:20:27', '2026-03-25 09:54:28', NULL, NULL),
+	(15, 4175, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-24 05:21:21', '2026-03-24 05:21:21', NULL, NULL),
+	(16, 4167, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-24 05:21:35', '2026-03-24 05:21:35', NULL, NULL),
+	(17, 3981, '', '', '2005-10-15', 'B+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"flower market st,seelayampatti","city":"Theni","state":"Tamil Nadu","pincode":"625515"}', NULL, '{"father":{"name":"Raja P","phone":"9994615254","email":"rajaruuban@gmail.com","occupation":"Business","qualification":"HSC","annualIncome":"200000"},"mother":{"name":"Kasthuri R","phone":"9994615254","email":"-","occupation":"house wife","qualification":"HSC","annualIncome":"-"},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-24 15:12:40', '2026-03-25 08:45:58', NULL, NULL),
+	(18, 4016, '', '', '2006-03-28', 'B+', 'Indian', 'Muslim', 'General', NULL, 'Tamil', 'day_scholar', '{"street":"sdgfsdfdasfadsfdsf","city":"Theni","state":"Tamil Nadu","pincode":"625602"}', NULL, '{"father":{"name":"dsafasdfsad","phone":"1478525630","email":"emailame@gmail.com","occupation":"fdsafaf","qualification":"fadsfsad","annualIncome":"70000"},"mother":{"name":"dsafasdfdasf","phone":"1478552369","email":"sadfads@gmail.com","occupation":"asfasfasfasfsf","qualification":"fadsfasfas","annualIncome":"70000"},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', '[]', NULL, NULL, NULL, '2026-03-24 15:16:18', '2026-03-25 15:40:34', '/uploads/photos/family/family_4016_thanushkumar_p.jpeg', '[{"name":"asdfdsfdsafdsaf","age":"18","education":"12","occupation":"fdsafdsafsa"}]'),
+	(19, 3968, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'day_scholar', NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-24 17:16:18', '2026-03-24 17:16:18', NULL, NULL),
+	(20, 3702, '9342459403', 'https://www.linkedin.com/in/gowthaman-n-78b176392?utm_source=share_via&utm_content=profile&utm_medium=member_android', '2006-09-18', 'O+', 'Indian', 'Hindu', 'SC', NULL, 'Tamil', 'hosteller', '{"street":"Murali, Chennampatti, Anthiyur Taluk ","city":"Erode ","state":"Tamilnadu ","pincode":"638504"}', NULL, '{"father":{"name":"Nambirasan P","phone":"9750128333","email":"","occupation":"Wage Labour ","qualification":"SSLC","annualIncome":"₹100000"},"mother":{"name":"Selvi N","phone":"7550385238","email":"","occupation":"","qualification":"","annualIncome":""},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-24 17:26:57', '2026-03-25 10:55:33', NULL, NULL),
+	(21, 4019, '9790036793', 'https://www.linkedin.com/in/yokesh-kumar-r-92b5342a3/', '2005-12-29', 'B+', 'Indian', 'Hindu', 'General', NULL, 'Tamil', 'day_scholar', '{"street":"54,Matchal street ,Allinagaram","city":"Theni","state":"Tamil Nadu","pincode":"625531"}', NULL, '{"father":{"name":"Ravi.P","phone":"9943899411","email":"","occupation":"coolie","qualification":"5th","annualIncome":"72,000"},"mother":{"name":"Mallika.R","phone":"9790036793","email":"","occupation":"-","qualification":"--","annualIncome":"--"},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 04:16:14', '2026-03-26 09:29:03', NULL, NULL),
+	(22, 3331, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{"street":"testm","city":"Theni","state":"Tamil Nadu","pincode":"625531"}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-25 04:22:09', '2026-03-25 06:37:28', NULL, NULL),
+	(23, 3991, '6382636787', 'https://www.linkedin.com/feed/', '2006-03-22', 'B+', 'Indian', 'Other', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"9/3-15 GT Naidu Street,Thamarikulam,Periyakulam, Theni","city":"Theni","state":"Tamil Nadu","pincode":"625601"}', NULL, '{"father":{"name":"V. Jayaraj","phone":"9551857883","email":"jayaraj28@gmail.com","occupation":"Superviser","qualification":"B.com","annualIncome":"300000"},"mother":{"name":"J.Jayanthi","phone":"6382636787","email":"jayanthijayaraj@gmail.com","occupation":"House Maker","qualification":"B.Com","annualIncome":"0"},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 04:27:46', '2026-03-25 08:59:38', NULL, NULL),
+	(24, 4008, '9944447656', '', '2005-12-26', 'AB+', 'Indian', 'Muslim', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"5/3 sangili kovil street chinnamanur","city":"Theni","state":"Tamil Nadu","pincode":"625531"}', NULL, '{"father":{"name":"G.THOPPU MOHAMED","phone":"9750433586","email":"parveenthoppu@gmail.com","occupation":"WELDER","qualification":"ITI","annualIncome":"3LPA"},"mother":{"name":"T.PARVEEN BANU","phone":"9944447656","email":"parveenthoppu@gmail.com","occupation":"HOUSE WIFE","qualification":"12th","annualIncome":"nil"},"guardian":{"name":"G.THOPPU MOHAMED","relation":"","phone":"9944447656","address":"5/3 SANGILI KOVIL STREET CHINNAMANUR"},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 06:18:51', '2026-03-25 06:46:24', NULL, NULL),
+	(25, 4015, '8056377340', 'https://www.linkedin.com/in/sujitha-balaguru-9385372a3/', '2006-06-21', 'O+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"5/3,NKP Ricemill Street, Periyasamy Line ,Chinnamanur ","city":"Theni","state":"Tamil Nadu","pincode":"625531"}', NULL, '{"father":{"name":"BALAGURU S","phone":"8344382645","email":"srigayathirimasala08@gmail.com","occupation":"Ricemill Business","qualification":"10th","annualIncome":"3 to 4 LPA"},"mother":{"name":"NAGAJOTHI B","phone":"8056377340","email":"sujinagajothi21@gmail.com","occupation":"Aarankavalar ","qualification":"10th","annualIncome":"2 LPA"},"guardian":{"name":"SARAVANAN","relation":"Brother","phone":"6381118638","address":"5/3,NKP Ricemill Street,Periyasamy Line ,Chinnamanur ,Theni"},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 06:19:49', '2026-03-25 06:46:26', NULL, NULL),
+	(26, 4017, '9842349787', '', '2006-07-22', 'B+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"Boys school backside,Aundipatti.","city":"Theni","state":"Tamil Nadu","pincode":"625531"}', NULL, '{"father":{"name":"RAJESHKUMAR S","phone":"9842349787","email":"","occupation":"Business","qualification":"12 th","annualIncome":"80000"},"mother":{"name":"AMUTHAVALLI K","phone":"9976636787","email":"","occupation":"Housewife","qualification":" M.Sc. B.Ed","annualIncome":""},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 06:20:21', '2026-03-25 06:26:05', NULL, NULL),
+	(27, 4009, '9965620883', '', '2005-11-10', 'O+', 'Indian', 'Hindu', 'SC', NULL, 'Tamil', 'day_scholar', '{"street":"V.P.R. Clinic Periyandavar st, Bodinayakanur","city":"Theni","state":"Tamil Nadu","pincode":"625513"}', NULL, '{"father":{"name":"Gnana Sekaran .B","phone":"9965620883","email":"","occupation":"Tailor","qualification":"10th","annualIncome":"72,000"},"mother":{"name":"Sasikala . G","phone":"","email":"","occupation":"House wife","qualification":"12th","annualIncome":"-"},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 06:21:09', '2026-03-25 06:28:54', NULL, NULL),
+	(28, 3999, '9442024591', '', '2006-06-06', 'A+', 'Indian', 'Muslim', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"23,board school street allinagaram ,theni","city":"Theni","state":"Tamil Nadu","pincode":"625531"}', NULL, '{"father":{"name":"M.A.Jiyaudeen","phone":"9442024591","email":"23,board school street allinagaram ,theni","occupation":"agriculture","qualification":"12th","annualIncome":"100000"},"mother":{"name":"J.Mumthaj begam","phone":"8124693844","email":"23,board school steer allinagarm ,theni","occupation":"house wife","qualification":"12th","annualIncome":"no"},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 06:21:28', '2026-03-25 06:32:07', NULL, NULL),
+	(29, 3998, '', '', '2006-07-11', 'O+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"VRP naidu strreet vadagarai periyakulam,Theni","city":"Theni","state":"Tamil Nadu","pincode":"625601"}', NULL, '{"father":{"name":"Palpandi","phone":"6379689726","email":"","occupation":"Tailor","qualification":"10","annualIncome":"70,000"},"mother":{"name":"Sangilidevi.P","phone":"","email":"","occupation":"House Wife","qualification":"12","annualIncome":"-"},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 06:21:42', '2026-03-25 06:27:44', NULL, NULL),
+	(30, 4012, '9092201292', '', '2005-09-19', 'B+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"15/7,MUTHUVEL STREET , THIRUMALAPURAM,BODINAYAKANUR.","city":"Theni","state":"Tamil Nadu","pincode":"625513"}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-25 06:21:49', '2026-03-25 06:33:02', NULL, NULL),
+	(31, 4000, '9789880565', '', '2006-02-22', 'A+', 'Indian', 'Christian', 'OBC', NULL, 'Tamil', 'day_scholar', '{}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-25 06:21:54', '2026-03-25 06:23:21', NULL, NULL),
+	(32, 4010, '6382277449', '', '2006-02-17', 'B+', 'Indian', 'Hindu', 'OBC', NULL, 'Telugu', 'day_scholar', '{"street":"14,Dr.radhakrishnan rd,Amaravathy nagar,Bodinayakanur.","city":"Theni","state":"Tamil Nadu","pincode":"625582"}', NULL, '{"father":{"name":"Venkatesaperumal R","phone":"9940835270","email":"rvkr75@gmail.com","occupation":"Account Supervisor,TNEB","qualification":"B.Com","annualIncome":"8,00,000"},"mother":{"name":"Renuga K","phone":"6382277449","email":"renugathilagavathi@gmail.com","occupation":"House Wife","qualification":"M.Com","annualIncome":""},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 06:23:26', '2026-03-26 09:01:16', NULL, '[{"name":"Tejaa Sri V","age":"13","education":"7th grade","occupation":""}]'),
+	(33, 4013, '9952417337', 'https://www.linkedin.com/in/sonipandian', '2005-11-13', 'B+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"2nd Street,Balan Nagar,Bommayagoundan patti","city":"Theni","state":"Tamil Nadu","pincode":"625531"}', NULL, '{"father":{"name":"PANDIAN P","phone":"9952417337","email":"p.pandian9473@gmail.com","occupation":"Driver","qualification":"10th","annualIncome":"60,000"},"mother":{"name":"SATHIYAVANI G","phone":"9345473349","email":"","occupation":"Housewife","qualification":"Bsc","annualIncome":""},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 06:29:54', '2026-03-26 09:05:45', NULL, '[{"name":"Akash Pandian P","age":"25","education":"Msc.Computer Science","occupation":"Student"}]'),
+	(34, 3995, '9080453922', 'https://www.linkedin.com/in/archana-devi-c-91a60630a/', '2006-07-17', 'B+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"east street, kamankallur, kadamalaikundu, Theni.","city":"Theni","state":"Tamil Nadu","pincode":"625579"}', NULL, '{"father":{"name":"Chandrasekar J","phone":"9344250862","email":"","occupation":"Former","qualification":"NO","annualIncome":"75000"},"mother":{"name":"Malar Kodi C","phone":"9080453922","email":"","occupation":"Former","qualification":"10 th Completed","annualIncome":""},"guardian":{"name":"Gunasekaran J","relation":"Uncle","phone":"8825912922","address":"01, Theiventhirapuram, kadamalaikundu, Theni."},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 06:46:32', '2026-03-25 10:43:59', NULL, NULL),
+	(35, 4132, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-25 06:56:07', '2026-03-25 06:56:07', '/uploads/photos/family/family_4132_pandeeswaran_c.jpg', NULL),
+	(36, 3987, '', 'https://www.linkedin.com/in/vasukipalpandi2006/', '2006-05-10', 'B+', 'Indian', 'Hindu', 'SC', NULL, 'Tamil', 'day_scholar', '{"street":"Duraiyappa Jinning Factory opposite,New police Station Street ,P.C.Patti","city":"Theni","state":"Tamil Nadu","pincode":"625531"}', NULL, '{"father":{"name":"C.Palpandi","phone":"9443501153","email":"","occupation":"Mechanic","qualification":"SSLC","annualIncome":"84000"},"mother":{"name":"P.Yasotha","phone":"8248287548","email":"","occupation":"Homemaker","qualification":"SSLC","annualIncome":""},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 08:00:16', '2026-03-25 08:30:56', NULL, NULL),
+	(37, 3978, '9500815509', 'https://linkedin.com/in/muthumari-m-76266a2a3', '2005-08-13', 'A+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"Chellaiah pillai street,Karukattanpatti,Usilampatti","city":"Madurai","state":"Tamil Nadu","pincode":"625532"}', NULL, '{"father":{"name":"Maheswaran","phone":"8438999276","email":"","occupation":"Salesman","qualification":"","annualIncome":"72,000"},"mother":{"name":"Tamilarasi","phone":"","email":"","occupation":"Tailor","qualification":"","annualIncome":""},"guardian":{"name":"Maheswaran","relation":"Father","phone":"8438999276","address":"Chellaiah pillai street,Karukattanpatti,Usilampatti"},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 08:04:26', '2026-03-25 08:30:26', NULL, NULL),
+	(38, 3992, '7006325294', 'https://www.linkedin.com/in/yuktha-s-25s07/', '2005-05-25', 'B+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"Voc nagar , West street , Bodinayakanur","city":"Theni","state":"Tamil Nadu","pincode":"625531"}', NULL, '{"father":{"name":"Sree Kumar V","phone":"8437253658","email":"","occupation":"Ex Army","qualification":"","annualIncome":"3 L"},"mother":{"name":"Murugeswari S","phone":"7006325294","email":"","occupation":"Home baker","qualification":"","annualIncome":""},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 08:06:42', '2026-03-25 08:23:33', NULL, NULL),
+	(39, 3988, '', '', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-25 08:07:00', '2026-03-25 08:15:03', NULL, NULL),
+	(40, 3990, '6381948663', '', '2006-03-22', 'B+', 'Indian', 'Hindu', 'General', NULL, 'Tamil', 'day_scholar', '{"street":"variva linga aasari street ,TB road","city":"Madurai","state":"Tamil Nadu","pincode":"625532"}', NULL, '{"father":{"name":"S.Ramachandran","phone":"","email":"","occupation":"salesman","qualification":"","annualIncome":""},"mother":{"name":"R.Sasikala","phone":"","email":"","occupation":"","qualification":"","annualIncome":""},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 08:12:01', '2026-03-25 08:15:22', NULL, NULL),
+	(41, 3980, '', 'https://www.linkedin.com/in/rajapraba2006/', '2006-09-03', 'B+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"26, Bazzar Street, Veerapandi","city":"Theni","state":"Tamil Nadu","pincode":"625531"}', NULL, '{"father":{"name":"Rajamani S","phone":"9715603500","email":"","occupation":"Business Man","qualification":"ITI","annualIncome":"80000"},"mother":{"name":"Kalpana Devi R ","phone":"9943542036","email":"","occupation":"Home maker","qualification":"SSLC","annualIncome":""},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 08:12:45', '2026-03-25 08:26:56', NULL, NULL),
+	(42, 3989, '8608768303', '', '2004-10-16', 'O+', 'Indian', 'Hindu', 'SC', NULL, 'Tamil', 'day_scholar', '{"street":"north street ,kunnur","city":"Theni","state":"Tamil Nadu","pincode":"625531"}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-25 08:14:26', '2026-03-25 08:16:37', NULL, NULL),
+	(43, 3985, '', 'https://www.linkedin.com/in/susmithasugumar', '2005-11-04', 'O+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"67 A/2, Bazzar street, Thirumalapuram, Bodinayakanur","city":"Theni","state":"Tamil Nadu","pincode":"625513"}', NULL, '{"father":{"name":"SUGUMAR S","phone":"9994537060","email":"","occupation":"Hardware Merchant","qualification":"B.sc. Zoology","annualIncome":"92000/-"},"mother":{"name":"LAKSHMI S","phone":"8825877424","email":"","occupation":"Housewife","qualification":"B.A Economics","annualIncome":""},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 08:14:46', '2026-03-25 08:29:01', NULL, NULL),
+	(44, 3984, '', 'https://www.linkedin.com/in/sri-harini-priya-siva-ab43502a0/', '2005-07-16', 'A+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"Sridevi Complex,Nadar street,Andipatti,Theni dt","city":"Theni","state":"Tamil Nadu","pincode":"625512"}', NULL, '{"father":{"name":"Sivalingam S","phone":"8270806888","email":"sivalingamsanmugam1976@gmail.com","occupation":"Daily wages","qualification":"Null","annualIncome":"72000"},"mother":{"name":"Kanchana S","phone":"9498827470","email":"","occupation":"Homemaker","qualification":"SSLC","annualIncome":"0"},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 08:16:10', '2026-03-25 08:31:40', NULL, NULL),
+	(45, 3969, '9566416731', 'https://www.linkedin.com/in/asim-fathima-3255362a3/ ', '2006-08-30', 'O+', 'Indian', 'Muslim', 'General', NULL, 'Tamil', 'day_scholar', '{"street":"Pattalamman kovil street periyakulam.","city":"Theni","state":"Tamil Nadu","pincode":"625601"}', NULL, '{"father":{"name":"Peer abdul vahith P","phone":"9566416731","email":"parveenbenazir59@gmail.com","occupation":"driver","qualification":"10th","annualIncome":"72000"},"mother":{"name":"Benazir parveen P","phone":"9566416731","email":"parveenbenazir59@gmail.com","occupation":"home maker","qualification":"12th","annualIncome":"-"},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 08:17:16', '2026-03-25 08:48:12', NULL, NULL),
+	(46, 4151, '', '', '2006-06-21', 'O+', 'Indian', 'Hindu', 'SC', NULL, 'Telugu', 'day_scholar', '{}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-25 08:28:35', '2026-03-25 08:29:27', NULL, NULL),
+	(47, 4153, '9965516868', '', '2006-06-01', 'A+', 'Indian', 'Hindu', 'General', NULL, 'Tamil', 'day_scholar', '{"street":"47/a chokkanathapuram, siva sakthi nagar, spk road, chinnamanur.","city":"Theni","state":"Tamil Nadu","pincode":"625515"}', NULL, '{"father":{"name":"Selvam N","phone":"9965516868","email":"","occupation":"Farmer","qualification":"","annualIncome":""},"mother":{"name":"Vennila M","phone":"8610463005","email":"","occupation":"House wife","qualification":"","annualIncome":""},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 08:28:44', '2026-03-25 08:40:57', NULL, NULL),
+	(48, 4152, '', '', '2006-05-23', 'B+', 'Indian', 'Hindu', 'SC', NULL, 'Tamil', 'day_scholar', '{"street":"9/2 st.xavier street thenkarai, periyakulam","city":"Theni","state":"Tamil Nadu","pincode":"625601"}', NULL, '{"father":{"name":"R.Rajeshkannan","phone":"9994595765","email":"","occupation":"Farmer","qualification":"","annualIncome":"72,000"},"mother":{"name":"R.Gowri","phone":"7871397432","email":"","occupation":"House wife","qualification":"","annualIncome":""},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 08:29:26', '2026-03-25 08:37:27', NULL, NULL),
+	(49, 4129, '9080063819', '', '2005-08-08', 'B+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"sivan kaalai thevar street keelapudhur usilampatti,madurai","city":"Madurai","state":"Tamil Nadu","pincode":"625532"}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-25 08:29:51', '2026-03-25 08:34:45', NULL, NULL),
+	(50, 4119, '9025296932', '', '2006-01-15', 'B+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"74 Mutton stall north street,Allinagaram,,Theni","city":"Theni","state":"Tamil Nadu","pincode":"625531"}', NULL, '{"father":{"name":"MANIVANNAN R","phone":"9087828101","email":"","occupation":"Farmer","qualification":"","annualIncome":""},"mother":{"name":"RAJESWARI P","phone":"9025296932","email":"","occupation":"","qualification":"","annualIncome":""},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 08:29:51', '2026-03-25 08:35:24', NULL, NULL),
+	(51, 4110, '', '', '2005-07-28', 'A+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"No.76, Raamar kovil street, Panchayat office(opp road), Annanji","city":"Theni","state":"Tamil Nadu","pincode":"625531"}', NULL, '{"father":{"name":"K.RAVI","phone":"9710025612","email":"","occupation":"Business","qualification":"","annualIncome":""},"mother":{"name":"R.UMA","phone":"7339316120","email":"","occupation":"Housewife","qualification":"","annualIncome":""},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 08:30:10', '2026-03-25 08:34:19', NULL, NULL),
+	(52, 4120, '9865516146', '', '2006-06-01', 'O+', 'Indian', 'Hindu', 'General', NULL, 'Tamil', 'day_scholar', '{"street":"Melapudur","city":"Madurai","state":"Tamil Nadu","pincode":"625232"}', NULL, '{"father":{"name":"Venkatesan K","phone":"7010001743","email":"nanthinimedical@gmail.com","occupation":"Business man","qualification":"B.Pharm","annualIncome":"80,000"},"mother":{"name":"Anitha V","phone":"9976132213","email":"","occupation":"House wife","qualification":"","annualIncome":""},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 08:30:15', '2026-03-25 08:40:04', NULL, NULL),
+	(53, 4138, '8124818271', '', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-25 08:30:39', '2026-03-25 08:30:39', NULL, NULL),
+	(54, 4114, '9865139842', 'https://www.linkedin.com/in/akshayashri/', '2006-07-15', 'B+', 'Indian', 'Hindu', 'General', NULL, 'Tamil', 'day_scholar', '{"street":"19/17p, Bismi Nagar, Thenkarai, Periyakulam","city":"Theni","state":"Tamil Nadu","pincode":"625601"}', NULL, '{"father":{"name":"Kannan R","phone":"9865139842","email":"rkrkwisdom@gmail.com","occupation":"Teacher","qualification":"","annualIncome":"Above 12 lakhs"},"mother":{"name":"Manimala","phone":"7904523194","email":"manimala150183@gmail.com","occupation":"Home maker","qualification":"","annualIncome":""},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 08:30:39', '2026-03-25 08:53:39', NULL, NULL),
+	(55, 4150, '8248569316', '', '2005-10-17', 'B+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"32/D,V.P.S.A. Mill Compound Pankajam House Street Theni.","city":"Theni","state":"Tamil Nadu","pincode":"625531"}', NULL, '{"father":{"name":"Baskaran.J.","phone":"9994430273","email":"baskaran.jbc@gmail.com","occupation":"Business","qualification":"B.A.","annualIncome":"70,000"},"mother":{"name":"Nagajothi.B.","phone":"9344559628","email":"","occupation":"Home Maker","qualification":"M.A.B.ed","annualIncome":""},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 08:31:08', '2026-03-25 08:35:46', NULL, NULL),
+	(56, 4135, '9994214656', '', '2006-06-12', 'B+', 'Indian', 'Hindu', 'General', NULL, 'Tamil', 'day_scholar', '{"street":"34/PTR kalvai street,samy kulam,chinnamanur","city":"Theni","state":"Tamil Nadu","pincode":"625515"}', NULL, '{"father":{"name":"","phone":"","email":"","occupation":"","qualification":"","annualIncome":""},"mother":{"name":"S.Aruna devi","phone":"9994214656","email":"","occupation":"Teacher","qualification":"","annualIncome":"80000"},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 08:31:11', '2026-03-25 08:36:48', NULL, NULL),
+	(57, 4128, '', '', '2006-01-26', 'A+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"15-7-9,siva sakthi nagar,near amman nagar,veerapandi","city":"Theni","state":"Tamil Nadu","pincode":"625534"}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-25 08:31:12', '2026-03-25 09:15:19', NULL, NULL),
+	(58, 4155, '', '', '2006-07-09', 'B+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"Anna street , M.G.R nagar ","city":"Theni","state":"Tamil Nadu","pincode":"625531"}', NULL, '{"father":{"name":"Velpandian T","phone":"9976225226","email":"","occupation":"","qualification":"","annualIncome":""},"mother":{"name":"Nithyadevi G","phone":"8902388226","email":"njithyadevi75@gmail.com","occupation":"Caser","qualification":"m.a","annualIncome":"70,000"},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 08:31:19', '2026-03-25 08:38:06', NULL, NULL),
+	(59, 4146, '9750334053', '', '2005-12-16', 'O+', 'Indian', 'Hindu', 'SC', NULL, 'Tamil', 'day_scholar', '{"street":"139,Housing Board, K.R.R Nagar,Theni","city":"Theni","state":"Tamil Nadu","pincode":"625531"}', NULL, '{"father":{"name":"J.Venkatesh","phone":"9750334053","email":"jeyavenkatesh007@gmail.com","occupation":"RTO-Accoutant","qualification":"M.Com.,","annualIncome":"346000"},"mother":{"name":"T.Maheswari","phone":"8248788475","email":"Nil","occupation":"housewife","qualification":"M.Com,.","annualIncome":"Nil"},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 08:31:27', '2026-03-25 08:46:24', '/uploads/photos/family/family_4146_shalini_v.jpg', NULL),
+	(60, 4147, '9360644543', '', '2004-11-09', 'AB-', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"508,Micheal Nadar Compound,Neruji road,theni","city":"Theni","state":"Tamil Nadu","pincode":"625531"}', NULL, '{"father":{"name":"Muthu Kumar.R","phone":"9500499593","email":"","occupation":"Business","qualification":"10th std","annualIncome":"120000"},"mother":{"name":"Muthu Selvi.M","phone":"","email":"","occupation":"Housewife","qualification":"10th std","annualIncome":"-"},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 08:31:28', '2026-03-25 08:37:54', NULL, NULL),
+	(61, 4141, '', '', '2005-03-28', 'O+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"333,Rani mangammal street ,Bodinayakanur","city":"Theni","state":"Tamil Nadu","pincode":"625513"}', NULL, '{"father":{"name":"T.Maheshwaran","phone":"8098307372","email":"","occupation":"Farmer","qualification":"","annualIncome":""},"mother":{"name":"M.Suganthi","phone":"8098332397","email":"","occupation":"House Wife","qualification":"","annualIncome":""},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 08:31:33', '2026-03-25 08:36:44', NULL, NULL),
+	(62, 4125, '7339471760', 'https://www.linkedin.com/in/kanaga-durga-a996782a3/', '2006-01-03', 'O+', 'Indian', 'Hindu', 'General', NULL, 'Tamil', 'day_scholar', '{"street":"62/2w,West Street,Maniyarampatti,Aundipatti.","city":"Theni","state":"Tamil Nadu","pincode":"625512"}', NULL, '{"father":{"name":"Murugesan.C","phone":"9965910035","email":"-","occupation":"Farmer","qualification":"12th","annualIncome":"75000"},"mother":{"name":"Meena M","phone":"9524897018","email":"-","occupation":"HomeMaker","qualification":"10th","annualIncome":"-"},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 08:31:34', '2026-03-25 08:44:00', NULL, NULL),
+	(63, 4116, '9626533019', '', '2005-04-22', 'B+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"3/26 main street jothimanikam,jothimanickam post ,usilampatti taluk,madurai","city":"Madurai","state":"Tamil Nadu","pincode":"625532"}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-25 08:31:40', '2026-03-25 08:35:29', NULL, NULL),
+	(64, 4156, '9791848157', '', '2006-03-22', 'O+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"Barathi devi school street kadamali kundu","city":"Theni","state":"Tamil Nadu","pincode":"625579"}', NULL, '{"father":{"name":"Mahesh.C","phone":"8754288157","email":"syuva851@gmail.com","occupation":"Farmer","qualification":"12th","annualIncome":"50k"},"mother":{"name":"Vinoth .M","phone":"9791848157","email":"syuva851@gmail.com","occupation":"House wife","qualification":"12th","annualIncome":"no"},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 08:32:49', '2026-03-25 08:45:01', NULL, NULL),
+	(65, 4122, '6381653152', '', '2006-08-21', 'O+', 'Indian', 'Hindu', 'General', NULL, 'Tamil', 'hosteller', '{"street":"3/191 ayyankovilpatti,uththapanaickanur,usilampatti,madurai","city":"Madurai","state":"Tamil Nadu","pincode":"625537"}', NULL, '{"father":{"name":"Muthupanti T","phone":"9585481294","email":"Nil","occupation":"farmer","qualification":"10th","annualIncome":"70000"},"mother":{"name":"Paunthai M","phone":"Nil","email":"Nil","occupation":"Nil","qualification":"Nil","annualIncome":"Nil"},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 08:32:58', '2026-03-25 08:40:18', NULL, NULL),
+	(66, 4144, '9843852725', '', '2006-06-25', 'A+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"143 A/ Arul Aanandhar college opp, pasumpon nagar ,karumathur","city":"Madurai","state":"Tamil Nadu","pincode":"625514"}', NULL, '{"father":{"name":"P.Kasinathan","phone":"9843825725","email":"mpkasinathan@gmail.com","occupation":"Engineer","qualification":"Diplomo Mechanical Engineering","annualIncome":""},"mother":{"name":"K.Chandralekha","phone":"7708750898","email":"santhosubbu7@gmail.com","occupation":"House wife","qualification":"10th","annualIncome":""},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 08:33:14', '2026-03-25 08:42:24', NULL, NULL),
+	(67, 4136, '8870414912', '', '2006-03-19', 'B+', 'Indian', 'Hindu', 'SC', NULL, 'Tamil', 'day_scholar', '{"street":"Dr.Ambedkar street,Thamaraikulam,625605.","city":"Theni","state":"Tamil Nadu","pincode":"625531"}', NULL, '{"father":{"name":"P.Chinnasamy","phone":"8870414912","email":"no","occupation":"wage labourer","qualification":"no education","annualIncome":"72,000"},"mother":{"name":"C.Rajalakshmi","phone":"8870414912","email":"no","occupation":"wage labourer","qualification":"10 th","annualIncome":"60,000"},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 08:33:35', '2026-03-25 08:41:05', NULL, NULL),
+	(68, 4134, '', '', '2006-02-12', 'O+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"kavandanpatti,23ward TB road ,Usilampatti","city":"Madurai","state":"Tamil Nadu","pincode":"625532"}', NULL, '{"father":{"name":"Chellapandi K","phone":"6383715900","email":"","occupation":"Driver","qualification":"10th grade","annualIncome":"75000"},"mother":{"name":"Kalaiarasi C","phone":"7418290594","email":"nil","occupation":"Housewife","qualification":"10th grage","annualIncome":"nil"},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 08:33:55', '2026-03-25 09:25:04', NULL, NULL),
+	(69, 4131, '8072414062', '', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-25 08:34:32', '2026-03-25 08:34:32', NULL, NULL),
+	(70, 4113, '9788942511', '', '2005-11-16', 'A+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"4/4, kaaliamman kovil 1st street, Theni cooperative bank backside,chinnamanur","city":"Theni","state":"Tamil Nadu","pincode":"625515"}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-25 08:35:03', '2026-03-25 08:39:55', NULL, NULL),
+	(71, 4158, '9345252519', 'https://www.linkedin.com/in/kaviya-perumalsamy', '2005-12-15', 'O+', 'Indian', 'Hindu', 'General', NULL, 'Tamil', 'day_scholar', '{"street":"D/o K.Perumalsamy,south street,Aundipatti,Balacombai.","city":"Theni","state":"Tamil Nadu","pincode":"625531"}', NULL, '{"father":{"name":"K.Perumal Samy","phone":"9943697488","email":"perumalsamyk433@gmail.com","occupation":"Farmer","qualification":"8th ","annualIncome":"72000"},"mother":{"name":"P.Thanga selvi","phone":"7604861743","email":"perumal.k6282@gmail.com","occupation":"Talior","qualification":"12th","annualIncome":"10,000"},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 08:36:01', '2026-03-25 08:54:53', NULL, NULL),
+	(72, 4157, '9150076041', '', '2003-07-16', 'AB+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"First street samikulam ,chinnamanur","city":"Theni","state":"Tamil Nadu","pincode":"625515"}', NULL, '{"father":{"name":"Balamurugan J","phone":"9150076041","email":"","occupation":"Farmer","qualification":"12","annualIncome":"40000"},"mother":{"name":"Saraswathi B","phone":"6385518832","email":"","occupation":"Tailor","qualification":"12","annualIncome":"35000"},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 08:36:03', '2026-03-25 09:26:17', NULL, NULL),
+	(73, 4115, '9446497231', '', '2005-07-12', 'O+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'hosteller', '{"street":"NETTIGUDE LOWER DIVISION,GUDERALE ESTATE","city":"Karur","state":"Kerala","pincode":"685612"}', NULL, '{"father":{"name":"C KANNAN","phone":"9446497231","email":"kannanmani5869@gmail.com","occupation":"BUSSINESS","qualification":"+12","annualIncome":"12,00,000"},"mother":{"name":"K MANIMEKALA","phone":"8301867231","email":"manimekalakerala@gmail.com","occupation":"HOME MAKER","qualification":"+12","annualIncome":"-NIL-"},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 08:36:34', '2026-03-25 08:45:15', NULL, NULL),
+	(74, 4142, '7358800257', '', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-25 08:39:42', '2026-03-25 08:39:48', NULL, NULL),
+	(75, 4140, '', '', '2005-09-27', 'AB+', 'Indian', 'Muslim', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"2/14 west street pudhur","city":"Theni","state":"Tamil Nadu","pincode":"625513"}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-25 08:39:52', '2026-03-25 08:41:54', NULL, NULL),
+	(76, 4124, '', 'https://www.linkedin.com/in/jai-ragul/', '2005-09-28', 'B+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"20,mutton stall north new street ,Allinagaram,Theni.","city":"Theni","state":"Tamil Nadu","pincode":"625531"}', NULL, '{"father":{"name":"Dhanapal T","phone":"9894405620","email":"dhanapalabijai@gmail.com","occupation":"Working in Co-operative Store","qualification":"12th Grade","annualIncome":"180000"},"mother":{"name":"Anita D","phone":"9952247876","email":"anithadhanapal75@gmail.com","occupation":"HouseWife","qualification":"B.com","annualIncome":"nil"},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 08:40:39', '2026-03-25 08:58:27', NULL, NULL),
+	(77, 4133, '8610002731', '', '2005-09-15', 'B+', 'Indian', 'Hindu', 'General', NULL, 'Tamil', 'hosteller', '{"street":".","city":"Madurai","state":"Tamil Nadu","pincode":"625019"}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-25 08:40:44', '2026-03-25 08:43:31', NULL, NULL),
+	(78, 3986, '7598645510', 'https://www.linkedin.com/in/varuni-thirumoorthy-9075342a3', '2004-04-22', 'A+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"29, Dehana Street near Suriyakumar hospital, cumbum","city":"Theni","state":"Tamil Nadu","pincode":"625516"}', NULL, '{"father":{"name":"Thirumoorthy N","phone":"7010697003","email":"","occupation":"Tamilnadu Police (SSI)","qualification":"12th std","annualIncome":"6,00,000-7,00,000"},"mother":{"name":"Janaki T","phone":"8668102993","email":"janakivaruni1980@gmail.com","occupation":"Home Maker","qualification":"Bsc","annualIncome":""},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 08:47:37', '2026-03-25 08:55:44', NULL, NULL),
+	(79, 3977, '8760478991', 'https://www.linkedin.com/in/muthulakshmi-pakkiyaraj-49653a2a3/', '2006-06-02', 'B+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"Bagavathi Amman Kovil Stereet , T.Subbulapuram Aundipati Taluk ,Theni","city":"Theni","state":"Tamil Nadu","pincode":"625536"}', NULL, '{"father":{"name":"Pakkiyaraj K","phone":"8760478991","email":"pakkiyarajk0@gmail.com","occupation":"weaving","qualification":"8th","annualIncome":"84000"},"mother":{"name":"Kamatchi P","phone":"","email":"","occupation":"weaving","qualification":"","annualIncome":""},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 08:55:10', '2026-03-25 13:40:08', NULL, NULL),
+	(80, 4139, '', '', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{"street":"34/168 THENI MAIN ROAD,USILAMPATTI","city":"Madurai","state":"Tamil Nadu","pincode":"625532"}', NULL, '{"father":{"name":"SURESH.R","phone":"9715294646","email":"","occupation":"BUSSINESS","qualification":"9th","annualIncome":"72000"},"mother":{"name":"PANDISELVI.S","phone":"","email":"","occupation":"HOUSEWIFE","qualification":"12th","annualIncome":""},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 09:06:35', '2026-03-25 09:16:34', NULL, NULL),
+	(81, 4148, '', 'https://www.linkedin.com/in/karan170/', '2006-04-29', 'AB+', 'Indian', 'Hindu', 'General', NULL, 'Tamil', 'day_scholar', '{"street":"147,Kaller school street,uppukkottai","city":"Theni","state":"Tamil Nadu","pincode":"625531"}', NULL, '{"father":{"name":"Gunasekaran M","phone":"9751988065","email":"srikaran170@gmail.com","occupation":"Driver","qualification":"","annualIncome":"75000"},"mother":{"name":"Mahalakshmi G","phone":"8608152796","email":"","occupation":"","qualification":"","annualIncome":""},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 09:08:26', '2026-03-25 09:13:43', NULL, NULL),
+	(82, 4145, '6380519378', '', '2004-09-05', 'AB+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"north strre,mangathayamman kovil stret,T Subbulapuram,Aundipatti.","city":"Theni","state":"Tamil Nadu","pincode":"625512"}', NULL, '{"father":{"name":"Rajaram S","phone":"8344665306","email":"nil","occupation":"Real estate","qualification":"12th grade","annualIncome":"150000"},"mother":{"name":"Manimegalai R","phone":"nil","email":"nil","occupation":"Housewife","qualification":"10th grade","annualIncome":"nil"},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 09:15:51', '2026-03-25 09:20:24', NULL, NULL),
+	(83, 4154, '', '', '2005-07-05', 'B+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-25 09:18:17', '2026-03-25 09:20:30', NULL, NULL),
+	(84, 3775, '7092148377', 'https://www.linkedin.com/in/thanga-raja-varshini', '2006-12-07', 'B+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"1/357-27B,sathuragiri nagar ,SBI colony, Keelavadagarai,periyakulam -625601","city":"Theni","state":"Tamil Nadu","pincode":"625601"}', NULL, '{"father":{"name":"T.Senthilkumar","phone":"7092148377","email":"senthilchinnarani@gmail.com","occupation":"Teacher","qualification":"B.Lite , B.Ed","annualIncome":"1000000"},"mother":{"name":"P.ChinnaRani","phone":"9791476152","email":"","occupation":"Homemaker","qualification":"B.A,B.Ed","annualIncome":""},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 09:38:45', '2026-03-25 15:20:24', NULL, NULL),
+	(85, 3774, '9361864638', 'https(not)', '2006-08-18', 'O+', 'Indian', 'Hindu', 'SC', NULL, 'Tamil', 'day_scholar', '{"street":"4/143c,east street,ambethkar nagar,t.subbulapuram,aundipatti,theni","city":"Theni","state":"Tamil Nadu","pincode":"625536"}', NULL, '{"father":{"name":"vanaraja.c","phone":"9787859135","email":"vsweety414@gmail.com","occupation":"farmer","qualification":"no","annualIncome":"72000"},"mother":{"name":"muthumari.v","phone":"9787859135","email":"vsweety414@gmail.com","occupation":"housewife","qualification":"8th","annualIncome":"no"},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 09:39:06', '2026-03-25 10:01:12', NULL, NULL),
+	(86, 4005, '9894392227', '', '2006-04-19', 'O+', 'Indian', 'Muslim', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"136/f20 sadaiyal south 3rd street thittasalai road,suppan ragavan colony,theni","city":"Theni","state":"Tamil Nadu","pincode":"625531"}', NULL, '{"father":{"name":"ABDUL HAMEED K","phone":"9894392227","email":"","occupation":"BUSINESS","qualification":"","annualIncome":"83,000"},"mother":{"name":"","phone":"","email":"","occupation":"","qualification":"","annualIncome":""},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 09:40:25', '2026-03-25 09:47:07', NULL, NULL),
+	(87, 3762, '9363002952', '', '2007-06-29', 'B+', 'Indian', 'Hindu', 'General', NULL, 'Tamil', 'day_scholar', '{"street":"14A Raja ricemill 2nd street, chinnamanur","city":"Theni","state":"Tamil Nadu","pincode":"625515"}', NULL, '{"father":{"name":"R.Velmurugan","phone":"9788745759","email":"","occupation":"Business","qualification":"5th","annualIncome":"77,000"},"mother":{"name":"V.Renuka","phone":"9363002952","email":"","occupation":"housewife","qualification":"12th","annualIncome":"-"},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 09:41:09', '2026-03-25 09:55:47', NULL, NULL),
+	(88, 3767, '9003407873', '', '2006-11-30', 'O+', 'Indian', 'Hindu', 'General', NULL, 'Tamil', 'day_scholar', '{"street":"105G/w-3 samykulam 2nd street Chinnamanur Theni(dt)","city":"Theni","state":"Tamil Nadu","pincode":"625515"}', NULL, '{"father":{"name":"Narasimman.R","phone":"9952570447","email":"narasuele.@gmail.com","occupation":"powerplant worker","qualification":"ITI","annualIncome":"below 75,000"},"mother":{"name":"Muthulakshmi.N","phone":"9003407873","email":"","occupation":"homeMaker","qualification":"","annualIncome":"no"},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 09:41:11', '2026-03-25 14:41:45', NULL, NULL),
+	(89, 4002, '', 'https://www.linkedin.com/in/monika-balamurugan-73666a2a3/?skipRedirect=true', '2005-10-01', 'O+', 'Indian', 'Hindu', 'General', NULL, 'Tamil', 'day_scholar', '{"street":"5/3B south new street,b.k.patty,Theni","city":"Theni","state":"Tamil Nadu","pincode":"625531"}', NULL, '{"father":{"name":"Balamurugan S","phone":"97881444180","email":"","occupation":"Business","qualification":"","annualIncome":"60,000"},"mother":{"name":"Ponmari B","phone":"9597026722","email":"","occupation":"Home maker","qualification":"","annualIncome":""},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 09:42:04', '2026-03-25 10:05:54', NULL, NULL),
+	(90, 3759, '9344462684', 'https://linked in.com//praveena19.n ', '2006-11-23', 'A+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"D/o 7B ,muthumariyamman kovil street ,aundipatty , theni","city":"Theni","state":"Tamil Nadu","pincode":"625512"}', NULL, '{"father":{"name":"B.Nagamani","phone":"7708714578","email":"np82684@gmail.com","occupation":"day wage","qualification":"7th","annualIncome":"50000"},"mother":{"name":"N.VijilaRani","phone":"8760616135","email":"vviji423519@gmail.com","occupation":"House Wife","qualification":"8th","annualIncome":"No"},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 09:42:11', '2026-03-25 10:05:36', NULL, NULL),
+	(91, 4006, '9361924761', 'https://www.linkedin.com/in/pandiya-rajan-54b6732a3/', '2006-03-15', 'O+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"M.G.R Nagar T.subbulapuram","city":"Theni","state":"Tamil Nadu","pincode":"625531"}', NULL, '{"father":{"name":"karthikeyan.N","phone":"9943640563","email":"","occupation":"shopkeeper","qualification":" 12","annualIncome":"15,0000"},"mother":{"name":"renganayaki.N","phone":"-","email":"","occupation":"houe wife","qualification":"12","annualIncome":"-"},"guardian":{"name":"-","relation":"-","phone":"-","address":"-"},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 09:43:32', '2026-03-26 10:07:40', NULL, '[{"name":"dinagar.k","age":"18","education":"ug","occupation":"student"}]'),
+	(92, 3766, '8667521070', '', '2007-08-18', 'O+', 'Indian', 'Hindu', 'General', NULL, 'Tamil', 'day_scholar', '{"street":" D\\\\O36 E \\\\4Wchellandiyamman kovil street ,cumbum","city":"Theni","state":"Tamil Nadu","pincode":"625516"}', NULL, '{"father":{"name":"K.Ganesan","phone":"763946052","email":"ganeshan.cumbum@gmail.com","occupation":"-","qualification":"9th","annualIncome":"-"},"mother":{"name":"G.kalamani","phone":"8667521070","email":"ganeshan.cumbum@gmail.com","occupation":"kuly","qualification":"9th","annualIncome":"75000"},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 09:43:40', '2026-03-25 09:56:29', NULL, NULL),
+	(93, 3761, '9894571321', '', '2006-09-22', 'B-', 'Indian', 'Hindu', 'General', NULL, 'Tamil', 'day_scholar', '{"street":"2nd machal street,Allinagaram","city":"Theni","state":"Tamil Nadu","pincode":"625531"}', NULL, '{"father":{"name":"Ganesan G R","phone":"9344715838","email":"priyamahes3022@gmail.com","occupation":"labour","qualification":"8","annualIncome":"120000"},"mother":{"name":"Maheswari G","phone":"9894571321","email":"mahespriya25@gmail.com","occupation":"housewife","qualification":"8","annualIncome":"-"},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 09:50:01', '2026-03-25 09:58:11', NULL, NULL),
+	(94, 3764, '9080997840', '', '2006-08-19', 'A+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"42/marriamman sanathi 2nd north street thenkarai,periyakulam","city":"Theni","state":"Tamil Nadu","pincode":"625601"}', NULL, '{"father":{"name":"SENTHIL NATHAN S","phone":"9150523121","email":"ishree50@gmail.com","occupation":"BUSSINESS","qualification":"M.COM","annualIncome":"1,00,000"},"mother":{"name":"VANI SRI S","phone":"9080997840","email":"ishvani2464@gmail.com","occupation":"HOUSE WIFE","qualification":"12TH","annualIncome":"NIL"},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 09:51:09', '2026-03-25 09:56:12', NULL, NULL),
+	(95, 3773, '9698222949', '', '2006-10-10', 'A+', 'Indian', 'Christian', 'General', NULL, 'Tamil', 'day_scholar', '{"street":"160,bethel complex,theni main road,near ponnuchamy theater,usillampatti","city":"Madurai","state":"Tamil Nadu","pincode":"625532"}', NULL, '{"father":{"name":"M.Rubanraj","phone":"9698222949","email":"","occupation":"agriculture","qualification":"","annualIncome":"72000"},"mother":{"name":"R.Deepa","phone":"9698222949","email":"","occupation":"","qualification":"","annualIncome":"72000"},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 09:51:29', '2026-03-25 15:54:12', NULL, NULL),
+	(96, 3771, '8056447553', '', '2007-03-29', 'B+', 'Indian', 'Hindu', 'General', NULL, 'Tamil', 'day_scholar', '{"street":"29/A,Malaiyandi street,chinnamanur","city":"Theni","state":"Tamil Nadu","pincode":"625515"}', NULL, '{"father":{"name":"M.Ayyachamy","phone":"8056447553","email":"","occupation":"Business man","qualification":"8th","annualIncome":"70,000"},"mother":{"name":"A.Rukkumani","phone":"8807503473","email":"","occupation":"House wife","qualification":"8th","annualIncome":""},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 09:51:46', '2026-03-25 10:03:04', NULL, NULL),
+	(97, 3772, '8056746728', '', '2006-12-16', 'AB+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'hosteller', '{"street":"No:153, srinivasanagar , nallampalayam , ganapathy post, comibatore - 06","city":"Coimbatore","state":"Tamil Nadu","pincode":"641006"}', NULL, '{"father":{"name":"SARAVANAN R","phone":"9840606407","email":"saravananam1980@gmail.com","occupation":"MANAGER","qualification":"BE","annualIncome":"5L"},"mother":{"name":"ANOGEETH M","phone":"8220126111","email":"anogeeth10@gmail.com","occupation":"TEAQCHER","qualification":"BE,ME,BEd","annualIncome":"3l"},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 09:52:05', '2026-03-25 09:59:11', NULL, NULL),
+	(98, 3760, '9345627919', '', '2006-09-29', 'B+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":" 269, 13th street, KRR Nagar","city":"Theni","state":"Tamil Nadu","pincode":"625531"}', NULL, '{"father":{"name":"Murugan M","phone":"8807901150","email":"","occupation":"Business","qualification":"","annualIncome":"92000"},"mother":{"name":"Vanitha M","phone":"9894047416","email":"","occupation":"Housewife","qualification":"","annualIncome":""},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 09:52:19', '2026-03-25 10:04:33', NULL, NULL),
+	(99, 3757, '9488181620', '', '2006-09-05', 'B+', 'Indian', 'Christian', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"kaliyamman kovil street,meenakshipuram,pattiveeranpatti","city":"Dindigul","state":"Tamil Nadu","pincode":"624212"}', NULL, '{"father":{"name":"johnpeter m","phone":"nill","email":"nill","occupation":"nill","qualification":"nill","annualIncome":"nill"},"mother":{"name":"thiruvalar selvi s","phone":"9488181620","email":"sthiruvalar959@gmail.com","occupation":"anganvadi worker","qualification":"10","annualIncome":"60000"},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 09:52:24', '2026-03-25 10:04:58', NULL, NULL),
+	(100, 3758, '7200490752', '', '2007-09-12', 'B+', 'Indian', 'Hindu', 'General', NULL, 'Tamil', 'day_scholar', '{"street":"W-23,9,Manthaiyamman Kovil Street,Chinnamanur.","city":"Theni","state":"Tamil Nadu","pincode":"625515"}', NULL, '{"father":{"name":"K N Murugan","phone":"","email":"knmurugan1304@gmail.com","occupation":"Coolie","qualification":"9th","annualIncome":"Rs.72,000/-"},"mother":{"name":"M Nagarathinam","phone":"8344425569","email":"mnagarathinam2004@gmail.com","occupation":"House Wife","qualification":"6th","annualIncome":"-"},"guardian":{"name":"-","relation":"-","phone":"-","address":"-"},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 09:52:32', '2026-03-25 10:03:53', NULL, NULL),
+	(101, 3996, '9655209446', '', '2006-03-01', 'O+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"4-323,southstreet,viralipatti Batlagundu","city":"Dindigul","state":"Tamil Nadu","pincode":"624202"}', NULL, '{"father":{"name":"Saravanan.P","phone":"9655209446","email":"","occupation":"Tailor","qualification":"12th","annualIncome":"60,000"},"mother":{"name":"Prabha.N","phone":"9786751386","email":"","occupation":"Teacher","qualification":"B.Ed","annualIncome":"50,000"},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 09:52:50', '2026-03-25 10:00:17', NULL, NULL),
+	(102, 3770, '9960427476', '', '2007-02-15', 'A+', 'Indian', 'Hindu', 'General', NULL, 'Tamil', 'day_scholar', '{"street":"212,Bhagavathiamman kovil street ,Palarpatti","city":"Theni","state":"Tamil Nadu","pincode":"625531"}', NULL, '{"father":{"name":"V.Kannan","phone":"-","email":"-","occupation":"-","qualification":"-","annualIncome":"-"},"mother":{"name":"K.Selvarani","phone":"9960427476","email":"sivaneshkannan081@gmail.com","occupation":"Self employee","qualification":"8th","annualIncome":"72000"},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 09:54:06', '2026-03-25 10:00:32', NULL, NULL),
+	(103, 3777, '8608442972', '', '2006-12-05', 'B+', 'Indian', 'Hindu', 'General', NULL, 'Tamil', 'day_scholar', '{"street":"Middle street","city":"Theni","state":"Tamil Nadu","pincode":"625531"}', NULL, '{"father":{"name":"velmurugan n","phone":"9095254916","email":"_","occupation":"self employed","qualification":"12th","annualIncome":"72000"},"mother":{"name":"Kanagarani A","phone":"8608442972","email":"kanasid82@gmail.com","occupation":"House wife","qualification":"12th","annualIncome":"-"},"guardian":{"name":"-","relation":"-","phone":"-","address":"-"},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 09:54:31', '2026-03-25 10:02:40', NULL, NULL),
+	(104, 3763, '7010146923', '', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{"street":"3/340 indira colony ,kattakamanpatty (PO)","city":"Dindigul","state":"Tamil Nadu","pincode":"624202"}', NULL, '{"father":{"name":"suresh kumar.s ","phone":"7010146923","email":"3/340 indira colony,kattakamanpaaty(po).","occupation":"security","qualification":"MA,MEd","annualIncome":"1,23,000"},"mother":{"name":"saraswathi.k","phone":"9626576407 ","email":"3/340 indira colony,kattakamanpaaty(po).","occupation":"housewife","qualification":"nursing","annualIncome":"nil"},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 09:55:32', '2026-03-25 10:23:39', NULL, NULL),
+	(105, 4143, '8489008759', 'https://www.linkedin.com/in/sakthi-sundar-78860a2a3/', '2005-08-16', 'A+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"Ward No:17, Vani illam, Minnagar, SPK Road, Chinnamanur","city":"Theni","state":"Tamil Nadu","pincode":"625515"}', NULL, '{"father":{"name":"Paramarajan M","phone":"7871135929","email":"paramarajanm@gmail.com","occupation":"Sculptor","qualification":"12th","annualIncome":"2 LPA"},"mother":{"name":"Chandra P","phone":"8489008759","email":"-","occupation":"Homemaker","qualification":"12th","annualIncome":"-"},"guardian":{"name":"Sowndarya","relation":"Sister","phone":"9080845176","address":"Ward No: 17, VANI ILLAM, MIN NAGAR, SPK Road, Chinnamanur.\\n"},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 09:56:03', '2026-03-25 10:03:25', NULL, NULL),
+	(106, 4011, '9789102556', '', '2006-04-26', 'B+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"1-9-50,North Street,Jakkampatty,Aundipatty.","city":"Theni","state":"Tamil Nadu","pincode":"625512"}', NULL, '{"father":{"name":"G.Selvaraju","phone":"9789102556","email":"","occupation":"Business Man","qualification":"12th Standard","annualIncome":"72,000"},"mother":{"name":"S.Jothi","phone":"9342900594","email":"","occupation":"","qualification":"","annualIncome":""},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 09:57:41', '2026-03-25 15:59:22', NULL, '[{"name":"S.Bhuvanasree","age":"23","education":"BE Computer Science","occupation":"Software Engineer"}]'),
+	(107, 3765, '', '', '2006-12-28', 'B+', 'Indian', 'Hindu', 'General', NULL, 'Tamil', 'day_scholar', '{"street":"1.3.59/2, JRR NAGAR, 1ST WARD, THENKARAI ,PERIYAKULAM","city":"Theni","state":"Tamil Nadu","pincode":"621053"}', NULL, '{"father":{"name":"R MUTHU KUMAR","phone":"9865091095","email":"MUTHU197498@GMAIL.COM","occupation":"PHOTOGRAPHER","qualification":"NONE","annualIncome":"70000"},"mother":{"name":"M PARAMESWARI","phone":"","email":"","occupation":"HOUSE WIFE","qualification":"","annualIncome":""},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 10:03:51', '2026-03-25 10:08:45', NULL, NULL),
+	(108, 4001, '9043132574', '', '2006-06-22', 'A+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"A/9-Kozhipannai Street,Andipatti.","city":"Theni","state":"Tamil Nadu","pincode":"625512"}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-25 10:04:28', '2026-03-25 10:07:33', NULL, NULL),
+	(109, 3752, '8015495341', '', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-25 10:28:24', '2026-03-25 10:28:24', NULL, NULL),
+	(110, 3724, '9488226537', 'https://www.linkedin.com/in/shahana-firdaus-1213763b1', '2007-06-06', 'A+', 'Indian', 'Muslim', 'General', NULL, 'Urdu', 'day_scholar', '{"street":"3/194,N.G.O NAGAR,K.N.PATTI,AUNDIPATTI,THENI(DT)","city":"Theni","state":"Tamil Nadu","pincode":"625531"}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-25 10:47:32', '2026-03-25 13:10:34', NULL, NULL),
+	(111, 3725, '8838425241', 'https://www.linkedin.com/in/srikavi-pm-320119374?utm_source=share_via&utm_content=profile&utm_medium=member_android', '2007-04-16', 'A+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"4-1/79 college road ,Uthamapalayam","city":"Theni","state":"Tamil Nadu","pincode":"625533"}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-25 10:49:09', '2026-03-25 13:45:18', NULL, NULL),
+	(112, 3708, '9497033640', 'https://www.linkedin.com/in/jeevitha-jeevitha-42b5a03b8', '2007-08-26', 'O+', 'Indian', 'Hindu', 'General', NULL, 'Tamil', 'day_scholar', '{"street":"16/5 karuppasamy kovil street,bodi.dharmathupatti","city":"Theni","state":"Tamil Nadu","pincode":"625582"}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-25 10:49:35', '2026-03-25 13:55:26', NULL, NULL),
+	(113, 3716, '', '', '2006-10-25', 'A+', 'Indian', 'Hindu', 'General', NULL, 'Tamil', 'day_scholar', '{"street":"No.21, V.M.STREET, BODINAYAKANUR","city":"Theni","state":"Tamil Nadu","pincode":"625513"}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-25 10:49:44', '2026-03-25 10:59:53', NULL, NULL),
+	(114, 3701, NULL, NULL, '2006-07-14', 'B+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"9-2-2,Kulalar street,vayal patti","city":"Theni","state":"Tamil Nadu","pincode":"625531"}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-25 10:49:51', '2026-03-25 10:51:12', NULL, NULL),
+	(115, 3714, '9003415072', 'https://www.linkedin.com/in/madhu-varshinii-jaisankar-007b66373/', '2006-07-28', 'A+', 'Indian', 'Hindu', 'General', NULL, 'Tamil', 'day_scholar', '{"street":"No.5, pennykwik nagar , Banglamedu , Theni ","city":"Theni","state":"Tamil Nadu","pincode":"625531"}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-25 10:50:53', '2026-03-25 13:54:11', NULL, NULL),
+	(116, 3713, '9952401432', 'https://www.linkedin.com/in/loga-priya-5993123a8', '2006-09-12', 'B+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"sri ram nagar,seelayampatti","city":"Theni","state":"Tamil Nadu","pincode":"625515"}', NULL, '{"father":{"name":"K.MURUGAN","phone":"9952401432","email":"sri ram nagar,seelaypatti","occupation":"farmer","qualification":"5th","annualIncome":"82000"},"mother":{"name":"M.SUMATHI","phone":"8056725601","email":"sri ram nagar,seelayampatti","occupation":"farmer","qualification":"8th","annualIncome":"82000"},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 10:55:46', '2026-03-25 13:45:10', NULL, NULL),
+	(117, 3694, '9787165337', 'https://www.linkedin.com/in/deepa-jeyaram/', '2007-03-10', 'O+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"144C,1st East street,chokkathevanpatti,Theni","city":"Theni","state":"Tamil Nadu","pincode":"625523"}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-25 10:57:17', '2026-03-25 14:08:07', NULL, NULL),
+	(118, 3730, '6369547351', 'https://www.linkedin.com/in/varshini-s-479395377', '2007-07-12', 'O+', 'Indian', 'Hindu', 'General', NULL, 'Tamil', 'day_scholar', '{"street":"11/3/26 perumal kovil street,kuchanur","city":"Theni","state":"Tamil Nadu","pincode":"625515"}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-25 10:59:49', '2026-03-25 14:29:10', NULL, NULL),
+	(119, 3756, '9942749651', 'https://www.linkedin.com/in/manjula-sakthi-952a85372/', '2007-12-01', 'B+', 'Indian', 'Hindu', 'General', NULL, 'Tamil', 'day_scholar', '{"street":"55/2-vinayaker kovil street , madurapuri","city":"Theni","state":"Tamil Nadu","pincode":"625523"}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-25 11:00:33', '2026-03-25 15:14:34', NULL, NULL),
+	(120, 3718, '', '', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-25 11:01:31', '2026-03-25 11:01:31', NULL, NULL),
+	(121, 3755, '9791559762', 'https://www.linkedin.com/public-profile/settings', '2006-12-22', 'O+', 'Indian', 'Hindu', 'General', NULL, 'Tamil', 'day_scholar', '{"street":"59/muneeshwaran kovil street,chinnamanur,theni-625515","city":"Theni","state":"Tamil Nadu","pincode":"625515"}', NULL, '{"father":{"name":"SANTHANAM N","phone":"9791559762","email":"-","occupation":"Daily Wage","qualification":"5TH STD","annualIncome":"74000"},"mother":{"name":"PANJAVARNAM S","phone":"-","email":"-","occupation":"House wife","qualification":"-","annualIncome":"-"},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 11:01:38', '2026-03-25 14:00:41', NULL, NULL),
+	(122, 3743, '', '', '2007-02-09', 'O+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"chinna kadai veethi ,vaigai dam road ,vadugapatti","city":"Theni","state":"Tamil Nadu","pincode":"625603"}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-25 11:02:26', '2026-03-25 11:03:47', NULL, NULL),
+	(123, 3706, '', 'https://www.linkedin.com/in/harshini-anandappan-6a6188315?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app', '2007-01-31', 'AB+', 'Indian', 'Hindu', 'General', NULL, 'Tamil', 'day_scholar', '{"street":"Post Office back side, MNP Line house, Lakshmipuram, Theni","city":"Theni","state":"Tamil Nadu","pincode":"625523"}', NULL, '{"father":{"name":"Anandappan.N","phone":"7708047025","email":"","occupation":"Farmer","qualification":"10th","annualIncome":"72000"},"mother":{"name":"Ranjani","phone":"9677780987","email":"","occupation":"Bakery Worker","qualification":"10th","annualIncome":"72000"},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 11:02:29', '2026-03-25 16:39:27', NULL, NULL),
+	(124, 3732, '9600539761', '', '2007-06-01', 'A+', 'Indian', 'Hindu', 'General', NULL, 'Tamil', 'day_scholar', '{"street":"23/12,Arunagirinathar Street, Bodinayakanur","city":"Theni","state":"Tamil Nadu","pincode":"625513"}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-25 11:03:09', '2026-03-25 11:04:54', NULL, NULL),
+	(125, 3749, '8012795064', '', '2007-05-08', 'A+', 'Indian', 'Hindu', 'General', NULL, 'Tamil', 'day_scholar', '{"street":"dhurgai amman kovil steert muththuthevanpatti theni","city":"Theni","state":"Tamil Nadu","pincode":"625534"}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-25 11:03:33', '2026-03-25 11:06:52', NULL, NULL),
+	(126, 3738, '9491431019', '', '2007-04-30', 'A+', 'Indian', 'Hindu', 'General', NULL, 'Tamil', 'day_scholar', '{"street":"Gandhinagar","city":"Dindigul","state":"Tamil Nadu","pincode":"624202"}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-25 11:03:42', '2026-03-25 11:05:22', NULL, NULL),
+	(127, 3746, '9442823760', '', '2006-07-09', 'A+', 'Indian', 'Hindu', 'General', NULL, 'Tamil', 'day_scholar', '{"street":"post office street kamatchipuram","city":"Theni","state":"Tamil Nadu","pincode":"625520"}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-25 11:04:27', '2026-03-25 11:06:28', NULL, NULL),
+	(128, 3739, '9976909555', '', '2007-04-02', 'O+', 'Indian', 'Hindu', 'General', NULL, 'Tamil', 'day_scholar', '{"street":"111/44,25ward,kuttiyah pillai street-cumbum","city":"Theni","state":"Tamil Nadu","pincode":"625516"}', NULL, '{"father":{"name":"manivannan","phone":"","email":"","occupation":"","qualification":"","annualIncome":""},"mother":{"name":"Amutha","phone":"9976909555","email":"amuthamani2306@gmail.com","occupation":"teacher","qualification":"BBA,D.Ed","annualIncome":"3,00,000"},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 11:05:44', '2026-03-25 15:37:11', NULL, NULL),
+	(129, 3747, '9865648533', '', '2007-05-22', 'O+', 'Indian', 'Hindu', 'SC', NULL, 'Tamil', 'day_scholar', '{"street":"kulathupatti kuppinayakanpatti theni 625520","city":"Theni","state":"Tamil Nadu","pincode":"625520"}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-25 11:06:09', '2026-03-25 11:08:59', NULL, NULL),
+	(130, 3735, '8973743032', '', '2006-07-15', 'O+', 'Indian', 'Muslim', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"Gandhi nagar ,Gk hall back side, batlagundu","city":"Dindigul","state":"Tamil Nadu","pincode":"624001"}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-25 11:06:45', '2026-03-26 04:45:44', NULL, NULL),
+	(131, 3753, '8098308322', '', '2006-08-25', 'B+', 'Indian', 'Hindu', 'General', NULL, 'Tamil', 'day_scholar', '{"street":"105/2b bagawathi amman kovil street,vadagarai,periyakulam","city":"Theni","state":"Tamil Nadu","pincode":"625601"}', NULL, '{"father":{"name":"P.Guru rajan ","phone":"9788930292","email":"no","occupation":"shop keeper","qualification":"10th","annualIncome":"72000"},"mother":{"name":"G.Amsa Lakshmi","phone":"8098308322","email":"lakshmiamsa5@gmail.com","occupation":"home maker","qualification":"12th","annualIncome":"no"},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 12:33:17', '2026-03-25 12:42:47', '/uploads/photos/family/family_3753_lakshmi_priya_g.jpeg', NULL),
+	(132, 3689, '', 'https://www.linkedin.com/in/aneesha-s-961a8b3b6/', '2005-05-07', 'O+', 'Indian', 'Muslim', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"105/1,Bagavathi Amman Kovil,1st Street , Vadagarai ,Periyakulam","city":"Theni","state":"Tamil Nadu","pincode":"625601"}', NULL, '{"father":{"name":"Sulthan A","phone":"9443927114","email":"null","occupation":"Business ","qualification":"","annualIncome":""},"mother":{"name":"AshaBanu S","phone":"","email":"null","occupation":"HouseWife","qualification":"","annualIncome":"null"},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 12:37:12', '2026-03-25 12:48:46', NULL, NULL),
+	(133, 3697, '8098861893', 'https://www.linkedin.com/in/dharani-dhanabalan-838b73386?utm_source=share_via&utm_content=profile&utm_medium=member_android', '2007-03-29', 'O+', 'Indian', 'Hindu', 'General', NULL, 'Tamil', 'day_scholar', '{"street":"177/57 VVG NAGAR , LAKSHMIPURAM","city":"Theni","state":"Tamil Nadu","pincode":"625523"}', NULL, '{"father":{"name":"DHANABALAN V","phone":"9443501512","email":"dhanabalan1003@gmail.com","occupation":"OPERATOR","qualification":"9th","annualIncome":"70,000"},"mother":{"name":"","phone":"","email":"","occupation":"","qualification":"","annualIncome":""},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 12:42:21', '2026-03-25 13:08:12', NULL, NULL),
+	(134, 3686, '9342425131', 'https://www.linkedin.com/in/abarna-k-3003283b4?utm_source=share_via&utm_content=profile&utm_medium=member_android', '2008-01-02', 'O+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"Mariyamman Kovil Street muthulapuram ","city":"Theni","state":"Tamil Nadu","pincode":"625515"}', NULL, '{"father":{"name":"Kaliappan v","phone":"8682934383","email":"","occupation":"Driver","qualification":"12th pass ","annualIncome":"50,000"},"mother":{"name":"Muthulakshmi k","phone":"7708934934","email":"","occupation":"House wife","qualification":"6th pass ","annualIncome":""},"guardian":{"name":"Kaliappan v","relation":"Father ","phone":"8682934383","address":"Mariyamman Kovil Street muthulapuram "},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 12:46:05', '2026-03-25 12:56:40', '/uploads/photos/family/family_3686_abarna_k.jpg', NULL),
+	(135, 3688, '9361827878', 'https://www.linkedin.com/in/anbu-dharsini-7260343b4?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app', '2007-05-21', 'AB+', 'Indian', 'Hindu', 'SC', NULL, 'Tamil', 'day_scholar', '{"street":"KRK Avenue,surya nagar, Boothipuram road,P.C.Patti","city":"Theni","state":"Tamil Nadu","pincode":"625531"}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-25 12:49:52', '2026-03-25 12:55:23', NULL, NULL),
+	(136, 3722, '9894790254', 'https://www.linkedin.com/in/samiksha-dharmaraj-1681a039a', '2006-10-06', 'O+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"8, suthandira veethi thenkarai periyakulam ","city":"Theni","state":"Tamil Nadu","pincode":"625601"}', NULL, '{"father":{"name":"Dharmaraj .M","phone":"9894790254","email":"dcsmobile001@gamil.com","occupation":"Dish installer ","qualification":"12th","annualIncome":"84,000"},"mother":{"name":"Chitra.D","phone":"9865503219","email":"skoff002@gmail.com","occupation":"Homemaker ","qualification":"12th","annualIncome":""},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 12:50:45', '2026-03-25 16:35:44', '/uploads/photos/family/family_3722_samiksha_d.jpeg', '[{"name":"Keerthi shri .D","age":"9","education":"4th","occupation":"student"}]'),
+	(137, 3692, '7604940562', 'https://www.linkedin.com/in/bakiya-lakshmi-g-3795683b5', '2006-08-04', 'O+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"North Street , kovil patti , Andipatti","city":"Theni","state":"Tamil Nadu","pincode":"652562"}', NULL, '{"father":{"name":"Ganesan ","phone":"Nil","email":"Nil","occupation":"Nil","qualification":"10","annualIncome":"Nil"},"mother":{"name":"Rajathi","phone":"9159782801","email":"Nil","occupation":"Coolie","qualification":"10","annualIncome":"75000"},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 13:05:04', '2026-03-25 15:28:27', NULL, NULL),
+	(138, 3696, '9842186613', 'https://www.linkedin.com/in/devikala-muthu-46aa7938a?utm_source=share_via&utm_content=profile&utm_medium=member_android', '2007-01-13', 'B+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"Annamalai nagar, near new police quarters, veerapandi,Theni.","city":"Theni","state":"Tamil Nadu","pincode":"625534"}', NULL, '{"father":{"name":"S. Muthu ","phone":"9842186613","email":"muthusbvpd@gmail.com","occupation":"Police ","qualification":"12th std","annualIncome":"11 lakhs"},"mother":{"name":"M. Deepa","phone":"+917598665210","email":"nil","occupation":"Homemaker ","qualification":"12th std","annualIncome":"Nil"},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', '[{"name":"S.Muthu","relation":"Father","phone":"9842186613","address":"Annamalai nagar, near new police quarters, veerapandi, theni","occupation":"Police"}]', NULL, NULL, NULL, '2026-03-25 13:10:50', '2026-03-25 13:29:51', NULL, NULL),
+	(139, 3703, '9566845939', 'https://www.linkedin.com/in/haripriya-m-priya-7830313b4?utm_source=share_via&utm_content=profile&utm_medium=member_android', '2007-07-29', 'A+', 'Indian', 'Hindu', 'SC', NULL, 'Tamil', 'day_scholar', '{"street":"9w Nagaratchi Pettai Street, Bodinayakanur ","city":"Theni","state":"Tamil Nadu","pincode":"625513"}', NULL, '{"father":{"name":"K.Maheswaran ","phone":"9566845939","email":"harimahes0@gmail.com","occupation":"Business","qualification":"D.M.E","annualIncome":"2,00,000 per annum"},"mother":{"name":"M.Maharani","phone":"9944081485","email":"maha45221@gmail.com","occupation":"House wife ","qualification":"BA English lt","annualIncome":"_"},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 13:11:12', '2026-03-25 13:18:35', NULL, NULL),
+	(140, 3704, '7604968324', '', '2007-01-07', 'O+', 'Indian', 'Hindu', 'General', NULL, 'Tamil', 'day_scholar', '{"street":"Jeeva Nagar , Melmangalam","city":"Theni","state":"Tamil Nadu","pincode":"625603"}', NULL, '{"father":{"name":"S.Selvamani","phone":"9894275047","email":"Null","occupation":"Electrician ","qualification":"12th std","annualIncome":"75000"},"mother":{"name":"S.Abirami","phone":"7604968324","email":"Null","occupation":"Housewife ","qualification":"12th std","annualIncome":"Null"},"guardian":{"name":"S.Selvamani","relation":"Appa","phone":"9894275047","address":"Jeeva Nagar , Melmangalam "},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 13:13:33', '2026-03-25 14:06:04', NULL, NULL),
+	(141, 3723, '8778793802', 'https://www.linkedin.com/in/sasi-regha-palanivel-40a14a3b8?utm_source=share_via&utm_content=profile&utm_medium=member_android', '2007-02-21', 'O+', 'Indian', 'Hindu', 'General', NULL, 'Tamil', 'day_scholar', '{"street":"9-7-20 pookadai lane,near kaliyamma Kovil Street , uthamapalayam ","city":"Theni","state":"Tamil Nadu","pincode":"625533"}', NULL, '{"father":{"name":"Palanivel.c","phone":"9597140260","email":"-","occupation":"Tea shop ","qualification":"6th","annualIncome":"75000"},"mother":{"name":"Santhi P","phone":"9597140260","email":"","occupation":"House wife ","qualification":"6th","annualIncome":""},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 13:14:12', '2026-03-25 13:29:51', '/uploads/photos/family/family_3723_sasi_regha_p.jpg', NULL),
+	(142, 3719, '8610531547', 'https://linkedin.com/in/ priyadharshini-vellaisamy-495ab3395 Vanity URL name', '2006-09-11', 'B+', 'Indian', 'Hindu', 'General', NULL, 'Tamil', 'hosteller', '{"street":"4/176,Lembalakudi,Thirumayam(tk),Pudukottai(dt)","city":"Pudukkottai","state":"Tamil Nadu","pincode":"622412"}', NULL, '{"father":{"name":"A.Vellaisamy","phone":"7806990051","email":"priyadharshini17307@gmail.com","occupation":"Farmar","qualification":"12th","annualIncome":"75000"},"mother":{"name":"V.Krishnaveni","phone":"8610531547","email":"priyadharshini17307@gmail.com","occupation":"housewife","qualification":"10th","annualIncome":"-"},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 13:14:30', '2026-03-25 13:37:59', NULL, NULL),
+	(143, 3974, '7358846324', 'https://www.linkedin.com/in/kaviyamaheshwari-j-6a3462399/', '2005-11-18', 'O+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"Perumal kovil Street,Endapuli,Periyakum","city":"Theni","state":"Tamil Nadu","pincode":"625604"}', NULL, '{"father":{"name":"K.Jeyavelu","phone":"9698025255","email":"jjeyaveluk@gmail.com","occupation":"TNSTC Conductor","qualification":"Graduated","annualIncome":"5,00,000"},"mother":{"name":"J.Annapackiyam","phone":"9698025255","email":"-","occupation":"Home Maker","qualification":"SSLC","annualIncome":"-"},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 13:14:42', '2026-03-25 13:52:52', NULL, NULL),
+	(144, 3726, '7825916100', 'https://www.linkedin.com/in/subashini-mohan-1a1587398/?lipi=urn%3Ali%3Apage%3Ad_flagship3_profile_view_base_contact_details%3BSfA2qOLUSNKzLmzNOwwmXw%3D%3D', '2007-05-16', 'O+', 'Indian', 'Hindu', 'General', NULL, 'Tamil', 'hosteller', '{"street":"181, Maruthanthalai, Mathiyanallur post, Illupur Taluka, Pudukkottai District","city":"Pudukkottai","state":"Tamil Nadu","pincode":"622412"}', NULL, '{"father":{"name":"Mohan.M.R","phone":"6381557966","email":"mrmohan073@gmail.com","occupation":"Private Employee","qualification":"M.com","annualIncome":"90000"},"mother":{"name":"M. Maheswari","phone":"7825916100","email":"maheswarimohan2016@gmail.com","occupation":"House wife","qualification":"12th","annualIncome":"-"},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 13:18:52', '2026-03-25 13:35:37', NULL, NULL),
+	(145, 3720, '9003796205', 'https://www.linkedin.com/in/raji-nallu-6809123b6?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app', '2007-04-30', 'B+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"227/1 kilaviamman Kovil street, saruthupatti, Lakshmi puram","city":"Theni","state":"Tamil Nadu","pincode":"625523"}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-25 13:19:49', '2026-03-25 13:22:40', NULL, NULL),
+	(146, 3709, '8012829801', 'https://www.linkedin.com/in/joys-kiruba-2088783b8 ', '2006-08-16', 'B+', 'Indian', 'Christian', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"60G,JRR Nagar,Thenkarai,Periyakulam","city":"Theni","state":"Tamil Nadu","pincode":"625601"}', NULL, '{"father":{"name":"","phone":"","email":"","occupation":"","qualification":"","annualIncome":""},"mother":{"name":"J.Mariya Shyamala","phone":"8012829801","email":"mariyashayamala12@gmail.com","occupation":"tailor","qualification":"10th","annualIncome":"72000"},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 13:25:07', '2026-03-25 13:29:07', NULL, NULL),
+	(147, 3715, '6383634764', 'https://linkedin.com/in/nagud31', '2007-05-31', 'A+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"63D/20 Forest Road 6th Street ","city":"Theni","state":"Tamil Nadu","pincode":"625531"}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-25 13:27:01', '2026-03-25 13:32:51', NULL, NULL),
+	(148, 3707, '8012841626', 'https://www.linkedin.com/in/janani-s-53b84a3b2?utm_source=share_via&utm_content=profile&utm_medium=member_android', '2006-09-02', 'O+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"120/6 , East street , Gohilapuram","city":"Theni","state":"Tamil Nadu","pincode":"625526"}', NULL, '{"father":{"name":"P.Seenivasan","phone":"9087088349","email":"seenvasanp@gmail.com","occupation":"Tailor","qualification":"10th","annualIncome":"72000"},"mother":{"name":"S.Kavitha","phone":"8012841626","email":"","occupation":"Homemaker ","qualification":"10th","annualIncome":""},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 13:35:21', '2026-03-25 13:56:22', NULL, NULL),
+	(149, 3734, '9976615216', '', '2007-03-04', 'A+', 'Indian', 'Hindu', 'General', NULL, 'Tamil', 'day_scholar', '{"street":"pandi kovil road vallinagar allinagram theni","city":"Theni","state":"Tamil Nadu","pincode":"625531"}', NULL, '{"father":{"name":"vairamuthu","phone":"9976615216","email":"","occupation":"collie","qualification":"10th","annualIncome":"75000"},"mother":{"name":"chermadevi","phone":"9976615216","email":"","occupation":"house wife","qualification":"11th","annualIncome":""},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', '[]', NULL, NULL, NULL, '2026-03-25 13:39:08', '2026-03-25 13:44:23', NULL, NULL),
+	(150, 3712, '8680868049', 'https://www.linkedin.com/in/lavanya-kamu-8820713b4', '2007-01-26', 'B+', 'Indian', 'Hindu', 'SC', NULL, 'Tamil', 'day_scholar', '{"street":"4/312 kaliamman kovil street, alagarsamypuram, vadagarai, periyakulam ","city":"Theni","state":"Tamil Nadu","pincode":"625601"}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-25 13:44:56', '2026-03-25 13:48:21', NULL, NULL),
+	(151, 3745, NULL, NULL, '2007-03-17', 'AB+', 'Indian', 'Hindu', 'General', NULL, 'Tamil', 'hosteller', '{"street":"3/194 ayyankovilpatti,uthapanayakanur,usilampatti,madurai","city":"Madurai","state":"Tamil Nadu","pincode":"625537"}', NULL, '{"father":{"name":"Pandiyarajan P","phone":"9786204014","email":"pandiyarajan704a704a@gmail.com","occupation":"former","qualification":"7th","annualIncome":"72000"},"mother":{"name":"Pappa P","phone":"9003846172","email":"pandiyarajan704a704a@gmail.com","occupation":"housewife","qualification":"2th","annualIncome":"-"},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 13:46:31', '2026-03-25 13:55:22', NULL, NULL),
+	(152, 3691, '9345546092', 'https://www.linkedin.com/in/ayisha-asmee-r-4445b13a7?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app', '2005-11-05', 'B+', 'Indian', 'Muslim', 'General', NULL, 'Tamil', 'day_scholar', '{"street":"D/R no 67,Jamindhar padasalai st, vadagarai, periyakulam, theni.","city":"Theni","state":"Tamil Nadu","pincode":"625601"}', NULL, '{"father":{"name":"A.R Riyazdheen ","phone":"8012816973","email":"","occupation":"Farmer","qualification":"+2","annualIncome":"95000"},"mother":{"name":"R Mushfirha Abitha","phone":"9345546092","email":"","occupation":"Home makker","qualification":"10","annualIncome":"-"},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 14:01:20', '2026-03-25 14:10:06', NULL, NULL),
+	(153, 3700, '9952421300', 'https://www.linkedin.com/in/divya-varshini-182b8a367?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app', '2006-11-20', 'A-', 'Indian', 'Hindu', 'General', NULL, 'Tamil', 'day_scholar', '{"street":"10/21 kottai mettu street,gandamanur","city":"Theni","state":"Tamil Nadu","pincode":"625517"}', NULL, '{"father":{"name":"Nagaraj M","phone":"8807709768","email":"nagarajmurugesan79@gmail.com","occupation":"Daily sawage","qualification":"xth","annualIncome":"84,000"},"mother":{"name":"Birundha Devi N","phone":"7598773840","email":"-","occupation":"Home maker","qualification":"x-th","annualIncome":"-"},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 14:10:17', '2026-03-25 14:50:53', '/uploads/photos/family/family_3700_divya_varshini_n.jpeg', NULL),
+	(154, 3695, '9942266246', 'https://www.linkedin.com/in/devidharshini-p-b085632a1?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app', '2005-10-17', 'B+', 'Indian', 'Hindu', 'SC', NULL, 'Tamil', 'day_scholar', '{"street":"Muthaiya Kovil Street papamalpuram andipatti","city":"Theni","state":"Tamil Nadu","pincode":"625512"}', NULL, '{"father":{"name":"E.Paulpandian","phone":"9585851076","email":"no","occupation":"Cooly","qualification":"10th","annualIncome":"82000"},"mother":{"name":"P.Maheshwari","phone":"8682002062","email":"No","occupation":"Home maker ","qualification":"10th","annualIncome":"No"},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 14:11:00', '2026-03-25 14:50:32', '/uploads/photos/family/family_3695_devidharshini_p.jpg', NULL),
+	(155, 3851, '9655136831', '', '2006-07-14', 'B+', 'Indian', 'Hindu', 'General', NULL, 'Tamil', 'day_scholar', '{"street":"245/7, Perumal Kovil street , Unjampatti , Annanji","city":"Theni","state":"Tamil Nadu","pincode":"625531"}', NULL, '{"father":{"name":"BALAN S","phone":"9047668730","email":"","occupation":"Wood Business","qualification":"","annualIncome":"80000"},"mother":{"name":"GEETHA U","phone":"9655136831","email":"geetha012u@gmail.com","occupation":"","qualification":"M.A., B,Ed.,","annualIncome":""},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 14:13:33', '2026-03-25 14:27:38', NULL, NULL),
+	(156, 3698, '', 'https://www.linkedin.com/in/dhivya-muthuraman-80199a3b8', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-25 14:26:07', '2026-03-25 14:26:07', NULL, NULL),
+	(157, 3729, '8489179982', 'https://www.linkedin.com/in/vsthirunika-satheesh/', '2006-10-24', 'O+', 'Indian', 'Hindu', 'OBC', NULL, 'English', 'day_scholar', '{"street":"56/B2,South street, Near Hindu Nadar Primary School,Kamatchipuram-625520","city":"Theni","state":"Tamil Nadu","pincode":"625520"}', NULL, '{"father":{"name":"Satheesh T J","phone":"84891799822","email":"tjsatheesh1@gmail.com","occupation":"Field Sales Executive","qualification":"BBA","annualIncome":"60000"},"mother":{"name":"Sivalakshmi S","phone":"9342559382","email":"lakmisiva@gmail.com","occupation":"Teacher","qualification":"M.Sc","annualIncome":"3000"},"guardian":{"name":"Sundareswari n","relation":"Grandmother","phone":"6379745843","address":"56/B2,South street, Near Hindu Nadar Primary School,Kamatchipuram-625520"},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 14:42:07', '2026-03-25 14:57:28', NULL, NULL),
+	(158, 3721, '6382012913', 'https://www.linkedin.com/in/ramachandran-m-0053ba7', '2006-08-01', 'O+', 'Indian', 'Hindu', 'General', NULL, 'Tamil', 'day_scholar', '{"street":"138, Power House Street","city":"Theni","state":"Tamil Nadu","pincode":"625531"}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-25 14:44:30', '2026-03-25 14:52:58', NULL, NULL),
+	(159, 3690, '9524454396', 'https://www.linkedin.com/in/anu-priya-4655483b5?utm_source=share_via&utm_content=profile&utm_medium=member_android', '2006-08-22', 'O+', 'Indian', 'Hindu', 'General', NULL, 'Tamil', 'day_scholar', '{"street":"PLL.Nagar, Venkatachalapuram, Theni","city":"Theni","state":"Tamil Nadu","pincode":"625534"}', NULL, '{"father":{"name":"G.Ravi","phone":"7373230344","email":"r.ragulravi172002@gmail.com","occupation":"Car Driver","qualification":"8th","annualIncome":"62000"},"mother":{"name":"R.Nirmala","phone":"9524454396","email":"anunirmala2006@gmail.com","occupation":"House wife","qualification":"8th","annualIncome":"-"},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 14:58:48', '2026-03-25 15:11:37', NULL, NULL),
+	(160, 3705, '8610569096', '', '2007-02-27', 'B+', 'Indian', 'Hindu', 'General', NULL, 'Tamil', 'day_scholar', '{"street":"First ward , moonandipatti , Thevaram","city":"Theni","state":"Tamil Nadu","pincode":"625530"}', NULL, '{"father":{"name":"M.Kumaran","phone":"8667521210","email":"null","occupation":"Former","qualification":"12th","annualIncome":"75000"},"mother":{"name":"M.Suruthi","phone":"6381066979","email":"null","occupation":"Housewife","qualification":"10th std","annualIncome":"Null"},"guardian":{"name":"M.Kumaran","relation":"Appa","phone":"8667521210","address":"First ward , moonandipatti,  Thevaram"},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 15:11:33', '2026-03-25 15:19:30', NULL, NULL),
+	(161, 3979, '', 'https://www.linkedin.com/in/prithika-sridhar-2a1a0b301/', '2005-09-13', 'A+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"Rengathapuram,Main road,Aundipatti","city":"Theni","state":"Tamil Nadu","pincode":"625512"}', NULL, '{"father":{"name":"SRIDHAR V","phone":"7395934838","email":"","occupation":"Hotel worker","qualification":"","annualIncome":""},"mother":{"name":"LATHA S","phone":"7708607542","email":"","occupation":"House wife","qualification":"","annualIncome":""},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 15:31:11', '2026-03-25 15:38:27', NULL, NULL),
+	(162, 3731, '8508320274', 'https://linkedin.com/in/vijayalakshmi-k-ap846', '2006-04-08', 'O+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"88/3/2, Muniyandi Kovil Street, Jeyamangalam","city":"Theni","state":"Tamil Nadu","pincode":"625603"}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-25 15:33:16', '2026-03-25 15:34:49', NULL, NULL),
+	(163, 3693, '9942371645', '', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{"street":"5.2.55, chinna kadai veethi vanniyar street vadugapatti ","city":"Theni","state":"Tamil Nadu","pincode":"625603"}', NULL, '{"father":{"name":"M.murugan","phone":"9942371645","email":"backiyalakshmi980@gmail.com","occupation":"Garlick business","qualification":"7th","annualIncome":"72000"},"mother":{"name":"M.kanchana","phone":"6383004049","email":"backiyalakshmi980@gmail.com","occupation":"Home maker ","qualification":"8th","annualIncome":"Nil"},"guardian":{"name":"Vignesh.m","relation":"Brother ","phone":"8610090883","address":"5.2.55, Chinna kadai veethi vanniyar street vadugapatti "},"siblings":[]}', '[{"name":"Bhagavathi","relation":"Sister ","phone":"9363103401","address":"5.2.55, chinna kadai veethi vanniyar street vadugapatti ","occupation":"Home maker "}]', NULL, NULL, NULL, '2026-03-25 15:43:06', '2026-03-25 15:54:35', NULL, NULL),
+	(164, 3741, '9500404687', '', '2006-12-28', 'B+', 'Indian', 'Hindu', 'General', NULL, 'Tamil', 'day_scholar', '{"street":"27 T.B west street,Bangalow medu, theni. ","city":"Theni","state":"Tamil Nadu","pincode":"625531"}', NULL, '{"father":{"name":"R.Selvamurugan","phone":"9500804046","email":"","occupation":"Business man ","qualification":"B.Sc M.A","annualIncome":"96000"},"mother":{"name":"S.Ranjitha devi","phone":"9500404687","email":"","occupation":"House wife","qualification":"12th","annualIncome":""},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 15:50:53', '2026-03-25 15:58:13', NULL, NULL),
+	(165, 3750, '9003372043', '', '2007-06-07', 'O+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"15/2C Raja Line Street,Theni","city":"Theni","state":"Tamil Nadu","pincode":"625531"}', NULL, '{"father":{"name":"Muthumanickam","phone":"9944098473","email":"manickammuthu173@gmail.com","occupation":"Business","qualification":"B.Com","annualIncome":"96000"},"mother":{"name":"Kiruthiga","phone":"9003372043","email":"kiruthigamuthu42@gmail.com","occupation":"House Wife","qualification":"DECE","annualIncome":""},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 15:58:37', '2026-03-25 16:31:45', NULL, '[{"name":"Akshaya Sree.M","age":"16","education":"11th","occupation":"Student"}]'),
+	(166, 4004, '', 'https://www.linkedin.com/in/nithya-sri-m-6045382a3', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{"street":"124, Old Flower Market Backside subban street, Theni","city":"Theni","state":"Tamil Nadu","pincode":"625531"}', NULL, '{"father":{"name":"Muruga Ganesan S","phone":"9944082879","email":"","occupation":"Business","qualification":"","annualIncome":"70,000"},"mother":{"name":"Chitra M","phone":"9500296605","email":"","occupation":"Home maker","qualification":"","annualIncome":""},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 16:07:09', '2026-03-25 16:11:27', NULL, NULL),
+	(167, 3742, '9790360470', '', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{"street":"Keela Street, RMTC Colony, PC Patti, Theni.","city":"Theni","state":"Tamil Nadu","pincode":"625531"}', NULL, '{"father":{"name":"Kumar ","phone":"9790360470","email":"kumarlma74@gmail.com","occupation":"LIC Advisor ","qualification":"10th std","annualIncome":"72000"},"mother":{"name":"Annakamu ","phone":"9150843436","email":"-","occupation":"General insurance company ","qualification":"8th std","annualIncome":"6,000"},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-25 16:35:34', '2026-03-26 00:46:31', NULL, '[{"name":"Dharani","age":"22","education":"PG","occupation":"STUDENT"}]'),
+	(168, 3994, '8754228861', '', '2005-10-20', 'O+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"9-16/31 A ,KOZHIPANNAI STREET - AUNDIPATTI.","city":"Theni","state":"Tamil Nadu","pincode":"625512"}', NULL, '{"father":{"name":"ARUMUGAM K","phone":"8754228861","email":"arumugam.annam@gmail.com","occupation":"FITTER","qualification":"","annualIncome":"83,000"},"mother":{"name":"ANNA PACKYALAKSHMI  A","phone":"6369002887","email":"","occupation":"","qualification":"","annualIncome":""},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-26 03:39:30', '2026-03-26 03:44:12', NULL, '[{"name":"NIKIL SURENTHAR  A","age":"18","education":"12th","occupation":"STUDENT"}]'),
+	(169, 3736, '9788745165', '', '2007-11-30', 'B+', 'Indian', 'Hindu', 'General', NULL, 'Tamil', 'day_scholar', '{"street":"W/10 SMV bavanam,jeevanlal cardmom opposite,Bodinayakanur.","city":"Theni","state":"Tamil Nadu","pincode":"625513"}', NULL, '{"father":{"name":"M.Maran","phone":"9788745165","email":"abiumadevia@gmail.com","occupation":"supervisor","qualification":"BBA","annualIncome":"72000"},"mother":{"name":"M.Uma devi","phone":"9514365474","email":"abi@gmail.com","occupation":"House wife","qualification":"B.Sc","annualIncome":""},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-26 04:21:49', '2026-03-26 04:39:16', NULL, NULL),
+	(170, 3754, '9566791286', '', '2006-08-03', 'O+', 'Indian', 'Hindu', 'General', NULL, 'Tamil', 'day_scholar', '{"street":"22A, Vellaiyandi Pillai Street , Gandhi nagar ,Bodinaykanur","city":"Theni","state":"Tamil Nadu","pincode":"625513"}', NULL, '{"father":{"name":"MUTHU S","phone":"8078996878","email":"","occupation":"coolie","qualification":"4th","annualIncome":"72000"},"mother":{"name":"KARPAGAVLLI M","phone":"8056647278","email":"pavikalamaha@gmail.com","occupation":"House wife","qualification":"10 th","annualIncome":""},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-26 04:31:18', '2026-03-26 04:39:38', NULL, NULL),
+	(171, 3744, '', '', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{"street":"KPT NAGAR AYYAMPALAYAM","city":"Dindigul","state":"Tamil Nadu","pincode":"624204"}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-26 04:35:42', '2026-03-26 04:37:45', NULL, NULL),
+	(172, 3751, '9047451926', 'https://www.linkedin.com/in/keerthana-s-551046372', '2007-05-19', 'B+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"213, fourth pipe street, samatharmapuram, theni ","city":"Theni","state":"Tamil Nadu","pincode":"625531"}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-26 05:29:46', '2026-03-26 05:33:29', NULL, '[{"name":"S. Subasri","age":"14","education":"9th","occupation":"Student "}]'),
+	(173, 4007, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{"father":{"name":"","phone":"","email":"","occupation":"","qualification":"","annualIncome":""},"mother":{"name":"","phone":"","email":"","occupation":"","qualification":"","annualIncome":""},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-26 07:24:28', '2026-03-26 07:26:58', NULL, NULL),
+	(174, 3993, '9177805719', '', '2006-05-12', 'A+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"13 No ,Middle street , Allikundam, Usilampatti .","city":"Madurai","state":"Tamil Nadu","pincode":"625532"}', NULL, '{"father":{"name":"S.Singaraj","phone":"9177805719","email":"abism2006@gmail.com","occupation":"sweet shop","qualification":"12th","annualIncome":"72000"},"mother":{"name":"S.Muthupandiammal","phone":"9177805719","email":"abism2006@gmail.com","occupation":"Housewife","qualification":"12th","annualIncome":"72000"},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-26 08:59:54', '2026-03-26 09:06:51', NULL, NULL),
+	(175, 3997, '9080763811', '', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-26 09:01:41', '2026-03-26 09:01:57', NULL, NULL),
+	(176, 3824, '9894272001', 'https://www.linkedin.com/in/girivishnu-m-051639329?utm_source=share_via&utm_content=profile&utm_medium=member_android', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{"street":"70,Bazar Street,Thirumalapuram,Bodinayakanur.","city":"Theni","state":"Tamil Nadu","pincode":"625513"}', NULL, '{"father":{"name":"MUNIKUMAR.A","phone":"9894272001","email":"munikumar1974@gmail.com","occupation":"ASSISTANT MANAGER at NSCET Theni.","qualification":"B.Com","annualIncome":"120000"},"mother":{"name":"","phone":"","email":"","occupation":"","qualification":"","annualIncome":""},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-26 12:00:00', '2026-03-26 13:19:39', NULL, '[{"name":"HARIVISHNU.M","age":"14","education":"9th std","occupation":"Student"}]'),
+	(177, 3820, '9487144070', '', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{"street":"64,mahatma Gandhiji street, vadagari, periyakulam","city":"Theni","state":"Tamil Nadu","pincode":"625601"}', NULL, '{"father":{"name":"Kamalanathan D","phone":"9487144070","email":"dharanikamalnathan@gmail.com","occupation":"Kulli","qualification":"10","annualIncome":"72000"},"mother":{"name":"Kannnammal k","phone":"8056380587","email":"dharanikamalnathan@gmail.com","occupation":"House wifi","qualification":"-","annualIncome":"-"},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-26 12:02:32', '2026-03-26 12:25:50', NULL, NULL),
+	(178, 4099, '9344848625', '', '2006-02-18', 'B+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"172C/4/1 Solamalai Ayyanar Kovil Street Banglowmedu Theni ","city":"Theni","state":"Tamil Nadu","pincode":"625531"}', NULL, '{"father":{"name":"Gurusamy ","phone":"","email":"","occupation":"","qualification":"","annualIncome":""},"mother":{"name":"Durgadevi ","phone":"9344848625","email":"","occupation":"Tailor ","qualification":"10","annualIncome":"72000"},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-26 12:06:12', '2026-03-26 12:10:10', NULL, '[{"name":"Yogaraja ","age":"26","education":"10","occupation":"Mechanic "}]'),
+	(179, 3853, '', '', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-26 12:07:04', '2026-03-26 12:07:04', NULL, NULL),
+	(180, 4077, '7397171140', 'https://www.linkedin.com/in/vijayaragavan-c-8b132b33b?utm_source=share_via&utm_content=profile&utm_medium=member_android', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{"street":"Muthuramalinga devar street","city":"Theni","state":"Tamil Nadu","pincode":"625605"}', NULL, '{"father":{"name":"A Chinnadurai ","phone":"6380260825","email":"","occupation":"","qualification":"","annualIncome":""},"mother":{"name":"","phone":"","email":"","occupation":"","qualification":"","annualIncome":""},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-26 12:12:00', '2026-03-26 12:14:51', NULL, NULL),
+	(181, 3826, '', 'https://www.linkedin.com/in/gokul-r-8b5528329?utm_source=share_via&utm_content=profile&utm_medium=member_android', '2007-08-26', 'O+', 'Indian', 'Hindu', 'General', NULL, 'Tamil', 'day_scholar', '{"street":"5/63, VEERAPATHIRAN KOVIL STREET, ALAGARSAMYPURAM, VADAGARAI, PERIYAKULAM.","city":"Theni","state":"Tamil Nadu","pincode":"625601"}', NULL, '{"father":{"name":"R.P.RAJA ","phone":"9488163677","email":"","occupation":"Daily wages","qualification":"","annualIncome":"84000"},"mother":{"name":"R.JEYANTHI","phone":"8220246864","email":"","occupation":"","qualification":"","annualIncome":""},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-26 12:15:36', '2026-03-26 12:24:29', NULL, NULL),
+	(182, 4079, '', '', '2006-08-07', 'B+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-26 12:18:30', '2026-03-26 12:20:11', NULL, NULL),
+	(183, 4102, '7094253818', '', '2006-05-21', 'B+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"marriyamman 2nd Street, thenkarai, Periyakulam ","city":"Theni","state":"Tamil Nadu","pincode":"625601"}', NULL, '{"father":{"name":"Nile ","phone":"","email":"","occupation":"","qualification":"","annualIncome":""},"mother":{"name":"MUTHULAKSHMI ","phone":"7094253818","email":"","occupation":"Government employe","qualification":"10th","annualIncome":""},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-26 12:26:50', '2026-03-26 12:33:27', NULL, '[{"name":"MUTHULAKSHMI ","age":"47","education":"10th","occupation":"Goverment employer "}]'),
+	(184, 4069, '9965779652', 'https://www.linkedin.com/in/sankara-narayanan-b315422a3?utm_source=share_via&utm_content=profile&utm_medium=member_android', '2005-10-03', 'A+', 'Indian', 'Hindu', 'General', NULL, 'Tamil', 'day_scholar', '{"street":"16/12 middle street, karanam palaniyandi lane,chinnamanur","city":"Theni","state":"Tamil Nadu","pincode":"625515"}', NULL, '{"father":{"name":"Subramanian R","phone":"9965779652","email":"","occupation":"Private ","qualification":"Bsc","annualIncome":""},"mother":{"name":"SELVAULAGU S","phone":"9092595876","email":"","occupation":"Housewife ","qualification":"12th","annualIncome":"-"},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-26 12:36:06', '2026-03-26 12:46:10', NULL, '[{"name":"Gowri ERajeshwari ","age":"24","education":"PG","occupation":"Teacher "}]'),
+	(185, 4109, '6383293257', 'https://www.linkedin.com/in/yuvaraj-pandiyan-16a6742a3?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app', '2005-12-29', 'A+', 'Indian', 'Hindu', 'General', NULL, 'Tamil', 'hosteller', '{"street":"Pandiyan, north street, pudupalapattu, sankarapuram. ","city":"Villupuram","state":"Tamil Nadu","pincode":"606401"}', NULL, '{"father":{"name":"PANDIYAN V","phone":"9976315415","email":"","occupation":"Farmer","qualification":"SSLC","annualIncome":"75,000"},"mother":{"name":"JAYAMNI P","phone":"7806965857","email":"","occupation":"House wife","qualification":"SSLC","annualIncome":""},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-26 12:37:02', '2026-03-26 12:46:58', NULL, '[{"name":"SUGUMAR P","age":"17","education":"UG","occupation":"Student"}]'),
+	(186, 4094, '9842953799', '', '2005-09-24', 'B+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"Railway station street boothipuram ","city":"Theni","state":"Tamil Nadu","pincode":"625531"}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-26 12:37:18', '2026-03-26 12:45:23', NULL, NULL),
+	(187, 4086, '8270310246', 'https://www.linkedin.com/in/ganesh-kumar-k-72908b394?utm_source=share_via&utm_content=profile&utm_medium=member_android', '2005-12-17', 'O+', 'Indian', 'Hindu', 'General', NULL, 'Tamil', 'hosteller', '{"street":"KUBENTHRAN vandiyur megamalai post auntipatti Theni","city":"Theni","state":"Tamil Nadu","pincode":"625579"}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-26 12:37:18', '2026-03-26 12:39:30', NULL, NULL),
+	(188, 4092, '9750777460', '', '2006-12-11', 'B+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"2-5-17, Rajaji Street.","city":"Theni","state":"Tamil Nadu","pincode":"625523"}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-26 12:44:47', '2026-03-26 12:51:24', NULL, NULL),
+	(189, 4106, '', '', '2005-11-17', 'A+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"18/19, Pattalamman Kovil street, Thirumalapuram, Bodinayakanur, Theni ","city":"Theni","state":"Tamil Nadu","pincode":"625513"}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-26 12:53:36', '2026-03-26 12:56:56', NULL, NULL),
+	(190, 3612, '', 'https://www.linkedin.com/in/devaguru-g-36a085399?utm_source=share_via&utm_content=profile&utm_medium=member_android', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{"street":"Forest Road 9th Street ","city":"Theni","state":"Tamil Nadu","pincode":"625531"}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-26 12:54:10', '2026-03-26 12:57:15', NULL, NULL),
+	(191, 3403, '8056523245', '', '2008-05-05', 'O+', 'Indian', 'Hindu', 'SC', NULL, 'Tamil', 'day_scholar', '{"street":"17,Gandhinagar Allinagaram Theni","city":"Theni","state":"Tamil Nadu","pincode":"625531"}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-26 12:55:29', '2026-03-26 13:01:28', NULL, '[{"name":"R.Naveen kumar","age":"21","education":"UG","occupation":"Job"},{"name":"R. Tamilarasi","age":"20","education":"12th","occupation":""},{"name":"R. Nanthini ","age":"18","education":"UG","occupation":"Student"}]'),
+	(192, 3613, '9514272259', '', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{"street":"Ayyappan Kovil south Street, thevaram ","city":"Theni","state":"Tamil Nadu","pincode":"625530"}', NULL, '{"father":{"name":"Jayaraman ","phone":"7094523763","email":"jayajaya84975@gmail.com","occupation":"Dead","qualification":"10","annualIncome":"No"},"mother":{"name":"Chandra devi .j","phone":"9514272259","email":"chandradevic601@gmail.com","occupation":"Coolie","qualification":"12","annualIncome":"72000"},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-26 12:55:32', '2026-03-26 13:08:29', NULL, '[{"name":"J. Devi Sri ","age":"15","education":"11","occupation":"Student "}]'),
+	(193, 3658, '7639668050', '', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{"street":"90, North Street, silvarpatty ","city":"Theni","state":"Tamil Nadu","pincode":"625602"}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-26 12:56:17', '2026-03-26 12:57:10', NULL, NULL),
+	(194, 3966, '8098976734', '', '2008-01-24', 'A+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"Kondamanaickanpatty,Amman nagar ,3rd street,Andipatti","city":"Theni","state":"Tamil Nadu","pincode":"625512"}', NULL, '{"father":{"name":"P.MANICKAM","phone":"8098976731","email":"maheshwarimanickam88@gmail.com","occupation":"Business","qualification":"10th","annualIncome":"70000"},"mother":{"name":"M.RAJATHI","phone":"8098976734","email":"maheshwarimanickam88@gmail.com","occupation":"house wife ","qualification":"8th","annualIncome":"0"},"guardian":{"name":"NIL","relation":"NIL","phone":"NIL","address":"NIL"},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-26 12:58:33', '2026-03-26 13:27:08', NULL, NULL),
+	(195, 3836, '9498216442', 'https://www.linkedin.com/in/mukilan-r-6312b5374?utm_source=share_via&utm_content=profile&utm_medium=member_android', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{"street":"CHOKKAMMAN STREET MEENAKSHI SCHOOL OPPOSITE ALLINAGARAM THENI ","city":"Theni","state":"Tamil Nadu","pincode":"625531"}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-26 12:59:33', '2026-03-26 13:00:43', NULL, NULL),
+	(196, 3541, '', '', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-26 13:00:12', '2026-03-26 13:00:12', NULL, NULL),
+	(197, 3841, '8248615336', 'https://www.linkedin.com/in/pradeepa-murugan-945561388?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app', '2006-10-27', 'A+', 'Indian', 'Hindu', 'General', NULL, 'Tamil', 'day_scholar', '{"street":"101,sathya nagar,Jeyamangalam","city":"Theni","state":"Tamil Nadu","pincode":"625603"}', NULL, '{"father":{"name":"MURUGAN P","phone":"9344479147","email":"","occupation":"MACHINE THECNICIAN","qualification":"12th","annualIncome":"72000/-"},"mother":{"name":"ALAGURANI M","phone":"8124179041","email":"","occupation":"Home maker","qualification":"10th","annualIncome":""},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-26 13:01:17', '2026-03-26 13:32:28', '/uploads/photos/family/family_3841_pradeepa_m.jpeg', '[{"name":"VINITH M","age":"17","education":"12th","occupation":"STUDENT"}]'),
+	(198, 3377, '9080639662', '', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-26 13:01:27', '2026-03-26 13:01:27', NULL, NULL),
+	(199, 3386, '8680819005', '', '2008-05-14', 'A+', 'Indian', 'Hindu', 'General', NULL, 'Tamil', 'day_scholar', '{}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-26 13:01:31', '2026-03-26 13:08:03', NULL, NULL),
+	(200, 3359, '9789641532', '', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-26 13:01:46', '2026-03-26 13:07:17', NULL, '[{"name":"S.SURYA","age":"25","education":"MCA","occupation":"Business "}]'),
+	(201, 3495, '9500270852', 'https://www.linkedin.com/in/balaji-b-2240773a2?utm_source=share_via&utm_content=profile&utm_medium=member_android', '2007-10-08', 'O+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"50/06, Ward - 01, Boyan Durai Road","city":"Theni","state":"Tamil Nadu","pincode":"625513"}', NULL, '{"father":{"name":"T Bala Krishnan","phone":"9500270852","email":"balakrishnan3995@gmail.com","occupation":"Armed Guard (SBI), Ex-Army","qualification":"12th std","annualIncome":"1000000"},"mother":{"name":"B Raja Lakshmi","phone":"6381201933","email":"rajalakshmi9531@gmail.com","occupation":"Home Maker","qualification":"BBA, DCA","annualIncome":"0"},"guardian":{"name":"G Muthuraj","relation":"Grandfather","phone":"9629764273","address":"50/06, Ward - 01, Boyan Durai Road,\\nBodinayakanur, Theni district, \\nTamil Nadu."},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-26 13:02:15', '2026-03-26 13:15:39', NULL, NULL),
+	(202, 3332, '', '', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-26 13:04:10', '2026-03-26 13:04:10', NULL, NULL),
+	(203, 3601, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{"street":"Abdul kalam street,state bank colony,Batlagundu ","city":"Dindigul","state":"Tamil Nadu","pincode":"624202"}', NULL, '{"father":{"name":"M.kumar","phone":"8807448725","email":"muthukumar42874@gmail.com","occupation":"Bussiness","qualification":"","annualIncome":"72,000"},"mother":{"name":"K.Alagurani","phone":"9842350986","email":"muthukumar42874@gmail.com","occupation":"Homemaker ","qualification":"","annualIncome":""},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-26 13:05:38', '2026-03-26 13:13:40', NULL, '[{"name":"K.Naga Ashwin","age":"21","education":"UG","occupation":"Student"}]'),
+	(204, 3606, '7868869565', '', '2007-11-13', 'A+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"18 thathayan street B.Kpatti","city":"Theni","state":"Tamil Nadu","pincode":"625531"}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-26 13:07:12', '2026-03-26 13:17:57', NULL, NULL),
+	(205, 4107, NULL, NULL, '2006-06-23', 'AB+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-26 13:07:40', '2026-03-26 13:07:40', NULL, NULL),
+	(206, 3655, '8056526171', 'http//www.linkedin.com/in/ shahana-prabhu-22736a385 ', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{"street":"Yogi ramjii illam Agraharam ,chinnamanur","city":"Theni","state":"Tamil Nadu","pincode":"625515"}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-26 13:09:30', '2026-03-26 13:12:03', NULL, NULL),
+	(207, 3371, '', '', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{}', NULL, '{"father":{"name":"","phone":"","email":"","occupation":"","qualification":"","annualIncome":""},"mother":{"name":"Sathiya.M","phone":"7373238943","email":"","occupation":"Home maker","qualification":"","annualIncome":""},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-26 13:10:07', '2026-03-26 13:11:00', NULL, NULL),
+	(208, 3617, '9894500765', '', '2007-08-30', 'O+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-26 13:10:18', '2026-03-26 13:30:21', NULL, NULL),
+	(209, 3333, '6374218015', 'https://www.linkedin.com/in/adhila-fathima-a-a62570395?utm_source=share_via&utm_content=profile&utm_medium=member_android', '2008-07-08', 'B+', 'Indian', 'Muslim', 'OBC', NULL, 'Tamil', 'day_scholar', '{}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-26 13:11:15', '2026-03-26 13:20:13', NULL, NULL),
+	(210, 3626, '6379399359', '', '2007-11-16', 'B+', 'Indian', 'Hindu', 'General', NULL, 'Tamil', 'day_scholar', '{"street":"368/B,Neruji Mill Road,Allinagaram","city":"Theni","state":"Tamil Nadu","pincode":"625531"}', NULL, '{"father":{"name":"S.K.JAYANTHAN","phone":"7871426444","email":"","occupation":"BUSINESS MAN","qualification":"DCA","annualIncome":"96000"},"mother":{"name":"J.JEYANTHI","phone":"7871029437","email":"jeyanthi2504@gmail.com","occupation":"TEACHER","qualification":"M.com,DECE","annualIncome":"96000"},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-26 13:12:52', '2026-03-26 13:27:09', NULL, '[{"name":"K.J.SEENIYAPPAN","age":"19","education":"UG","occupation":"STUDENT"}]'),
+	(211, 3347, '6379661618', 'https://www.linkedin.com/in/divagar-m-k-0b6606350', '2008-06-25', 'B+', 'Indian', 'Hindu', 'General', NULL, 'Tamil', 'day_scholar', '{"street":"3/3, Sadaiyandi Kovil Street, Kodangipatti, Theni.","city":"Theni","state":"Tamil Nadu","pincode":"625531"}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-26 13:13:06', '2026-03-26 13:19:37', NULL, NULL),
+	(212, 3509, '9994203833', '', '2007-11-28', 'A+', 'Indian', 'Hindu', 'General', NULL, 'Tamil', 'day_scholar', '{"street":"Kattabomman street,Aranmanai puthur ","city":"Theni","state":"Tamil Nadu","pincode":"625531"}', NULL, '{"father":{"name":"Saravanan KV ","phone":"9994203833","email":"kvs31578@gmail.com","occupation":"Electrician ","qualification":"12th","annualIncome":"82,000"},"mother":{"name":"Bhuvaneswari S","phone":"9994917833","email":"-","occupation":"Home maker","qualification":"8th","annualIncome":"-"},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-26 13:14:24', '2026-03-26 13:18:11', NULL, NULL),
+	(213, 3957, '', '', '2006-06-19', 'B+', 'Indian', 'Hindu', 'General', NULL, 'Tamil', 'day_scholar', '{"street":"Jayanthi nagar colony, vadugapatti, periyakulam ","city":"Theni","state":"Tamil Nadu","pincode":"625601"}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-26 13:16:06', '2026-03-26 13:33:49', NULL, NULL),
+	(214, 4047, '', 'https://www.linkedin.com/in/jeevetha06/', '2006-01-28', 'A+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"2/1/11,Keeraikadaist,B.Meenachipuram,Bodi-625582","city":"Theni","state":"Tamil Nadu","pincode":"625531"}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-26 13:17:01', '2026-03-26 13:18:50', NULL, NULL),
+	(215, 3424, '', 'https://www.linkedin.com/in/preetha-manikandan-507137399?utm_source=share_via&utm_content=profile&utm_medium=member_android', '2008-05-22', 'O+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"162/A Subban Street, Theni","city":"Theni","state":"Tamil Nadu","pincode":"625531"}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-26 13:17:33', '2026-03-26 13:26:49', NULL, '[{"name":"M.Sri Varsha","age":"16","education":"12th","occupation":"Student "}]'),
+	(216, 3656, '', '', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-26 13:17:51', '2026-03-26 13:18:40', NULL, NULL),
+	(217, 3578, '9976653418', 'https://www.linkedin.com/in/nandha-kumar-876b953b6?utm_source=share_via&utm_content=profile&utm_medium=member_android', '2008-04-13', 'B+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'hosteller', '{"street":"6/29 KARUNGALKADU, EDAPPADI, Kurubapatti Salem,  Tamil Nadu 637105","city":"Salem","state":"Tamil Nadu","pincode":"637105"}', NULL, '{"father":{"name":"Sekar. K","phone":"9976653418","email":"","occupation":"Loom work ","qualification":"","annualIncome":"96,000"},"mother":{"name":"Priya. S","phone":"9976653418","email":"","occupation":"","qualification":"","annualIncome":""},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', '[{"type":"Other","name":"No","email":"nandhakumarsekar08@gmail.com","phone":"9842824418"}]', NULL, NULL, NULL, '2026-03-26 13:18:43', '2026-03-26 13:46:13', NULL, '[{"name":"Keerthana. D","age":"27","education":"PG","occupation":""},{"name":"Elavarasi. S","age":"21","education":"PG","occupation":"PG student"}]'),
+	(218, 3828, '6379204659', 'https://www.linkedin.com/in/harinanthasri-sasikannan-2a5956388?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app', '2006-12-08', 'A+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"21,Vengala Nagar, 3rd street, Allinagaram ","city":"Theni","state":"Tamil Nadu","pincode":"625531"}', NULL, '{"father":{"name":"SASIKANNAN N","phone":"8680816484","email":"","occupation":"Mechanic ","qualification":"8","annualIncome":"96,000"},"mother":{"name":"JOTHY S","phone":"8056827548","email":"","occupation":"House wife","qualification":"8","annualIncome":""},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-26 13:21:44', '2026-03-26 13:49:55', NULL, '[{"name":"VENGADES WARAN S","age":"16","education":"11th","occupation":"Student "}]'),
+	(219, 3667, '9944435791', '', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{}', NULL, '{"father":{"name":"Krishnan.N","phone":"9944435791","email":"","occupation":"Kuli","qualification":"7th","annualIncome":"84000"},"mother":{"name":"Devi.K","phone":"8870732995","email":"","occupation":"Home maker","qualification":"8th","annualIncome":"0"},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-26 13:21:46', '2026-03-26 13:33:21', NULL, NULL),
+	(220, 3648, '8220389390', '', '2008-01-16', 'B+', 'Indian', 'Hindu', 'General', NULL, 'Tamil', 'day_scholar', '{"street":"21/3 East street m.suppulapuram ","city":"Theni","state":"Tamil Nadu","pincode":"625517"}', NULL, '{"father":{"name":"S.velmurugan","phone":"999454349390","email":"pounmaniv@gmail.com","occupation":"Tailor ","qualification":"9th","annualIncome":"75,000"},"mother":{"name":"V.pounmani","phone":"8124605297","email":"subasriiisubasuba@gmail.com","occupation":"Tailor ","qualification":"9th","annualIncome":"75,000"},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-26 13:23:01', '2026-03-26 13:35:00', NULL, '[{"name":"V.suba sri","age":"16","education":"12th","occupation":"Student "}]'),
+	(221, 3525, '9994592172', '', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{"street":"D.No:5, Paranjyothi Illam, Sivaji Nagar","city":"Theni","state":"Tamil Nadu","pincode":"625531"}', NULL, '{"father":{"name":"Balasubramani P.","phone":"9994592172","email":"sudalai1818@gmail.com","occupation":"Self employee","qualification":"10","annualIncome":"200000"},"mother":{"name":"Kalpana B.","phone":"8220604944","email":"mallukutti1213@gmail.com","occupation":"House wife","qualification":"10","annualIncome":"-"},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-26 13:28:37', '2026-03-26 13:41:36', NULL, '[{"name":"Sivanee Shri B.","age":"15","education":"10","occupation":"Student "}]'),
+	(222, 3406, '9488227225', 'https://www.linkedin.com/in/jeysree-saravanan-b249313a3?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app', '2007-12-13', 'B+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"Sarojini Naidu st, Thasilthar nagar","city":"Theni","state":"Tamil Nadu","pincode":"625601"}', NULL, '{"father":{"name":"Saravanan. P","phone":"9488227225","email":"saravananp7443@gmail.com","occupation":"Appraiser","qualification":"10th","annualIncome":"72000"},"mother":{"name":"Sasi. S","phone":"9361380355","email":"sasisasi32795@gmail.com","occupation":"House wife","qualification":"10th","annualIncome":"0"},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-26 13:30:46', '2026-03-26 13:52:36', '/uploads/photos/family/family_3406_jeysree_s.jpg', '[{"name":"Sri balaje. S","age":"15","education":"10th","occupation":"Student"}]'),
+	(223, 3834, '7094879970', 'https://www.linkedin.com/in/kishore-kannan-s-a93745253?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app', '2006-01-03', 'B+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"Annanji vilakku,Sree kani dall mill,Old military canteen opposite,theni","city":"Theni","state":"Tamil Nadu","pincode":"625531"}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-26 13:32:50', '2026-03-26 13:42:37', NULL, NULL),
+	(224, 3614, '9943167193', '', '2007-04-09', 'O+', 'Indian', 'Hindu', 'General', NULL, 'Tamil', 'day_scholar', '{"street":"Holy veera thevar street, karukkattanpatti, usilampatti, madurai district","city":"Madurai","state":"Tamil Nadu","pincode":"625532"}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-26 13:32:51', '2026-03-26 13:35:57', NULL, NULL),
+	(225, 4084, '9843816637', '', '2005-12-26', 'O+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"Kaliyamman Kovil Street varusanadu theni ","city":"Theni","state":"Tamil Nadu","pincode":"625579"}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-26 13:37:50', '2026-03-26 13:40:08', NULL, NULL),
+	(226, 3579, '', '', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-26 13:43:53', '2026-03-26 13:54:51', NULL, '[{"name":"Yadav krishnan N","age":"21","education":"PG","occupation":"Student "},{"name":"N.Deepan ","age":"","education":"10th ","occupation":"Student "}]'),
+	(227, 3958, '6381169438', '', '2006-12-01', 'O+', 'Indian', 'Hindu', 'SC', NULL, 'Tamil', 'day_scholar', '{"street":"Sadaiyandi Nagar, BODINAYAKANUR","city":"Theni","state":"Tamil Nadu","pincode":"625531"}', NULL, '{"father":{"name":"S.Murugan","phone":"9952799794","email":"","occupation":"Tailor","qualification":"","annualIncome":"60,000"},"mother":{"name":"M.Saraswathi","phone":"99449 27011","email":"","occupation":"House wife","qualification":"","annualIncome":""},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-26 13:44:26', '2026-03-26 13:48:48', NULL, NULL),
+	(228, 3815, '9384947350', 'https://www.linkedin.com/in/buvaneshwari-k-0a1555388?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app', '2007-06-03', 'O+', 'Indian', 'Hindu', 'OBC', NULL, 'Tamil', 'day_scholar', '{"street":"W3/2A Balan nagar 3rd Street bommaiyagoundanpatty theni ","city":"Theni","state":"Tamil Nadu","pincode":"625531"}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-26 13:46:41', '2026-03-26 13:52:13', NULL, NULL),
+	(229, 3446, '', 'https://www.linkedin.com/in/velmurugan-j-5a19453ab?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-26 13:49:08', '2026-03-26 13:49:08', NULL, NULL),
+	(230, 4033, '9345984926', 'https://www.linkedin.com/in/anton-mattew-1285b4339', '2006-01-13', 'B+', 'Indian', 'Christian', 'General', NULL, 'Tamil', 'day_scholar', '{"street":"226 Miranda Line, 2nd Cross Street, G H Road","city":"Theni","state":"Tamil Nadu","pincode":"625531"}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-26 13:54:52', '2026-03-26 14:00:30', NULL, '[{"name":"Joel Christy A","age":"15","education":"11th","occupation":"Student "}]'),
+	(231, 3649, '', '', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-26 13:56:08', '2026-03-26 13:56:08', NULL, NULL),
+	(232, 4023, '', '', '2006-02-06', 'O+', 'Indian', 'Hindu', 'SC', NULL, 'Tamil', 'day_scholar', '{}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-26 13:56:43', '2026-03-26 13:58:58', NULL, NULL),
+	(233, 3949, '9080160406', '', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{"street":"VOC street, jeyamangalam ","city":"Theni","state":"Tamil Nadu","pincode":"625531"}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-26 13:57:24', '2026-03-26 14:00:41', NULL, '[{"name":"Mareeshwari P","age":"20","education":"UG","occupation":"Student "},{"name":"Marimuthu P","age":"17","education":"12th","occupation":"Student "}]'),
+	(234, 4101, '7092742628', 'https://www.linkedin.com/in/j-santhosh-0b65362a3?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-26 13:58:26', '2026-03-26 13:58:26', NULL, NULL),
+	(235, 3948, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{}', NULL, '{"father":{"name":"M. Pandiyarajan","phone":"7667638439","email":"guna61083@gmail.com","occupation":"Farmer","qualification":"10 th","annualIncome":"72000"},"mother":{"name":"P. Vijayalakshmi","phone":"9361435434","email":"guna61083@gmail.com","occupation":"Home maker","qualification":"11 th","annualIncome":"72000"},"guardian":{"name":"","relation":"","phone":"","address":""},"siblings":[]}', NULL, NULL, NULL, NULL, '2026-03-26 13:59:03', '2026-03-26 14:00:40', NULL, NULL),
+	(236, 3625, '9080175808', '', '2006-11-08', 'O+', 'Indian', 'Muslim', 'General', NULL, 'Tamil', 'day_scholar', '{}', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-26 13:59:55', '2026-03-26 14:00:41', NULL, NULL);
 
-INSERT INTO `student_bio` (`id`, `studentId`, `alternatePhone`, `linkedinUrl`, `dateOfBirth`, `bloodGroup`, `nationality`, `religion`, `category`, `aadharNo`, `motherTongue`, `residenceType`, `address`, `permanentAddress`, `parentInfo`, `references`, `previousEducation`, `scholarshipDetails`, `documents`, `createdAt`, `updatedAt`) VALUES
-(1, 3975, NULL, 'https://www.linkedin.com/in/r-logesh-kumar-74566a2a3/', NULL, 'B+', 'Indian', '', NULL, NULL, 'Tamil', 'day_scholar', NULL, NULL, '{\"father\":{\"name\":\"\",\"phone\":\"\",\"email\":\"\",\"occupation\":\"\",\"qualification\":\"\",\"annualIncome\":\"\"},\"mother\":{\"name\":\"\",\"phone\":\"\",\"email\":\"\",\"occupation\":\"\",\"qualification\":\"\",\"annualIncome\":\"\"},\"guardian\":{\"name\":\"\",\"relation\":\"\",\"phone\":\"\",\"address\":\"\"}}', NULL, NULL, NULL, NULL, '2026-03-18 05:26:59', '2026-03-20 10:25:21');
-
--- --------------------------------------------------------
-
---
--- Table structure for table `student_certifications`
---
-
-CREATE TABLE `student_certifications` (
-  `id` int(11) NOT NULL,
+-- Dumping structure for table eduvertex.student_certifications
+CREATE TABLE IF NOT EXISTS `student_certifications` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `studentId` int(11) NOT NULL,
   `name` varchar(200) NOT NULL,
   `issuer` varchar(150) NOT NULL,
@@ -1132,24 +1862,31 @@ CREATE TABLE `student_certifications` (
   `approvalRemarks` varchar(500) DEFAULT NULL,
   `approvalDate` datetime DEFAULT NULL,
   `createdAt` datetime NOT NULL DEFAULT current_timestamp(),
-  `updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_student` (`studentId`),
+  KEY `fk_cert_approver` (`approvedById`),
+  CONSTRAINT `fk_cert_approver` FOREIGN KEY (`approvedById`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_cert_student` FOREIGN KEY (`studentId`) REFERENCES `student_profile` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `student_certifications`
---
-
+-- Dumping data for table eduvertex.student_certifications: ~11 rows (approximately)
 INSERT INTO `student_certifications` (`id`, `studentId`, `name`, `issuer`, `issueDate`, `expiryDate`, `credentialId`, `credentialUrl`, `skills`, `documentUrl`, `approvalStatus`, `approvedById`, `approvalRemarks`, `approvalDate`, `createdAt`, `updatedAt`) VALUES
-(2, 3975, 'claude code in action', 'anthrophic', '2026-03-19', '2026-03-20', 'Anthrophic-784', 'https://verify.skilljar.com/c/ybbipj9wpv68', '\"[\\\"mcp\\\"]\"', 'documentUrl-1773860315571-608046220.pdf', 'approved', 406, 'keep going lokesh', '2026-03-19 05:18:18', '2026-03-18 18:58:35', '2026-03-19 05:18:18');
+	(2, 3975, 'claude code in action', 'anthrophic', '2026-03-19', '2026-03-20', 'Anthrophic-784', 'https://verify.skilljar.com/c/ybbipj9wpv68', '"[\\"mcp\\"]"', 'documentUrl-1773860315571-608046220.pdf', 'approved', 406, 'keep going lokesh', '2026-03-19 05:18:18', '2026-03-18 18:58:35', '2026-03-19 05:18:18'),
+	(3, 3702, 'Cybersecurity Workshop ', 'Center for innovation and software learning ', '2026-01-27', NULL, 'CYSW-2026-2501020', NULL, '"[\\"Cybersecurity Workflows\\"]"', 'documentUrl-1774372429734-319104225.png', 'pending', NULL, NULL, NULL, '2026-03-24 17:14:13', '2026-03-24 17:14:13'),
+	(4, 3992, 'Back-End App Development with Node.js and Express', 'IBM', '2025-11-12', NULL, NULL, NULL, '"[]"', 'documentUrl-1774428372075-456585712.pdf', 'pending', NULL, NULL, NULL, '2026-03-25 08:46:13', '2026-03-25 08:46:13'),
+	(5, 3987, 'Kalam Awards', 'World Youth Federation', '2025-09-25', NULL, NULL, NULL, '"[]"', 'documentUrl-1774428399743-195599386.pdf', 'pending', NULL, NULL, NULL, '2026-03-25 08:46:40', '2026-03-25 08:46:40'),
+	(6, 3713, 'simplilearn', 'ace your appraisal;how to prepare present and perform in ypur review', '2026-03-19', NULL, NULL, NULL, '"[]"', NULL, 'pending', NULL, NULL, NULL, '2026-03-25 13:49:06', '2026-03-25 13:49:06'),
+	(7, 3713, 'simpleleanr', 'ace your appraisal;how to prepare present and perform in ypur review', '2026-03-19', NULL, NULL, NULL, '"[]"', 'documentUrl-1774446615246-420627182.pdf', 'pending', NULL, NULL, NULL, '2026-03-25 13:50:16', '2026-03-25 13:50:16'),
+	(8, 3713, 'guvi', 'ui/ux', '2026-03-18', NULL, NULL, NULL, '"[]"', 'documentUrl-1774446781379-704531860.png', 'pending', NULL, NULL, NULL, '2026-03-25 13:53:06', '2026-03-25 13:53:06'),
+	(9, 3713, 'guvi workshop', '90 minutes generative ai workshop', '2026-03-20', NULL, NULL, NULL, '"[]"', 'documentUrl-1774446947915-404424461.png', 'pending', NULL, NULL, NULL, '2026-03-25 13:55:56', '2026-03-25 13:55:56'),
+	(10, 3713, 'mastering data visualization and analytics with power bi', 'nscet', '2025-09-27', NULL, NULL, NULL, '"[]"', 'documentUrl-1774447623172-43273785.jpeg', 'pending', NULL, NULL, NULL, '2026-03-25 14:07:03', '2026-03-25 14:07:03'),
+	(11, 3713, 'diploma in computer application(dca)', 'csc center', '2023-12-06', '2024-06-06', NULL, NULL, '"[]"', 'documentUrl-1774447728051-169862161.jpeg', 'pending', NULL, NULL, NULL, '2026-03-25 14:08:48', '2026-03-25 14:08:48'),
+	(12, 3713, 'gen ai for real-world', 'techvolt software pvt.ltd', '2025-08-19', NULL, NULL, NULL, '"[]"', 'documentUrl-1774447806106-841056368.jpeg', 'pending', NULL, NULL, NULL, '2026-03-25 14:10:06', '2026-03-25 14:10:06');
 
--- --------------------------------------------------------
-
---
--- Table structure for table `student_events`
---
-
-CREATE TABLE `student_events` (
-  `id` int(11) NOT NULL,
+-- Dumping structure for table eduvertex.student_events
+CREATE TABLE IF NOT EXISTS `student_events` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `studentId` int(11) NOT NULL,
   `eventName` varchar(200) NOT NULL,
   `eventType` enum('cultural','technical','sports','social','workshop','seminar','other') NOT NULL DEFAULT 'other',
@@ -1164,17 +1901,24 @@ CREATE TABLE `student_events` (
   `approvalRemarks` varchar(500) DEFAULT NULL,
   `approvalDate` datetime DEFAULT NULL,
   `createdAt` datetime NOT NULL DEFAULT current_timestamp(),
-  `updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_student` (`studentId`),
+  KEY `fk_event_approver` (`approvedById`),
+  CONSTRAINT `fk_event_approver` FOREIGN KEY (`approvedById`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_event_student` FOREIGN KEY (`studentId`) REFERENCES `student_profile` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- --------------------------------------------------------
+-- Dumping data for table eduvertex.student_events: ~4 rows (approximately)
+INSERT INTO `student_events` (`id`, `studentId`, `eventName`, `eventType`, `organizer`, `eventDate`, `role`, `achievement`, `level`, `certificateUrl`, `approvalStatus`, `approvedById`, `approvalRemarks`, `approvalDate`, `createdAt`, `updatedAt`) VALUES
+	(1, 3702, 'Hackathon ', 'technical', 'Nscet ', '2026-02-13', 'participant', '2nd Runner-up ', 'college', 'certificateUrl-1774372880610-396903717.jpg', 'pending', NULL, NULL, NULL, '2026-03-24 17:21:45', '2026-03-24 17:21:45'),
+	(2, 3713, 'mime odyssey', 'cultural', 'college nscet', '2024-12-27', 'participant', '1 place', 'college', 'certificateUrl-1774448067236-878672677.jpeg', 'pending', NULL, NULL, NULL, '2026-03-25 14:14:27', '2026-03-25 14:14:27'),
+	(3, 3713, 'blossom&crafts', 'cultural', 'nscet', '2025-12-08', 'participant', 'participant', 'college', 'certificateUrl-1774448136702-482930492.jpeg', 'pending', NULL, NULL, NULL, '2026-03-25 14:15:37', '2026-03-25 14:15:37'),
+	(4, 3713, 'maths snapshot', 'technical', 'nscet', '2024-11-20', 'participant', NULL, 'college', 'certificateUrl-1774448186492-553795511.jpeg', 'pending', NULL, NULL, NULL, '2026-03-25 14:16:26', '2026-03-25 14:16:26');
 
---
--- Table structure for table `student_internal_marks`
---
-
-CREATE TABLE `student_internal_marks` (
-  `id` int(11) NOT NULL,
+-- Dumping structure for table eduvertex.student_internal_marks
+CREATE TABLE IF NOT EXISTS `student_internal_marks` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `studentId` int(11) NOT NULL,
   `subjectId` int(11) NOT NULL,
   `semester` int(11) NOT NULL,
@@ -1185,17 +1929,19 @@ CREATE TABLE `student_internal_marks` (
   `totalScore` decimal(5,2) DEFAULT 0.00,
   `remarks` varchar(255) DEFAULT NULL,
   `createdAt` datetime NOT NULL DEFAULT current_timestamp(),
-  `updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+  `updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_student_subject_sem_year_int` (`studentId`,`subjectId`,`semester`,`academicYear`,`internalNumber`),
+  KEY `idx_subject_semester` (`subjectId`,`semester`),
+  CONSTRAINT `fk_intmarks_student` FOREIGN KEY (`studentId`) REFERENCES `student_profile` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_intmarks_subject` FOREIGN KEY (`subjectId`) REFERENCES `subjects` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- --------------------------------------------------------
+-- Dumping data for table eduvertex.student_internal_marks: ~0 rows (approximately)
 
---
--- Table structure for table `student_leaves`
---
-
-CREATE TABLE `student_leaves` (
-  `id` int(11) NOT NULL,
+-- Dumping structure for table eduvertex.student_leaves
+CREATE TABLE IF NOT EXISTS `student_leaves` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `studentId` int(11) NOT NULL,
   `leaveType` enum('Medical','Casual','On-Duty','Special','Other','Leave','Personal','Earned') NOT NULL DEFAULT 'Casual',
   `startDate` date NOT NULL,
@@ -1220,29 +1966,31 @@ CREATE TABLE `student_leaves` (
   `department_admin_approval_date` datetime DEFAULT NULL,
   `leaveSubType` varchar(100) DEFAULT NULL,
   `attachment` varchar(255) DEFAULT NULL,
-  `submitted_to` enum('Class Incharge','Faculty Advisor','HOD') NOT NULL DEFAULT 'Class Incharge'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `submitted_to` enum('Class Incharge','Faculty Advisor','HOD') NOT NULL DEFAULT 'Class Incharge',
+  PRIMARY KEY (`id`),
+  KEY `idx_student` (`studentId`),
+  KEY `fk_leave_approver` (`approvedById`),
+  CONSTRAINT `fk_sleave_approver` FOREIGN KEY (`approvedById`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_sleave_student` FOREIGN KEY (`studentId`) REFERENCES `student_profile` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `student_leaves`
---
-
+-- Dumping data for table eduvertex.student_leaves: ~11 rows (approximately)
 INSERT INTO `student_leaves` (`id`, `studentId`, `leaveType`, `startDate`, `endDate`, `totalDays`, `reason`, `status`, `approvedById`, `approvalRemarks`, `approvalDate`, `createdAt`, `updatedAt`, `classId`, `overall_status`, `class_incharge_approval_status`, `class_incharge_id`, `class_incharge_remarks`, `class_incharge_approval_date`, `department_admin_approval_status`, `department_admin_id`, `department_admin_remarks`, `department_admin_approval_date`, `leaveSubType`, `attachment`, `submitted_to`) VALUES
-(4, 3975, '', '2026-03-16', '2026-03-17', 2.0, 'asdfjkl;', 'pending', NULL, NULL, NULL, '2026-03-16 05:08:23', '2026-03-16 05:08:23', 21, 'pending', 'pending', NULL, NULL, NULL, 'pending', NULL, NULL, NULL, 'Personal Leave', NULL, 'Class Incharge'),
-(5, 3975, 'Medical', '2026-03-20', '2026-03-21', 2.0, 'Test after fix', 'pending', NULL, NULL, NULL, '2026-03-18 06:08:49', '2026-03-19 05:16:59', 21, 'cancelled', 'pending', NULL, NULL, NULL, 'pending', NULL, NULL, NULL, 'Sick', 'test-doc.pdf', 'Class Incharge'),
-(6, 3975, 'Personal', '2026-03-18', '2026-03-19', 2.0, 'personal', 'pending', NULL, NULL, NULL, '2026-03-18 06:09:33', '2026-03-18 18:04:20', 21, 'rejected', 'rejected', 406, NULL, '2026-03-18 18:04:20', 'pending', 435, NULL, NULL, 'Personal Leave', NULL, 'Class Incharge'),
-(7, 3975, 'Personal', '2026-03-18', '2026-03-19', 2.0, 'personal', 'pending', NULL, NULL, NULL, '2026-03-18 07:18:57', '2026-03-18 08:39:18', 21, 'approved', 'approved', 406, NULL, '2026-03-18 08:38:47', 'approved', 435, NULL, '2026-03-18 08:39:18', 'Personal Leave', 'attachment-1773818337550-804097791.pdf', 'Class Incharge'),
-(8, 3975, 'On-Duty', '2026-03-19', '2026-03-19', 1.0, 'leave for workshop', 'pending', NULL, NULL, NULL, '2026-03-19 05:17:34', '2026-03-19 05:19:10', 21, 'approved', 'approved', 406, 'ok', '2026-03-19 05:18:32', 'approved', 435, 'ok', '2026-03-19 05:19:10', 'Workshop', 'attachment-1773897454516-392030487.png', 'Class Incharge'),
-(9, 3975, 'On-Duty', '2026-03-21', '2026-03-21', 1.0, 'xjfdsafjf', 'pending', NULL, NULL, NULL, '2026-03-20 10:19:04', '2026-03-20 10:20:01', 21, 'approved', 'approved', 406, 'dcfbnjk,', '2026-03-20 10:19:26', 'approved', 435, NULL, '2026-03-20 10:20:01', 'Workshop', NULL, 'Class Incharge');
+	(4, 3975, '', '2026-03-16', '2026-03-17', 2.0, 'asdfjkl;', 'pending', NULL, NULL, NULL, '2026-03-16 05:08:23', '2026-03-23 13:55:36', 21, 'cancelled', 'pending', NULL, NULL, NULL, 'pending', NULL, NULL, NULL, 'Personal Leave', NULL, 'Class Incharge'),
+	(5, 3975, 'Medical', '2026-03-20', '2026-03-21', 2.0, 'Test after fix', 'pending', NULL, NULL, NULL, '2026-03-18 06:08:49', '2026-03-19 05:16:59', 21, 'cancelled', 'pending', NULL, NULL, NULL, 'pending', NULL, NULL, NULL, 'Sick', 'test-doc.pdf', 'Class Incharge'),
+	(6, 3975, 'Personal', '2026-03-18', '2026-03-19', 2.0, 'personal', 'pending', NULL, NULL, NULL, '2026-03-18 06:09:33', '2026-03-18 18:04:20', 21, 'rejected', 'rejected', 406, NULL, '2026-03-18 18:04:20', 'pending', 435, NULL, NULL, 'Personal Leave', NULL, 'Class Incharge'),
+	(7, 3975, 'Personal', '2026-03-18', '2026-03-19', 2.0, 'personal', 'pending', NULL, NULL, NULL, '2026-03-18 07:18:57', '2026-03-18 08:39:18', 21, 'approved', 'approved', 406, NULL, '2026-03-18 08:38:47', 'approved', 435, NULL, '2026-03-18 08:39:18', 'Personal Leave', 'attachment-1773818337550-804097791.pdf', 'Class Incharge'),
+	(8, 3975, 'On-Duty', '2026-03-19', '2026-03-19', 1.0, 'leave for workshop', 'pending', NULL, NULL, NULL, '2026-03-19 05:17:34', '2026-03-19 05:19:10', 21, 'approved', 'approved', 406, 'ok', '2026-03-19 05:18:32', 'approved', 435, 'ok', '2026-03-19 05:19:10', 'Workshop', 'attachment-1773897454516-392030487.png', 'Class Incharge'),
+	(9, 3975, 'On-Duty', '2026-03-21', '2026-03-21', 1.0, 'xjfdsafjf', 'pending', NULL, NULL, NULL, '2026-03-20 10:19:04', '2026-03-20 10:20:01', 21, 'approved', 'approved', 406, 'dcfbnjk,', '2026-03-20 10:19:26', 'approved', 435, NULL, '2026-03-20 10:20:01', 'Workshop', NULL, 'Class Incharge'),
+	(10, 3990, 'Personal', '2026-03-26', '2026-03-31', 6.0, 'family function', 'pending', NULL, NULL, NULL, '2026-03-25 08:21:52', '2026-03-25 08:22:54', 21, 'cancelled', 'pending', 406, NULL, NULL, 'pending', 435, NULL, NULL, 'Personal Leave', NULL, 'Class Incharge'),
+	(11, 3972, 'Personal', '2026-03-26', '2026-03-26', 1.0, 'fever ', 'pending', NULL, NULL, NULL, '2026-03-25 08:22:35', '2026-03-25 08:22:35', 21, 'pending', 'pending', 406, NULL, NULL, 'pending', 435, NULL, NULL, 'Personal Leave', NULL, 'Class Incharge'),
+	(12, 3991, 'Personal', '2026-03-27', '2026-03-27', 1.0, 'Grandfather dead', 'pending', NULL, NULL, NULL, '2026-03-25 08:38:42', '2026-03-25 08:39:29', 21, 'cancelled', 'pending', 406, NULL, NULL, 'pending', 435, NULL, NULL, 'Personal Leave', NULL, 'Class Incharge'),
+	(13, 4110, 'Personal', '2026-03-26', '2026-03-26', 1.0, 'hospital', 'pending', NULL, NULL, NULL, '2026-03-25 08:42:23', '2026-03-25 08:42:48', 25, 'cancelled', 'approved', NULL, NULL, NULL, 'pending', 517, NULL, NULL, 'Personal Leave', NULL, 'HOD'),
+	(14, 3991, 'Personal', '2026-03-27', '2026-03-27', 1.0, 'Grandfather dead', 'pending', NULL, NULL, NULL, '2026-03-25 08:51:36', '2026-03-26 13:34:18', 21, 'rejected', 'rejected', 406, NULL, '2026-03-26 13:34:18', 'pending', 435, NULL, NULL, 'Personal Leave', NULL, 'Class Incharge');
 
--- --------------------------------------------------------
-
---
--- Table structure for table `student_marks`
---
-
-CREATE TABLE `student_marks` (
-  `id` int(11) NOT NULL,
+-- Dumping structure for table eduvertex.student_marks
+CREATE TABLE IF NOT EXISTS `student_marks` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `studentId` int(11) NOT NULL,
   `subjectId` int(11) NOT NULL,
   `semester` int(11) NOT NULL,
@@ -1256,17 +2004,19 @@ CREATE TABLE `student_marks` (
   `status` enum('pass','fail','absent','withheld','pending') DEFAULT 'pending',
   `remarks` varchar(255) DEFAULT NULL,
   `createdAt` datetime NOT NULL DEFAULT current_timestamp(),
-  `updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+  `updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_student_subject_sem_year` (`studentId`,`subjectId`,`semester`,`academicYear`),
+  KEY `idx_subject_semester` (`subjectId`,`semester`),
+  CONSTRAINT `fk_marks_student` FOREIGN KEY (`studentId`) REFERENCES `student_profile` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_marks_subject` FOREIGN KEY (`subjectId`) REFERENCES `subjects` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- --------------------------------------------------------
+-- Dumping data for table eduvertex.student_marks: ~0 rows (approximately)
 
---
--- Table structure for table `student_notifications`
---
-
-CREATE TABLE `student_notifications` (
-  `id` int(11) NOT NULL,
+-- Dumping structure for table eduvertex.student_notifications
+CREATE TABLE IF NOT EXISTS `student_notifications` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `studentId` int(11) NOT NULL,
   `title` varchar(200) NOT NULL,
   `message` text NOT NULL,
@@ -1279,38 +2029,40 @@ CREATE TABLE `student_notifications` (
   `readAt` datetime DEFAULT NULL,
   `expiresAt` datetime DEFAULT NULL,
   `createdAt` datetime NOT NULL DEFAULT current_timestamp(),
-  `updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_student` (`studentId`),
+  KEY `idx_student_read` (`studentId`,`isRead`),
+  CONSTRAINT `fk_notif_student` FOREIGN KEY (`studentId`) REFERENCES `student_profile` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=22 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `student_notifications`
---
-
+-- Dumping data for table eduvertex.student_notifications: ~21 rows (approximately)
 INSERT INTO `student_notifications` (`id`, `studentId`, `title`, `message`, `type`, `priority`, `referenceId`, `referenceType`, `actionUrl`, `isRead`, `readAt`, `expiresAt`, `createdAt`, `updatedAt`) VALUES
-(1, 3975, 'Leave Application Submitted', 'Your Personal leave application for 2 days has been submitted.', 'leave', 'low', 6, 'StudentLeave', NULL, 0, NULL, NULL, '2026-03-18 06:09:33', '2026-03-18 06:09:33'),
-(2, 3975, 'Leave Application Submitted', 'Your Personal leave application for 2 days has been submitted.', 'leave', 'low', 7, 'StudentLeave', NULL, 0, NULL, NULL, '2026-03-18 07:18:57', '2026-03-18 07:18:57'),
-(3, 3975, 'Class Incharge Approved', 'Your leave has been approved by NAGAJOTHI P. Awaiting department admin approval.', 'leave', 'low', 7, 'StudentLeave', NULL, 0, NULL, NULL, '2026-03-18 08:38:47', '2026-03-18 08:38:47'),
-(4, 3975, 'Leave Approved', 'Your Personal leave has been approved by all required authorities.', 'leave', 'low', 7, 'StudentLeave', NULL, 0, NULL, NULL, '2026-03-18 08:39:18', '2026-03-18 08:39:18'),
-(5, 3975, 'Leave Rejected', 'Your Personal leave has been rejected. Reason: Not specified', 'leave', 'low', 6, 'StudentLeave', NULL, 0, NULL, NULL, '2026-03-18 18:04:20', '2026-03-18 18:04:20'),
-(6, 3975, 'Sport Approved', 'Your sport \"WWE\" has been approved. ', 'approval', 'medium', 1, 'sport', '/student/portfolio/sports', 0, NULL, NULL, '2026-03-18 18:30:43', '2026-03-18 18:30:43'),
-(7, 3975, 'Certification Approved', 'Your certification \"claude code action\" has been approved. ', 'approval', 'medium', 1, 'certification', '/student/portfolio/certifications', 0, NULL, NULL, '2026-03-18 18:52:14', '2026-03-18 18:52:14'),
-(8, 3975, 'Sport Approved', 'Your sport \"WWE\" has been approved. ', 'approval', 'medium', 1, 'sport', '/student/portfolio/sports', 0, NULL, NULL, '2026-03-18 18:52:21', '2026-03-18 18:52:21'),
-(9, 3975, 'Leave Application Submitted', 'Your On-Duty leave application for 1 days has been submitted.', 'leave', 'low', 8, 'StudentLeave', NULL, 0, NULL, NULL, '2026-03-19 05:17:34', '2026-03-19 05:17:34'),
-(10, 3975, 'Certification Approved', 'Your certification \"claude code in action\" has been approved. Remarks: keep going lokesh', 'approval', 'medium', 2, 'certification', '/student/portfolio/certifications', 0, NULL, NULL, '2026-03-19 05:18:18', '2026-03-19 05:18:18'),
-(11, 3975, 'Class Incharge Approved', 'Your leave has been approved by NAGAJOTHI P. Awaiting department admin approval.', 'leave', 'low', 8, 'StudentLeave', NULL, 0, NULL, NULL, '2026-03-19 05:18:32', '2026-03-19 05:18:32'),
-(12, 3975, 'Leave Approved', 'Your On-Duty leave has been approved by all required authorities.', 'leave', 'low', 8, 'StudentLeave', NULL, 0, NULL, NULL, '2026-03-19 05:19:10', '2026-03-19 05:19:10'),
-(13, 3975, 'Leave Application Submitted', 'Your On-Duty leave application for 1 days has been submitted.', 'leave', 'low', 9, 'StudentLeave', NULL, 0, NULL, NULL, '2026-03-20 10:19:04', '2026-03-20 10:19:04'),
-(14, 3975, 'Class Incharge Approved', 'Your leave has been approved by NAGAJOTHI P. Awaiting department admin approval.', 'leave', 'low', 9, 'StudentLeave', NULL, 0, NULL, NULL, '2026-03-20 10:19:26', '2026-03-20 10:19:26'),
-(15, 3975, 'Leave Approved', 'Your On-Duty leave has been approved by all required authorities.', 'leave', 'low', 9, 'StudentLeave', NULL, 0, NULL, NULL, '2026-03-20 10:20:01', '2026-03-20 10:20:01');
+	(1, 3975, 'Leave Application Submitted', 'Your Personal leave application for 2 days has been submitted.', 'leave', 'low', 6, 'StudentLeave', NULL, 0, NULL, NULL, '2026-03-18 06:09:33', '2026-03-18 06:09:33'),
+	(2, 3975, 'Leave Application Submitted', 'Your Personal leave application for 2 days has been submitted.', 'leave', 'low', 7, 'StudentLeave', NULL, 0, NULL, NULL, '2026-03-18 07:18:57', '2026-03-18 07:18:57'),
+	(3, 3975, 'Class Incharge Approved', 'Your leave has been approved by NAGAJOTHI P. Awaiting department admin approval.', 'leave', 'low', 7, 'StudentLeave', NULL, 0, NULL, NULL, '2026-03-18 08:38:47', '2026-03-18 08:38:47'),
+	(4, 3975, 'Leave Approved', 'Your Personal leave has been approved by all required authorities.', 'leave', 'low', 7, 'StudentLeave', NULL, 0, NULL, NULL, '2026-03-18 08:39:18', '2026-03-18 08:39:18'),
+	(5, 3975, 'Leave Rejected', 'Your Personal leave has been rejected. Reason: Not specified', 'leave', 'low', 6, 'StudentLeave', NULL, 0, NULL, NULL, '2026-03-18 18:04:20', '2026-03-18 18:04:20'),
+	(6, 3975, 'Sport Approved', 'Your sport "WWE" has been approved. ', 'approval', 'medium', 1, 'sport', '/student/portfolio/sports', 0, NULL, NULL, '2026-03-18 18:30:43', '2026-03-18 18:30:43'),
+	(7, 3975, 'Certification Approved', 'Your certification "claude code action" has been approved. ', 'approval', 'medium', 1, 'certification', '/student/portfolio/certifications', 0, NULL, NULL, '2026-03-18 18:52:14', '2026-03-18 18:52:14'),
+	(8, 3975, 'Sport Approved', 'Your sport "WWE" has been approved. ', 'approval', 'medium', 1, 'sport', '/student/portfolio/sports', 0, NULL, NULL, '2026-03-18 18:52:21', '2026-03-18 18:52:21'),
+	(9, 3975, 'Leave Application Submitted', 'Your On-Duty leave application for 1 days has been submitted.', 'leave', 'low', 8, 'StudentLeave', NULL, 0, NULL, NULL, '2026-03-19 05:17:34', '2026-03-19 05:17:34'),
+	(10, 3975, 'Certification Approved', 'Your certification "claude code in action" has been approved. Remarks: keep going lokesh', 'approval', 'medium', 2, 'certification', '/student/portfolio/certifications', 0, NULL, NULL, '2026-03-19 05:18:18', '2026-03-19 05:18:18'),
+	(11, 3975, 'Class Incharge Approved', 'Your leave has been approved by NAGAJOTHI P. Awaiting department admin approval.', 'leave', 'low', 8, 'StudentLeave', NULL, 0, NULL, NULL, '2026-03-19 05:18:32', '2026-03-19 05:18:32'),
+	(12, 3975, 'Leave Approved', 'Your On-Duty leave has been approved by all required authorities.', 'leave', 'low', 8, 'StudentLeave', NULL, 0, NULL, NULL, '2026-03-19 05:19:10', '2026-03-19 05:19:10'),
+	(13, 3975, 'Leave Application Submitted', 'Your On-Duty leave application for 1 days has been submitted.', 'leave', 'low', 9, 'StudentLeave', NULL, 0, NULL, NULL, '2026-03-20 10:19:04', '2026-03-20 10:19:04'),
+	(14, 3975, 'Class Incharge Approved', 'Your leave has been approved by NAGAJOTHI P. Awaiting department admin approval.', 'leave', 'low', 9, 'StudentLeave', NULL, 0, NULL, NULL, '2026-03-20 10:19:26', '2026-03-20 10:19:26'),
+	(15, 3975, 'Leave Approved', 'Your On-Duty leave has been approved by all required authorities.', 'leave', 'low', 9, 'StudentLeave', NULL, 0, NULL, NULL, '2026-03-20 10:20:01', '2026-03-20 10:20:01'),
+	(16, 3990, 'Leave Application Submitted', 'Your Personal leave application for 6 days has been submitted.', 'leave', 'low', 10, 'StudentLeave', NULL, 0, NULL, NULL, '2026-03-25 08:21:52', '2026-03-25 08:21:52'),
+	(17, 3972, 'Leave Application Submitted', 'Your Personal leave application for 1 days has been submitted.', 'leave', 'low', 11, 'StudentLeave', NULL, 0, NULL, NULL, '2026-03-25 08:22:35', '2026-03-25 08:22:35'),
+	(18, 3991, 'Leave Application Submitted', 'Your Personal leave application for 1 days has been submitted.', 'leave', 'low', 12, 'StudentLeave', NULL, 0, NULL, NULL, '2026-03-25 08:38:42', '2026-03-25 08:38:42'),
+	(19, 4110, 'Leave Application Submitted', 'Your Personal leave application for 1 days has been submitted.', 'leave', 'low', 13, 'StudentLeave', NULL, 0, NULL, NULL, '2026-03-25 08:42:23', '2026-03-25 08:42:23'),
+	(20, 3991, 'Leave Application Submitted', 'Your Personal leave application for 1 days has been submitted.', 'leave', 'low', 14, 'StudentLeave', NULL, 0, NULL, NULL, '2026-03-25 08:51:36', '2026-03-25 08:51:36'),
+	(21, 3991, 'Leave Rejected', 'Your Personal leave has been rejected. Reason: Not specified', 'leave', 'low', 14, 'StudentLeave', NULL, 0, NULL, NULL, '2026-03-26 13:34:18', '2026-03-26 13:34:18');
 
--- --------------------------------------------------------
-
---
--- Table structure for table `student_profile`
---
-
-CREATE TABLE `student_profile` (
-  `id` int(11) NOT NULL,
+-- Dumping structure for table eduvertex.student_profile
+CREATE TABLE IF NOT EXISTS `student_profile` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `userId` int(11) DEFAULT NULL,
   `role_id` int(11) NOT NULL DEFAULT 6,
   `studentId` varchar(30) NOT NULL,
@@ -1334,37 +2086,854 @@ CREATE TABLE `student_profile` (
   `password` varchar(255) DEFAULT NULL,
   `createdAt` datetime NOT NULL DEFAULT current_timestamp(),
   `updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  `emisNo` varchar(50) DEFAULT NULL COMMENT 'Education Management Information System Number'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `emisNo` varchar(50) DEFAULT NULL COMMENT 'Education Management Information System Number',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_studentId` (`studentId`),
+  UNIQUE KEY `uq_email` (`email`),
+  UNIQUE KEY `emisNo` (`emisNo`),
+  KEY `fk_student_user` (`userId`),
+  KEY `fk_student_department` (`departmentId`),
+  KEY `idx_student_class` (`classId`),
+  KEY `idx_student_batch_sem` (`batch`,`semester`),
+  CONSTRAINT `fk_student_class` FOREIGN KEY (`classId`) REFERENCES `classes` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_student_dept` FOREIGN KEY (`departmentId`) REFERENCES `departments` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_student_user` FOREIGN KEY (`userId`) REFERENCES `users` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB AUTO_INCREMENT=4159 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `student_profile`
---
-
+-- Dumping data for table eduvertex.student_profile: ~828 rows (approximately)
 INSERT INTO `student_profile` (`id`, `userId`, `role_id`, `studentId`, `rollNumber`, `admissionNo`, `firstName`, `lastName`, `email`, `phone`, `photo`, `gender`, `departmentId`, `classId`, `batch`, `semester`, `year`, `admissionDate`, `admissionType`, `feeStatus`, `status`, `password`, `createdAt`, `updatedAt`, `emisNo`) VALUES
-(3686, NULL, 6, '921024243001', '921024243001', NULL, 'ABARNA', 'K', '921024243001@nscet.org', '9876543210', 'default-student.png', 'female', 6, NULL, '2024-2028', 4, '2', '2024-11-15', 'regular', 'paid', 'active', '$2a$10$dFoVkpiU4xkoGUYT3OhfOucc255f/yft8BhHC.o3aZqqY/vjHyY.O', '2026-03-14 13:13:50', '2026-03-14 13:13:50', NULL),
-(3687, NULL, 6, '921024243002', '921024243002', NULL, 'ABDUL RAHMAN', 'U', '921024243002@nscet.org', '9876543210', 'default-student.png', 'male', 6, NULL, '2024-2028', 4, '2', '2024-11-15', 'regular', 'paid', 'active', '$2a$10$dFoVkpiU4xkoGUYT3OhfOucc255f/yft8BhHC.o3aZqqY/vjHyY.O', '2026-03-14 13:13:50', '2026-03-14 13:13:50', NULL),
-(3688, NULL, 6, '921024243003', '921024243003', NULL, 'ANBU DHARSINI', 'V', '921024243003@nscet.org', '9876543210', 'default-student.png', 'female', 6, NULL, '2024-2028', 4, '2', '2024-11-15', 'regular', 'paid', 'active', '$2a$10$dFoVkpiU4xkoGUYT3OhfOucc255f/yft8BhHC.o3aZqqY/vjHyY.O', '2026-03-14 13:13:50', '2026-03-14 13:13:50', NULL),
-(3967, NULL, 6, '921023243001', '921023243001', NULL, 'AJAY PRASATH', 'K', '921023243001@nscet.org', '9876543210', 'default-student.png', 'male', 6, 21, '2023-2027', 6, '3', '2023-11-15', 'regular', 'paid', 'active', '$2a$10$dFoVkpiU4xkoGUYT3OhfOucc255f/yft8BhHC.o3aZqqY/vjHyY.O', '2026-03-14 13:13:50', '2026-03-14 13:13:50', NULL),
-(3968, NULL, 6, '921023243002', '921023243002', NULL, 'ANFIYAA', 'M', '921023243002@nscet.org', '9876543210', 'default-student.png', 'female', 6, 21, '2023-2027', 6, '3', '2023-11-15', 'regular', 'paid', 'active', '$2a$10$dFoVkpiU4xkoGUYT3OhfOucc255f/yft8BhHC.o3aZqqY/vjHyY.O', '2026-03-14 13:13:50', '2026-03-14 13:13:50', NULL),
-(3969, NULL, 6, '921023243004', '921023243004', NULL, 'ASIM FATHIMA', 'P', '921023243004@nscet.org', '9876543210', 'default-student.png', 'female', 6, 21, '2023-2027', 6, '3', '2023-11-15', 'regular', 'paid', 'active', '$2a$10$dFoVkpiU4xkoGUYT3OhfOucc255f/yft8BhHC.o3aZqqY/vjHyY.O', '2026-03-14 13:13:50', '2026-03-14 13:13:50', NULL),
-(3970, NULL, 6, '921023243005', '921023243005', NULL, 'BALAJI', 'B', '921023243005@nscet.org', '9876543210', 'default-student.png', 'male', 6, 21, '2023-2027', 6, '3', '2023-11-15', 'regular', 'paid', 'active', '$2a$10$dFoVkpiU4xkoGUYT3OhfOucc255f/yft8BhHC.o3aZqqY/vjHyY.O', '2026-03-14 13:13:50', '2026-03-14 13:13:50', NULL),
-(3971, NULL, 6, '921023243006', '921023243006', NULL, 'DEVENDRA KUMAR', 'P', '921023243006@nscet.org', '9876543210', 'default-student.png', 'male', 6, 21, '2023-2027', 6, '3', '2023-11-15', 'regular', 'paid', 'active', '$2a$10$dFoVkpiU4xkoGUYT3OhfOucc255f/yft8BhHC.o3aZqqY/vjHyY.O', '2026-03-14 13:13:50', '2026-03-14 13:13:50', NULL),
-(3972, NULL, 6, '921023243007', '921023243007', NULL, 'GOKUL', 'M', '921023243007@nscet.org', '9876543210', 'default-student.png', 'male', 6, 21, '2023-2027', 6, '3', '2023-11-15', 'regular', 'paid', 'active', '$2a$10$dFoVkpiU4xkoGUYT3OhfOucc255f/yft8BhHC.o3aZqqY/vjHyY.O', '2026-03-14 13:13:50', '2026-03-14 13:13:50', NULL),
-(3973, NULL, 6, '921023243008', '921023243008', NULL, 'HARI PRABHA', 'S', '921023243008@nscet.org', '9876543210', 'default-student.png', 'male', 6, 21, '2023-2027', 6, '3', '2023-11-15', 'regular', 'paid', 'active', '$2a$10$dFoVkpiU4xkoGUYT3OhfOucc255f/yft8BhHC.o3aZqqY/vjHyY.O', '2026-03-14 13:13:50', '2026-03-14 13:13:50', NULL),
-(3974, NULL, 6, '921023243009', '921023243009', NULL, 'KAVIYAMAHESHWARI', 'J', '921023243009@nscet.org', '9876543210', 'default-student.png', 'female', 6, 21, '2023-2027', 6, '3', '2023-11-15', 'regular', 'paid', 'active', '$2a$10$dFoVkpiU4xkoGUYT3OhfOucc255f/yft8BhHC.o3aZqqY/vjHyY.O', '2026-03-14 13:13:50', '2026-03-14 13:13:50', NULL),
-(3975, NULL, 6, '3975', '921023243010', NULL, 'LOGESH KUMAR', 'R', '921023243010@nscet.org', '9876543210', 'default-student.png', 'male', 6, 21, '2023-2027', 6, '3', '2023-11-15', 'regular', 'pending', 'active', '$2a$10$dFoVkpiU4xkoGUYT3OhfOucc255f/yft8BhHC.o3aZqqY/vjHyY.O', '2026-03-14 13:13:50', '2026-03-20 10:25:49', NULL),
-(3976, NULL, 6, '921023243011', '921023243011', NULL, 'MALARVIZHI', 'S', '921023243011@nscet.org', '9876543210', 'default-student.png', 'female', 6, 21, '2023-2027', 6, '3', '2023-11-15', 'regular', 'paid', 'active', '$2a$10$dFoVkpiU4xkoGUYT3OhfOucc255f/yft8BhHC.o3aZqqY/vjHyY.O', '2026-03-14 13:13:50', '2026-03-14 13:13:50', NULL),
-(4159, NULL, 3, '921023243018', '23AI&100', NULL, 'SHRIMATHI', 'R', 'shrimathiravi44@gmail.com', '9384114714', 'default-student.png', 'female', 6, 21, '2023-2027', 1, '3', '2026-03-15', 'regular', 'pending', 'active', '$2a$10$jvuWQ71xy2Z1C2XBFBTdleqcajw0FoikNF5Tw.o4CZmzW1MrcJ2v6', '2026-03-15 09:29:14', '2026-03-18 10:24:18', NULL);
+	(3331, NULL, 3, '921025243001', '921025243001', NULL, 'AATHESREE', 'R', '921025243001@nscet.org', '9876543210', 'default-student.png', 'female', 6, NULL, '2025-2029', 5, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$dFoVkpiU4xkoGUYT3OhfOucc255f/yft8BhHC.o3aZqqY/vjHyY.O', '2026-02-19 22:09:11', '2026-03-26 10:37:47', NULL),
+	(3332, NULL, 3, '921025243002', '921025243002', NULL, 'AATHIGA', 'FATHIMA A', 'aathigafathima72@gmail.com', '9345214392', 'default-student.png', 'female', 6, NULL, '2025-2029', 5, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$dFoVkpiU4xkoGUYT3OhfOucc255f/yft8BhHC.o3aZqqY/vjHyY.O', '2026-02-19 22:09:11', '2026-03-26 13:04:10', NULL),
+	(3333, NULL, 3, '921025243003', '921025243003', NULL, 'ADHILA', 'FATHIMA A', 'adhilafathimaa4@gmail.com', '9487720020', 'default-student.png', 'female', 6, NULL, '2025-2029', 5, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$dFoVkpiU4xkoGUYT3OhfOucc255f/yft8BhHC.o3aZqqY/vjHyY.O', '2026-02-19 22:09:11', '2026-03-26 13:11:15', NULL),
+	(3334, NULL, 3, '921025243004', '921025243004', NULL, 'AHAMED', 'ADHIEF KHAN M', '921025243004@nscet.org', '9876543210', 'default-student.png', 'male', 6, NULL, '2025-2029', 5, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$dFoVkpiU4xkoGUYT3OhfOucc255f/yft8BhHC.o3aZqqY/vjHyY.O', '2026-02-19 22:09:11', '2026-03-24 20:28:48', NULL),
+	(3335, NULL, 3, '921025243005', '921025243005', NULL, 'AKALYA', 'J', '921025243005@nscet.org', '9876543210', 'default-student.png', 'female', 6, NULL, '2025-2029', 5, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$dFoVkpiU4xkoGUYT3OhfOucc255f/yft8BhHC.o3aZqqY/vjHyY.O', '2026-02-19 22:09:11', '2026-03-26 10:38:06', NULL),
+	(3336, NULL, 3, '921025243006', '921025243006', NULL, 'ALAGUMEENA', 'S', '921025243006@nscet.org', '9876543210', 'default-student.png', 'female', 6, NULL, '2025-2029', 5, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:38:22', NULL),
+	(3337, NULL, 3, '921025243007', '921025243007', NULL, 'ASWATHA', 'J S', '921025243007@nscet.org', '9876543210', 'default-student.png', 'female', 6, NULL, '2025-2029', 5, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:38:30', NULL),
+	(3338, NULL, 3, '921025243008', '921025243008', NULL, 'BAGHYALAKSHMI', 'S', '921025243008@nscet.org', '9876543210', 'default-student.png', 'female', 6, NULL, '2025-2029', 5, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:38:36', NULL),
+	(3339, NULL, 3, '921025243009', '921025243009', NULL, 'DEEPAN', 'M', '921025243009@nscet.org', '9876543210', 'default-student.png', 'male', 6, NULL, '2025-2029', 5, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-24 20:28:48', NULL),
+	(3340, NULL, 3, '921025243010', '921025243010', NULL, 'DEVADHARSHAN', 'V', '921025243010@nscet.org', '9876543210', 'default-student.png', 'male', 6, NULL, '2025-2029', 5, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-24 20:28:48', NULL),
+	(3341, NULL, 3, '921025243011', '921025243011', NULL, 'DEVADHARSHINI', 'M', '921025243011@nscet.org', '9876543210', 'default-student.png', 'female', 6, NULL, '2025-2029', 5, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:38:39', NULL),
+	(3342, NULL, 3, '921025243012', '921025243012', NULL, 'DEVI', 'PRIYA T', '921025243012@nscet.org', '9876543210', 'default-student.png', 'female', 6, NULL, '2025-2029', 5, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:38:41', NULL),
+	(3343, NULL, 3, '921025243013', '921025243013', NULL, 'DHANUSRI', 'B', '921025243013@nscet.org', '9876543210', 'default-student.png', 'female', 6, NULL, '2025-2029', 5, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:38:44', NULL),
+	(3344, NULL, 3, '921025243014', '921025243014', NULL, 'DHARSHAN', 'BALA P', '921025243014@nscet.org', '9876543210', 'default-student.png', 'male', 6, NULL, '2025-2029', 5, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-24 20:28:48', NULL),
+	(3345, NULL, 3, '921025243015', '921025243015', NULL, 'DHARSHINI', 'SARO SHREE S U', '921025243015@nscet.org', '9876543210', 'default-student.png', 'female', 6, NULL, '2025-2029', 5, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:38:56', NULL),
+	(3346, NULL, 3, '921025243016', '921025243016', NULL, 'DHIVYA', 'SRI A', '921025243016@nscet.org', '9876543210', 'default-student.png', 'female', 6, NULL, '2025-2029', 5, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:39:02', NULL),
+	(3347, NULL, 3, '921025243017', '921025243017', NULL, 'DIVAGAR', 'M K', 'divagarmk1001@gmail.com', '8778195568', 'default-student.png', 'male', 6, NULL, '2025-2029', 5, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$SmIs.x5052D8Dagry/obzOwUr2US3xJg8BeQAuoCCFSZyWYBUxWVG', '2026-02-19 22:09:11', '2026-03-26 13:21:34', NULL),
+	(3348, NULL, 3, '921025243018', '921025243018', NULL, 'DIVYASHREE', 'P', '921025243018@nscet.org', '9876543210', 'default-student.png', 'female', 6, NULL, '2025-2029', 5, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:39:07', NULL),
+	(3349, NULL, 3, '921025243019', '921025243019', NULL, 'GOKULAVANI', 'K', '921025243019@nscet.org', '9876543210', 'default-student.png', 'female', 6, NULL, '2025-2029', 5, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:39:13', NULL),
+	(3350, NULL, 3, '921025243020', '921025243020', NULL, 'GOPAL', 'KARTHICK S', '921025243020@nscet.org', '9876543210', 'default-student.png', 'male', 6, NULL, '2025-2029', 5, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-24 20:28:48', NULL),
+	(3351, NULL, 3, '921025243021', '921025243021', NULL, 'HARINI', 'M', '921025243021@nscet.org', '9876543210', 'default-student.png', 'female', 6, NULL, '2025-2029', 5, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:39:16', NULL),
+	(3352, NULL, 3, '921025243022', '921025243022', NULL, 'HARINI', 'SRI M', '921025243022@nscet.org', '9876543210', 'default-student.png', 'female', 6, NULL, '2025-2029', 5, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:39:19', NULL),
+	(3353, NULL, 3, '921025243023', '921025243023', NULL, 'HARIPRIYA', 'S', '921025243023@nscet.org', '9876543210', 'default-student.png', 'female', 6, NULL, '2025-2029', 5, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:39:22', NULL),
+	(3354, NULL, 3, '921025243024', '921025243024', NULL, 'HEMAN', 'M', '921025243024@nscet.org', '9876543210', 'default-student.png', 'male', 6, NULL, '2025-2029', 5, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-24 20:28:48', NULL),
+	(3355, NULL, 3, '921025243025', '921025243025', NULL, 'JEEVITHA', 'C', '921025243025@nscet.org', '9876543210', 'default-student.png', 'female', 6, NULL, '2025-2029', 5, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:39:37', NULL),
+	(3356, NULL, 3, '921025243026', '921025243026', NULL, 'JEYAVARSHAN', 'B', '921025243026@nscet.org', '9876543210', 'default-student.png', 'male', 6, NULL, '2025-2029', 5, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-24 20:28:48', NULL),
+	(3357, NULL, 3, '921025243027', '921025243027', NULL, 'KANISHKA', 'R', '921025243027@nscet.org', '9876543210', 'default-student.png', 'female', 6, NULL, '2025-2029', 5, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:40:01', NULL),
+	(3358, NULL, 3, '921025243028', '921025243028', NULL, 'KANISH', 'KUMAR K', '921025243028@nscet.org', '9876543210', 'default-student.png', 'male', 6, NULL, '2025-2029', 5, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-24 20:28:48', NULL),
+	(3359, NULL, 3, '921025243029', '921025243029', NULL, 'KAVITHA', 'S', 'kavi27032008@gmail.com', '9363026974', 'default-student.png', 'female', 6, NULL, '2025-2029', 5, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 13:01:46', NULL),
+	(3360, NULL, 3, '921025243030', '921025243030', NULL, 'LAKSHANA', 'S', '921025243030@nscet.org', '9876543210', 'default-student.png', 'female', 6, NULL, '2025-2029', 5, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:40:12', NULL),
+	(3361, NULL, 3, '921025243031', '921025243031', NULL, 'LAKSHMI', 'DEVI S', '921025243031@nscet.org', '9876543210', 'default-student.png', 'female', 6, NULL, '2025-2029', 5, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:40:15', NULL),
+	(3362, NULL, 3, '921025243032', '921025243032', NULL, 'MATHUMITHA', 'G', '921025243032@nscet.org', '9876543210', 'default-student.png', 'female', 6, NULL, '2025-2029', 5, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:40:19', NULL),
+	(3363, NULL, 3, '921025243033', '921025243033', NULL, 'MEERA', 'S', '921025243033@nscet.org', '9876543210', 'default-student.png', 'female', 6, NULL, '2025-2029', 5, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:40:22', NULL),
+	(3364, NULL, 3, '921025243034', '921025243034', NULL, 'NANDHINI', 'S', '921025243034@nscet.org', '9876543210', 'default-student.png', 'female', 6, NULL, '2025-2029', 5, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:40:25', NULL),
+	(3365, NULL, 3, '921025243035', '921025243035', NULL, 'NARMATHA', 'R B', '921025243035@nscet.org', '9876543210', 'default-student.png', 'female', 6, NULL, '2025-2029', 5, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:40:29', NULL),
+	(3366, NULL, 3, '921025243036', '921025243036', NULL, 'NIVETHA', 'S', '921025243036@nscet.org', '9876543210', 'default-student.png', 'female', 6, NULL, '2025-2029', 5, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:40:32', NULL),
+	(3367, NULL, 3, '921025243037', '921025243037', NULL, 'PANDEESWARI', 'M', '921025243037@nscet.org', '9876543210', 'default-student.png', 'female', 6, NULL, '2025-2029', 5, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:40:38', NULL),
+	(3368, NULL, 3, '921025243038', '921025243038', NULL, 'POORVAJA', 'S', '921025243038@nscet.org', '9876543210', 'default-student.png', 'male', 6, NULL, '2025-2029', 5, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-24 20:28:48', NULL),
+	(3369, NULL, 3, '921025243039', '921025243039', NULL, 'PRAVEENA', 'M', '921025243039@nscet.org', '9876543210', 'default-student.png', 'female', 6, NULL, '2025-2029', 5, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:40:58', NULL),
+	(3370, NULL, 3, '921025243040', '921025243040', NULL, 'RAJA', 'RAJESHWARI S', '921025243040@nscet.org', '9876543210', 'default-student.png', 'female', 6, NULL, '2025-2029', 5, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:41:05', NULL),
+	(3371, NULL, 3, '921025243041', '921025243041', NULL, 'RAJASRI', 'M', '921025243041@nscet.org', '6385248943', 'default-student.png', 'female', 6, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 13:10:07', NULL),
+	(3372, NULL, 3, '921025243042', '921025243042', NULL, 'REENASRI', 'S', '921025243042@nscet.org', '9876543210', 'default-student.png', 'female', 6, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:41:10', NULL),
+	(3373, NULL, 3, '921025243043', '921025243043', NULL, 'RITHIKA', 'SRI A', '921025243043@nscet.org', '9876543210', 'default-student.png', 'female', 6, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:42:27', NULL),
+	(3374, NULL, 3, '921025243044', '921025243044', NULL, 'SAHANA', 'C', '921025243044@nscet.org', '9876543210', 'default-student.png', 'female', 6, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:42:35', NULL),
+	(3375, NULL, 3, '921025243045', '921025243045', NULL, 'SANKARA', 'NARAYAN R', '921025243045@nscet.org', '9876543210', 'default-student.png', 'male', 6, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3376, NULL, 3, '921025243047', '921025243047', NULL, 'SHARANYA', 'M', '921025243047@nscet.org', '9876543210', 'default-student.png', 'female', 6, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:42:46', NULL),
+	(3377, NULL, 3, '921025243048', '921025243048', NULL, 'SIVA', 'DHARANI R', '921025243048@nscet.org', '9345650585', 'default-student.png', 'female', 6, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 13:01:27', NULL),
+	(3378, NULL, 3, '921025243049', '921025243049', NULL, 'SRINIVASH', 'T', '921025243049@nscet.org', '9876543210', 'default-student.png', 'male', 6, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3379, NULL, 3, '921025243050', '921025243050', NULL, 'SRI', 'RAM V', '921025243050@nscet.org', '9876543210', 'default-student.png', 'male', 6, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3380, NULL, 3, '921025243051', '921025243051', NULL, 'SUGAPRIYA', 'T', '921025243051@nscet.org', '9876543210', 'default-student.png', 'female', 6, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:43:10', NULL),
+	(3381, NULL, 3, '921025243052', '921025243052', NULL, 'SUPRIYA', 'J S', '921025243052@nscet.org', '9876543210', 'default-student.png', 'female', 6, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:43:15', NULL),
+	(3382, NULL, 3, '921025243053', '921025243053', NULL, 'VETRISELVAM', 'R', '921025243053@nscet.org', '9876543210', 'default-student.png', 'male', 6, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3383, NULL, 3, '921025243054', '921025243054', NULL, 'VIJAYSHREE', 'S', '921025243054@nscet.org', '9876543210', 'default-student.png', 'female', 6, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:43:19', NULL),
+	(3384, NULL, 3, '921025243055', '921025243055', NULL, 'YASHIKA', 'K', '921025243055@nscet.org', '9876543210', 'default-student.png', 'female', 6, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:43:27', NULL),
+	(3385, NULL, 3, '921025243056', '921025243056', NULL, 'YAZHINI', 'P', '921025243056@nscet.org', '9876543210', 'default-student.png', 'female', 6, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:43:36', NULL),
+	(3386, NULL, 3, '921025243057', '921025243057', NULL, 'YAZHINI', 'PM', '921025243057@nscet.org', '9003700367', 'default-student.png', 'female', 6, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 13:01:31', NULL),
+	(3387, NULL, 3, '921025243058', '921025243058', NULL, 'YUGASRI', 'I', '921025243058@nscet.org', '9876543210', 'default-student.png', 'female', 6, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:43:42', NULL),
+	(3388, NULL, 3, '921025205001', '921025205001', NULL, 'ABARNA', 'M', '921025205001@nscet.org', '9876543210', 'default-student.png', 'female', 7, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:50:55', NULL),
+	(3389, NULL, 3, '921025205002', '921025205002', NULL, 'ABIRAMI', 'R', '921025205002@nscet.org', '9876543210', 'default-student.png', 'female', 7, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:50:58', NULL),
+	(3390, NULL, 3, '921025205003', '921025205003', NULL, 'AISHWARYA', 'LAKSHMI S', '921025205003@nscet.org', '9876543210', 'default-student.png', 'female', 7, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:51:01', NULL),
+	(3391, NULL, 3, '921025205004', '921025205004', NULL, 'AKSHAYA', 'S', '921025205004@nscet.org', '9876543210', 'default-student.png', 'female', 7, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:51:04', NULL),
+	(3392, NULL, 3, '921025205005', '921025205005', NULL, 'ARAVINDHAN', 'K', '921025205005@nscet.org', '9876543210', 'default-student.png', 'male', 7, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3393, NULL, 3, '921025205006', '921025205006', NULL, 'ARCHANA', 'P', '921025205006@nscet.org', '9876543210', 'default-student.png', 'female', 7, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:51:06', NULL),
+	(3394, NULL, 3, '921025205007', '921025205007', NULL, 'BHUVANA', 'SRI G', '921025205007@nscet.org', '9876543210', 'default-student.png', 'female', 7, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:51:11', NULL),
+	(3395, NULL, 3, '921025205008', '921025205008', NULL, 'DEENA', 'P', '921025205008@nscet.org', '9876543210', 'default-student.png', 'male', 7, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3396, NULL, 3, '921025205009', '921025205009', NULL, 'DHANALAKSHMI', 'R', '921025205009@nscet.org', '9876543210', 'default-student.png', 'female', 7, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:51:30', NULL),
+	(3397, NULL, 3, '921025205010', '921025205010', NULL, 'DHARSHINI', 'M', '921025205010@nscet.org', '9876543210', 'default-student.png', 'female', 7, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:51:32', NULL),
+	(3398, NULL, 3, '921025205011', '921025205011', NULL, 'DIVYASRI', 'S', '921025205011@nscet.org', '9876543210', 'default-student.png', 'female', 7, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:51:34', NULL),
+	(3399, NULL, 3, '921025205012', '921025205012', NULL, 'ELAKKIYA', 'M', '921025205012@nscet.org', '9876543210', 'default-student.png', 'female', 7, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:51:42', NULL),
+	(3400, NULL, 3, '921025205013', '921025205013', NULL, 'GOBIKA', 'SRI S', '921025205013@nscet.org', '9876543210', 'default-student.png', 'female', 7, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:51:48', NULL),
+	(3401, NULL, 3, '921025205014', '921025205014', NULL, 'GOWTHAM', 'KUMAR M', '921025205014@nscet.org', '9876543210', 'default-student.png', 'male', 7, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3402, NULL, 3, '921025205015', '921025205015', NULL, 'GURU', 'K', '921025205015@nscet.org', '9876543210', 'default-student.png', 'male', 7, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3403, NULL, 3, '921025205016', '921025205016', NULL, 'HARIPRIYA', 'R', '921025205016@nscet.org', '9344578073', 'default-student.png', 'female', 7, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:58:51', NULL),
+	(3404, NULL, 3, '921025205017', '921025205017', NULL, 'JANARTHANAN', 'M', '921025205017@nscet.org', '9876543210', 'default-student.png', 'male', 7, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3405, NULL, 3, '921025205018', '921025205018', NULL, 'JEYAKRISHNAN', 'P', '921025205018@nscet.org', '9876543210', 'default-student.png', 'male', 7, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3406, NULL, 3, '921025205019', '921025205019', NULL, 'JEYSREE', 'S', '921025205019@nscet.org', '9361380355', 'default-student.png', 'female', 7, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 13:35:38', NULL),
+	(3407, NULL, 3, '921025205020', '921025205020', NULL, 'KARTHIGA', 'M', '921025205020@nscet.org', '9876543210', 'default-student.png', 'female', 7, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:52:00', NULL),
+	(3408, NULL, 3, '921025205021', '921025205021', NULL, 'KIRUTHIKA', 'S', '921025205021@nscet.org', '9876543210', 'default-student.png', 'female', 7, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:52:03', NULL),
+	(3409, NULL, 3, '921025205022', '921025205022', NULL, 'LAKXMAN', 'HARI K M', '921025205022@nscet.org', '9876543210', 'default-student.png', 'male', 7, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3410, NULL, 3, '921025205023', '921025205023', NULL, 'LOGASRI', 'K', '921025205023@nscet.org', '9876543210', 'default-student.png', 'female', 7, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:52:15', NULL),
+	(3411, NULL, 3, '921025205024', '921025205024', NULL, 'MAHALAKSHMI', 'R', '921025205024@nscet.org', '9876543210', 'default-student.png', 'female', 7, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:57:10', NULL),
+	(3412, NULL, 3, '921025205025', '921025205025', NULL, 'MAHARAJAN', 'K', '921025205025@nscet.org', '9876543210', 'default-student.png', 'male', 7, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3413, NULL, 3, '921025205026', '921025205026', NULL, 'MAHIMA', 'GRACE G', '921025205026@nscet.org', '9876543210', 'default-student.png', 'female', 7, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:57:46', NULL),
+	(3414, NULL, 3, '921025205027', '921025205027', NULL, 'MOHAMED', 'IRFAN P', '921025205027@nscet.org', '9876543210', 'default-student.png', 'male', 7, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3415, NULL, 3, '921025205028', '921025205028', NULL, 'MOHAMED', 'SYATH ARAFATH A', '921025205028@nscet.org', '9876543210', 'default-student.png', 'male', 7, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3416, NULL, 3, '921025205029', '921025205029', NULL, 'MUTHU', 'VETHA VARSHINI M', '921025205029@nscet.org', '9876543210', 'default-student.png', 'female', 7, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:58:04', NULL),
+	(3417, NULL, 3, '921025205030', '921025205030', NULL, 'NAFILA', 'FATHIMA R', '921025205030@nscet.org', '9876543210', 'default-student.png', 'female', 7, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:58:10', NULL),
+	(3418, NULL, 3, '921025205031', '921025205031', NULL, 'NIROSHKUMAR', 'R', '921025205031@nscet.org', '9876543210', 'default-student.png', 'male', 7, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3419, NULL, 3, '921025205032', '921025205032', NULL, 'NISHANTHINI', 'R', '921025205032@nscet.org', '9876543210', 'default-student.png', 'female', 7, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:58:12', NULL),
+	(3420, NULL, 3, '921025205033', '921025205033', NULL, 'PAVITHRA', 'R', '921025205033@nscet.org', '9876543210', 'default-student.png', 'female', 7, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:58:15', NULL),
+	(3421, NULL, 3, '921025205034', '921025205034', NULL, 'PRATHIBHA', 'SHIVARANJANI P', '921025205034@nscet.org', '9876543210', 'default-student.png', 'female', 7, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:58:19', NULL),
+	(3422, NULL, 3, '921025205035', '921025205035', NULL, 'PRATHISHA', 'ARASI S', '921025205035@nscet.org', '9876543210', 'default-student.png', 'female', 7, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:58:25', NULL),
+	(3423, NULL, 3, '921025205036', '921025205036', NULL, 'PRAVEENA', 'M', '921025205036@nscet.org', '9876543210', 'default-student.png', 'female', 7, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:58:28', NULL),
+	(3424, NULL, 3, '921025205037', '921025205037', NULL, 'PREETHA', 'M', 'preethamanikandan07@gmail.com', '8754017526', 'default-student.png', 'female', 7, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 13:19:18', NULL),
+	(3425, NULL, 3, '921025205038', '921025205038', NULL, 'PRIYADHARSHINI', 'M', '921025205038@nscet.org', '9876543210', 'default-student.png', 'female', 7, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:58:34', NULL),
+	(3426, NULL, 3, '921025205039', '921025205039', NULL, 'RAJANESWARAN', 'N', '921025205039@nscet.org', '9876543210', 'default-student.png', 'male', 7, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3427, NULL, 3, '921025205040', '921025205040', NULL, 'RAJIYA', 'PRIYA K', '921025205040@nscet.org', '9876543210', 'default-student.png', 'female', 7, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:58:42', NULL),
+	(3428, NULL, 3, '921025205041', '921025205041', NULL, 'RENUGA', 'K', '921025205041@nscet.org', '9876543210', 'default-student.png', 'female', 7, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:58:51', NULL),
+	(3429, NULL, 3, '921025205042', '921025205042', NULL, 'RINISHA', 'M', '921025205042@nscet.org', '9876543210', 'default-student.png', 'female', 7, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:58:53', NULL),
+	(3430, NULL, 3, '921025205043', '921025205043', NULL, 'ROHITH', 'BALAJ IM', '921025205043@nscet.org', '9876543210', 'default-student.png', 'male', 7, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3431, NULL, 3, '921025205044', '921025205044', NULL, 'ROSHINI', 'M', '921025205044@nscet.org', '9876543210', 'default-student.png', 'female', 7, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:58:57', NULL),
+	(3432, NULL, 3, '921025205045', '921025205045', NULL, 'SABANA', 'BANU K', '921025205045@nscet.org', '9876543210', 'default-student.png', 'female', 7, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:59:00', NULL),
+	(3433, NULL, 3, '921025205046', '921025205046', NULL, 'SANJAY', 'KUMAR B', '921025205046@nscet.org', '9876543210', 'default-student.png', 'male', 7, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3434, NULL, 3, '921025205047', '921025205047', NULL, 'SANTHOSH', 'P', '921025205047@nscet.org', '9876543210', 'default-student.png', 'male', 7, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3435, NULL, 3, '921025205048', '921025205048', NULL, 'SARAVANA', 'KUMAR A', '921025205048@nscet.org', '9876543210', 'default-student.png', 'male', 7, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3436, NULL, 3, '921025205049', '921025205049', NULL, 'SARUSHEELA', 'G', '921025205049@nscet.org', '9876543210', 'default-student.png', 'female', 7, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:59:09', NULL),
+	(3437, NULL, 3, '921025205050', '921025205050', NULL, 'SHANMUGAVALLI', 'K', '921025205050@nscet.org', '9876543210', 'default-student.png', 'female', 7, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:59:14', NULL),
+	(3438, NULL, 3, '921025205051', '921025205051', NULL, 'SHARUNETHRA', 'V', '921025205051@nscet.org', '9876543210', 'default-student.png', 'female', 7, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:59:18', NULL),
+	(3439, NULL, 3, '921025205052', '921025205052', NULL, 'SHIVANI', 'B', '921025205052@nscet.org', '9876543210', 'default-student.png', 'female', 7, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:59:20', NULL),
+	(3440, NULL, 3, '921025205053', '921025205053', NULL, 'SHOBA', 'M', '921025205053@nscet.org', '9876543210', 'default-student.png', 'female', 7, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:59:23', NULL),
+	(3441, NULL, 3, '921025205054', '921025205054', NULL, 'SUJITHRAM', 'S', '921025205054@nscet.org', '9876543210', 'default-student.png', 'male', 7, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3442, NULL, 3, '921025205055', '921025205055', NULL, 'SWETHA', 'T', '921025205055@nscet.org', '9876543210', 'default-student.png', 'female', 7, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:59:29', NULL),
+	(3443, NULL, 3, '921025205056', '921025205056', NULL, 'THANISHA', 'S', '921025205056@nscet.org', '9876543210', 'default-student.png', 'female', 7, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 11:24:15', NULL),
+	(3444, NULL, 3, '921025205057', '921025205057', NULL, 'THEJINI', 'P', '921025205057@nscet.org', '9876543210', 'default-student.png', 'female', 7, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 11:24:18', NULL),
+	(3445, NULL, 3, '921025205058', '921025205058', NULL, 'VEERUJOTHI', 'P', '921025205058@nscet.org', '9876543210', 'default-student.png', 'female', 7, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 11:24:24', NULL),
+	(3446, NULL, 3, '921025205059', '921025205059', NULL, 'VELMURUGAN', 'J', 'sb7916696@gmail.com', '8668118539', 'default-student.png', 'male', 7, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 13:49:08', NULL),
+	(3447, NULL, 3, '921025205060', '921025205060', NULL, 'YUGASHRI', 'S', '921025205060@nscet.org', '9876543210', 'default-student.png', 'female', 7, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 11:24:31', NULL),
+	(3448, NULL, 3, '921025114001', '921025114001', NULL, 'ABINESH', 'P', '921025114001@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3449, NULL, 3, '921025114002', '921025114002', NULL, 'AKASH', 'K', '921025114002@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3450, NULL, 3, '921025114003', '921025114003', NULL, 'AZHAGAR', 'RAJA P', '921025114003@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3451, NULL, 3, '921025114004', '921025114004', NULL, 'BHUVANESHPANDI', 'S', '921025114004@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3452, NULL, 3, '921025114005', '921025114005', NULL, 'BUVANESWARAN', 'S', '921025114005@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3453, NULL, 3, '921025114006', '921025114006', NULL, 'DEEPAK', 'A', '921025114006@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3454, NULL, 3, '921025114007', '921025114007', NULL, 'DEEPAKISHAN', 'R', '921025114007@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3455, NULL, 3, '921025114008', '921025114008', NULL, 'DESIKASRI', 'S', '921025114008@nscet.org', '9876543210', 'default-student.png', 'female', 5, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:43:06', NULL),
+	(3456, NULL, 3, '921025114009', '921025114009', NULL, 'DHIVYAJOTHI', 'SREE K', '921025114009@nscet.org', '9876543210', 'default-student.png', 'female', 5, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:43:06', NULL),
+	(3457, NULL, 3, '921025114010', '921025114010', NULL, 'DIVAHAR', 'S', '921025114010@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3458, NULL, 3, '921025114011', '921025114011', NULL, 'DURAI', 'SELVAN K', '921025114011@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3459, NULL, 3, '921025114012', '921025114012', NULL, 'GOWMARIGAYATHRI', 'R', '921025114012@nscet.org', '9876543210', 'default-student.png', 'female', 5, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:43:06', NULL),
+	(3460, NULL, 3, '921025114013', '921025114013', NULL, 'HARISHMA', 'SRI R', '921025114013@nscet.org', '9876543210', 'default-student.png', 'female', 5, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:43:06', NULL),
+	(3461, NULL, 3, '921025114014', '921025114014', NULL, 'HARRYS', 'R', '921025114014@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3462, NULL, 3, '921025114015', '921025114015', NULL, 'JABAR', 'MYDEEN U', '921025114015@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3463, NULL, 3, '921025114016', '921025114016', NULL, 'KABISH', 'R', '921025114016@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3464, NULL, 3, '921025114018', '921025114018', NULL, 'KAVIARASAN', 'N', '921025114018@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3465, NULL, 3, '921025114019', '921025114019', NULL, 'KAVIN', 'G', '921025114019@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3466, NULL, 3, '921025114020', '921025114020', NULL, 'KIRTHICK', 'M', '921025114020@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3467, NULL, 3, '921025114022', '921025114022', NULL, 'KISHORE', 'KUMAR V', '921025114022@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3468, NULL, 3, '921025114023', '921025114023', NULL, 'KOWSHIK', 'HEMA CHANDRAN M', '921025114023@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3469, NULL, 3, '921025114024', '921025114024', NULL, 'MARIMUTHU', 'S', '921025114024@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3470, NULL, 3, '921025114025', '921025114025', NULL, 'MATHESH', 'M', '921025114025@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3471, NULL, 3, '921025114026', '921025114026', NULL, 'MOHAMED', 'ASKAR M', '921025114026@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3472, NULL, 3, '921025114027', '921025114027', NULL, 'MOHAMED', 'THARIK A', '921025114027@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3473, NULL, 3, '921025114028', '921025114028', NULL, 'MOHANARAJAN', 'M', '921025114028@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3474, NULL, 3, '921025114029', '921025114029', NULL, 'MONISH', 'S', '921025114029@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3475, NULL, 3, '921025114030', '921025114030', NULL, 'MUTHUPANDI', 'G', '921025114030@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3476, NULL, 3, '921025114031', '921025114031', NULL, 'NIKASH', 'S', '921025114031@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3477, NULL, 3, '921025114032', '921025114032', NULL, 'PERARASAN', 'S', '921025114032@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3478, NULL, 3, '921025114033', '921025114033', NULL, 'POOVESH', 'M', '921025114033@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3479, NULL, 3, '921025114034', '921025114034', NULL, 'RANJITH', 'P', '921025114034@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3480, NULL, 3, '921025114035', '921025114035', NULL, 'SANJAYPANDIAN', 'G', '921025114035@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3481, NULL, 3, '921025114036', '921025114036', NULL, 'SANTHOSH', 'KUMAR B', '921025114036@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3482, NULL, 3, '921025114037', '921025114037', NULL, 'SANTHOSH', 'SRI RAM R', '921025114037@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3483, NULL, 3, '921025114038', '921025114038', NULL, 'SURIYA', 'PRAKASH J', '921025114038@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3484, NULL, 3, '921025114039', '921025114039', NULL, 'THIRUNAVUKKARASU', 'B', '921025114039@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3485, NULL, 3, '921025114040', '921025114040', NULL, 'VIGNESHWARAN', 'M', '921025114040@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3486, NULL, 3, '921025114041', '921025114041', NULL, 'VIGNESHWARAN', 'V', '921025114041@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3487, NULL, 3, '921025114042', '921025114042', NULL, 'VISHNUVARATHAN', 'V', '921025114042@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3488, NULL, 3, '921025114043', '921025114043', NULL, 'VISHWA', 'V', '921025114043@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3489, NULL, 3, '921025114044', '921025114044', NULL, 'YUVARAJ', 'M', '921025114044@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3490, NULL, 3, '921025106001', '921025106001', NULL, 'ABISHEK', 'S', '921025106001@nscet.org', '9876543210', 'default-student.png', 'male', 3, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3491, NULL, 3, '921025106002', '921025106002', NULL, 'AJAY', 'SELVAM T', '921025106002@nscet.org', '9876543210', 'default-student.png', 'male', 3, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3492, NULL, 3, '921025106003', '921025106003', NULL, 'ARAVINDH', 'KUMAR D', '921025106003@nscet.org', '9876543210', 'default-student.png', 'male', 3, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3493, NULL, 3, '921025106004', '921025106004', NULL, 'ARIVAZHAGAN', 'G', '921025106004@nscet.org', '9876543210', 'default-student.png', 'male', 3, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3494, NULL, 3, '921025106005', '921025106005', NULL, 'BARANI', 'DHARAN R', '921025106005@nscet.org', '9876543210', 'default-student.png', 'male', 3, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3495, NULL, 3, '921025106006', '921025106006', NULL, 'BALAJI', 'B', 'balajibalakrishnan.2007@gmail.com', '6381201933', 'default-student.png', 'male', 3, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 13:07:57', NULL),
+	(3496, NULL, 3, '921025106007', '921025106007', NULL, 'BHARANIDHARAN', 'C', '921025106007@nscet.org', '9876543210', 'default-student.png', 'male', 3, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3497, NULL, 3, '921025106008', '921025106008', NULL, 'DEEKSITHKASTHURIRAJAN', 'K', '921025106008@nscet.org', '9876543210', 'default-student.png', 'male', 3, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3498, NULL, 3, '921025106009', '921025106009', NULL, 'DEEPAK', 'SRI RENGA D', '921025106009@nscet.org', '9876543210', 'default-student.png', 'male', 3, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3499, NULL, 3, '921025106010', '921025106010', NULL, 'DHANUSREE', 'M P', '921025106010@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(3500, NULL, 3, '921025106011', '921025106011', NULL, 'DHARANI', 'P', '921025106011@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(3501, NULL, 3, '921025106012', '921025106012', NULL, 'DHARANI', 'SHREE S', '921025106012@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(3502, NULL, 3, '921025106013', '921025106013', NULL, 'DHIVASHINI', 'M', '921025106013@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(3503, NULL, 3, '921025106014', '921025106014', NULL, 'DHIYA', 'M', '921025106014@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(3504, NULL, 3, '921025106015', '921025106015', NULL, 'GIRIVASAN', 'A', '921025106015@nscet.org', '9876543210', 'default-student.png', 'male', 3, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3505, NULL, 3, '921025106016', '921025106016', NULL, 'GOWTHAM', 'V', '921025106016@nscet.org', '9876543210', 'default-student.png', 'male', 3, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3506, NULL, 3, '921025106017', '921025106017', NULL, 'HARINI', 'K', '921025106017@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(3507, NULL, 3, '921025106018', '921025106018', NULL, 'HEMA', 'T', '921025106018@nscet.org', '9876543210', 'default-student.png', 'male', 3, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3508, NULL, 3, '921025106019', '921025106019', NULL, 'HEMA', 'VARSHINI A', '921025106019@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(3509, NULL, 3, '921025106020', '921025106020', NULL, 'HIRUTHIKA', 'S', 'hiruthikassaravanankv@gmail.com', '7708896996', 'default-student.png', 'female', 3, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 13:14:24', NULL),
+	(3510, NULL, 3, '921025106021', '921025106021', NULL, 'INULZAARIYA', 'A', '921025106021@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(3511, NULL, 3, '921025106022', '921025106022', NULL, 'JAMEER', 'MOHAMED S', '921025106022@nscet.org', '9876543210', 'default-student.png', 'male', 3, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3512, NULL, 3, '921025106023', '921025106023', NULL, 'JEEVADHARSHINI', 'K', '921025106023@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(3513, NULL, 3, '921025106024', '921025106024', NULL, 'JEEVADHARSINI', 'B', '921025106024@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(3514, NULL, 3, '921025106025', '921025106025', NULL, 'JEGATHEESWARI', 'K', '921025106025@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(3515, NULL, 3, '921025106026', '921025106026', NULL, 'KANAL', 'AVINASH R', '921025106026@nscet.org', '9876543210', 'default-student.png', 'male', 3, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3516, NULL, 3, '921025106027', '921025106027', NULL, 'KARTHICK', 'S', '921025106027@nscet.org', '9876543210', 'default-student.png', 'male', 3, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3517, NULL, 3, '921025106028', '921025106028', NULL, 'KARUNIYA', 'K', '921025106028@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(3518, NULL, 3, '921025106029', '921025106029', NULL, 'KAVIYA', 'B', '921025106029@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(3519, NULL, 3, '921025106030', '921025106030', NULL, 'KEERTHI', 'SUKANYA S', '921025106030@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(3520, NULL, 3, '921025106031', '921025106031', NULL, 'KIRUBASHREE', 'S', '921025106031@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(3521, NULL, 3, '921025106032', '921025106032', NULL, 'KIRUPAKARAN', 'J', '921025106032@nscet.org', '9876543210', 'default-student.png', 'male', 3, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3522, NULL, 3, '921025106033', '921025106033', NULL, 'KISHORE', 'V', '921025106033@nscet.org', '9876543210', 'default-student.png', 'male', 3, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3523, NULL, 3, '921025106034', '921025106034', NULL, 'LAUREL', 'HAGI D', '921025106034@nscet.org', '9876543210', 'default-student.png', 'male', 3, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3524, NULL, 3, '921025106035', '921025106035', NULL, 'LAVANYA', 'M', '921025106035@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(3525, NULL, 3, '921025106036', '921025106036', NULL, 'LEENA', 'SHRI B', 'mallukutti1213@gmail.com', '8220604944', 'default-student.png', 'female', 3, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 13:28:37', NULL),
+	(3526, NULL, 3, '921025106037', '921025106037', NULL, 'LOGADHARSHINI', 'R', '921025106037@nscet.org', '9876543210', 'default-student.png', 'male', 3, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3527, NULL, 3, '921025106038', '921025106038', NULL, 'LOGAMMAL', 'M', '921025106038@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(3528, NULL, 3, '921025106039', '921025106039', NULL, 'MAHALAKSHMI', 'P', '921025106039@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(3529, NULL, 3, '921025106040', '921025106040', NULL, 'MANASA', 'DEVI K', '921025106040@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(3530, NULL, 3, '921025106041', '921025106041', NULL, 'MANISHA', 'R', '921025106041@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(3531, NULL, 3, '921025106042', '921025106042', NULL, 'MARLIYA', 'FATHIMA S', '921025106042@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(3532, NULL, 3, '921025106043', '921025106043', NULL, 'MEERA', 'N', '921025106043@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(3533, NULL, 3, '921025106044', '921025106044', NULL, 'MOHANAPRIYA', 'S', '921025106044@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(3534, NULL, 3, '921025106045', '921025106045', NULL, 'MONIGA', 'R', '921025106045@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(3535, NULL, 3, '921025106046', '921025106046', NULL, 'NAVTHEEB', 'A', '921025106046@nscet.org', '9876543210', 'default-student.png', 'male', 3, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3536, NULL, 3, '921025106047', '921025106047', NULL, 'NELAKSHI', 'B', '921025106047@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(3537, NULL, 3, '921025106048', '921025106048', NULL, 'NISHANTHINI', 'K', '921025106048@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(3538, NULL, 3, '921025106049', '921025106049', NULL, 'NITHISH', 'K T', '921025106049@nscet.org', '9876543210', 'default-student.png', 'male', 3, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3539, NULL, 3, '921025106050', '921025106050', NULL, 'PANDEESWARI', 'M', '921025106050@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(3540, NULL, 3, '921025106052', '921025106052', NULL, 'PRAVEEN', 'C', '921025106052@nscet.org', '9876543210', 'default-student.png', 'male', 3, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3541, NULL, 3, '921025106053', '921025106053', NULL, 'SIVA', 'E', '921025106053@nscet.org', '8778141972', 'default-student.png', 'male', 3, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 13:00:12', NULL),
+	(3542, NULL, 3, '921025106054', '921025106054', NULL, 'SIVAKAMI', 'P', '921025106054@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(3543, NULL, 3, '921025106055', '921025106055', NULL, 'SRILEKHA', 'R', '921025106055@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(3544, NULL, 3, '921025106056', '921025106056', NULL, 'SURIYA', 'PRAKASH', '921025106056@nscet.org', '9876543210', 'default-student.png', 'male', 3, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3545, NULL, 3, '921025106057', '921025106057', NULL, 'THEEPTHIGA', 'K', '921025106057@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(3546, NULL, 3, '921025106058', '921025106058', NULL, 'VAISHNAVI', 'S', '921025106058@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(3547, NULL, 3, '921025106059', '921025106059', NULL, 'VIKRAM', 'N', '921025106059@nscet.org', '9876543210', 'default-student.png', 'male', 3, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3548, NULL, 3, '921025105001', '921025105001', NULL, 'AJAY', 'PANDI P', '921025105001@nscet.org', '9876543210', 'default-student.png', 'male', 4, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3549, NULL, 3, '921025105002', '921025105002', NULL, 'ANISH', 'FATHIMA A', '921025105002@nscet.org', '9876543210', 'default-student.png', 'female', 4, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:46:43', NULL),
+	(3550, NULL, 3, '921025105003', '921025105003', NULL, 'ANUSRI', 'A', '921025105003@nscet.org', '9876543210', 'default-student.png', 'female', 4, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:46:47', NULL),
+	(3551, NULL, 3, '921025105004', '921025105004', NULL, 'ASHMA', 'BARVIN P', '921025105004@nscet.org', '9876543210', 'default-student.png', 'female', 4, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:46:51', NULL),
+	(3552, NULL, 3, '921025105005', '921025105005', NULL, 'ASIFA', 'M', '921025105005@nscet.org', '9876543210', 'default-student.png', 'female', 4, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:47:00', NULL),
+	(3553, NULL, 3, '921025105006', '921025105006', NULL, 'ATCHAYA', 'KEERTHIKA D', '921025105006@nscet.org', '9876543210', 'default-student.png', 'female', 4, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:47:08', NULL),
+	(3554, NULL, 3, '921025105007', '921025105007', NULL, 'BEAULAH', 'JOILE S', '921025105007@nscet.org', '9876543210', 'default-student.png', 'female', 4, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:47:10', NULL),
+	(3555, NULL, 3, '921025105008', '921025105008', NULL, 'CHENNA', 'KRISHNAN K', '921025105008@nscet.org', '9876543210', 'default-student.png', 'male', 4, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3556, NULL, 3, '921025105009', '921025105009', NULL, 'DEEPIKA', 'V', '921025105009@nscet.org', '9876543210', 'default-student.png', 'female', 4, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:47:16', NULL),
+	(3557, NULL, 3, '921025105010', '921025105010', NULL, 'DHANISHA', 'M', '921025105010@nscet.org', '9876543210', 'default-student.png', 'female', 4, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:47:20', NULL),
+	(3558, NULL, 3, '921025105011', '921025105011', NULL, 'DHARSHAN', 'N', '921025105011@nscet.org', '9876543210', 'default-student.png', 'male', 4, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3559, NULL, 3, '921025105012', '921025105012', NULL, 'GOWSIKA', 'S', '921025105012@nscet.org', '9876543210', 'default-student.png', 'female', 4, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:49:38', NULL),
+	(3560, NULL, 3, '921025105013', '921025105013', NULL, 'HARCHINI', 'M', '921025105013@nscet.org', '9876543210', 'default-student.png', 'female', 4, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:49:40', NULL),
+	(3561, NULL, 3, '921025105014', '921025105014', NULL, 'HARINI', 'M', '921025105014@nscet.org', '9876543210', 'default-student.png', 'female', 4, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:49:42', NULL),
+	(3562, NULL, 3, '921025105015', '921025105015', NULL, 'HARISH', 'K', '921025105015@nscet.org', '9876543210', 'default-student.png', 'male', 4, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3563, NULL, 3, '921025105016', '921025105016', NULL, 'HARISH', 'L', '921025105016@nscet.org', '9876543210', 'default-student.png', 'male', 4, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3564, NULL, 3, '921025105017', '921025105017', NULL, 'HARISH', 'M', '921025105017@nscet.org', '9876543210', 'default-student.png', 'male', 4, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3565, NULL, 3, '921025105018', '921025105018', NULL, 'HARITHABANU', 'K', '921025105018@nscet.org', '9876543210', 'default-student.png', 'female', 4, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:49:50', NULL),
+	(3566, NULL, 3, '921025105019', '921025105019', NULL, 'HEMAPRIYA', 'N', '921025105019@nscet.org', '9876543210', 'default-student.png', 'female', 4, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:49:54', NULL),
+	(3567, NULL, 3, '921025105020', '921025105020', NULL, 'JANANI', 'A V', '921025105020@nscet.org', '9876543210', 'default-student.png', 'female', 4, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:49:59', NULL),
+	(3568, NULL, 3, '921025105021', '921025105021', NULL, 'KAMALESH', 'V', '921025105021@nscet.org', '9876543210', 'default-student.png', 'male', 4, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3569, NULL, 3, '921025105022', '921025105022', NULL, 'KANAGALAKSHMI', 'R', '921025105022@nscet.org', '9876543210', 'default-student.png', 'female', 4, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:50:08', NULL),
+	(3570, NULL, 3, '921025105023', '921025105023', NULL, 'KEERTHIKA', 'C', '921025105023@nscet.org', '9876543210', 'default-student.png', 'female', 4, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:50:15', NULL),
+	(3571, NULL, 3, '921025105024', '921025105024', NULL, 'KIRUBA', 'A', '921025105024@nscet.org', '9876543210', 'default-student.png', 'female', 4, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:50:18', NULL),
+	(3572, NULL, 3, '921025105025', '921025105025', NULL, 'LINGESH', 'S', '921025105025@nscet.org', '9876543210', 'default-student.png', 'male', 4, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3573, NULL, 3, '921025105026', '921025105026', NULL, 'LINGESH', 'S S', '921025105026@nscet.org', '9876543210', 'default-student.png', 'male', 4, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3574, NULL, 3, '921025105027', '921025105027', NULL, 'MADHUMIDHA', 'M', '921025105027@nscet.org', '9876543210', 'default-student.png', 'female', 4, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:50:25', NULL),
+	(3575, NULL, 3, '921025105028', '921025105028', NULL, 'MANOJ', 'PRAVEEN M', '921025105028@nscet.org', '9876543210', 'default-student.png', 'male', 4, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3576, NULL, 3, '921025105029', '921025105029', NULL, 'MATHESH', 'M', '921025105029@nscet.org', '9876543210', 'default-student.png', 'male', 4, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3577, NULL, 3, '921025105030', '921025105030', NULL, 'MUGESHKUMAR', 'M', '921025105030@nscet.org', '9876543210', 'default-student.png', 'male', 4, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3578, NULL, 3, '921025105031', '921025105031', NULL, 'NANDHAKUMAR', 'S', 'nandhakumarsekar08@gmail.com', '9842824418', 'default-student.png', 'male', 4, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 13:18:43', NULL),
+	(3579, NULL, 3, '921025105032', '921025105032', NULL, 'NAVEENA', 'N', 'navee091508@gmail.com', '8056317196', 'default-student.png', 'female', 4, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 13:44:54', NULL),
+	(3580, NULL, 3, '921025105033', '921025105033', NULL, 'NIGITHA', 'R', '921025105033@nscet.org', '9876543210', 'default-student.png', 'female', 4, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:50:38', NULL),
+	(3581, NULL, 3, '921025105034', '921025105034', NULL, 'NITHISH', 'G', '921025105034@nscet.org', '9876543210', 'default-student.png', 'male', 4, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3582, NULL, 3, '921025105035', '921025105035', NULL, 'NITHYA', 'DHARSHINI S', '921025105035@nscet.org', '9876543210', 'default-student.png', 'female', 4, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:50:45', NULL),
+	(3583, NULL, 3, '921025105036', '921025105036', NULL, 'NIVESH', 'E', '921025105036@nscet.org', '9876543210', 'default-student.png', 'male', 4, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3584, NULL, 3, '921025105037', '921025105037', NULL, 'PADMASHRI', 'P', '921025105037@nscet.org', '9876543210', 'default-student.png', 'female', 4, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:50:50', NULL),
+	(3585, NULL, 3, '921025105038', '921025105038', NULL, 'PAVITHRA', 'S', '921025105038@nscet.org', '9876543210', 'default-student.png', 'female', 4, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:50:52', NULL),
+	(3586, NULL, 3, '921025105039', '921025105039', NULL, 'POOJA', 'M', '921025105039@nscet.org', '9876543210', 'default-student.png', 'female', 4, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:50:55', NULL),
+	(3587, NULL, 3, '921025105040', '921025105040', NULL, 'PRITHIKA', 'J', '921025105040@nscet.org', '9876543210', 'default-student.png', 'female', 4, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:50:58', NULL),
+	(3588, NULL, 3, '921025105041', '921025105041', NULL, 'RAGAVAN', 'S', '921025105041@nscet.org', '9876543210', 'default-student.png', 'male', 4, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3589, NULL, 3, '921025105042', '921025105042', NULL, 'RUBINASRI', 'L', '921025105042@nscet.org', '9876543210', 'default-student.png', 'female', 4, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:51:01', NULL),
+	(3590, NULL, 3, '921025105043', '921025105043', NULL, 'SABARI', 'BALAJI A', '921025105043@nscet.org', '9876543210', 'default-student.png', 'male', 4, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3591, NULL, 3, '921025105044', '921025105044', NULL, 'SANTHOSH', 'C', '921025105044@nscet.org', '9876543210', 'default-student.png', 'male', 4, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3592, NULL, 3, '921025105045', '921025105045', NULL, 'SANTHOSH', 'M', '921025105045@nscet.org', '9876543210', 'default-student.png', 'male', 4, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3593, NULL, 3, '921025105046', '921025105046', NULL, 'SARAVANA', 'MUTHU G', '921025105046@nscet.org', '9876543210', 'default-student.png', 'male', 4, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3594, NULL, 3, '921025105047', '921025105047', NULL, 'SATHANA', 'R', '921025105047@nscet.org', '9876543210', 'default-student.png', 'female', 4, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:53:14', NULL),
+	(3595, NULL, 3, '921025105048', '921025105048', NULL, 'SATHYA', 'PRIYA S', '921025105048@nscet.org', '9876543210', 'default-student.png', 'female', 4, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:53:19', NULL),
+	(3596, NULL, 3, '921025105049', '921025105049', NULL, 'SELVARANI', 'M E', '921025105049@nscet.org', '9876543210', 'default-student.png', 'female', 4, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:53:31', NULL),
+	(3597, NULL, 3, '921025105050', '921025105050', NULL, 'SHAPNADEVI', 'P', '921025105050@nscet.org', '9876543210', 'default-student.png', 'female', 4, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:53:27', NULL),
+	(3598, NULL, 3, '921025105051', '921025105051', NULL, 'SIVABALAN', 'B', '921025105051@nscet.org', '9876543210', 'default-student.png', 'male', 4, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3599, NULL, 3, '921025105052', '921025105052', NULL, 'SIVASAKTHI', 'J', '921025105052@nscet.org', '9876543210', 'default-student.png', 'female', 4, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:54:03', NULL),
+	(3600, NULL, 3, '921025105053', '921025105053', NULL, 'SOUNDHAR', 'RAJAN V', '921025105053@nscet.org', '9876543210', 'default-student.png', 'male', 4, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3601, NULL, 3, '921025105054', '921025105054', NULL, 'SRIDHARSHINI', 'K', '921025105054@nscet.org', '9876543210', 'default-student.png', 'female', 4, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:54:20', NULL),
+	(3602, NULL, 3, '921025105055', '921025105055', NULL, 'SUNDARA', 'ADHITHAN S', '921025105055@nscet.org', '9876543210', 'default-student.png', 'male', 4, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3603, NULL, 3, '921025105056', '921025105056', NULL, 'THARUN', 'M', '921025105056@nscet.org', '9876543210', 'default-student.png', 'male', 4, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3604, NULL, 3, '921025105057', '921025105057', NULL, 'THIRUKUMARAN', 'M', '921025105057@nscet.org', '9876543210', 'default-student.png', 'male', 4, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3605, NULL, 3, '921025105058', '921025105058', NULL, 'VIDHYA', 'R', '921025105058@nscet.org', '9876543210', 'default-student.png', 'female', 4, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:54:47', NULL),
+	(3606, NULL, 3, '921025105059', '921025105059', NULL, 'YOGITH', 'S', '921025105059@nscet.org', '7904276965', 'default-student.png', 'male', 4, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 13:07:12', NULL),
+	(3607, NULL, 3, '921025105060', '921025105060', NULL, 'YUVATHI', 'SRI A', '921025105060@nscet.org', '9876543210', 'default-student.png', 'female', 4, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:55:14', NULL),
+	(3608, NULL, 3, '921025104001', '921025104001', NULL, 'AATHISUNDARARAJAN', 'N', '921025104001@nscet.org', '9876543210', 'default-student.png', 'male', 1, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3609, NULL, 3, '921025104002', '921025104002', NULL, 'AZLINA', 'M', '921025104002@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 11:26:05', NULL),
+	(3610, NULL, 3, '921025104003', '921025104003', NULL, 'BHARATHI', 'M', '921025104003@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 11:26:44', NULL),
+	(3611, NULL, 3, '921025104004', '921025104004', NULL, 'BHAVADHARANI', 'M', '921025104004@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 11:26:49', NULL),
+	(3612, NULL, 3, '921025104005', '921025104005', NULL, 'DEVA', 'GURU G', 'devaguru8655@gmail.com', '9787048655', 'default-student.png', 'male', 1, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:57:15', NULL),
+	(3613, NULL, 3, '921025104006', '921025104006', NULL, 'DHANUSHA', 'SRI J', 'jayajaya84975@gmail.com', '7094523763', 'default-student.png', 'female', 1, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 13:00:10', NULL),
+	(3614, NULL, 3, '921025104007', '921025104007', NULL, 'DHARSHINI', 'S', 'ssureshsuresh922@gmail.com', '6385560890', 'default-student.png', 'female', 1, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 13:32:51', NULL),
+	(3615, NULL, 3, '921025104008', '921025104008', NULL, 'DHARSHITH', 'R', '921025104008@nscet.org', '9876543210', 'default-student.png', 'male', 1, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3616, NULL, 3, '921025104009', '921025104009', NULL, 'DIVYA', 'K', '921025104009@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 11:27:00', NULL),
+	(3617, NULL, 3, '921025104010', '921025104010', NULL, 'DURGALAKSHMI', 'M', 'durgalakshmim26@gmail.com', '7558188370', 'default-student.png', 'female', 1, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 13:11:08', NULL),
+	(3618, NULL, 3, '921025104011', '921025104011', NULL, 'GAYATHIRI', 'M', '921025104011@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 11:28:02', NULL),
+	(3619, NULL, 3, '921025104012', '921025104012', NULL, 'GOKULA', 'KANNAN P G', '921025104012@nscet.org', '9876543210', 'default-student.png', 'male', 1, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3620, NULL, 3, '921025104013', '921025104013', NULL, 'HAASINI', 'K', '921025104013@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 11:46:36', NULL),
+	(3621, NULL, 3, '921025104014', '921025104014', NULL, 'HARIGARAN', 'K', '921025104014@nscet.org', '9876543210', 'default-student.png', 'male', 1, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3622, NULL, 3, '921025104015', '921025104015', NULL, 'HARINI', 'K', '921025104015@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 11:46:36', NULL),
+	(3623, NULL, 3, '921025104016', '921025104016', NULL, 'HARSHINI', 'S', '921025104016@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 11:46:36', NULL),
+	(3624, NULL, 3, '921025104017', '921025104017', NULL, 'HARSHITHA', 'S', '921025104017@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 11:46:36', NULL),
+	(3625, NULL, 3, '921025104018', '921025104018', NULL, 'IRFANA', 'S', 'irfyyyds.12@gmail.com', '6363396917', 'default-student.png', 'female', 1, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 14:00:41', NULL),
+	(3626, NULL, 3, '921025104019', '921025104019', NULL, 'JAYANTHRA', 'K J', '921025104019@nscet.org', '7871029437', 'default-student.png', 'female', 1, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 13:12:52', NULL),
+	(3627, NULL, 3, '921025104020', '921025104020', NULL, 'JEYA', 'SREE P', '921025104020@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 11:46:36', NULL),
+	(3628, NULL, 3, '921025104021', '921025104021', NULL, 'JUHI', 'NUSHRATH H', '921025104021@nscet.org', '9876543210', 'default-student.png', 'male', 1, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3629, NULL, 3, '921025104022', '921025104022', NULL, 'KARTHIK', 'OMSHAKTHI K', '921025104022@nscet.org', '9876543210', 'default-student.png', 'male', 1, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3630, NULL, 3, '921025104023', '921025104023', NULL, 'KAVIYA', 'K', '921025104023@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(3631, NULL, 3, '921025104024', '921025104024', NULL, 'LATHIKA', 'K', '921025104024@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(3632, NULL, 3, '921025104025', '921025104025', NULL, 'LISHANTHI', 'S', '921025104025@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(3633, NULL, 3, '921025104026', '921025104026', NULL, 'MAHIMA', 'M', '921025104026@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(3634, NULL, 3, '921025104027', '921025104027', NULL, 'MAHISHA', 'S', '921025104027@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(3635, NULL, 3, '921025104028', '921025104028', NULL, 'MANIKANDAN', 'P', '921025104028@nscet.org', '9876543210', 'default-student.png', 'male', 1, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3636, NULL, 3, '921025104029', '921025104029', NULL, 'MEGADHARSHINI', 'S', '921025104029@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(3637, NULL, 3, '921025104030', '921025104030', NULL, 'MOHAMED', 'AFSAL K', '921025104030@nscet.org', '9876543210', 'default-student.png', 'male', 1, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3638, NULL, 3, '921025104031', '921025104031', NULL, 'MOHANASANTHOSH', 'V', '921025104031@nscet.org', '9876543210', 'default-student.png', 'male', 1, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3639, NULL, 3, '921025104032', '921025104032', NULL, 'MONISHA', 'S', '921025104032@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(3640, NULL, 3, '921025104033', '921025104033', NULL, 'NETHRA', 'V', '921025104033@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(3641, NULL, 3, '921025104034', '921025104034', NULL, 'NISHA', 'K', '921025104034@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(3642, NULL, 3, '921025104035', '921025104035', NULL, 'NITHARSHANA', 'S', '921025104035@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(3643, NULL, 3, '921025104036', '921025104036', NULL, 'POOJA', 'SRI P', '921025104036@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(3644, NULL, 3, '921025104037', '921025104037', NULL, 'PRATHIKSHA', 'SRI S', '921025104037@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(3645, NULL, 3, '921025104038', '921025104038', NULL, 'PRINCYMISPHA', 'C', '921025104038@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(3646, NULL, 3, '921025104039', '921025104039', NULL, 'PRIYADHARSHINI', 'P', '921025104039@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(3647, NULL, 3, '921025104040', '921025104040', NULL, 'PUGAZHENTHI', 'G', 'gpugal06@nscet.org', '9876543210', 'default-student.png', 'male', 1, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3648, NULL, 3, '921025104041', '921025104041', NULL, 'RAGA', 'SRI V', 'raga161408@gmail.com', '8220389390', 'default-student.png', 'female', 1, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 13:23:01', NULL),
+	(3649, NULL, 3, '921025104042', '921025104042', NULL, 'RIYA', 'R', '921025104042@nscet.org', '9994401230', 'default-student.png', 'female', 1, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 13:56:08', NULL),
+	(3650, NULL, 3, '921025104043', '921025104043', NULL, 'SAMRUTHA', 'P', '921025104043@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(3651, NULL, 3, '921025104044', '921025104044', NULL, 'SANTHANAGOWSHIKA', 'K', '921025104044@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(3652, NULL, 3, '921025104045', '921025104045', NULL, 'SANTHIYA', 'C', '921025104045@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(3653, NULL, 3, '921025104046', '921025104046', NULL, 'SANTHOSI', 'S', '921025104046@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(3654, NULL, 3, '921025104047', '921025104047', NULL, 'SELVALAKSHMI', 'M', '921025104047@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(3655, NULL, 3, '921025104048', '921025104048', NULL, 'SHAHANA', 'P', '921025104048@nscet.org', '6380348931', 'default-student.png', 'female', 1, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 13:09:30', NULL),
+	(3656, NULL, 3, '921025104049', '921025104049', NULL, 'SHAKTHI', 'R', 'shakthisagi@gmail.com', '6369210045', 'default-student.png', 'male', 1, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 13:17:51', NULL),
+	(3657, NULL, 3, '921025104050', '921025104050', NULL, 'SIVAKUMAR', 'K', '921025104050@nscet.org', '9876543210', 'default-student.png', 'male', 1, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3658, NULL, 3, '921025104051', '921025104051', NULL, 'SOWMIYA', 'A', 'asowmiya23112007@gmail.com', '8778987894', 'default-student.png', 'female', 1, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:56:17', NULL),
+	(3659, NULL, 3, '921025104052', '921025104052', NULL, 'SREEJA', 'R', '921025104052@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(3660, NULL, 3, '921025104053', '921025104053', NULL, 'SRIVAISHNAVI', 'M', '921025104053@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(3661, NULL, 3, '921025104054', '921025104054', NULL, 'SUBATHRA', 'M', '921025104054@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(3662, NULL, 3, '921025104055', '921025104055', NULL, 'SURIYA', 'T', '921025104055@nscet.org', '9876543210', 'default-student.png', 'male', 1, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 11:48:14', NULL),
+	(3663, NULL, 3, '921025104056', '921025104056', NULL, 'VARSHINI', 'K', '921025104056@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(3664, NULL, 3, '921025104057', '921025104057', NULL, 'VISHAL', 'R', '921025104057@nscet.org', '9876543210', 'default-student.png', 'male', 1, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:36', NULL),
+	(3665, NULL, 3, '921025104058', '921025104058', NULL, 'YASHIKAJAISHREE', 'M', '921025104058@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(3666, NULL, 3, '921025104059', '921025104059', NULL, 'YOKHITHA', 'V', '921025104059@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(3667, NULL, 3, '921025104060', '921025104060', NULL, 'YOSHITHA', 'K', 'yositha10092008@gmail.com', '8870732995', 'default-student.png', 'female', 1, NULL, '2025-2029', 2, '1', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 13:26:25', NULL),
+	(3668, NULL, 3, '921023103001', '921023103001', NULL, 'AJAY', 'S', '921023103001@nscet.org', '9876543210', 'default-student.png', 'male', 2, NULL, '2023-2027', 2, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:10', NULL),
+	(3669, NULL, 3, '921023103002', '921023103002', NULL, 'BALA', 'S', '921023103002@nscet.org', '9876543210', 'default-student.png', 'male', 2, NULL, '2023-2027', 2, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:10', NULL),
+	(3670, NULL, 3, '921023103004', '921023103004', NULL, 'GURULAKSHMI', 'R', '921023103004@nscet.org', '9876543210', 'default-student.png', 'female', 2, NULL, '2023-2027', 2, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:59:11', NULL),
+	(3671, NULL, 3, '921023103005', '921023103005', NULL, 'HARIKRISHNAN', 'R', '921023103005@nscet.org', '9876543210', 'default-student.png', 'male', 2, NULL, '2023-2027', 2, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:10', NULL),
+	(3672, NULL, 3, '921023103006', '921023103006', NULL, 'HEMAPRIYA', 'K', '921023103006@nscet.org', '9876543210', 'default-student.png', 'female', 2, NULL, '2023-2027', 2, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:59:20', NULL),
+	(3673, NULL, 3, '921023103007', '921023103007', NULL, 'IYYANATHAN', 'M', '921023103007@nscet.org', '9876543210', 'default-student.png', 'male', 2, NULL, '2023-2027', 2, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:10', NULL),
+	(3674, NULL, 3, '921023103008', '921023103008', NULL, 'JEGANATH', 'M', '921023103008@nscet.org', '9876543210', 'default-student.png', 'male', 2, NULL, '2023-2027', 2, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:10', NULL),
+	(3675, NULL, 3, '921023103009', '921023103009', NULL, 'KABILAN', 'E T', '921023103009@nscet.org', '9876543210', 'default-student.png', 'male', 2, NULL, '2023-2027', 2, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:10', NULL),
+	(3676, NULL, 3, '921023103010', '921023103010', NULL, 'MADHUGAYATHRI', 'J', '921023103010@nscet.org', '9876543210', 'default-student.png', 'female', 2, NULL, '2023-2027', 2, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 13:20:19', NULL),
+	(3677, NULL, 3, '921023103011', '921023103011', NULL, 'MALATHI', 'S', '921023103011@nscet.org', '9876543210', 'default-student.png', 'female', 2, NULL, '2023-2027', 2, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 13:20:26', NULL),
+	(3678, NULL, 3, '921023103012', '921023103012', NULL, 'NITHIYA', 'SHREE S', '921023103012@nscet.org', '9876543210', 'default-student.png', 'female', 2, NULL, '2023-2027', 2, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 13:20:29', NULL),
+	(3679, NULL, 3, '921023103013', '921023103013', NULL, 'PRABHA', 'S', '921023103013@nscet.org', '9876543210', 'default-student.png', 'female', 2, NULL, '2023-2027', 2, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 13:20:33', NULL),
+	(3680, NULL, 3, '921023103014', '921023103014', NULL, 'PRATHIVARUN', 'P R', '921023103014@nscet.org', '9876543210', 'default-student.png', 'male', 2, NULL, '2023-2027', 2, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:10', NULL),
+	(3681, NULL, 3, '921023103016', '921023103016', NULL, 'SHAJITHA', 'PARVEEN R', '921023103016@nscet.org', '9876543210', 'default-student.png', 'female', 2, NULL, '2023-2027', 2, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 13:20:41', NULL),
+	(3682, NULL, 3, '921023103017', '921023103017', NULL, 'SUBITCHANASRI', 'S', '921023103017@nscet.org', '9876543210', 'default-student.png', 'female', 2, NULL, '2023-2027', 2, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 13:20:46', NULL),
+	(3683, NULL, 3, '921023103018', '921023103018', NULL, 'THANUJA', 'S', '921023103018@nscet.org', '9876543210', 'default-student.png', 'female', 2, NULL, '2023-2027', 2, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 13:20:48', NULL),
+	(3684, NULL, 3, '921023103301', '921023103301', NULL, 'GEERI', 'R', '921023103301@nscet.org', '9876543210', 'default-student.png', 'male', 2, NULL, '2023-2027', 2, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:10', NULL),
+	(3685, NULL, 3, '921023103302', '921023103302', NULL, 'PICHAIMUTHU', 'S', '921023103302@nscet.org', '9876543210', 'default-student.png', 'male', 2, NULL, '2023-2027', 2, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:10', NULL),
+	(3686, NULL, 3, '921024243001', '921024243001', NULL, 'ABARNA', 'K', 'abarna012008@gmail.com', '7708934934', 'default-student.png', 'female', 6, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$OieqD2FJ9xQnr52Nn.z06eedvCattA/cMCHqsCL9a8efR1HMvHjsy', '2026-02-19 22:09:11', '2026-03-26 10:43:46', NULL),
+	(3687, NULL, 3, '921024243002', '921024243002', NULL, 'ABDUL', 'RAHMAN U', '921024243002@nscet.org', '9876543210', 'default-student.png', 'male', 6, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3688, NULL, 3, '921024243003', '921024243003', NULL, 'ANBU', 'DHARSINI V', 'anbudharsini.isv@gmail.com', '7845608908', 'default-student.png', 'female', 6, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$rvEFqXKV9Kl01rjaneFl3uguUCd.bLugXsz10RRXCmmAa8zCDedfe', '2026-02-19 22:09:11', '2026-03-26 10:43:54', NULL),
+	(3689, NULL, 3, '921024243004', '921024243004', NULL, 'ANEESHA', 'S', 'aneeshas486@gmail.com', '9994307659', 'default-student.png', 'female', 6, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$.YL8/8nKgX3GOz.3hl12hOmQh59wTJrS/kZmYyZTnZeHUF0q/Dfv6', '2026-02-19 22:09:11', '2026-03-26 10:43:57', NULL),
+	(3690, NULL, 3, '921024243005', '921024243005', NULL, 'ANUPRIYA', 'R', 'anubtech22@gmail.com', '9042622936', 'default-student.png', 'female', 6, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:43:59', NULL),
+	(3691, NULL, 3, '921024243006', '921024243006', NULL, 'AYISHA', 'ASMEE R', 'ayishaasmee2005@gmail.com', '9626568697', 'default-student.png', 'female', 6, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$naoPVeoz5WYGEk55yyx3r.1QE5d86QDMci66rxyM1gCZKHumLG3JW', '2026-02-19 22:09:11', '2026-03-26 10:44:09', NULL),
+	(3692, NULL, 3, '921024243007', '921024243007', NULL, 'BACKIYALAKSHMI', 'G', 'backiyaganesh@gmail.com', '7604940562', 'default-student.png', 'female', 6, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$SoNMy0f9rn6pNFqKN1s9F.meqBARshL4kv1efxre95u3vmKVYBCCe', '2026-02-19 22:09:11', '2026-03-26 10:44:30', NULL),
+	(3693, NULL, 3, '921024243008', '921024243008', NULL, 'BACKYALAKSHMI', 'M', 'backiyalakshmi980@gmail.com', '6383004049', 'default-student.png', 'female', 6, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:44:39', NULL),
+	(3694, NULL, 3, '921024243009', '921024243009', NULL, 'DEEPA', 'J', 'deepajeyaram47@gmail.com', '7904125757', 'default-student.png', 'female', 6, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$6PwSeCIEe6s19Ol1y2x0MOGLHyJQ.I23ANExLk//E926uo/l9D2Qm', '2026-02-19 22:09:11', '2026-03-26 10:44:59', NULL),
+	(3695, NULL, 3, '921024243010', '921024243010', NULL, 'DEVIDHARSHINI', 'P', 'maheshwari6768@gmail.com', '8682002062', 'default-student.png', 'female', 6, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:45:03', NULL),
+	(3696, NULL, 3, '921024243011', '921024243011', NULL, 'DEVIKALA', 'M', 'devi13kala2007@gamil.com', '9442481410', 'default-student.png', 'female', 6, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:46:08', NULL),
+	(3697, NULL, 3, '921024243012', '921024243012', NULL, 'DHARANI', 'D', 'dharadharani64@gmail.com', '9025771285', 'default-student.png', 'female', 6, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$6gEoXYFcU6s/EHjty2juRO/vrDU7VOzoS5pHK7ihXoLa2jktOTjde', '2026-02-19 22:09:11', '2026-03-26 10:46:12', NULL),
+	(3698, NULL, 3, '921024243013', '921024243013', NULL, 'DHIVYA', 'M', 'divirani265@gmail.com', '9345551025', 'default-student.png', 'female', 6, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$27O28W1Naj1m7IIuJzfxGOwBktA/lhmXvc0iFhrl5mRUtCP4p1DzG', '2026-02-19 22:09:11', '2026-03-26 10:46:18', NULL),
+	(3699, NULL, 3, '921024243014', '921024243014', NULL, 'DINESH', 'BABU O', '921024243014@nscet.org', '9876543210', 'default-student.png', 'male', 6, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3700, NULL, 3, '921024243015', '921024243015', NULL, 'DIVYA', 'VARSHINI N', 'divyanagaraj0001@gmail.com', '8148773840', 'default-student.png', 'female', 6, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:46:22', NULL),
+	(3701, NULL, 3, '921024243016', '921024243016', NULL, 'GOBI', 'P', '921024243016@nscet.org', '9876543210', 'default-student.png', 'male', 6, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3702, NULL, 3, '921024243017', '921024243017', NULL, 'GOWTHAMAN', 'N', 'gowthamann_ai@nscet.org', '9952499506', 'default-student.png', 'male', 6, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-24 17:26:57', NULL),
+	(3703, NULL, 3, '921024243018', '921024243018', NULL, 'HARIPRIYA', 'M', '921024243018@nscet.org', '9944081485', 'default-student.png', 'female', 6, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:46:27', NULL),
+	(3704, NULL, 3, '921024243019', '921024243019', NULL, 'HARIPRIYA', 'S', 'haripriyap497@gmail.com', '7604968324', 'default-student.png', 'female', 6, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:46:29', NULL),
+	(3705, NULL, 3, '921024243020', '921024243020', NULL, 'HARSANTHINI', 'K', 'kumaranharsha1@gmail.com', '8610569096', 'default-student.png', 'female', 6, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:46:36', NULL),
+	(3706, NULL, 3, '921024243021', '921024243021', NULL, 'HARSHINI', 'A', 'harshiniar871@gmail.com', '9361523852', 'default-student.png', 'female', 6, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$lU6vL7yLVMZ3ep2Z7PsCM.wxYf7EBVfU422DKSDRrXRt.kgTdmUjS', '2026-02-19 22:09:11', '2026-03-26 10:46:41', NULL),
+	(3707, NULL, 3, '921024243022', '921024243022', NULL, 'JANANI', 'S', 'sjanani0206@gmail.com', '8807531626', 'default-student.png', 'female', 6, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:46:45', NULL),
+	(3708, NULL, 3, '921024243023', '921024243023', NULL, 'JEEVITHA', 'S', 'jeevitha3363@gmail.com', '9344636843', 'default-student.png', 'female', 6, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$cNwm22mgtWdKVyNKK3.u7.c2OtRjhpA7dsuHi3AI5hp/tffcBEDc.', '2026-02-19 22:09:11', '2026-03-26 10:46:48', NULL),
+	(3709, NULL, 3, '921024243024', '921024243024', NULL, 'JOYS', 'KIRUBA J', 'joyskiruba7@gmail.com', '7358851999', 'default-student.png', 'female', 6, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$zOUjUma5cijcTsJiYjOIR.H/uocMJd1KhpJc4xEjBF7u5TdQ4Ydqe', '2026-02-19 22:09:11', '2026-03-26 10:46:51', NULL),
+	(3710, NULL, 3, '921024243025', '921024243025', NULL, 'KABILAN', 'I', '921024243025@nscet.org', '9876543210', 'default-student.png', 'male', 6, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3711, NULL, 3, '921024243026', '921024243026', NULL, 'KEERTHAN', 'A', '921024243026@nscet.org', '9876543210', 'default-student.png', 'male', 6, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3712, NULL, 3, '921024243027', '921024243027', NULL, 'LAVANYA', 'A', 'lavanyakamu26012007@gmail.com', '8680868049', 'default-student.png', 'female', 6, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:46:57', NULL),
+	(3713, NULL, 3, '921024243028', '921024243028', NULL, 'LOGAPRIYA', 'M', 'yuvasriloga@gmail.com', '8056725601', 'default-student.png', 'female', 6, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$HhbFcNeZdRb8MqAjntPgW.81HtmoUfovQr5nhTKNKgq4wVT0bs56O', '2026-02-19 22:09:11', '2026-03-26 10:47:00', NULL),
+	(3714, NULL, 3, '921024243029', '921024243029', NULL, 'MADHU', 'VARSHINI J', 'madhuvarshinii258@gmail.com', '6380101568', 'default-student.png', 'female', 6, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$ZsoSe9cV1/vCfwbUKagMy.BAHLmKhLCXjchPX4JUg9r8OqgrN/DHy', '2026-02-19 22:09:11', '2026-03-26 10:47:04', NULL),
+	(3715, NULL, 3, '921024243030', '921024243030', NULL, 'NAGESWARI', 'S', 'vijinagu080@gmail.com', '8270767938', 'default-student.png', 'female', 6, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$Y2hEtK16iSfXIdGMOf2sYO4Asz9VlS5HoRx7yBMi2d8lwxb8xzVgK', '2026-02-19 22:09:11', '2026-03-26 10:47:11', NULL),
+	(3716, NULL, 3, '921024243031', '921024243031', NULL, 'NITIN', 'KARTHICK J', 'nitinkarthick25@gmail.com', '9566074007', 'default-student.png', 'male', 6, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$j.Cm4rR.tjsV76vdZOgiEek0DOrP1SwlG7emV..swi8N6gLw466ei', '2026-02-19 22:09:11', '2026-03-25 10:49:44', NULL),
+	(3717, NULL, 3, '921024243032', '921024243032', NULL, 'POOBATHI', 'RAJAN M', '921024243032@nscet.org', '9876543210', 'default-student.png', 'male', 6, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3718, NULL, 3, '921024243033', '921024243033', NULL, 'PRAVEENKUMAR', 'A', 'praveenkumara_ai@nscet.org', '7010259526', 'default-student.png', 'male', 6, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-25 11:01:31', NULL),
+	(3719, NULL, 3, '921024243034', '921024243034', NULL, 'PRIYADHARSHINI', 'V', 'priyadharshini17307@gmail.com', '9361829532', 'default-student.png', 'female', 6, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:47:16', NULL),
+	(3720, NULL, 3, '921024243035', '921024243035', NULL, 'RAJARAJESHWARI', 'N', 'rajinallu30@gmail.com', '7871219585', 'default-student.png', 'female', 6, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$8aLvsvpeD2VC6CQ8VoXyL.TXVk04tx3V7GC8LShzM8hjLH3UmUXQ.', '2026-02-19 22:09:11', '2026-03-26 10:47:23', NULL),
+	(3721, NULL, 3, '921024243036', '921024243036', NULL, 'RAMACHANDRAN', 'M', 'ramachandranm607@gmail.com', '6382012913', 'default-student.png', 'male', 6, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$Pls0sz.AEVnhOQ3amEBvYuxFqZlPdNuLLW3YTu6uxTHkshwYhWQBm', '2026-02-19 22:09:11', '2026-03-25 14:44:30', NULL),
+	(3722, NULL, 3, '921024243037', '921024243037', NULL, 'SAMIKSHA', 'D', 'skoff001@gmail.com', '9865503219', 'default-student.png', 'female', 6, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$uRQPnjBYfGn8PlA0PI0LeOsq1sV4kj.3hHa3CU7NJkZlF4OFJpJNO', '2026-02-19 22:09:11', '2026-03-26 10:47:30', NULL),
+	(3723, NULL, 3, '921024243038', '921024243038', NULL, 'SASI', 'REGHA P', 'sasiregha2007@gmail.com', '6382892351', 'default-student.png', 'female', 6, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$70U0vrmYRfeJj3qh93Zt7eXrjzwJuTi1JfmK4yEQHk5Vyufg24jQG', '2026-02-19 22:09:11', '2026-03-26 10:47:33', NULL),
+	(3724, NULL, 3, '921024243039', '921024243039', NULL, 'SHAHANA', 'FIRDAUS  K', 'kshahanafirdaus@gmail.com', '7397642139', 'default-student.png', 'female', 6, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$NxK0C08/0r9Al1NLRY7vIeGyj7XLnMZD5azhgOIKgOyipWWbAoo3O', '2026-02-19 22:09:11', '2026-03-26 10:47:39', NULL),
+	(3725, NULL, 3, '921024243040', '921024243040', NULL, 'SRI', 'KAVI P M', 'pmsrikavi@gmail.com', '9363880884', 'default-student.png', 'female', 6, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$TTRthTyoqqACeLwyN7/Koub5XC55UzqGkSIY0NDcGAFTeULZ3ZDbq', '2026-02-19 22:09:11', '2026-03-26 10:48:00', NULL),
+	(3726, NULL, 3, '921024243041', '921024243041', NULL, 'SUBASHINI', 'M', 'msubashini073@gmail.com', '6381557966', 'default-student.png', 'female', 6, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:48:05', NULL),
+	(3727, NULL, 3, '921024243042', '921024243042', NULL, 'THANGA', 'PRABHU A', '921024243042@nscet.org', '9876543210', 'default-student.png', 'male', 6, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3728, NULL, 3, '921024243043', '921024243043', NULL, 'THARUN', 'V', '921024243043@nscet.org', '9876543210', 'default-student.png', 'male', 6, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3729, NULL, 3, '921024243044', '921024243044', NULL, 'THIRUNIKA', 'V S', 'thirunika24@gmail.com', '9080237376', 'default-student.png', 'female', 6, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$G4H24BYmlrX86hy1jdTN4ukfZUnzHg31lEsmK4iiZu1WFxyv.QHry', '2026-02-19 22:09:11', '2026-03-26 10:48:12', NULL),
+	(3730, NULL, 3, '921024243045', '921024243045', NULL, 'VARSHINI', 'S', 'varshinisasikumar46@gmail.com', '9150836351', 'default-student.png', 'female', 6, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$UtsUxWzZaL3Jhh779YgsuOqoXtgBkxpnckUcIvUuOKLI3Jwnqf7Ii', '2026-02-19 22:09:11', '2026-03-26 10:48:21', NULL),
+	(3731, NULL, 3, '921024243046', '921024243046', NULL, 'VIJAYALAKSHMI', 'K', 'vijik096@gmail.com', '8122450274', 'default-student.png', 'female', 6, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$BTKsOcdWIjXZYarTKCZnYOMopDimtaeUlWvrvGZ5M87pbz5uTsRgK', '2026-02-19 22:09:11', '2026-03-26 10:48:26', NULL),
+	(3732, NULL, 3, '921024243047', '921024243047', NULL, 'YAVANASHREE', 'R', 'yavanashree07@gmail.com', '6381584813', 'default-student.png', 'female', 6, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$18n4N0j3oMrWQRKORQC1hew2nI8EBq1yRMJ7js8HUkZMDpUXvaB3K', '2026-02-19 22:09:11', '2026-03-26 10:48:29', NULL),
+	(3733, NULL, 3, '921024243301', '921024243301', NULL, 'PANDEESWARAN', 'P', '921024243301@nscet.org', '9876543210', 'default-student.png', 'male', 6, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$F2c1W9H.3ItzEf949NymbuVH5OAbHmRnFKZhbnAHzEFykbNgWje9u', '2026-02-19 22:09:11', '2026-03-25 10:40:16', NULL),
+	(3734, NULL, 3, '921024243302', '921024243302', NULL, 'VAISHNAVI', 'V', 'vaishu2007princess@gmail.com', '9363090644', 'default-student.png', 'female', 6, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$pBW.3uEqupiSe7HvXJd4zu4lKYBEb7MiT8lUa.vN65sx2xpG9FMCm', '2026-02-19 22:09:11', '2026-03-26 10:48:33', NULL),
+	(3735, NULL, 3, '921024205001', '921024205001', NULL, 'ABBAS', 'MANTHIRI A', 'manthiriabbas74@gmail.com', '7845898847', 'default-student.png', 'male', 7, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-25 11:06:45', NULL),
+	(3736, NULL, 3, '921024205002', '921024205002', NULL, 'ABIKCHANA', 'M', 'abiviswa800@gmail.com', '7358897009', 'default-student.png', 'female', 7, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 04:21:49', NULL),
+	(3737, NULL, 3, '921024205003', '921024205003', NULL, 'ABINAYA', 'V', '921024205003@nscet.org', '9876543210', 'default-student.png', 'female', 7, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-25 15:33:32', NULL),
+	(3738, NULL, 3, '921024205004', '921024205004', NULL, 'AISHWARYA', 'S', 'aishuaishu83278@gmail.com', '9080632252', 'default-student.png', 'female', 7, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-25 11:03:42', NULL),
+	(3739, NULL, 3, '921024205005', '921024205005', NULL, 'AKSHARA', 'M', 'aksharamanivannan0204@gmail.com', '9894705505', 'default-student.png', 'female', 7, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-25 11:05:44', NULL),
+	(3740, NULL, 3, '921024205006', '921024205006', NULL, 'ANITHA', 'S', '921024205006@nscet.org', '9876543210', 'default-student.png', 'female', 7, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-25 15:33:15', NULL),
+	(3741, NULL, 3, '921024205007', '921024205007', NULL, 'DEVADHARSHINI', 'S', 'devaselvamurugan47@gmail.com', '7397133598', 'default-student.png', 'female', 7, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-25 15:50:53', NULL),
+	(3742, NULL, 3, '921024205008', '921024205008', NULL, 'DHARSHINI', 'K', 'dharshini36606@gmail.com', '9150843436', 'default-student.png', 'female', 7, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-25 16:35:34', NULL),
+	(3743, NULL, 3, '921024205009', '921024205009', NULL, 'DHINESHKUMAR', 'V', 'mvdk790473@gmail.com', '8610364137', 'default-student.png', 'male', 7, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 09:56:19', NULL),
+	(3744, NULL, 3, '921024205010', '921024205010', NULL, 'GANESH', 'BABU P', '921024205010@nscet.org', '8015078755', 'default-student.png', 'male', 7, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$42qT7x8ibBbOJTJ39uAefOt9TJPMc4Taz/1bc9YAr0kfkQLy5gB.G', '2026-02-19 22:09:11', '2026-03-26 04:35:42', NULL),
+	(3745, NULL, 3, '921024205011', '921024205011', NULL, 'GAYATHRI', 'P', '921024205011@nscet.org', '9876543210', 'default-student.png', 'female', 7, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-25 15:33:04', NULL),
+	(3746, NULL, 3, '921024205012', '921024205012', NULL, 'GOBINATH', 'G', 'gobinathg777@gmail.com', '6383097773', 'default-student.png', 'male', 7, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-25 11:04:27', NULL),
+	(3747, NULL, 3, '921024205013', '921024205013', NULL, 'HARISH', 'K', 'harishkumaravel2007@gmail.com', '9345821448', 'default-student.png', 'male', 7, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-25 11:06:09', NULL),
+	(3748, NULL, 3, '921024205014', '921024205014', NULL, 'HEMA', 'M', '921024205014@nscet.org', '9876543210', 'default-student.png', 'female', 7, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-25 15:32:59', NULL),
+	(3749, NULL, 3, '921024205015', '921024205015', NULL, 'JEYASIVA', 'S', 'sivab0757@gmail.com', '9345659339', 'default-student.png', 'male', 7, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-25 11:03:33', NULL),
+	(3750, NULL, 3, '921024205016', '921024205016', NULL, 'KARUNYA', 'SHRI M', 'karunyakiruthiga@gmail.com', '8610557750', 'default-student.png', 'female', 7, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-25 15:58:37', NULL),
+	(3751, NULL, 3, '921024205017', '921024205017', NULL, 'KEERTHANA', 'S', 'keerthanasridhar18@gmail.com', '8056621926', 'default-student.png', 'female', 7, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 05:29:46', NULL),
+	(3752, NULL, 3, '921024205018', '921024205018', NULL, 'KRISHNAVENI', 'V', '921024205018@nscet.org', '8124421787', 'default-student.png', 'female', 7, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-25 10:28:24', NULL),
+	(3753, NULL, 3, '921024205019', '921024205019', NULL, 'LAKSHMI', 'PRIYA G', '921024205019@nscet.org', '7200659302', 'default-student.png', 'female', 7, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-25 12:33:17', NULL),
+	(3754, NULL, 3, '921024205020', '921024205020', NULL, 'MAHESWARI', 'M', 'mahapavi08@gmail.com', '9597867278', 'default-student.png', 'female', 7, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 04:31:18', NULL),
+	(3755, NULL, 3, '921024205021', '921024205021', NULL, 'MANISHVARMA', 'S', 'santhanammanish@gmail.com', '9677941560', 'default-student.png', 'male', 7, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$f/eSYGiynYBYeRQdqd.61u4x6QmqbJf9bPGGhw0uu9437zV1ks9Ma', '2026-02-19 22:09:11', '2026-03-25 11:04:52', NULL),
+	(3756, NULL, 3, '921024205022', '921024205022', NULL, 'MANJULA', 'S', 'manjulasakthi760@gmail.com', '9363679687', 'default-student.png', 'female', 7, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$oOy/y4fPBfcA.upQE8NP/uevbAfNZCDnKzYBWsuF40EHSvtC8ZlJe', '2026-02-19 22:09:11', '2026-03-25 11:09:42', NULL),
+	(3757, NULL, 3, '921024205023', '921024205023', NULL, 'NIVETHA', 'J', '921024205023@nscet.org', '9488181620', 'default-student.png', 'male', 7, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$AMYB.Q42cG48kLV9XqaRpORodbdexSxneVO61xC2jUxi3SJ7sp/a6', '2026-02-19 22:09:11', '2026-03-25 10:01:50', NULL),
+	(3758, NULL, 3, '921024205024', '921024205024', NULL, 'PAVITHRA', 'M', 'pavithramurugan2007@gmail.com', '7200490752', 'default-student.png', 'female', 7, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$sRJthW42Qzvzley4n5w7KOOPIcqLfYbBqbCn0c3tnCqC5IDAPywIe', '2026-02-19 22:09:11', '2026-03-25 10:07:06', NULL),
+	(3759, NULL, 3, '921024205026', '921024205026', NULL, 'PRAVEENA', 'N', 'praveena19.n@gamil.com', '8760616135', 'default-student.png', 'female', 7, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-25 15:32:17', NULL),
+	(3760, NULL, 3, '921024205027', '921024205027', NULL, 'PRIYADHARSHINI', 'M', 'priyadharahini0756@gmail.com', '9363974900', 'default-student.png', 'female', 7, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$xv79jq4xpUov.k0CrmnlUuBHbodToZb5f09u8jPWFj2hBHzuP.j5y', '2026-02-19 22:09:11', '2026-03-25 10:02:17', NULL),
+	(3761, NULL, 3, '921024205028', '921024205028', NULL, 'PRIYANGA', 'G', 'priyamahes3022@gmail.com', '8189874391', 'default-student.png', 'female', 7, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-25 15:32:10', NULL),
+	(3762, NULL, 3, '921024205029', '921024205029', NULL, 'RAJESHWARI', 'V', 'vijivelmurugan.cmr@gmail.com', '7010834094', 'default-student.png', 'female', 7, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-25 15:32:07', NULL),
+	(3763, NULL, 3, '921024205030', '921024205030', NULL, 'RESHMA', 'S', 'reshmas1769@gmail.com', '8940703006', 'default-student.png', 'female', 7, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$yFe27DjBe3zf.49zTmKvR.seC.3SUWz1xF/v.ljaMZlSbbgkD3srq', '2026-02-19 22:09:11', '2026-03-25 10:11:15', NULL),
+	(3764, NULL, 3, '921024205032', '921024205032', NULL, 'SAHANA', 'S', 'sahanaitnscet@gmail.com', '9080997840', 'default-student.png', 'female', 7, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-25 15:31:59', NULL),
+	(3765, NULL, 3, '921024205033', '921024205033', NULL, 'SARAN', 'SANJAI M', 'saransanjai676@gmail.com', '9342786827', 'default-student.png', 'male', 7, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-25 10:03:51', NULL),
+	(3766, NULL, 3, '921024205034', '921024205034', NULL, 'SATHYABAMA', 'G', 'ganeshan.cumbum@gmail.com', '8667521070', 'default-student.png', 'female', 7, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-25 15:31:55', NULL),
+	(3767, NULL, 3, '921024205035', '921024205035', NULL, 'SHANMUGAPRIYA', 'N', 'priyanarasu73@gmail.com', '6369695629', 'default-student.png', 'female', 7, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-25 15:31:51', NULL),
+	(3768, NULL, 3, '921024205036', '921024205036', NULL, 'SHARVESWARAN', 'S P', '921024205036@nscet.org', '9876543210', 'default-student.png', 'male', 7, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3769, NULL, 3, '921024205037', '921024205037', NULL, 'SIVA', 'PRADEEP M', '921024205037@nscet.org', '9876543210', 'default-student.png', 'male', 7, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3770, NULL, 3, '921024205038', '921024205038', NULL, 'SIVASANDHYA', 'K', 'sivaneshkannan081@gmail.com', '7868867476', 'default-student.png', 'female', 7, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$dze5lijtay7tXelZdC./zuUaj5jNOKtfrrb9mMTKRMYJ9N3gEQHiu', '2026-02-19 22:09:11', '2026-03-25 10:08:35', NULL),
+	(3771, NULL, 3, '921024205039', '921024205039', NULL, 'SRINITHI', 'A', 'srinithiayyasamy29@gmail.com', '8807503473', 'default-student.png', 'female', 7, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-25 15:31:36', NULL),
+	(3772, NULL, 3, '921024205040', '921024205040', NULL, 'SRI', 'SAI NIVASHINI S', 'nivashini0616@gmail.com', '9840606407', 'default-student.png', 'female', 7, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$AMkmBv99bY56JKKXZd3cuOhWRJspfYZ6fa/sl.JU5qSzQxqcJUFve', '2026-02-19 22:09:11', '2026-03-25 15:31:29', NULL),
+	(3773, NULL, 3, '921024205041', '921024205041', NULL, 'SWEETY', 'R', 'sweetyrubanraj@gmail.com', '9080599436', 'default-student.png', 'female', 7, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$eYd7CupvUzPcdXeXnG4fcuBDbKVzrI8Vkxk5FoCJTrVhJJ.7/Jg7i', '2026-02-19 22:09:11', '2026-03-25 15:31:25', NULL),
+	(3774, NULL, 3, '921024205042', '921024205042', NULL, 'SWEETY', 'V', 'vsweety414@gamil.com', '9787879135', 'default-student.png', 'female', 7, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-25 15:31:22', NULL),
+	(3775, NULL, 3, '921024205043', '921024205043', NULL, 'THANGA', 'RAJA VARSHINI S', 'thangarajavarshini7@gmail.com', '9791476152', 'default-student.png', 'female', 7, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-25 15:31:19', NULL),
+	(3776, NULL, 3, '921024205044', '921024205044', NULL, 'THARICK', 'AHAMED A', '921024205044@nscet.org', '9876543210', 'default-student.png', 'male', 7, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3777, NULL, 3, '921024205045', '921024205045', NULL, 'VISHALINI', 'V', 'visalinisiddhu@gmail.com', '9095254916', 'default-student.png', 'female', 7, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$su7DDviQbVjWYIeKV6UBu.e6xpSN1HkUitCzWUl.b611ZPeStFqr.', '2026-02-19 22:09:11', '2026-03-25 10:07:13', NULL),
+	(3778, NULL, 3, '921024114001', '921024114001', NULL, 'ABARNA', 'B', '921024114001@nscet.org', '9876543210', 'default-student.png', 'female', 5, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:43:06', NULL),
+	(3779, NULL, 3, '921024114002', '921024114002', NULL, 'ABINESH', 'T', '921024114002@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3780, NULL, 3, '921024114003', '921024114003', NULL, 'ABISHEK', 'N', '921024114003@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3781, NULL, 3, '921024114005', '921024114005', NULL, 'BHARATHWAJ', 'G', '921024114005@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3782, NULL, 3, '921024114006', '921024114006', NULL, 'BHUPESH', 'G T', '921024114006@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3783, NULL, 3, '921024114007', '921024114007', NULL, 'CHANDRESHWARAN', 'G', '921024114007@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3784, NULL, 3, '921024114008', '921024114008', NULL, 'DHECHITH', 'J', '921024114008@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3785, NULL, 3, '921024114009', '921024114009', NULL, 'JEEVA', 'R', '921024114009@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3786, NULL, 3, '921024114010', '921024114010', NULL, 'KAVIRANJANI', 'M', '921024114010@nscet.org', '9876543210', 'default-student.png', 'female', 5, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:43:06', NULL),
+	(3787, NULL, 3, '921024114011', '921024114011', NULL, 'LATHIKA', 'R', '921024114011@nscet.org', '9876543210', 'default-student.png', 'female', 5, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:43:06', NULL),
+	(3788, NULL, 3, '921024114012', '921024114012', NULL, 'MANOJRAJ', 'R', '921024114012@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3789, NULL, 3, '921024114013', '921024114013', NULL, 'MOHAN', 'RAJ P', '921024114013@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3790, NULL, 3, '921024114014', '921024114014', NULL, 'NAVINRAJ', 'M', '921024114014@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3791, NULL, 3, '921024114015', '921024114015', NULL, 'RAHUL', 'KRISHNA G', '921024114015@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3792, NULL, 3, '921024114016', '921024114016', NULL, 'RANJITH', 'KUMAR K', '921024114016@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3793, NULL, 3, '921024114017', '921024114017', NULL, 'RIYAZ', 'AHAMED S', '921024114017@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3794, NULL, 3, '921024114018', '921024114018', NULL, 'SAKTHIVEL', 'PANDI K', '921024114018@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3795, NULL, 3, '921024114019', '921024114019', NULL, 'SANJAY', 'RAMKUMAR M', '921024114019@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3796, NULL, 3, '921024114020', '921024114020', NULL, 'SANJAY', 'THALAIKUMAR M', '921024114020@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3797, NULL, 3, '921024114021', '921024114021', NULL, 'SANTHOSH', 'M', '921024114021@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3798, NULL, 3, '921024114022', '921024114022', NULL, 'SARATHI', 'S', '921024114022@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3799, NULL, 3, '921024114023', '921024114023', NULL, 'SENTHIL', 'MURUGAN K', '921024114023@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3800, NULL, 3, '921024114024', '921024114024', NULL, 'SIDDHARTHAN', 'E', '921024114024@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3801, NULL, 3, '921024114025', '921024114025', NULL, 'SRINIVASAN', 'R', '921024114025@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3802, NULL, 3, '921024114026', '921024114026', NULL, 'SUDHARSAN', 'S', '921024114026@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3803, NULL, 3, '921024114027', '921024114027', NULL, 'SUMAN', 'KUMAR B', '921024114027@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3804, NULL, 3, '921024114028', '921024114028', NULL, 'VETRIVEL', 'K', '921024114028@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3805, NULL, 3, '921024114029', '921024114029', NULL, 'VIGNESHKUMAR', 'M', '921024114029@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3806, NULL, 3, '921024114030', '921024114030', NULL, 'VISHAL', 'S', '921024114030@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3807, NULL, 3, '921024114031', '921024114031', NULL, 'YOGA', 'ARJUN R S', '921024114031@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3808, NULL, 3, '921024114032', '921024114032', NULL, 'YUVASARAVANAKUMAR', 'P', '921024114032@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3809, NULL, 3, '921024106001', '921024106001', NULL, 'ABARNA', 'A', '921024106001@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$Scliw6geC//fNsncKBoPX.8fxbDvc/Fu9oqZrOaFq2SWHvtczuFPi', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(3810, NULL, 3, '921024106002', '921024106002', NULL, 'ANU', 'SHREE R', '921024106002@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(3811, NULL, 3, '921024106003', '921024106003', NULL, 'ASHWATHIKA', 'G', '921024106003@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$0EWvljI.IsJ//gn85q2CVe8zsc7/6E6zHvoafS99RJEOA1K1x3RFe', '2026-02-19 22:09:11', '2026-03-26 13:11:56', NULL),
+	(3812, NULL, 3, '921024106004', '921024106004', NULL, 'ASWANTHIKA', 'R', '921024106004@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$zSks8QZUT7dQlC5aByBiFO5J8K/84..DaD88fUsQmYLEuua23d38C', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(3813, NULL, 3, '921024106005', '921024106005', NULL, 'BHARATHI', 'M', '921024106005@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(3814, NULL, 3, '921024106006', '921024106006', NULL, 'BHAVYASRI', 'M', '921024106006@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$QHhVfeM/qjYPl.Td3dXKcuK.Ag8grmUwTCQF0nzHlH9IucBNxpsxi', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(3815, NULL, 3, '921024106007', '921024106007', NULL, 'BUVANESHWARI', 'K', '921024106007@nscet.org', '9384947350', 'default-student.png', 'female', 3, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$62F9ElFeFmhvaXQpmNoVWeXsd2nrrUuBg1.LF16PL8DhiSU4FgAFm', '2026-02-19 22:09:11', '2026-03-26 13:46:41', NULL),
+	(3816, NULL, 3, '921024106008', '921024106008', NULL, 'DAKSHITHA', 'R', '921024106008@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(3817, NULL, 3, '921024106009', '921024106009', NULL, 'DEEPA', 'S S', '921024106009@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$LUKILcBqazvmZnHLWsBf2eeQf2exzB72a2XnlDgkkZPC5Ti/x2nae', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(3818, NULL, 3, '921024106010', '921024106010', NULL, 'DEEPAKRAJ', 'S', '921024106010@nscet.org', '9876543210', 'default-student.png', 'male', 3, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3819, NULL, 3, '921024106011', '921024106011', NULL, 'DEEPIKA', 'S', '921024106011@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$.aRi88yCCD2kaeoGKAl5X.YTYefnn45sZXZcy71C7DaGEtw0Lk2f6', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(3820, NULL, 3, '921024106012', '921024106012', NULL, 'DHARSHINI', 'K', '921024106012@nscet.org', '8056380587', 'default-student.png', 'female', 3, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$nDZV8cBwe/Y90OK0av62JOQAg.FbA6yt32m5xpo/lPQFZbqfd6VqO', '2026-02-19 22:09:11', '2026-03-26 12:25:50', NULL),
+	(3821, NULL, 3, '921024106013', '921024106013', NULL, 'DHARSHINI', 'PRIYA V', '921024106013@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$BVGQci0RpIRF56tiOVh2aOyhiplnyZSfmmCXKe66PLujVpZ3wiapC', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(3822, NULL, 3, '921024106014', '921024106014', NULL, 'DHEJESH', 'KANNAN M', '921024106014@nscet.org', '9876543210', 'default-student.png', 'male', 3, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3823, NULL, 3, '921024106015', '921024106015', NULL, 'DIVYA', 'SHREE S R', '921024106015@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$dVdlTnyHdiYSTrC2rrWo7.Hng9YJKLZqdyL6T6sWn7J4vLgFrd5wO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(3824, NULL, 3, '921024106016', '921024106016', NULL, 'GIRIVISHNU', 'M', 'girivishnu131106@gmail.com', '9842721356', 'default-student.png', 'male', 3, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 13:13:54', NULL),
+	(3825, NULL, 3, '921024106017', '921024106017', NULL, 'GOKILAVANI', 'P', '921024106017@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$prEpv7CvLhfTm3G.WkSsrOLRAGCNeVtJAkSAIQVO7nTscdwt6mG9i', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(3826, NULL, 3, '921024106018', '921024106018', NULL, 'GOKUL', 'R', 'gk26082007@gmail.com', '8287280643', 'default-student.png', 'male', 3, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$gcahecz/nfSOOW34p7jk.eI61oD3ajecvIRSRaMp7RieROmZgBUPa', '2026-02-19 22:09:11', '2026-03-26 12:15:36', NULL),
+	(3827, NULL, 3, '921024106019', '921024106019', NULL, 'GURUPRASATH', 'M', '921024106019@nscet.org', '9876543210', 'default-student.png', 'male', 3, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3828, NULL, 3, '921024106020', '921024106020', NULL, 'HARINANTHASRI', 'S', '921024106020@nscet.org', '6379204659', 'default-student.png', 'female', 3, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$3A2xPygZWlxzvzd06kq7QOHKZzLul0m7zQvK1p3r7HDbJAdk8wmhi', '2026-02-19 22:09:11', '2026-03-26 13:21:44', NULL),
+	(3829, NULL, 3, '921024106021', '921024106021', NULL, 'HARSHAVARDHINI', 'P', '921024106021@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(3830, NULL, 3, '921024106022', '921024106022', NULL, 'JANANI', 'SRI T', '921024106022@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$L0Rbq4/IxnHH3PC6idjBm.yuA/DOZpi/vXDhGwydg7oF1zbnQHn4K', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(3831, NULL, 3, '921024106023', '921024106023', NULL, 'JENELIA', 'S', '921024106023@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$KVoBRZUkR4d/Ky2hqYgU3uBZCKQPHchGdnWJolzATs0wD/rLWzinm', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(3832, NULL, 3, '921024106024', '921024106024', NULL, 'KALEP', 'G', '921024106024@nscet.org', '9876543210', 'default-student.png', 'male', 3, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3833, NULL, 3, '921024106025', '921024106025', NULL, 'KAVIYA', 'V', '921024106025@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(3834, NULL, 3, '921024106026', '921024106026', NULL, 'KISHORE', 'KANNAN S', 'kishorekannans0301@gmail.com', '7094879970', 'default-student.png', 'male', 3, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 13:32:50', NULL),
+	(3835, NULL, 3, '921024106027', '921024106027', NULL, 'KUMUTHAVALLI', 'S', '921024106027@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(3836, NULL, 3, '921024106028', '921024106028', NULL, 'MUKILAN', 'R', 'mukilan7733@gmail.com', '9345341338', 'default-student.png', 'male', 3, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 13:00:43', NULL),
+	(3837, NULL, 3, '921024106029', '921024106029', NULL, 'NATHISHA', 'R', '921024106029@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$gxfOkmpvpWjFXQqsRl0g0uRGWO29JftiXioa6Eng3Jp/f/YQKgfyO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(3838, NULL, 3, '921024106030', '921024106030', NULL, 'NIMAL', 'K', '921024106030@nscet.org', '9876543210', 'default-student.png', 'male', 3, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3839, NULL, 3, '921024106031', '921024106031', NULL, 'PAVITHRA', 'S', '921024106031@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(3840, NULL, 3, '921024106032', '921024106032', NULL, 'POOVITHA', 'M', '921024106032@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(3841, NULL, 3, '921024106033', '921024106033', NULL, 'PRADEEPA', 'M', 'pradeepradee754@gmail.com', '8248615336', 'default-student.png', 'female', 3, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 13:01:17', NULL),
+	(3842, NULL, 3, '921024106034', '921024106034', NULL, 'PRAVEENA', 'K', '921024106034@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$EGbetXTlKV7J3/wOnIsfH.Wh9LtYtUs0WEImefyIdCGPBwl3.qzxq', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(3843, NULL, 3, '921024106035', '921024106035', NULL, 'PRIYANGA', 'S', '921024106035@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(3844, NULL, 3, '921024106036', '921024106036', NULL, 'RIDDHI', 'SHREE P', '921024106036@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$g0Xl8L9gZYEGI8jdw1i9q.mE290XkdEKWO.rNdx4ZutH1MTTyRBqi', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(3845, NULL, 3, '921024106037', '921024106037', NULL, 'RISHI', 'PRIYAN S', '921024106037@nscet.org', '9876543210', 'default-student.png', 'male', 3, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3846, NULL, 3, '921024106038', '921024106038', NULL, 'SAKTHI', 'DHARANI K', '921024106038@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(3847, NULL, 3, '921024106039', '921024106039', NULL, 'SARANRAJ', 'M', '921024106039@nscet.org', '9876543210', 'default-student.png', 'male', 3, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3848, NULL, 3, '921024106040', '921024106040', NULL, 'SARMILI', 'SHAKSHI S', '921024106040@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(3849, NULL, 3, '921024106041', '921024106041', NULL, 'SRIDHARSHINI', 'S', '921024106041@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(3850, NULL, 3, '921024106042', '921024106042', NULL, 'SWATHY', 'G', '921024106042@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$tcJNayebEbaDuIghqXghAubV4ABsRVJ6BNnr7VAghaMkqgYSVINeC', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(3851, NULL, 3, '921024106043', '921024106043', NULL, 'THRISHA', 'B', '3sha1409@gmail.com', '8056742730', 'default-student.png', 'female', 3, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$Cf9Q9DyWzsJHYVUXqsBHKuGivIl/Khnb6GDPv5DJAPkeVYsw5ykNa', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(3852, NULL, 3, '921024106044', '921024106044', NULL, 'UMA', 'V', '921024106044@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(3853, NULL, 3, '921024106045', '921024106045', NULL, 'VISHVA', 'S', '921024106045@nscet.org', '6381532032', 'default-student.png', 'male', 3, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:07:04', NULL),
+	(3854, NULL, 3, '921024106701', '921024106701', NULL, 'SRI', 'SHARAN R', '921024106701@nscet.org', '9876543210', 'default-student.png', 'male', 3, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3855, NULL, 3, '921024105001', '921024105001', NULL, 'ANUSRI', 'S', '921024105001@nscet.org', '9876543210', 'default-student.png', 'female', 4, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:55:17', NULL),
+	(3856, NULL, 3, '921024105002', '921024105002', NULL, 'DEVA', 'DHARSHINI S', '921024105002@nscet.org', '9876543210', 'default-student.png', 'female', 4, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:55:22', NULL),
+	(3857, NULL, 3, '921024105003', '921024105003', NULL, 'DHANUSHKA', 'P', '921024105003@nscet.org', '9876543210', 'default-student.png', 'female', 4, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:55:27', NULL),
+	(3858, NULL, 3, '921024105004', '921024105004', NULL, 'DHARANI', 'R', '921024105004@nscet.org', '9876543210', 'default-student.png', 'female', 4, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:55:30', NULL),
+	(3859, NULL, 3, '921024105005', '921024105005', NULL, 'DHARNIKA', 'R', '921024105005@nscet.org', '9876543210', 'default-student.png', 'female', 4, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:55:35', NULL),
+	(3860, NULL, 3, '921024105006', '921024105006', NULL, 'DHARANISRI', 'K', '921024105006@nscet.org', '9876543210', 'default-student.png', 'female', 4, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:55:41', NULL),
+	(3861, NULL, 3, '921024105007', '921024105007', NULL, 'DINESHKUMAR', 'S', '921024105007@nscet.org', '9876543210', 'default-student.png', 'male', 4, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3862, NULL, 3, '921024105008', '921024105008', NULL, 'GAYATHIRI', 'DEVI B', '921024105008@nscet.org', '9876543210', 'default-student.png', 'female', 4, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:55:46', NULL),
+	(3863, NULL, 3, '921024105009', '921024105009', NULL, 'ISHANI', 'K', '921024105009@nscet.org', '9876543210', 'default-student.png', 'female', 4, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:55:50', NULL),
+	(3864, NULL, 3, '921024105010', '921024105010', NULL, 'ISWARYA', 'S', '921024105010@nscet.org', '9876543210', 'default-student.png', 'female', 4, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:55:55', NULL),
+	(3865, NULL, 3, '921024105011', '921024105011', NULL, 'KANISHKA', 'J', '921024105011@nscet.org', '9876543210', 'default-student.png', 'female', 4, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:55:58', NULL),
+	(3866, NULL, 3, '921024105013', '921024105013', NULL, 'MOHAMED', 'ANAS K', '921024105013@nscet.org', '9876543210', 'default-student.png', 'male', 4, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3867, NULL, 3, '921024105014', '921024105014', NULL, 'NAGAJOTHI', 'P', '921024105014@nscet.org', '9876543210', 'default-student.png', 'female', 4, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:56:01', NULL),
+	(3868, NULL, 3, '921024105015', '921024105015', NULL, 'PANDI', 'SELVI S', '921024105015@nscet.org', '9876543210', 'default-student.png', 'male', 4, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3869, NULL, 3, '921024105016', '921024105016', NULL, 'PRIYA', 'S', '921024105016@nscet.org', '9876543210', 'default-student.png', 'female', 4, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:56:05', NULL),
+	(3870, NULL, 3, '921024105017', '921024105017', NULL, 'RAHINI', 'S', '921024105017@nscet.org', '9876543210', 'default-student.png', 'female', 4, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:56:07', NULL),
+	(3871, NULL, 3, '921024105018', '921024105018', NULL, 'RAJIYA', 'SULTHANA A', '921024105018@nscet.org', '9876543210', 'default-student.png', 'female', 4, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:56:16', NULL),
+	(3872, NULL, 3, '921024105019', '921024105019', NULL, 'RAKESHRAJA', 'R', '921024105019@nscet.org', '9876543210', 'default-student.png', 'male', 4, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3873, NULL, 3, '921024105020', '921024105020', NULL, 'RAMYA', 'S', '921024105020@nscet.org', '9876543210', 'default-student.png', 'female', 4, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:56:22', NULL),
+	(3874, NULL, 3, '921024105021', '921024105021', NULL, 'SHAHANA', 'V S', '921024105021@nscet.org', '9876543210', 'default-student.png', 'female', 4, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:56:24', NULL),
+	(3875, NULL, 3, '921024105023', '921024105023', NULL, 'SURYAH', 'S', '921024105023@nscet.org', '9876543210', 'default-student.png', 'male', 4, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3876, NULL, 3, '921024105024', '921024105024', NULL, 'TAMILSELVAN', 'P', '921024105024@nscet.org', '9876543210', 'default-student.png', 'male', 4, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3877, NULL, 3, '921024105025', '921024105025', NULL, 'THILAKKUMAR', 'S', '921024105025@nscet.org', '9876543210', 'default-student.png', 'male', 4, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3878, NULL, 3, '921024105026', '921024105026', NULL, 'THIRUMAL', 'SELVAN M', '921024105026@nscet.org', '9876543210', 'default-student.png', 'male', 4, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3879, NULL, 3, '921024105027', '921024105027', NULL, 'VAISHALI', 'S', '921024105027@nscet.org', '9876543210', 'default-student.png', 'female', 4, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:56:31', NULL),
+	(3880, NULL, 3, '921024105028', '921024105028', NULL, 'VISHWA', 'R', '921024105028@nscet.org', '9876543210', 'default-student.png', 'male', 4, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3881, NULL, 3, '921024105301', '921024105301', NULL, 'KESAVA', 'PERUMAL T', '921024105301@nscet.org', '9876543210', 'default-student.png', 'male', 4, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3882, NULL, 3, '921024104001', '921024104001', NULL, 'ADHITHIYA', 'S', '921024104001@nscet.org', '9876543210', 'default-student.png', 'male', 1, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3883, NULL, 3, '921024104002', '921024104002', NULL, 'ANGALA', 'DHAN VARSHINI P R', '921024104002@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(3884, NULL, 3, '921024104003', '921024104003', NULL, 'ANU', 'VIASHINI M', '921024104003@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(3885, NULL, 3, '921024104004', '921024104004', NULL, 'ARCHANA', 'B', '921024104004@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(3886, NULL, 3, '921024104005', '921024104005', NULL, 'ASIFA', 'SHEREEN S', '921024104005@nscet.org', '9876543210', 'default-student.png', 'male', 1, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3887, NULL, 3, '921024104006', '921024104006', NULL, 'ASMATH', 'NABILA A', '921024104006@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(3888, NULL, 3, '921024104007', '921024104007', NULL, 'CHELLAMUTHUKUMAR', 'P', '921024104007@nscet.org', '9876543210', 'default-student.png', 'male', 1, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3889, NULL, 3, '921024104008', '921024104008', NULL, 'DIYASRI', 'P', '921024104008@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(3890, NULL, 3, '921024104009', '921024104009', NULL, 'DURGADEVI', 'V', '921024104009@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(3891, NULL, 3, '921024104010', '921024104010', NULL, 'GAYATHRI', 'K', '921024104010@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(3892, NULL, 3, '921024104011', '921024104011', NULL, 'GOKULAPRIYAN', 'I', '921024104011@nscet.org', '9876543210', 'default-student.png', 'male', 1, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3893, NULL, 3, '921024104012', '921024104012', NULL, 'HARIDHARSHINI', 'R', '921024104012@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(3894, NULL, 3, '921024104013', '921024104013', NULL, 'HARINI', 'M', '921024104013@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(3895, NULL, 3, '921024104014', '921024104014', NULL, 'HEMASREE', 'V', '921024104014@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(3896, NULL, 3, '921024104015', '921024104015', NULL, 'IRFANA', 'BEGAM A', '921024104015@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(3897, NULL, 3, '921024104016', '921024104016', NULL, 'JASON', 'ANTONY J', '921024104016@nscet.org', '9876543210', 'default-student.png', 'male', 1, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3898, NULL, 3, '921024104017', '921024104017', NULL, 'JEEVA', 'DHARSHINI P', '921024104017@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(3899, NULL, 3, '921024104018', '921024104018', NULL, 'JEEVITHA', 'SRI K', 'jeevithasrik2006@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(3900, NULL, 3, '921024104019', '921024104019', NULL, 'JESLIN', 'SHARON J', '921024104019@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(3901, NULL, 3, '921024104020', '921024104020', NULL, 'JOSHUA', 'A', '921024104020@nscet.org', '9876543210', 'default-student.png', 'male', 1, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3902, NULL, 3, '921024104021', '921024104021', NULL, 'KANIPRIYA', 'S', '921024104021@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(3903, NULL, 3, '921024104022', '921024104022', NULL, 'KISHO', 'VARMA K', '921024104022@nscet.org', '9876543210', 'default-student.png', 'male', 1, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3904, NULL, 3, '921024104023', '921024104023', NULL, 'LATHIKA', 'KAMATCHI K', '921024104023@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(3905, NULL, 3, '921024104024', '921024104024', NULL, 'LIYONAA', 'R', '921024104024@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(3906, NULL, 3, '921024104025', '921024104025', NULL, 'MARIMUTHU', 'J', '921024104025@nscet.org', '9876543210', 'default-student.png', 'male', 1, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3907, NULL, 3, '921024104026', '921024104026', NULL, 'MONIKA', 'SRI P', '921024104026@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(3908, NULL, 3, '921024104027', '921024104027', NULL, 'MUTHAIYA', 'MURALITHARAN M', '921024104027@nscet.org', '9876543210', 'default-student.png', 'male', 1, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3909, NULL, 3, '921024104028', '921024104028', NULL, 'NIKIL', 'R', '921024104028@nscet.org', '9876543210', 'default-student.png', 'male', 1, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3910, NULL, 3, '921024104029', '921024104029', NULL, 'NITHARSANA', 'M', '921024104029@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(3911, NULL, 3, '921024104030', '921024104030', NULL, 'NIVETHA', 'S', '921024104030@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(3912, NULL, 3, '921024104031', '921024104031', NULL, 'POOVARASAN', 'L', '921024104031@nscet.org', '9876543210', 'default-student.png', 'male', 1, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3913, NULL, 3, '921024104032', '921024104032', NULL, 'PRASHITHAA', 'J', 'prashilatha1511@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(3914, NULL, 3, '921024104034', '921024104034', NULL, 'PRAVEEN', 'KUMAR P', '921024104034@nscet.org', '9876543210', 'default-student.png', 'male', 1, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3915, NULL, 3, '921024104035', '921024104035', NULL, 'RASEETHA', 'PARVEEN M', '921024104035@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(3916, NULL, 3, '921024104036', '921024104036', NULL, 'RITHIKA', 'SRI S', '921024104036@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(3917, NULL, 3, '921024104037', '921024104037', NULL, 'ROOBA', 'SREE N', '921024104037@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(3918, NULL, 3, '921024104038', '921024104038', NULL, 'SABITHA', 'G', '921024104038@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(3919, NULL, 3, '921024104039', '921024104039', NULL, 'SAKTHI', 'SRI S', '921024104039@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(3920, NULL, 3, '921024104040', '921024104040', NULL, 'SANCHANAA', 'S', '921024104040@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(3921, NULL, 3, '921024104041', '921024104041', NULL, 'SANTHOSH', 'KUMAR G', '921024104041@nscet.org', '9876543210', 'default-student.png', 'male', 1, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3922, NULL, 3, '921024104042', '921024104042', NULL, 'SASIPRAVEEN', 'S', 'sasipraveen963@nscet.org', '9876543210', 'default-student.png', 'male', 1, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3923, NULL, 3, '921024104043', '921024104043', NULL, 'SELVAKUMAR', 'V', '921024104043@nscet.org', '9876543210', 'default-student.png', 'male', 1, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3924, NULL, 3, '921024104044', '921024104044', NULL, 'SHAKTHI', 'BHARATHI D T', '921024104044@nscet.org', '9876543210', 'default-student.png', 'male', 1, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3925, NULL, 3, '921024104045', '921024104045', NULL, 'SHALNI', 'V', '921024104045@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(3926, NULL, 3, '921024104046', '921024104046', NULL, 'SHASMITHA', 'M', '921024104046@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(3927, NULL, 3, '921024104047', '921024104047', NULL, 'SHRIJA', 'M', '921024104047@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(3928, NULL, 3, '921024104048', '921024104048', NULL, 'SHYAM', 'RAJ Y', '921024104048@nscet.org', '9876543210', 'default-student.png', 'male', 1, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3929, NULL, 3, '921024104049', '921024104049', NULL, 'SONIADEVI', 'K', '921024104049@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(3930, NULL, 3, '921024104050', '921024104050', NULL, 'SUGAPPRIYAN', 'S', '921024104050@nscet.org', '9876543210', 'default-student.png', 'male', 1, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3931, NULL, 3, '921024104051', '921024104051', NULL, 'SUNDARRAJAPERUMAL', 'G', '921024104051@nscet.org', '9876543210', 'default-student.png', 'male', 1, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3932, NULL, 3, '921024104052', '921024104052', NULL, 'UDHAYAPRAKASH', 'S', '921024104052@nscet.org', '9876543210', 'default-student.png', 'male', 1, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3933, NULL, 3, '921024104053', '921024104053', NULL, 'VANITHA', 'R', '921024104053@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(3934, NULL, 3, '921024104054', '921024104054', NULL, 'VEDHASREE', 'S', '921024104054@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(3935, NULL, 3, '921024104055', '921024104055', NULL, 'YAZHINI', 'M', '921024104055@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(3936, NULL, 3, '921024104056', '921024104056', NULL, 'YOHESH', 'K', '921024104056@nscet.org', '9876543210', 'default-student.png', 'male', 1, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3937, NULL, 3, '921024104301', '921024104301', NULL, 'JOTHI', 'RAM K', '921024104301@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(3938, NULL, 3, '921024104701', '921024104701', NULL, 'DEETSANYA', 'R', '921024104701@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(3939, NULL, 3, '921024104702', '921024104702', NULL, 'RITHIKA', 'M', '921024104702@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(3940, NULL, 3, '921024103001', '921024103001', NULL, 'AKSHAYADEVI', 'R', '921024103001@nscet.org', '9876543210', 'default-student.png', 'female', 2, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 13:21:20', NULL),
+	(3941, NULL, 3, '921024103002', '921024103002', NULL, 'ANBUSUBASHINI', 'A', '921024103002@nscet.org', '9876543210', 'default-student.png', 'female', 2, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 13:21:23', NULL),
+	(3942, NULL, 3, '921024103003', '921024103003', NULL, 'ANBU', 'VASANTHAN S', '921024103003@nscet.org', '9876543210', 'default-student.png', 'male', 2, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3943, NULL, 3, '921024103004', '921024103004', NULL, 'ANGAMA', 'PREMA M', '921024103004@nscet.org', '9876543210', 'default-student.png', 'female', 2, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 13:21:31', NULL),
+	(3944, NULL, 3, '921024103005', '921024103005', NULL, 'ARUNKUMAR', 'N', '921024103005@nscet.org', '9876543210', 'default-student.png', 'male', 2, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3945, NULL, 3, '921024103006', '921024103006', NULL, 'AZHAGARASI', 'P', '921024103006@nscet.org', '9876543210', 'default-student.png', 'female', 2, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 13:21:37', NULL),
+	(3946, NULL, 3, '921024103007', '921024103007', NULL, 'DAVID', 'JOSHWA A', '921024103007@nscet.org', '9876543210', 'default-student.png', 'male', 2, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3947, NULL, 3, '921024103008', '921024103008', NULL, 'DHANYASHRI', 'R', '921024103008@nscet.org', '9876543210', 'default-student.png', 'female', 2, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 13:22:03', NULL),
+	(3948, NULL, 3, '921024103009', '921024103009', NULL, 'GUNASRI', 'P', '921024103009@nscet.org', '9876543210', 'default-student.png', 'female', 2, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 13:22:09', NULL),
+	(3949, NULL, 3, '921024103010', '921024103010', NULL, 'MANIMEGALA', 'P', '921024103010@nscet.org', '9654009939', 'default-student.png', 'female', 2, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 14:00:41', NULL),
+	(3950, NULL, 3, '921024103011', '921024103011', NULL, 'MANOBARATH', 'E', '921024103011@nscet.org', '9876543210', 'default-student.png', 'male', 2, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3951, NULL, 3, '921024103012', '921024103012', NULL, 'MATHUMITHA', 'J', '921024103012@nscet.org', '9876543210', 'default-student.png', 'female', 2, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 13:22:15', NULL),
+	(3952, NULL, 3, '921024103013', '921024103013', NULL, 'MOHANAPRIYA', 'R', '921024103013@nscet.org', '9876543210', 'default-student.png', 'female', 2, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 13:22:17', NULL),
+	(3953, NULL, 3, '921024103014', '921024103014', NULL, 'MUFIN', 'RIYANA T', '921024103014@nscet.org', '9876543210', 'default-student.png', 'female', 2, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 13:22:21', NULL),
+	(3954, NULL, 3, '921024103015', '921024103015', NULL, 'NISANTH', 'M', '921024103015@nscet.org', '9876543210', 'default-student.png', 'male', 2, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3955, NULL, 3, '921024103016', '921024103016', NULL, 'PRADEEP', 'P', '921024103016@nscet.org', '9876543210', 'default-student.png', 'male', 2, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3956, NULL, 3, '921024103017', '921024103017', NULL, 'RUBINI', 'C', '921024103017@nscet.org', '9876543210', 'default-student.png', 'female', 2, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 13:22:30', NULL),
+	(3957, NULL, 3, '921024103018', '921024103018', NULL, 'SANDHIYA', 'N', 'sandhiyanagaraj2006@gmail.com', '9791778519', 'default-student.png', 'female', 2, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 13:16:06', NULL),
+	(3958, NULL, 3, '921024103019', '921024103019', NULL, 'SARANYA', 'M', 'murugansaranya323@gmail.com', '9345553614', 'default-student.png', 'female', 2, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 13:45:21', NULL),
+	(3959, NULL, 3, '921024103020', '921024103020', NULL, 'SARAVANAN', 'A', '921024103020@nscet.org', '9876543210', 'default-student.png', 'male', 2, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3960, NULL, 3, '921024103021', '921024103021', NULL, 'SIDDHARTHAN', 'P', '921024103021@nscet.org', '9876543210', 'default-student.png', 'male', 2, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:46:42', NULL),
+	(3961, NULL, 3, '921024103022', '921024103022', NULL, 'SIVAKEERTHANA', 'M', '921024103022@nscet.org', '9876543210', 'default-student.png', 'female', 2, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 13:22:40', NULL),
+	(3962, NULL, 3, '921024103023', '921024103023', NULL, 'SRI', 'VAISHNAVI V', '921024103023@nscet.org', '9876543210', 'default-student.png', 'female', 2, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 13:22:43', NULL),
+	(3963, NULL, 3, '921024103024', '921024103024', NULL, 'SUBATHRA', 'S', '921024103024@nscet.org', '9876543210', 'default-student.png', 'female', 2, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 13:22:47', NULL),
+	(3964, NULL, 3, '921024103025', '921024103025', NULL, 'SWETHA', 'S', '921024103025@nscet.org', '9876543210', 'default-student.png', 'female', 2, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 13:22:49', NULL),
+	(3965, NULL, 3, '921024103026', '921024103026', NULL, 'THASLEEMA', 'NISREEN A', '921024103026@nscet.org', '9876543210', 'default-student.png', 'female', 2, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 13:22:54', NULL),
+	(3966, NULL, 3, '921024103301', '921024103301', NULL, 'MAHESHWARI', 'M', '921024103301@nscet.org', '9876543210', 'default-student.png', 'female', 2, NULL, '2024-2028', 4, '2', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$7SsX7FeXEnUwwK5Xn/Fg5O5HHQ94qxE0vGUw2eE6noHwSsJyYZT0e', '2026-02-19 22:09:11', '2026-03-26 13:14:04', NULL),
+	(3967, NULL, 3, '921023243001', '921023243001', NULL, 'AJAY', 'PRASATH K', 'ajjiajji1338@gmail.com', '6381967880', 'default-student.png', 'male', 6, 21, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$d2EwOOcDddamJKKir0QK9uCXVhx9XLalnctBfkEKa10qvUeX11kYm', '2026-02-19 22:09:11', '2026-03-25 08:08:21', NULL),
+	(3968, NULL, 3, '921023243002', '921023243002', NULL, 'ANFIYAA', 'M', '921023243002@nscet.org', '9876543210', 'default-student.png', 'female', 6, 21, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:48:37', NULL),
+	(3969, NULL, 3, '921023243004', '921023243004', NULL, 'ASIM', 'FATHIMA P', 'asimfathima@gmail.com', '7449054109', 'default-student.png', 'female', 6, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:48:43', NULL),
+	(3970, NULL, 3, '921023243005', '921023243005', NULL, 'BALAJI', 'B', 'yuvabalaji572@gmail.com', '9345752721', 'default-student.png', 'male', 6, 21, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$gJSSkkzp4klNGCJn2I0IDu/aljtOBLPMO0mKhZAMYcXlnHzpyOzOm', '2026-02-19 22:09:11', '2026-03-25 08:16:18', NULL),
+	(3971, NULL, 3, '921023243006', '921023243006', NULL, 'DEVENDRA', 'KUMAR P', '921023243006@nscet.org', '9876543210', 'default-student.png', 'other', 6, 21, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$GVxAKXe3XuofP.U4Bhj0EOCQkzoH2BNYqBcgmvPZGYa5pqLLEtgAS', '2026-02-19 22:09:11', '2026-03-26 10:48:49', NULL),
+	(3972, NULL, 3, '921023243007', '921023243007', NULL, 'GOKUL', 'M', 'muthugokul886@gmail.com', '7598665910', 'default-student.png', 'other', 6, 21, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$BpZxwDwVQSQgPzDkVHhkQujiZ4QpLryJ30LWOJeyRolRU36TjVRhO', '2026-02-19 22:09:11', '2026-03-26 10:48:51', NULL),
+	(3973, NULL, 3, '921023243008', '921023243008', NULL, 'HARI', 'PRABHA S', 'hariprabha772005@gmail.com', '8015542885', 'default-student.png', 'female', 6, 21, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 09:56:31', NULL),
+	(3974, NULL, 3, '921023243009', '921023243009', NULL, 'KAVIYAMAHESHWARI', 'J', 'kaviyajeyavelu2005@gmail.com', '9361353201', '/uploads/photos/student_3974_kaviyamaheshwari_j.png', 'female', 6, 21, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:49:05', NULL),
+	(3975, NULL, 3, '3975', '921023243010', NULL, 'LOGESH', 'KUMAR R', 'logeshk882@gmail.com', '9876543211', '/uploads/photos/student_3975_logesh_kumar_r.jpeg', 'male', 6, 21, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 08:46:41', '1006916315'),
+	(3976, NULL, 3, '921023243011', '921023243011', NULL, 'MALARVIZHI', 'S', '921023243011@nscet.org', '8807707702', 'default-student.png', 'female', 6, 21, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:49:08', NULL),
+	(3977, NULL, 3, '921023243012', '921023243012', NULL, 'MUTHULAKSHMI', 'P', '921023243012@nscet.org', '9361221430', 'default-student.png', 'female', 6, 21, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:49:11', NULL),
+	(3978, NULL, 3, '921023243013', '921023243013', NULL, 'MUTHUMARI', 'M', 'muthumari181109@gmail.com', '9500815509', 'default-student.png', 'female', 6, 21, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$CRQzOGTpJTU54/AWrvgKDuG8kaFPXNNhEiEsnTNgDSBwsG8EKYTGi', '2026-02-19 22:09:11', '2026-03-26 10:49:20', NULL),
+	(3979, NULL, 3, '921023243014', '921023243014', NULL, 'PRITHIKA', 'S', 'preethi13sep@gmail.com', '9042051604', 'default-student.png', 'female', 6, 21, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$ppQn6qz3okHZqD68dC8i2OzMk4EtPRue.u24bf22es1znRxRWtrzy', '2026-02-19 22:09:11', '2026-03-26 10:49:27', NULL),
+	(3980, NULL, 3, '921023243015', '921023243015', NULL, 'RAJAPRABA', 'R', 'rajapraba396@gmail.com', '9715603501', 'default-student.png', 'female', 6, 21, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$kyufmZOx3kSCKY8HAXqqnO6GgVS7iYWxFV./.sHMG1ols1PJt6BWW', '2026-02-19 22:09:11', '2026-03-26 10:49:32', NULL),
+	(3981, NULL, 3, '921023243016', '921023243016', NULL, 'RUUBANRAJ', 'R', 'ruubanraja@gmail.com', '7708018819', 'default-student.png', 'male', 6, 21, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$4M4iYlIsW7tCZjbWLaC1p.1zILRyBa8ZgPbR5g8L2CriVqrz1LfV2', '2026-02-19 22:09:11', '2026-03-25 08:13:53', NULL),
+	(3982, NULL, 3, '921023243017', '921023243017', NULL, 'SAFIKUL', 'FARINAZ S', '921023243017@nscet.org', '9876543210', 'default-student.png', 'female', 6, 21, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:49:36', NULL),
+	(3983, NULL, 3, '921023243018', '921023243018', NULL, 'SHRIMATHI', 'R', '921023243018@nscet.org', '9876543210', 'default-student.png', 'female', 6, 21, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:49:39', NULL),
+	(3984, NULL, 3, '921023243019', '921023243019', NULL, 'SRI', 'HARINI PRIYA S', 'sriharinipriya367@gmail.com', '9345631010', 'default-student.png', 'female', 6, 21, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$Qax0qBf4cEMnM1pEc3M/ke0IIu5HjG5.OVYBQb3airqrPHcgvZ4G6', '2026-02-19 22:09:11', '2026-03-26 10:49:43', NULL),
+	(3985, NULL, 3, '921023243020', '921023243020', NULL, 'SUSMITHA', 'S', 'susmithasugumar05@gmail.com', '9043887060', 'default-student.png', 'female', 6, 21, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$tFjSSr57Kbu.hP.3BPAK6OnbbUfyanli/eFRTXETj3Ekr4DEypB8.', '2026-02-19 22:09:11', '2026-03-26 10:49:47', NULL),
+	(3986, NULL, 3, '921023243021', '921023243021', NULL, 'VARUNI', 'T', 'janakivaruni1980@gmail.com', '8668102993', 'default-student.png', 'female', 6, 21, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$qG7Dnby943wTMrALVCtmr.YSuSOU76K2UrLKQ2JuPHIaLJK6vy9Xu', '2026-02-19 22:09:11', '2026-03-26 10:49:49', NULL),
+	(3987, NULL, 3, '921023243022', '921023243022', NULL, 'VASUKI', 'P', 'vasukipalpandi2006@gmail.com', '9345731473', 'default-student.png', 'female', 6, 21, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$Gl7bCMYgDU9ShM0KNrYZv.hn57JXrEbCfgU9DXBzH1utjkbt2WHFi', '2026-02-19 22:09:11', '2026-03-26 10:49:51', NULL),
+	(3988, NULL, 3, '921023243023', '921023243023', NULL, 'VISHALINI', 'K', '921023243023@nscet.org', '9344162228', 'default-student.png', 'female', 6, 21, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$JrvKrAvEOK7OiNpWDhnIDOeEGNekz9EB3XV0fOwR7yQ85ejVqKV7e', '2026-02-19 22:09:11', '2026-03-26 10:49:55', NULL),
+	(3989, NULL, 3, '921023243024', '921023243024', NULL, 'VISHNU', 'PARAMESH B', 'theflyindutchman06@gmail.com', '8608768303', 'default-student.png', 'male', 6, 21, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$Oh/RsN51XJxVFGGW/IhWB.d8ZEstcyiwMN8TK.6ySnEVvh7bntuYm', '2026-02-19 22:09:11', '2026-03-25 08:18:14', NULL),
+	(3990, NULL, 3, '921023243025', '921023243025', NULL, 'YOGESHKUMAR', 'R', 'ryogeshkumar99@gmail.com', '6381948663', 'default-student.png', 'other', 6, 21, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$Uwm7YTqDmrZOObth2KTueOXWffrhf4iZtILxZkpEbm2a6Ao8EWzI6', '2026-02-19 22:09:11', '2026-03-26 10:50:16', NULL),
+	(3991, NULL, 3, '921023243026', '921023243026', NULL, 'YOKESH', 'J', 'yokeshjayan@gmail.com', '6382636787', 'default-student.png', 'other', 6, 21, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$geWQDA8o3TQ3Rg0dQX6BxOMDClcwbt/RMqViY.atkT/qEoOp3d2tK', '2026-02-19 22:09:11', '2026-03-26 10:50:13', NULL),
+	(3992, NULL, 3, '921023243027', '921023243027', NULL, 'YUKTHA', 'S', 'yukthaa2005@gmail.com', '6369771791', 'default-student.png', 'female', 6, 21, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$odGb2/g9CLoIky3OPheJ0.6rCnA.tEICyu34JOVw6k6F7V0FudqJu', '2026-02-19 22:09:11', '2026-03-26 10:50:02', NULL),
+	(3993, NULL, 3, '921023205001', '921023205001', NULL, 'ABI', 'S', 'abism2006@gmail.com', '6304463797', 'default-student.png', 'female', 7, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 08:59:54', NULL),
+	(3994, NULL, 3, '921023205002', '921023205002', NULL, 'ANUDARSHNI', 'A', 'anudarshni1@gmail.com', '9342586489', 'default-student.png', 'female', 7, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$gf.M2uwABKhVyZnOko.q/uPp1PbtdOj9amrT1k0ozUkPTk4vnGzRG', '2026-02-19 22:09:11', '2026-03-26 03:44:58', NULL),
+	(3995, NULL, 3, '921023205003', '921023205003', NULL, 'ARCHANA', 'DEVI C', 'archukeerthi1731@gmail.com', '8248853845', 'default-student.png', 'female', 7, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-25 15:29:39', NULL),
+	(3996, NULL, 3, '921023205004', '921023205004', NULL, 'DHIVYA', 'DHARSHINI S', '103dhivyadharshini@gmail.com', '9994706186', 'default-student.png', 'female', 7, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-25 15:29:41', NULL),
+	(3997, NULL, 3, '921023205005', '921023205005', NULL, 'DIVYASRI', 'P', 'divya.techvision@gmail.com', '9342411976', 'default-student.png', 'female', 7, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 09:01:41', NULL),
+	(3998, NULL, 3, '921023205006', '921023205006', NULL, 'HARINI', 'P', 'harinipalpandi12@gmail.com', '6379689726', 'default-student.png', 'female', 7, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-25 15:29:45', NULL),
+	(3999, NULL, 3, '921023205007', '921023205007', NULL, 'ISMATH', 'FATHIMA J', 'i7861098@gmail.com', '9025379044', 'default-student.png', 'female', 7, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-25 15:29:47', NULL),
+	(4000, NULL, 3, '921023205008', '921023205008', NULL, 'JEBANIKITHA', 'N', 'n.jebanikitha06@gmail.com', '7845829643', 'default-student.png', 'female', 7, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-25 15:29:50', NULL),
+	(4001, NULL, 3, '921023205009', '921023205009', NULL, 'LOGESHWARI', 'S', 'logeswarisaktheeswaran2006@gmail.com', '6383207269', 'default-student.png', 'female', 7, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-25 10:04:28', NULL),
+	(4002, NULL, 3, '921023205010', '921023205010', NULL, 'MONIKA', 'B', 'monika0110theni@gmail.com', '7603855960', 'default-student.png', 'female', 7, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-25 15:29:59', NULL),
+	(4003, NULL, 3, '921023205011', '921023205011', NULL, 'NAVEENA', 'G', '921023205011@nscet.org', '9876543210', 'default-student.png', 'female', 7, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-25 15:30:01', NULL),
+	(4004, NULL, 3, '921023205012', '921023205012', NULL, 'NITHYA', 'SRI M', 'cc618658@gmail.com', '9677726605', 'default-student.png', 'female', 7, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-25 16:07:09', NULL),
+	(4005, NULL, 3, '921023205013', '921023205013', NULL, 'NOORUL', 'NAFEELA A', 'nafeelahameed19@gmail.com', '9342812959', 'default-student.png', 'female', 7, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-25 15:30:10', NULL),
+	(4006, NULL, 3, '921023205014', '921023205014', NULL, 'PANDIYARAJAN', 'K', 'pandiyarajan15032006@gmail.com', '9361924761', 'default-student.png', 'female', 7, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-25 15:30:15', NULL),
+	(4007, NULL, 3, '4007', '921023205015', NULL, 'RISHIKESH', 'K', '921023205015@nscet.org', '9876543210', '/uploads/photos/student_4007_rishikesh_k.JPG', 'female', 7, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 07:26:58', NULL),
+	(4008, NULL, 3, '921023205016', '921023205016', NULL, 'SAFRIN', 'T', 'tsafrin26@gmail.com', '8807169232', 'default-student.png', 'female', 7, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-25 15:30:20', NULL),
+	(4009, NULL, 3, '921023205017', '921023205017', NULL, 'SAHANA', 'G', 'sahanasahana51247@gmail.com', '9965620883', 'default-student.png', 'female', 7, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$yzoxudBGJaXi7W3IqH65HuqkqHybF0/o4xMz1OMD8G7zS7P8iNwuS', '2026-02-19 22:09:11', '2026-03-25 15:30:22', NULL),
+	(4010, NULL, 3, '921023205018', '921023205018', NULL, 'SHAHANA', 'V', 'shahana170206@gmai.com', '8015294004', 'default-student.png', 'female', 7, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$b.6KA5qdP/QO7PdZfV2BNuBqUpN268OokJLeyN3UTCH8goDWuVCkC', '2026-02-19 22:09:11', '2026-03-25 15:30:24', NULL),
+	(4011, NULL, 3, '921023205019', '921023205019', NULL, 'SINDHU', 'S', 'sindhuselvaraju26@gmail.com', '8637647764', 'default-student.png', 'female', 7, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-25 15:39:35', NULL),
+	(4012, NULL, 3, '921023205020', '921023205020', NULL, 'SIVAYOGGA', 'K', 'sivayogga192005@gmail.com', '9360473114', 'default-student.png', 'female', 7, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-25 15:30:28', NULL),
+	(4013, NULL, 3, '921023205021', '921023205021', NULL, 'SONI', 'P', 'iamsoni.btech@gmail.com', '7010372537', 'default-student.png', 'female', 7, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$iiIQqM7kg4P1rLO2oN69QuwE6KeEcJq4JoM5AqFeRsrBC5YAES7e2', '2026-02-19 22:09:11', '2026-03-26 09:08:06', NULL),
+	(4014, NULL, 3, '921023205022', '921023205022', NULL, 'SOWMIYA', 'K', '921023205022@nscet.org', '9876543210', 'default-student.png', 'female', 7, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-25 15:30:32', NULL),
+	(4015, NULL, 3, '921023205023', '921023205023', NULL, 'SUJITHA', 'B', 'sujinagajothi21@gmail.com', '6369754302', 'default-student.png', 'female', 7, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-25 15:30:36', NULL),
+	(4016, NULL, 3, '921023205024', '921023205024', NULL, 'THANUSHKUMAR', 'P', '921023205024@nscet.org', '9876543214', '/uploads/students/thanushkumar_p.png', 'female', 7, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$UONSXsaqRtgw/Fz/qBZZgevMSRoscWF6T5b4TCYVffIahsiHA7LvG', '2026-02-19 22:09:11', '2026-03-25 15:30:39', NULL),
+	(4017, NULL, 3, '921023205025', '921023205025', NULL, 'VAITHEESHWARI', 'R', 'vaithi198322@gmail.com', '9894432543', 'default-student.png', 'female', 7, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$Xz3vMZS36akoED4HzC3yCuWfCo07REMqCrIR1Dw/ZvRPWfKxZpRzG', '2026-02-19 22:09:11', '2026-03-25 15:30:42', NULL),
+	(4018, NULL, 3, '921023205026', '921023205026', NULL, 'VANI', 'SRI M', '921023205026@nscet.org', '9876543210', 'default-student.png', 'female', 7, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:00:02', NULL),
+	(4019, NULL, 3, '921023205027', '921023205027', NULL, 'YOKESHKUMAR', 'R', 'yoguyogu2005@gmail.com', '9790036793', 'default-student.png', 'male', 7, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$Ea22rbtw.mUBdbeDvTK0DeuiChXEYWzA99dkCvweO1PgdQK98bnVC', '2026-02-19 22:09:11', '2026-03-26 09:03:31', NULL),
+	(4020, NULL, 3, '921023114001', '921023114001', NULL, 'AJAY', 'D', '921023114001@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:10', NULL),
+	(4021, NULL, 3, '921023114002', '921023114002', NULL, 'DHIYANESH', 'K', '921023114002@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:10', NULL),
+	(4022, NULL, 3, '921023114003', '921023114003', NULL, 'HARIRAM', 'R', '921023114003@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:10', NULL),
+	(4023, NULL, 3, '921023114004', '921023114004', NULL, 'KARUTHAPANDI', 'E', 'ekaruthapandi586@gmail.com', '8122603584', 'default-student.png', 'male', 5, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 13:56:43', NULL),
+	(4024, NULL, 3, '921023114005', '921023114005', NULL, 'PANDEESWARAN', 'B', '921023114005@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:10', NULL),
+	(4025, NULL, 3, '921023114006', '921023114006', NULL, 'RAJESH', 'KUMAR M', '921023114006@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:10', NULL),
+	(4026, NULL, 3, '921023114007', '921023114007', NULL, 'SANJAY', 'K', '921023114007@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:10', NULL),
+	(4027, NULL, 3, '921023114008', '921023114008', NULL, 'SATHISH', 'P', '921023114008@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:10', NULL),
+	(4028, NULL, 3, '921023114009', '921023114009', NULL, 'YOGESH', 'G', '921023114009@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:10', NULL),
+	(4029, NULL, 3, '921023114301', '921023114301', NULL, 'DEEPAN', 'RAJ E', '921023114301@nscet.org', '9876543210', 'default-student.png', 'male', 5, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:10', NULL),
+	(4030, NULL, 3, '921023106001', '921023106001', NULL, 'AATHEESWARAN', 'M', '921023106001@nscet.org', '9876543210', 'default-student.png', 'male', 3, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:10', NULL),
+	(4031, NULL, 3, '921023106002', '921023106002', NULL, 'ADITHYAN', 'V', '921023106002@nscet.org', '9876543210', 'default-student.png', 'male', 3, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:10', NULL),
+	(4032, NULL, 3, '921023106003', '921023106003', NULL, 'ANANTHA', 'RAM A', '921023106003@nscet.org', '9876543210', 'default-student.png', 'male', 3, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:10', NULL),
+	(4033, NULL, 3, '921023106004', '921023106004', NULL, 'ANTON', 'MATTEW A', 'antonmattew06@gmail.com', '9344757466', 'default-student.png', 'female', 3, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 13:54:52', NULL),
+	(4034, NULL, 3, '921023106005', '921023106005', NULL, 'ANUSHASRI', 'D', '921023106005@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(4035, NULL, 3, '921023106006', '921023106006', NULL, 'ASHVANI', 'S', '921023106006@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$K/jUO.Co9e6ska79H3pV5.j32pJwvuaDS01ydLJlPSVu0fEQ3O4oK', '2026-02-19 22:09:11', '2026-03-26 13:59:09', NULL),
+	(4036, NULL, 3, '921023106007', '921023106007', NULL, 'ATCHAYAKAMALI', 'V', '921023106007@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(4037, NULL, 3, '921023106008', '921023106008', NULL, 'DEEPIKA', 'SRI K', '921023106008@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(4038, NULL, 3, '921023106009', '921023106009', NULL, 'DEVADHARSHINI', 'K', '921023106009@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(4039, NULL, 3, '921023106010', '921023106010', NULL, 'DHANALAKSHMI', 'S', '921023106010@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(4040, NULL, 3, '921023106011', '921023106011', NULL, 'DHASHINA', 'S', '921023106011@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(4041, NULL, 3, '921023106012', '921023106012', NULL, 'DURGASRI', 'A', '921023106012@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(4042, NULL, 3, '921023106014', '921023106014', NULL, 'GOBINATH', 'M', '921023106014@nscet.org', '9876543210', 'default-student.png', 'male', 3, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:10', NULL),
+	(4043, NULL, 3, '921023106015', '921023106015', NULL, 'GOPIKA', 'M', '921023106015@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(4044, NULL, 3, '921023106016', '921023106016', NULL, 'HARIMURUGAN', 'S', '921023106016@nscet.org', '9876543210', 'default-student.png', 'male', 3, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:10', NULL),
+	(4045, NULL, 3, '921023106018', '921023106018', NULL, 'JEEVANA', 'M', '921023106018@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(4046, NULL, 3, '921023106019', '921023106019', NULL, 'JEEVANANDHAM', 'A', '921023106019@nscet.org', '9876543210', 'default-student.png', 'male', 3, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$gH13SbMCB6FGaA1l8sP6Heuh/qDXVcbDwmWTe4yMW9CHWz2FDd2iG', '2026-02-19 22:09:11', '2026-03-26 12:17:05', NULL),
+	(4047, NULL, 3, '921023106020', '921023106020', NULL, 'JEEVETHA', 'P', 'jeevethaece@gmail.com', '9842843132', 'default-student.png', 'female', 3, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$.1paubNL.YlxRw7AnxK/QuE4w5gkF4N4rZ.jED8XXh0ueDAG7wiYC', '2026-02-19 22:09:11', '2026-03-26 13:17:01', NULL),
+	(4048, NULL, 3, '921023106021', '921023106021', NULL, 'JEYAHARINISHREE', 'R', '921023106021@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(4049, NULL, 3, '921023106022', '921023106022', NULL, 'JEYAPRIYA', 'L M', '921023106022@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(4050, NULL, 3, '921023106023', '921023106023', NULL, 'JEYASRI', 'K', '921023106023@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(4051, NULL, 3, '921023106024', '921023106024', NULL, 'KARTHIK', 'V', '921023106024@nscet.org', '9876543210', 'default-student.png', 'male', 3, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:10', NULL),
+	(4052, NULL, 3, '921023106025', '921023106025', NULL, 'KARTHIKRAJA', 'V', '921023106025@nscet.org', '9876543210', 'default-student.png', 'male', 3, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:10', NULL),
+	(4053, NULL, 3, '921023106026', '921023106026', NULL, 'KAVIYA', 'R', '921023106026@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(4054, NULL, 3, '921023106027', '921023106027', NULL, 'KIRUTHIKA', 'M', '921023106027@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(4055, NULL, 3, '921023106028', '921023106028', NULL, 'MANIKANDAN', 'M', '921023106028@nscet.org', '9876543210', 'default-student.png', 'male', 3, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:10', NULL),
+	(4056, NULL, 3, '921023106029', '921023106029', NULL, 'MAREESWARI', 'B', '921023106029@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(4057, NULL, 3, '921023106030', '921023106030', NULL, 'MOGANA', 'PRIYA M', '921023106030@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(4058, NULL, 3, '921023106031', '921023106031', NULL, 'MOHANAMITHRAA', 'M', '921023106031@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(4059, NULL, 3, '921023106032', '921023106032', NULL, 'NAGAJOTHI', 'S', '921023106032@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(4060, NULL, 3, '921023106033', '921023106033', NULL, 'NAGESHWARAN', 'K', '921023106033@nscet.org', '9876543210', 'default-student.png', 'male', 3, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:10', NULL),
+	(4061, NULL, 3, '921023106034', '921023106034', NULL, 'NANDHINI', 'R', '921023106034@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(4062, NULL, 3, '921023106035', '921023106035', NULL, 'PIRIYA', 'LAXMI E', '921023106035@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(4063, NULL, 3, '921023106036', '921023106036', NULL, 'POOJA', 'P', '921023106036@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(4064, NULL, 3, '921023106037', '921023106037', NULL, 'RATHEESWARI', 'P', '921023106037@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(4065, NULL, 3, '921023106038', '921023106038', NULL, 'RESHMA', 'K', '921023106038@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(4066, NULL, 3, '921023106039', '921023106039', NULL, 'SABRIN', 'FATHIMA Z', '921023106039@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(4067, NULL, 3, '921023106040', '921023106040', NULL, 'SADHA', 'SRI V', '921023106040@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(4068, NULL, 3, '921023106041', '921023106041', NULL, 'SAMEENA', 'BANU P', '921023106041@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(4069, NULL, 3, '921023106042', '921023106042', NULL, 'SANKARA', 'NARAYANAN S', 'ssanthoshdhoni6@gmail.com', '9092595876', 'default-student.png', 'male', 3, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$bDpxhVFR795qgrIx7/pPj.R5/PWL2WMQKp8iTKcUOkvurJD7Dvvb6', '2026-02-19 22:09:11', '2026-03-26 12:43:55', NULL),
+	(4070, NULL, 3, '921023106043', '921023106043', NULL, 'SANTHIYA', 'G', '921023106043@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(4071, NULL, 3, '921023106044', '921023106044', NULL, 'SHARVARI', 'S', '921023106044@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(4072, NULL, 3, '921023106045', '921023106045', NULL, 'SRINITHI', 'C', '921023106045@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(4073, NULL, 3, '921023106046', '921023106046', NULL, 'SUBASRI', 'M', '921023106046@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(4074, NULL, 3, '921023106047', '921023106047', NULL, 'SUGESHRAM', 'R', '921023106047@nscet.org', '9876543210', 'default-student.png', 'male', 3, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:10', NULL),
+	(4075, NULL, 3, '921023106048', '921023106048', NULL, 'SWATHI', 'K', '921023106048@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$mIo4WPgojGgjqHo4mxDGkecBch41iegViYEH9di2UQPWixg8N9ywK', '2026-02-19 22:09:11', '2026-03-26 12:31:26', NULL),
+	(4076, NULL, 3, '921023106049', '921023106049', NULL, 'SWETHASREE', 'P', '921023106049@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(4077, NULL, 3, '921023106050', '921023106050', NULL, 'VIJAYARAGAVAN', 'C', 'vijayaragavanc05@gmail.com', '7397171140', 'default-student.png', 'male', 3, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:12:00', NULL),
+	(4078, NULL, 3, '921023106701', '921023106701', NULL, 'KAVIYA', 'SHREE B', '921023106701@nscet.org', '9876543210', 'default-student.png', 'female', 3, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:29:21', NULL),
+	(4079, NULL, 3, '921023105001', '921023105001', NULL, 'AKASH', 'S', '921023105001@nscet.org', '8610409136', 'default-student.png', 'male', 4, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$G7Dqa8XnZpdt6Ydht79FEOATcsoGayOCkjPZpoKN5.2zs0ng0WtxG', '2026-02-19 22:09:11', '2026-03-26 12:18:30', NULL),
+	(4080, NULL, 3, '921023105003', '921023105003', NULL, 'BOOMIGA', 'M', '921023105003@nscet.org', '9876543210', 'default-student.png', 'female', 4, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:56:38', NULL),
+	(4081, NULL, 3, '921023105004', '921023105004', NULL, 'BRINDHA', 'K', '921023105004@nscet.org', '9876543210', 'default-student.png', 'female', 4, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:56:40', NULL),
+	(4082, NULL, 3, '921023105006', '921023105006', NULL, 'DARUN', 'KUMAR K', '921023105006@nscet.org', '9876543210', 'default-student.png', 'male', 4, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:10', NULL),
+	(4083, NULL, 3, '921023105007', '921023105007', NULL, 'DEEPIKALAKSHAYA', 'M', '921023105007@nscet.org', '9876543210', 'default-student.png', 'female', 4, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:56:44', NULL),
+	(4084, NULL, 3, '921023105008', '921023105008', NULL, 'DHARUNRAJ', 'K', 'dharunraj2612@gmail.com', '6382293039', 'default-student.png', 'male', 4, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 13:37:50', NULL),
+	(4085, NULL, 3, '921023105009', '921023105009', NULL, 'DHARUNYASHREE', 'S', '921023105009@nscet.org', '9876543210', 'default-student.png', 'female', 4, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:56:49', NULL),
+	(4086, NULL, 3, '921023105010', '921023105010', NULL, 'GANESHKUMAR', 'K', 'ganeshkumar637918@gmail.com', '6379182714', 'default-student.png', 'male', 4, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:37:18', NULL),
+	(4087, NULL, 3, '921023105011', '921023105011', NULL, 'GAYATHRI', 'S', '921023105011@nscet.org', '9876543210', 'default-student.png', 'female', 4, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:56:52', NULL),
+	(4088, NULL, 3, '921023105012', '921023105012', NULL, 'GURUPRASATH', 'M', '921023105012@nscet.org', '9876543210', 'default-student.png', 'male', 4, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:10', NULL),
+	(4089, NULL, 3, '921023105013', '921023105013', NULL, 'HARINA', 'S', '921023105013@nscet.org', '9876543210', 'default-student.png', 'female', 4, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:56:58', NULL),
+	(4090, NULL, 3, '921023105014', '921023105014', NULL, 'ISWARYA', 'S', '921023105014@nscet.org', '9876543210', 'default-student.png', 'female', 4, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:57:01', NULL),
+	(4091, NULL, 3, '921023105015', '921023105015', NULL, 'JAYASRI', 'P N', '921023105015@nscet.org', '9876543210', 'default-student.png', 'female', 4, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:57:04', NULL),
+	(4092, NULL, 3, '921023105016', '921023105016', NULL, 'KARTHICKRAJAN', 'T', 'tkarthikraja2006@gmail.com', '6379376182', 'default-student.png', 'male', 4, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:48:07', NULL),
+	(4093, NULL, 3, '921023105017', '921023105017', NULL, 'KATHIRVELSAMY', 'S', '921023105017@nscet.org', '9876543210', 'default-student.png', 'male', 4, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:10', NULL),
+	(4094, NULL, 3, '921023105018', '921023105018', NULL, 'KAVIN', 'ASWATH S', 'slkavin2005@gmail.com', '7502875084', 'default-student.png', 'male', 4, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$u/8kci/1jTrRVnEUjntmuO1AA5HhPvl1qkCM3VLL7lAicP4xoqhIm', '2026-02-19 22:09:11', '2026-03-26 12:37:18', NULL),
+	(4095, NULL, 3, '921023105019', '921023105019', NULL, 'KRISHNAVENI', 'P', '921023105019@nscet.org', '9876543210', 'default-student.png', 'female', 4, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:57:11', NULL),
+	(4096, NULL, 3, '921023105020', '921023105020', NULL, 'MARIMUTHU', 'R', '921023105020@nscet.org', '9876543210', 'default-student.png', 'female', 6, 21, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 10:50:10', NULL),
+	(4097, NULL, 3, '921023105021', '921023105021', NULL, 'MOHAMED', 'NOWFIL A', '921023105021@nscet.org', '9876543210', 'default-student.png', 'male', 4, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:10', NULL),
+	(4098, NULL, 3, '921023105023', '921023105023', NULL, 'PRIYADHARSHINI', 'S', '921023105023@nscet.org', '9876543210', 'default-student.png', 'female', 4, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:57:17', NULL),
+	(4099, NULL, 3, '921023105025', '921023105025', NULL, 'RAJESHWARAN', 'G', 'rajeshguru838@gmail.com', '7558178921', 'default-student.png', 'male', 4, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:06:12', NULL),
+	(4100, NULL, 3, '921023105027', '921023105027', NULL, 'RIHANA', 'AFRIN A', '921023105027@nscet.org', '9876543210', 'default-student.png', 'female', 4, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:57:22', NULL),
+	(4101, NULL, 3, '921023105028', '921023105028', NULL, 'SANTHOSH', 'J', 'jsanthosheee24@gmail.com', '9876543210', 'default-student.png', 'male', 4, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 13:58:26', NULL),
+	(4102, NULL, 3, '921023105029', '921023105029', NULL, 'SIVASURIYAPRAKASH', 'M', 'sivasuriyaprakash21@gmail.com', '9360704014', 'default-student.png', 'male', 4, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:26:50', NULL),
+	(4103, NULL, 3, '921023105030', '921023105030', NULL, 'SUBARAJASREE', 'M', '921023105030@nscet.org', '9876543210', 'default-student.png', 'male', 4, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:10', NULL),
+	(4104, NULL, 3, '921023105031', '921023105031', NULL, 'SUBHASINI', 'K', '921023105031@nscet.org', '9876543210', 'default-student.png', 'female', 4, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:57:31', NULL),
+	(4105, NULL, 3, '921023105033', '921023105033', NULL, 'VAISHNAVI', 'K', '921023105033@nscet.org', '9876543210', 'default-student.png', 'female', 4, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:57:33', NULL),
+	(4106, NULL, 3, '921023105034', '921023105034', NULL, 'VIDHYA', 'SAGAR P', 'vidhyasagarnov@gmail.com', '9080466569', 'default-student.png', 'male', 4, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$.uXKJ.xTTCkZukKboQKbj.74hhbargj9mwMFWpESmTle2QKdKWWV2', '2026-02-19 22:09:11', '2026-03-26 12:58:35', NULL),
+	(4107, NULL, 3, '921023105035', '921023105035', NULL, 'VINOTH', 'G', '921023105035@nscet.org', '9876543210', 'default-student.png', 'male', 4, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:10', NULL),
+	(4108, NULL, 3, '921023105036', '921023105036', NULL, 'YUVARAJ', 'M', '921023105036@nscet.org', '9876543210', 'default-student.png', 'male', 4, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:10', NULL),
+	(4109, NULL, 3, '921023105037', '921023105037', NULL, 'YUVARAJ', 'P', '921023105037@nscet.org', '6383293257', 'default-student.png', 'male', 4, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$/0hmHEI6osxo3VYeJpC.1.QLpIqzqPsVBi50xZJA/CAIMkRTZxrci', '2026-02-19 22:09:11', '2026-03-26 12:37:02', NULL),
+	(4110, NULL, 3, '921023104001', '921023104001', NULL, 'ABI', 'R', 'abiravi2807@gmail.com', '9790580194', 'default-student.png', 'female', 1, 25, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$za.Sn8lkU.Zr2JMoiaz.nexbodiKSLxNqDJemuuX/ttYEes/dR9Ny', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(4111, NULL, 3, '921023104002', '921023104002', NULL, 'AHAMED', 'ATHIL KHAN M V', '921023104002@nscet.org', '9876543210', 'default-student.png', 'male', 1, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:10', NULL),
+	(4112, NULL, 3, '921023104003', '921023104003', NULL, 'AKSHAYA', 'G', '921023104003@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(4113, NULL, 3, '921023104004', '921023104004', NULL, 'AKSHAYA', 'R', 'akshayarajendran850@gmail.com', '7397510360', 'default-student.png', 'female', 1, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$f.RxCrRYZ1MZO.MMO6sTpOHI2JYwIe1dauuWYQfuSDundYV.bbGs2', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(4114, NULL, 3, '921023104005', '921023104005', NULL, 'AKSHAYA', 'SHRI K', 'rkrkakshaya@gmail.com', '7904523194', 'default-student.png', 'female', 1, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$rxk6cwwoNga7TxJOCbzLq.zKx.d7H4Nd4SXCZUqYAT1U8vZbrrjZe', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(4115, NULL, 3, '921023104006', '921023104006', NULL, 'BALA', 'DINESH K', 'kbaladinesh.nscet@gmail.com', '8547677231', 'default-student.png', 'male', 1, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-25 08:36:34', NULL),
+	(4116, NULL, 3, '921023104007', '921023104007', NULL, 'BRINDHA', 'A', 'brindhabrindha2005a@gmail.com', '8015175621', 'default-student.png', 'female', 1, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(4117, NULL, 3, '921023104008', '921023104008', NULL, 'DEEBA', 'DHARSHINIE G K', '921023104008@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(4118, NULL, 3, '921023104009', '921023104009', NULL, 'DHANUJA', 'P', '921023104009@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(4119, NULL, 3, '921023104010', '921023104010', NULL, 'HARINI', 'M', 'harini7726@gmail.com', '8300757483', 'default-student.png', 'female', 1, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$l/YeoblgKYuqXBHEKLS4qeR/Zt9dsXQ1cqokQpOfVD5hHHvR7wWpS', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(4120, NULL, 3, '921023104011', '921023104011', NULL, 'HARINI', 'V', 'harihasi2006@gmail.com', '6369607670', 'default-student.png', 'female', 1, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(4121, NULL, 3, '921023104012', '921023104012', NULL, 'HARISHPRAJEETH', 'A S', '921023104012@nscet.org', '9876543210', 'default-student.png', 'male', 1, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:10', NULL),
+	(4122, NULL, 3, '921023104013', '921023104013', NULL, 'HEMALATHA', 'M', 'lathapandi958548@gmail.com', '6381653152', 'default-student.png', 'female', 1, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(4123, NULL, 3, '921023104014', '921023104014', NULL, 'INDHUMATHI', 'S', '921023104014@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(4124, NULL, 3, '921023104015', '921023104015', NULL, 'JAI', 'RAGUL D', 'jairaguldhanapal@gmail.com', '9043624840', 'default-student.png', 'male', 1, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-25 08:40:39', NULL),
+	(4125, NULL, 3, '921023104017', '921023104017', NULL, 'KANAGA', 'DURGA M', 'murugesan99659100@gmail.com', '9965910035', 'default-student.png', 'female', 1, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(4126, NULL, 3, '921023104018', '921023104018', NULL, 'KAVIN', 'PRASHAD A', '921023104018@nscet.org', '9876543210', 'default-student.png', 'male', 1, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:10', NULL),
+	(4127, NULL, 3, '921023104019', '921023104019', NULL, 'MADHUMITHA', 'D', '921023104019@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(4128, NULL, 3, '921023104020', '921023104020', NULL, 'MENIL', 'SRI M', '921023104020@nscet.org', '9344338929', 'default-student.png', 'female', 1, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(4129, NULL, 3, '921023104021', '921023104021', NULL, 'MONAA', 'SHREE S', 'monaashree55@gmail.com', '7548862950', 'default-student.png', 'female', 1, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(4130, NULL, 3, '921023104022', '921023104022', NULL, 'MUHESH', 'KANNA M', '921023104022@nscet.org', '9876543210', 'default-student.png', 'male', 1, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:10', NULL),
+	(4131, NULL, 3, '921023104023', '921023104023', NULL, 'MUZZAMEEL', 'AHAMED S', 'smuzzameelahamed@gmail.com', '6381070694', 'default-student.png', 'male', 1, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-25 08:34:32', NULL),
+	(4132, NULL, 3, '921023104024', '921023104024', NULL, 'PANDEESWARAN', 'C', '921023104024@nscet.org', '9876543210', 'default-student.png', 'male', 1, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:10', NULL),
+	(4133, NULL, 3, '921023104025', '921023104025', NULL, 'PHIRAMOTH', 'G K', 'phiramothgk@gmail.com', '9360106151', 'default-student.png', 'male', 1, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$7QNdHiWozbjpMNccgiUZmOAHKtFvKUT6iCUrL739NzIpWYgzhTqs2', '2026-02-19 22:09:11', '2026-03-25 08:44:07', NULL),
+	(4134, NULL, 3, '921023104026', '921023104026', NULL, 'PRAVEEN', 'K C', 'kcp004422@gmail.com', '8610530594', 'default-student.png', 'male', 1, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-25 08:33:55', NULL),
+	(4135, NULL, 3, '921023104027', '921023104027', NULL, 'PREETHI', 'S', 'preethisathishkumar86@#gmail.com', '7695947108', 'default-student.png', 'female', 1, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$eHuoWPLoGUtbE44ZkveaX.cEs4dl5kFOGbEkrxe9aWeS6EBfRhrTi', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(4136, NULL, 3, '921023104028', '921023104028', NULL, 'PRIJEETHA', 'C', 'prijeetha123@gmail.com', '9884284912', 'default-student.png', 'female', 1, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(4137, NULL, 3, '921023104029', '921023104029', NULL, 'PRIYADHARSHINI', 'M', '921023104029@nscet.org', '9876543210', 'default-student.png', 'female', 1, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(4138, NULL, 3, '921023104030', '921023104030', NULL, 'RABIKA', 'BANU A', 'rabikax13@gmail.com', '8695689547', 'default-student.png', 'female', 1, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(4139, NULL, 3, '921023104031', '921023104031', NULL, 'RAGUL', 'S', 'rahuloffical002@gmail.com', '8838410839', 'default-student.png', 'male', 1, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-25 09:06:35', NULL),
+	(4140, NULL, 3, '921023104032', '921023104032', NULL, 'REEMA', 'FATHIMA R', 'reemafathima279@gmail.com', '7402390786', 'default-student.png', 'female', 1, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(4141, NULL, 3, '921023104033', '921023104033', NULL, 'RUPIKA', 'M', 'rupika200518@gmail.com', '9344740997', 'default-student.png', 'female', 1, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$fqjQiJuLtnKZphRzraU.CeLWgQuYtLIn57HiBow9S9yFs5N9tXQzC', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(4142, NULL, 3, '921023104034', '921023104034', NULL, 'RUTHRADEVI', 'R', 'ruthraramachandran1@gmail.com', '9360316141', 'default-student.png', 'female', 1, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(4143, NULL, 3, '921023104035', '921023104035', NULL, 'SAKTHI', 'SUNDAR P', 'sakthisundar5002@gmail.com', '8122592152', 'default-student.png', 'male', 1, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-25 09:56:03', NULL),
+	(4144, NULL, 3, '921023104036', '921023104036', NULL, 'SANTHOSHINI', 'K', 'santhosubbu7@gmail.com', '7708750898', 'default-student.png', 'female', 1, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$YdJry0HuLC5Wpksf/g3G8elkqRAFVcOcICShxYuhUywou4gSciqSK', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(4145, NULL, 3, '921023104037', '921023104037', NULL, 'SARAN', 'R', 'saransaran63189@gmail.com', '8778024685', 'default-student.png', 'male', 1, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-25 09:15:51', NULL),
+	(4146, NULL, 3, '921023104038', '921023104038', NULL, 'SHALINI', 'V', 'shalini16.venkatesh@gmail.com', '8807601612', 'default-student.png', 'female', 1, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$4kewVaEa18rCC0/Y0lSNq.b4fvTZUqjsExuZGMJzrcgeEBPR28H3y', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(4147, NULL, 3, '921023104039', '921023104039', NULL, 'SHOBIYA', 'M', 'shobiyamuthukumar07@gmail.com', '9080887045', 'default-student.png', 'female', 1, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(4148, NULL, 3, '921023104040', '921023104040', NULL, 'SRIKARAN', 'G', 'srikaran170@gmail.com', '9080997915', 'default-student.png', 'male', 1, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-25 09:08:26', NULL),
+	(4149, NULL, 3, '921023104041', '921023104041', NULL, 'SRI', 'KESAVAN S', '921023104041@nscet.org', '9876543210', 'default-student.png', 'male', 1, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-05 11:47:10', NULL),
+	(4150, NULL, 3, '921023104042', '921023104042', NULL, 'SUSITHRA', 'J B', 'susithrajb2005@gmail.com', '8248569316', 'default-student.png', 'female', 1, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$5pddCgaCb78u5OTfGAycgu8drXcmzBGi83YMAUTk2XudRhZvys/aa', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(4151, NULL, 3, '921023104043', '921023104043', NULL, 'SUTHEESHNA', 'R', 'sutheeshna7@gmail.com', '9385313858', 'default-student.png', 'female', 1, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(4152, NULL, 3, '921023104044', '921023104044', NULL, 'THARANEESH', 'G R', 'grtharneeshagrtharneesha@gmail.com', '7448909266', 'default-student.png', 'male', 1, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-25 08:29:26', NULL),
+	(4153, NULL, 3, '921023104045', '921023104045', NULL, 'VARSHINI', 'N S', 'varshiniselva2785@gmail.com', '9345867446', 'default-student.png', 'female', 1, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(4154, NULL, 3, '921023104046', '921023104046', NULL, 'VASUTHA', 'T', 'vvasuthat@gmail.com', '7094956408', 'default-student.png', 'female', 1, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(4155, NULL, 3, '921023104047', '921023104047', NULL, 'YUVA', 'PRIYA V', 'yuvavkcy2006@gmail.com', '8903288226', 'default-student.png', 'female', 1, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$QBft50SK2WR3rKrBN31QzeUoU1FyQ8r9jJFj9GKsdqEoULkLJczyK', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(4156, NULL, 3, '921023104048', '921023104048', NULL, 'YUVA', 'SHREE M', 'syuva851@gmail.com', '8754288157', 'default-student.png', 'female', 1, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL),
+	(4157, NULL, 3, '921023104301', '921023104301', NULL, 'RISHI', 'B', 'kavin16036@gmail.com', '6385518832', 'default-student.png', 'male', 1, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-25 08:36:30', NULL),
+	(4158, NULL, 3, '921023104701', '921023104701', NULL, 'KAVIYA', 'P', 'kaviyaperumalselvi@gmail.com', '9345252519', 'default-student.png', 'female', 1, NULL, '2023-2027', 6, '3', '2026-02-19', 'regular', 'paid', 'active', '$2a$10$E6/X2KrSHWRQlXWvZR0ByOsGWhh.SgPcby.Jj.RLJlG22IAb5SPBO', '2026-02-19 22:09:11', '2026-03-26 12:05:54', NULL);
 
--- --------------------------------------------------------
-
---
--- Table structure for table `student_projects`
---
-
-CREATE TABLE `student_projects` (
-  `id` int(11) NOT NULL,
+-- Dumping structure for table eduvertex.student_projects
+CREATE TABLE IF NOT EXISTS `student_projects` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `studentId` int(11) NOT NULL,
   `title` varchar(200) NOT NULL,
   `description` text DEFAULT NULL,
@@ -1380,17 +2949,22 @@ CREATE TABLE `student_projects` (
   `approvalRemarks` varchar(500) DEFAULT NULL,
   `approvalDate` datetime DEFAULT NULL,
   `createdAt` datetime NOT NULL DEFAULT current_timestamp(),
-  `updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_student` (`studentId`),
+  KEY `fk_proj_approver` (`approvedById`),
+  CONSTRAINT `fk_proj_approver` FOREIGN KEY (`approvedById`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_proj_student` FOREIGN KEY (`studentId`) REFERENCES `student_profile` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- --------------------------------------------------------
+-- Dumping data for table eduvertex.student_projects: ~2 rows (approximately)
+INSERT INTO `student_projects` (`id`, `studentId`, `title`, `description`, `role`, `techStack`, `startDate`, `endDate`, `demoUrl`, `repoUrl`, `status`, `approvalStatus`, `approvedById`, `approvalRemarks`, `approvalDate`, `createdAt`, `updatedAt`) VALUES
+	(1, 3992, 'DeadIdea-AI ', 'DeadIdea AI – Reviving forgotten innovations through intelligent analysis.', NULL, '"[\\"AI: Google Gemini (via google-generativeai SDK) Backend API: Python FastAPI Frontend: Streamlit Database: Google Cloud Firestore Deployment: Google Cloud Run / Docker\\"]"', NULL, NULL, 'https://deadidea-ai.streamlit.app/', 'https://github.com/yuktha2005/DeadIdea-AI', 'completed', 'pending', NULL, NULL, NULL, '2026-03-25 08:48:23', '2026-03-25 08:48:23'),
+	(2, 3744, 'TwinAI', 'AI TO AI TALK HALLUCINATION DEBATE PLATFORM', NULL, '"[\\"React\\"]"', NULL, NULL, 'https://twinai.chat', NULL, 'completed', 'pending', NULL, NULL, NULL, '2026-03-26 04:41:30', '2026-03-26 04:41:30');
 
---
--- Table structure for table `student_sports`
---
-
-CREATE TABLE `student_sports` (
-  `id` int(11) NOT NULL,
+-- Dumping structure for table eduvertex.student_sports
+CREATE TABLE IF NOT EXISTS `student_sports` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `studentId` int(11) NOT NULL,
   `name` varchar(100) NOT NULL,
   `category` enum('Team Sports','Individual Sports','Aquatics','Combat Sports','Other') NOT NULL DEFAULT 'Other',
@@ -1404,17 +2978,81 @@ CREATE TABLE `student_sports` (
   `approvalRemarks` varchar(500) DEFAULT NULL,
   `approvalDate` datetime DEFAULT NULL,
   `createdAt` datetime NOT NULL DEFAULT current_timestamp(),
-  `updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_student` (`studentId`),
+  KEY `fk_sport_approver` (`approvedById`),
+  CONSTRAINT `fk_sport_approver` FOREIGN KEY (`approvedById`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_sport_student` FOREIGN KEY (`studentId`) REFERENCES `student_profile` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- --------------------------------------------------------
+-- Dumping data for table eduvertex.student_sports: ~4 rows (approximately)
+INSERT INTO `student_sports` (`id`, `studentId`, `name`, `category`, `joinedDate`, `status`, `achievements`, `level`, `documentUrl`, `approvalStatus`, `approvedById`, `approvalRemarks`, `approvalDate`, `createdAt`, `updatedAt`) VALUES
+	(2, 3975, 'zxcvzxdfg', 'Team Sports', '2006-03-28', 'active', 'fsdafsadfsda', 'college', 'documentUrl-1774373731029-320613733.png', 'pending', NULL, NULL, NULL, '2026-03-24 17:35:32', '2026-03-24 17:35:32'),
+	(3, 4129, 'athletic', 'Individual Sports', '2023-09-11', 'active', 'runner', 'college', NULL, 'pending', NULL, NULL, NULL, '2026-03-25 08:41:28', '2026-03-25 08:41:28'),
+	(4, 3763, 'RESHMA.S', 'Team Sports', '2007-04-05', 'active', 'Runner-up', 'college', NULL, 'pending', NULL, NULL, NULL, '2026-03-25 10:05:50', '2026-03-25 10:05:50'),
+	(5, 3975, 'fsasfadsf', 'Team Sports', '2006-03-28', 'active', 'fasdfasdfdasfas', 'college', NULL, 'pending', NULL, NULL, NULL, '2026-03-26 09:15:18', '2026-03-26 09:15:18');
 
---
--- Table structure for table `subjects`
---
+-- Dumping structure for table eduvertex.subject_class_mappings
+CREATE TABLE IF NOT EXISTS `subject_class_mappings` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `subject_id` int(11) NOT NULL,
+  `class_id` int(11) NOT NULL,
+  `department_id` int(11) NOT NULL,
+  `semester` tinyint(2) NOT NULL,
+  `academic_year` varchar(9) NOT NULL,
+  `is_core` tinyint(1) NOT NULL DEFAULT 1,
+  `status` enum('active','inactive') NOT NULL DEFAULT 'active',
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_subject_class_semester` (`subject_id`,`class_id`,`semester`,`academic_year`),
+  KEY `idx_scm_class` (`class_id`),
+  KEY `idx_scm_semester` (`semester`),
+  KEY `idx_scm_dept` (`department_id`),
+  KEY `idx_scm_subject` (`subject_id`),
+  CONSTRAINT `fk_scm_class` FOREIGN KEY (`class_id`) REFERENCES `classes` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_scm_dept` FOREIGN KEY (`department_id`) REFERENCES `departments` (`id`),
+  CONSTRAINT `fk_scm_subject` FOREIGN KEY (`subject_id`) REFERENCES `subjects` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=52 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-CREATE TABLE `subjects` (
-  `id` int(11) NOT NULL,
+-- Dumping data for table eduvertex.subject_class_mappings: ~32 rows (approximately)
+INSERT INTO `subject_class_mappings` (`id`, `subject_id`, `class_id`, `department_id`, `semester`, `academic_year`, `is_core`, `status`, `created_at`) VALUES
+	(8, 95, 21, 6, 6, '2026-2027', 1, 'active', '2026-03-14 15:09:21'),
+	(9, 102, 21, 6, 6, '2026-2027', 1, 'active', '2026-03-14 17:15:37'),
+	(10, 103, 21, 6, 6, '2026-2027', 1, 'active', '2026-03-14 17:15:48'),
+	(11, 100, 21, 6, 6, '2026-2027', 1, 'active', '2026-03-14 17:16:15'),
+	(12, 90, 21, 6, 6, '2026-2027', 1, 'active', '2026-03-14 17:16:38'),
+	(13, 98, 21, 6, 6, '2026-2027', 1, 'active', '2026-03-14 17:16:46'),
+	(14, 94, 21, 6, 6, '2026-2027', 1, 'active', '2026-03-15 08:05:34'),
+	(15, 105, 21, 6, 6, '2026-2027', 1, 'active', '2026-03-15 08:13:02'),
+	(16, 106, 21, 6, 6, '2026-2027', 1, 'active', '2026-03-15 08:13:11'),
+	(17, 107, 21, 6, 6, '2026-2027', 1, 'active', '2026-03-15 08:37:44'),
+	(18, 94, 23, 6, 5, '2026-2027', 1, 'active', '2026-03-25 05:43:06'),
+	(23, 120, 25, 1, 6, '2025-2026', 1, 'active', '2026-03-25 07:27:13'),
+	(24, 114, 25, 1, 6, '2025-2026', 1, 'active', '2026-03-25 07:27:28'),
+	(25, 115, 25, 1, 6, '2025-2026', 1, 'active', '2026-03-25 07:27:49'),
+	(26, 118, 25, 1, 6, '2025-2026', 1, 'active', '2026-03-25 07:28:04'),
+	(27, 119, 25, 1, 6, '2025-2026', 1, 'active', '2026-03-25 07:28:15'),
+	(28, 121, 25, 1, 6, '2025-2026', 1, 'active', '2026-03-25 07:29:49'),
+	(29, 112, 25, 1, 6, '2026-2027', 0, 'active', '2026-03-25 10:17:06'),
+	(30, 111, 25, 1, 6, '2026-2027', 1, 'active', '2026-03-25 10:18:07'),
+	(31, 122, 24, 1, 4, '2026-2027', 1, 'active', '2026-03-25 10:22:18'),
+	(32, 123, 24, 1, 4, '2026-2027', 1, 'active', '2026-03-25 10:24:40'),
+	(33, 120, 25, 1, 6, '2026-2027', 0, 'active', '2026-03-25 10:24:41'),
+	(34, 117, 25, 1, 6, '2026-2027', 0, 'active', '2026-03-25 10:25:35'),
+	(35, 116, 25, 1, 6, '2026-2027', 1, 'active', '2026-03-25 10:25:45'),
+	(38, 114, 25, 1, 6, '2023-2027', 0, 'active', '2026-03-25 10:27:19'),
+	(39, 125, 24, 1, 4, '2026-2027', 1, 'active', '2026-03-25 10:27:36'),
+	(40, 124, 24, 1, 4, '2026-2027', 1, 'active', '2026-03-25 10:27:59'),
+	(47, 115, 25, 1, 6, '2026-2027', 0, 'active', '2026-03-25 10:36:55'),
+	(48, 127, 24, 1, 4, '2026-2027', 1, 'active', '2026-03-25 10:39:49'),
+	(49, 126, 24, 1, 4, '2026-2027', 1, 'active', '2026-03-25 10:40:10'),
+	(50, 129, 24, 1, 4, '2026-2027', 1, 'active', '2026-03-25 10:40:20'),
+	(51, 128, 24, 1, 4, '2026-2027', 1, 'active', '2026-03-25 10:40:30');
+
+-- Dumping structure for table eduvertex.subjects
+CREATE TABLE IF NOT EXISTS `subjects` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `subject_code` varchar(20) NOT NULL,
   `subject_name` varchar(255) NOT NULL,
   `description` text DEFAULT NULL,
@@ -1435,84 +3073,76 @@ CREATE TABLE `subjects` (
   `created_by` int(11) DEFAULT 1,
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  `batch` varchar(50) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `batch` varchar(50) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_subject_dept` (`department_id`),
+  KEY `idx_subject_semester` (`semester`),
+  KEY `idx_subject_class` (`class_id`),
+  KEY `idx_subject_status` (`status`),
+  CONSTRAINT `fk_subj_class` FOREIGN KEY (`class_id`) REFERENCES `classes` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_subj_dept` FOREIGN KEY (`department_id`) REFERENCES `departments` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=140 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `subjects`
---
-
+-- Dumping data for table eduvertex.subjects: ~43 rows (approximately)
 INSERT INTO `subjects` (`id`, `subject_code`, `subject_name`, `description`, `department_id`, `semester`, `academic_year`, `year`, `sem_type`, `class_id`, `credits`, `type`, `is_elective`, `is_laboratory`, `lab_name`, `hours_per_week`, `lab_hours_per_week`, `status`, `created_by`, `created_at`, `updated_at`, `batch`) VALUES
-(90, 'CCS358', 'Principles of Programming Language', '', 6, 6, '2025-2026', 3, 'even', NULL, 4.00, 'Theory', 1, 0, NULL, 3, 0, 'active', 109, '2026-03-14 13:13:50', '2026-03-14 16:04:05', '2023-2027'),
-(91, 'CS3452', 'Theory of Computation', '', 6, 4, '2025-2026', 2, 'even', NULL, 4.00, 'Theory', 1, 0, NULL, 3, 0, 'active', 109, '2026-03-14 13:13:50', '2026-03-14 13:13:50', '2024-2028'),
-(92, 'AD3491', 'Fundamentals of Data Science and Analytics', '', 6, 4, '2025-2026', 2, 'even', NULL, 4.00, 'Theory', 1, 0, NULL, 3, 0, 'active', 109, '2026-03-14 13:13:50', '2026-03-14 13:13:50', NULL),
-(93, 'AD3411', 'Data Science and Analytics Lab', '', 6, 4, '2025-2026', 2, 'even', NULL, 4.00, 'Practical', 0, 1, 'linux', 0, 2, 'active', 109, '2026-03-14 13:13:50', '2026-03-14 13:13:50', NULL),
-(94, 'CCS332', 'App Development', '', 6, 5, '2025-2026', 3, 'odd', NULL, 4.00, 'Theory+Practical', 1, 1, 'Dennis', 3, 2, 'active', 109, '2026-03-14 13:13:50', '2026-03-15 08:06:06', '2023-2027'),
-(95, 'NAAN-III', 'NAAN MUDHALVAN III', '', 6, 6, '2025-2026', 3, 'even', NULL, 4.00, 'Project', 0, 1, 'MAD', 3, 0, 'active', 109, '2026-03-14 13:13:50', '2026-03-14 16:06:06', '2023-2027'),
-(96, 'CS3591', 'Computer Networks', '', 6, 3, '2025-2026', 2, 'odd', NULL, 4.00, 'Theory+Practical', 0, 1, 'CN Lab', 3, 2, 'active', 109, '2026-03-14 13:13:50', '2026-03-14 13:13:50', NULL),
-(97, 'NAAN-II', 'NAAN MUDHALVAN II', '', 6, 5, '2025-2026', 3, 'odd', NULL, 4.00, 'Project', 0, 1, 'CAD', 3, 0, 'active', 109, '2026-03-14 13:13:50', '2026-03-14 13:13:50', '2025'),
-(98, 'CCW332', 'Digital Marketing', '', 6, 6, '2025-2026', 3, 'even', NULL, 4.00, 'Theory+Practical', 0, 1, 'MAD', 3, 2, 'active', 109, '2026-03-14 13:13:50', '2026-03-14 16:18:39', '2023-2027'),
-(100, 'OMA351', 'Graph Theory', '', 6, 6, '2025-2026', 3, 'even', NULL, 4.00, 'Theory', 0, 0, NULL, 3, 0, 'active', 109, '2026-03-14 13:13:50', '2026-03-14 16:39:13', '2023-2027'),
-(102, 'CS3691', '	Embedded Systems and IoT', '', 6, 6, '2025-2026', 3, 'even', NULL, 4.00, 'Theory+Practical', 0, 1, '	Embedded Systems and IoT', 3, 0, 'active', 109, '2026-03-14 17:11:46', '2026-03-14 17:16:59', '2023-2027'),
-(103, 'GE3451', 'Well being with Traditional Ayervedic and Yoga', '', 6, 6, '2025-2026', 3, 'even', NULL, 4.00, 'Theory+Practical', 0, 0, NULL, 3, 0, 'active', 109, '2026-03-14 17:15:20', '2026-03-14 17:15:20', '2023-2027'),
-(104, 'CCS332-', 'App Development', '', 6, 6, '2025-2026', 3, 'even', NULL, 4.00, 'Theory+Practical', 1, 0, NULL, 3, 0, 'active', 109, '2026-03-15 08:04:40', '2026-03-15 08:04:40', '2023-2027'),
-(105, '-', 'LIBRARY', '', 6, 6, '2025-2026', 3, 'even', NULL, 4.00, 'Theory+Practical', 1, 0, NULL, 3, 0, 'active', 109, '2026-03-15 08:12:01', '2026-03-15 08:12:01', '2023-2027'),
-(106, '.', 'Placement', '', 6, 6, '2025-2026', 3, 'even', NULL, 4.00, 'Theory+Practical', 0, 0, NULL, 3, 0, 'active', 109, '2026-03-15 08:12:33', '2026-03-15 08:12:33', '2023-2027'),
-(107, 'MH', 'MINI-HACKATHON', '', 6, 6, '2025-2026', 3, 'even', NULL, 4.00, 'Practical', 1, 0, NULL, 3, 0, 'active', 109, '2026-03-15 08:36:47', '2026-03-17 04:05:30', '2023-2027');
+	(90, 'CCS358', 'Principles of Programming Language', '', 6, 6, '2025-2026', 3, 'even', NULL, 4.00, 'Theory', 1, 0, NULL, 3, 0, 'active', 109, '2026-03-14 13:13:50', '2026-03-14 16:04:05', '2023-2027'),
+	(94, 'CCS332', 'App Development', '', 6, 5, '2025-2026', 3, 'odd', NULL, 4.00, 'Theory+Practical', 1, 1, 'Dennis', 3, 2, 'active', 109, '2026-03-14 13:13:50', '2026-03-15 08:06:06', '2023-2027'),
+	(95, 'NAAN-III', 'NAAN MUDHALVAN III', '', 6, 6, '2025-2026', 3, 'even', NULL, 4.00, 'Project', 0, 1, 'MAD', 3, 0, 'active', 109, '2026-03-14 13:13:50', '2026-03-14 16:06:06', '2023-2027'),
+	(97, 'NAAN-II', 'NAAN MUDHALVAN II', '', 6, 5, '2025-2026', 3, 'odd', NULL, 4.00, 'Project', 0, 1, 'CAD', 3, 0, 'active', 109, '2026-03-14 13:13:50', '2026-03-14 13:13:50', '2025'),
+	(98, 'CCW332', 'Digital Marketing', '', 6, 6, '2025-2026', 3, 'even', NULL, 4.00, 'Theory+Practical', 0, 1, 'MAD', 3, 2, 'active', 109, '2026-03-14 13:13:50', '2026-03-14 16:18:39', '2023-2027'),
+	(100, 'OMA351', 'Graph Theory', '', 6, 6, '2025-2026', 3, 'even', NULL, 4.00, 'Theory', 0, 0, NULL, 3, 0, 'active', 109, '2026-03-14 13:13:50', '2026-03-14 16:39:13', '2023-2027'),
+	(102, 'CS3691', '	Embedded Systems and IoT', '', 6, 6, '2025-2026', 3, 'even', NULL, 4.00, 'Theory+Practical', 0, 1, '	Embedded Systems and IoT', 3, 0, 'active', 109, '2026-03-14 17:11:46', '2026-03-14 17:16:59', '2023-2027'),
+	(103, 'GE3451', 'Well being with Traditional Ayervedic and Yoga', '', 6, 6, '2025-2026', 3, 'even', NULL, 4.00, 'Theory+Practical', 0, 0, NULL, 3, 0, 'active', 109, '2026-03-14 17:15:20', '2026-03-14 17:15:20', '2023-2027'),
+	(104, 'CCS332', 'App Development', '', 6, 6, '2025-2026', 3, 'even', NULL, 4.00, 'Theory+Practical', 1, 0, NULL, 3, 0, 'active', 109, '2026-03-15 08:04:40', '2026-03-24 20:37:33', '2023-2027'),
+	(105, '', 'LIBRARY', '', 6, 6, '2025-2026', 3, 'even', NULL, 4.00, 'Theory+Practical', 1, 0, NULL, 3, 0, 'active', 109, '2026-03-15 08:12:01', '2026-03-25 12:43:59', '2023-2027'),
+	(106, '.', 'Placement', '', 6, 6, '2025-2026', 3, 'even', NULL, 4.00, 'Theory+Practical', 0, 0, NULL, 3, 0, 'active', 109, '2026-03-15 08:12:33', '2026-03-15 08:12:33', '2023-2027'),
+	(107, 'MH', 'MINI-HACKATHON', '', 6, 6, '2025-2026', 3, 'even', NULL, 4.00, 'Practical', 1, 0, NULL, 3, 0, 'active', 109, '2026-03-15 08:36:47', '2026-03-17 04:05:30', '2023-2027'),
+	(108, 'CS3452', 'THEORY OF COMPUTATION', '', 6, 4, '2025-2026', 2, 'even', NULL, 4.00, 'Theory', 0, 0, NULL, 3, 0, 'active', 109, '2026-03-23 16:15:54', '2026-03-23 16:15:54', '2024-2028'),
+	(109, 'CS3491', 'ARTIFICIAL INTELLIGENCE AND MACHINE LEARNING', '', 6, 5, '2025-2026', 3, 'even', NULL, 4.00, 'Theory+Practical', 0, 1, 'DENNIS LAB', 3, 0, 'active', 109, '2026-03-23 16:17:06', '2026-03-23 16:17:06', '2024-2028'),
+	(110, 'CS3492', 'DATABASE MANAGEMENT SYSTEM', '', 6, 4, '2025-2026', 2, 'even', NULL, 4.00, 'Theory', 0, 1, 'DATABASE MANAGEMENT SYSTEM LABORATORY', 3, 0, 'active', 109, '2026-03-23 16:18:08', '2026-03-23 16:18:08', '2024-2028'),
+	(111, 'CCS356', 'OBJECT ORIENTED SOFTWARE ENGINEERING', '', 1, 6, '2025-2056', 3, 'even', NULL, 4.00, 'Theory', 0, 1, 'LINUS LAB', 3, 0, 'active', 109, '2026-03-25 06:57:25', '2026-03-25 06:59:18', '2023-2027'),
+	(112, 'CCS336', 'CLOUD SERVICES MANAGEMENT', '', 1, 6, '2025-2026', 3, 'even', NULL, 4.00, 'Theory+Practical', 0, 1, 'LINUS LAB', 3, 0, 'active', 109, '2026-03-25 07:00:23', '2026-03-25 10:32:13', '2023-2027'),
+	(114, 'CCS362', 'SECURITY AND PRIVACY IN CLOUD(TCL)', '', 1, 6, '2025-2026', 3, 'even', NULL, 4.00, 'Theory+Practical', 0, 1, 'LINUS', 3, 0, 'active', 109, '2026-03-25 07:01:51', '2026-03-25 10:31:54', '2023-2027'),
+	(115, 'MX3089', 'INDUSTRIAL SAFETY', '', 1, 6, '2025-2026', 3, 'even', NULL, 4.00, 'Theory', 0, 0, NULL, 3, 0, 'active', 109, '2026-03-25 07:02:40', '2026-03-25 10:45:04', '2023-2027'),
+	(116, 'CS3691', 'EMBEDDED SYSTEM AND IoT', '', 1, 6, '2025-2026', 3, 'even', NULL, 4.00, 'Theory', 0, 1, NULL, 3, 0, 'active', 109, '2026-03-25 07:15:05', '2026-03-25 12:45:24', '2023-2027'),
+	(117, 'OMA351', 'GRAPH THEORY', '', 1, 6, '2025-2026', 3, 'even', NULL, 4.00, 'Theory', 0, 0, NULL, 3, 0, 'active', 109, '2026-03-25 07:17:18', '2026-03-25 12:47:35', '2023-2027'),
+	(118, '', 'LIBRARY/ SPORTS', '', 1, 6, '2025-2026', 3, 'even', NULL, 4.00, 'Theory', 0, 0, NULL, 3, 0, 'active', 109, '2026-03-25 07:18:33', '2026-03-25 12:48:41', '2023-2027'),
+	(119, '', 'PLACEMENT TRAINING', '', 1, 6, '2025-2026', 3, 'even', NULL, 4.00, 'Theory', 0, 0, NULL, 3, 0, 'active', 109, '2026-03-25 07:19:31', '2026-03-25 12:49:39', '2023-2027'),
+	(120, 'CCS341', 'DATA WAREHOUSING', '', 1, 6, '2025-2026', 3, 'even', NULL, 4.00, 'Theory+Practical', 0, 1, 'LINUS', 3, 0, 'active', 109, '2026-03-25 07:26:15', '2026-03-25 10:30:37', '2023-2027'),
+	(121, '-', 'HACKATHON', '', 1, 6, '2025-2026', 3, 'even', NULL, 4.00, 'Practical', 0, 0, NULL, 3, 0, 'active', 109, '2026-03-25 07:29:25', '2026-03-25 07:29:25', '2023-2027'),
+	(122, 'CS3452-', 'THEORY OF COMPUTATION', '', 1, 4, '2025-2026', 2, 'even', NULL, 3.00, 'Theory', 0, 0, NULL, 3, 0, 'active', 109, '2026-03-25 10:20:59', '2026-03-25 10:32:30', '2024-2028'),
+	(123, 'CS3491-', 'ARTIFICIAL INTELLIGENCE AND MACHINE LEARNING', '', 1, 4, '2025-2026', 2, 'even', NULL, 4.00, 'Theory+Practical', 0, 0, NULL, 3, 0, 'active', 109, '2026-03-25 10:22:48', '2026-03-25 10:32:48', '2024-2028'),
+	(124, 'CS3492-', 'DATABASE MANAGEMENT SYSTEM', '', 1, 4, '2025-2026', 2, 'even', NULL, 1.00, 'Theory', 0, 0, NULL, 3, 0, 'active', 109, '2026-03-25 10:25:20', '2026-03-25 10:33:07', '2024-2028'),
+	(125, 'CS3401', 'ALGORITHMS', '', 1, 4, '2025-2026', 2, 'even', NULL, 4.00, 'Theory+Practical', 0, 0, NULL, 3, 0, 'active', 109, '2026-03-25 10:26:50', '2026-03-25 10:31:57', '2024-2028'),
+	(126, 'CS3451', 'INTRODUCTION TO OPERATING SYSTEMS', '', 1, 4, '2025-2026', 2, 'even', NULL, 3.00, 'Theory', 0, 0, NULL, 3, 0, 'active', 109, '2026-03-25 10:30:14', '2026-03-25 10:32:13', '2024-2028'),
+	(127, 'GE3451-', 'ENVIRONMENTAL SCIENCES AND SUSTAINABILITY', '', 1, 4, '2025-2026', 2, 'even', NULL, 2.00, 'Theory', 0, 0, NULL, 3, 0, 'active', 109, '2026-03-25 10:35:26', '2026-03-25 10:35:26', '2024-2028'),
+	(128, 'CS3461', 'OPERATING SYSTEMS LABORATORY', '', 1, 4, '2025-2026', 2, 'even', NULL, 4.00, 'Practical', 0, 1, 'Machine Learning Lab', 3, 0, 'active', 109, '2026-03-25 10:38:44', '2026-03-25 11:06:32', '2024-2028'),
+	(129, 'CS3481', 'DATABASE MANAGEMENT SYSTEM LABORATORY', '', 1, 4, '2025-2026', 2, 'even', NULL, 4.00, 'Practical', 0, 1, 'DATABASE PROGRAMMING LAB', 3, 0, 'active', 109, '2026-03-25 10:39:57', '2026-03-25 11:07:16', '2024-2028'),
+	(130, 'NA', 'LIBRARY', '', 1, 4, '2025-2026', 2, 'even', NULL, 4.00, 'Theory', 0, 0, NULL, 3, 0, 'active', 109, '2026-03-25 10:42:06', '2026-03-25 10:42:06', '2024-2028'),
+	(131, 'NA-', 'PLACEMENT TRAINING', '', 1, 4, '2025-2026', 2, 'even', NULL, 4.00, 'Theory', 0, 0, NULL, 3, 0, 'active', 109, '2026-03-25 11:02:36', '2026-03-25 11:02:36', '2024-2028'),
+	(132, 'NA--', 'SPORTS', '', 1, 4, '2025-2026', 2, 'even', NULL, 3.00, 'Theory', 0, 0, NULL, 3, 0, 'active', 109, '2026-03-25 11:03:16', '2026-03-25 11:03:16', '2024-2028'),
+	(133, 'CS3491--', 'ARTIFICIAL INTELLIGENCE AND MACHINE LEARNING', '', 1, 4, '2025-2026', 2, 'even', NULL, 4.00, 'Practical', 0, 1, 'MOBILE APPLICATION DEVELOPMENT LAB', 3, 0, 'active', 109, '2026-03-25 11:05:36', '2026-03-25 11:05:36', '2024-2028'),
+	(134, 'CS3401-', 'ALGORITHMS', '', 1, 4, '2025-2026', 2, 'even', NULL, 4.00, 'Practical', 0, 1, 'MOBILE APPLICATION DEVELOPMENT LAB', 3, 0, 'active', 109, '2026-03-25 11:09:24', '2026-03-25 11:09:24', '2024-2028'),
+	(135, 'CCS356-', 'OBJECT ORIENTED SOFTWARE  ENGINEERING', '', 1, 6, '2025-2026', 3, 'even', NULL, 4.00, 'Practical', 0, 1, 'Machine Learning Lab', 3, 0, 'active', 109, '2026-03-25 14:32:17', '2026-03-25 14:32:17', '2023-2027'),
+	(136, 'CS3691-', 'EMBEDDED SYSTEM AND IoT', '', 1, 6, '2025-2026', 3, 'even', NULL, 4.00, 'Practical', 0, 1, '-', 3, 0, 'active', 109, '2026-03-25 14:35:13', '2026-03-25 14:35:13', '2023-2027'),
+	(137, 'CCS336-', 'CLOUD SERVICES MANAGEMENT', '', 1, 6, '2025-2026', 3, 'even', NULL, 3.00, 'Practical', 0, 1, 'MOBILE APPLICATION DEVELOPMENT LAB', 3, 0, 'active', 109, '2026-03-25 14:38:15', '2026-03-25 14:38:15', '2023-2027'),
+	(138, 'CCS341-', 'DATA WAREHOUSING', '', 1, 6, '2025-2026', 3, 'even', NULL, 3.00, 'Practical', 0, 1, 'MECH CADD Lab', 3, 0, 'active', 109, '2026-03-25 14:41:03', '2026-03-25 14:41:03', '2023-2027'),
+	(139, 'CCS362-', 'SECURITY AND PRIVACY IN CLOUD', '', 1, 6, '2025-2026', 3, 'even', NULL, 3.00, 'Practical', 0, 1, 'MOBILE APPLICATION DEVELOPMENT LAB', 3, 0, 'active', 109, '2026-03-25 14:42:48', '2026-03-25 14:42:48', '2023-2027');
 
--- --------------------------------------------------------
-
---
--- Table structure for table `subject_class_mappings`
---
-
-CREATE TABLE `subject_class_mappings` (
-  `id` int(11) NOT NULL,
-  `subject_id` int(11) NOT NULL,
-  `class_id` int(11) NOT NULL,
-  `department_id` int(11) NOT NULL,
-  `semester` tinyint(2) NOT NULL,
-  `academic_year` varchar(9) NOT NULL,
-  `is_core` tinyint(1) NOT NULL DEFAULT 1,
-  `status` enum('active','inactive') NOT NULL DEFAULT 'active',
-  `created_at` datetime NOT NULL DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `subject_class_mappings`
---
-
-INSERT INTO `subject_class_mappings` (`id`, `subject_id`, `class_id`, `department_id`, `semester`, `academic_year`, `is_core`, `status`, `created_at`) VALUES
-(8, 95, 21, 6, 6, '2026-2027', 1, 'active', '2026-03-14 15:09:21'),
-(9, 102, 21, 6, 6, '2026-2027', 1, 'active', '2026-03-14 17:15:37'),
-(10, 103, 21, 6, 6, '2026-2027', 1, 'active', '2026-03-14 17:15:48'),
-(11, 100, 21, 6, 6, '2026-2027', 1, 'active', '2026-03-14 17:16:15'),
-(12, 90, 21, 6, 6, '2026-2027', 1, 'active', '2026-03-14 17:16:38'),
-(13, 98, 21, 6, 6, '2026-2027', 1, 'active', '2026-03-14 17:16:46'),
-(14, 94, 21, 6, 6, '2026-2027', 1, 'active', '2026-03-15 08:05:34'),
-(15, 105, 21, 6, 6, '2026-2027', 1, 'active', '2026-03-15 08:13:02'),
-(16, 106, 21, 6, 6, '2026-2027', 1, 'active', '2026-03-15 08:13:11'),
-(17, 107, 21, 6, 6, '2026-2027', 1, 'active', '2026-03-15 08:37:44');
-
--- --------------------------------------------------------
-
---
--- Table structure for table `timetable_master`
---
-
-CREATE TABLE `timetable_master` (
-  `id` int(11) NOT NULL,
+-- Dumping structure for table eduvertex.timetable_master
+CREATE TABLE IF NOT EXISTS `timetable_master` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `class_id` int(11) NOT NULL,
   `department_id` int(11) NOT NULL,
   `academic_year` varchar(9) NOT NULL,
-  `semester` tinyint(2) UNSIGNED NOT NULL,
+  `semester` tinyint(2) unsigned NOT NULL,
   `semester_type` enum('odd','even') NOT NULL DEFAULT 'even',
   `batch` varchar(20) DEFAULT NULL,
   `room_no` varchar(20) DEFAULT NULL,
   `effective_from` date NOT NULL,
   `effective_to` date DEFAULT NULL,
   `revision_no` varchar(30) DEFAULT NULL,
-  `status` enum('draft','active','archived') NOT NULL DEFAULT 'draft',
+  `status` enum('draft','pending_approval','active','inactive') NOT NULL DEFAULT 'draft',
   `class_coordinator_id` int(11) DEFAULT NULL,
   `asst_coordinator_id` int(11) DEFAULT NULL,
   `timetable_incharge_id` int(11) DEFAULT NULL,
@@ -1521,27 +3151,35 @@ CREATE TABLE `timetable_master` (
   `approved_at` datetime DEFAULT NULL,
   `created_by` int(11) NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_active_class_sem` (`class_id`,`academic_year`,`semester`,`status`),
+  KEY `idx_ttm_class` (`class_id`),
+  KEY `idx_ttm_dept` (`department_id`),
+  KEY `idx_ttm_status` (`status`),
+  KEY `idx_ttm_ci` (`class_coordinator_id`),
+  KEY `idx_ttm_hod` (`hod_id`),
+  KEY `fk_ttm_asst` (`asst_coordinator_id`),
+  CONSTRAINT `fk_ttm_asst` FOREIGN KEY (`asst_coordinator_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_ttm_class` FOREIGN KEY (`class_id`) REFERENCES `classes` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_ttm_coord` FOREIGN KEY (`class_coordinator_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_ttm_dept` FOREIGN KEY (`department_id`) REFERENCES `departments` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_ttm_hod` FOREIGN KEY (`hod_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE SET NULL
+) ENGINE=InnoDB AUTO_INCREMENT=48 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
---
--- Dumping data for table `timetable_master`
---
-
+-- Dumping data for table eduvertex.timetable_master: ~4 rows (approximately)
 INSERT INTO `timetable_master` (`id`, `class_id`, `department_id`, `academic_year`, `semester`, `semester_type`, `batch`, `room_no`, `effective_from`, `effective_to`, `revision_no`, `status`, `class_coordinator_id`, `asst_coordinator_id`, `timetable_incharge_id`, `hod_id`, `approved_by`, `approved_at`, `created_by`, `created_at`, `updated_at`) VALUES
-(1, 21, 6, '2025-2026', 6, 'even', '2023-2027', 'CR-15', '2026-01-05', NULL, '05.01.2026/01', 'active', 406, 496, 406, 435, NULL, NULL, 435, '2026-03-14 13:13:50', '2026-03-20 16:36:56');
+	(1, 21, 6, '2025-2026', 6, 'even', '2023-2027', 'CR-15', '2026-01-05', NULL, '05.01.2026/01', 'active', 406, 496, 406, 435, NULL, NULL, 435, '2026-03-14 13:13:50', '2026-03-26 13:32:41'),
+	(3, 23, 6, '2026-2027', 1, 'odd', '2024-2028', 'CR-17', '2026-03-25', NULL, NULL, 'draft', 522, 496, 406, 435, NULL, NULL, 435, '2026-03-25 05:43:50', '2026-03-26 10:16:27'),
+	(5, 25, 1, '2026-2027', 6, 'even', '2023-2027', 'CR-10', '2026-01-05', NULL, '01', 'draft', 463, 465, NULL, 517, NULL, NULL, 517, '2026-03-25 10:43:09', '2026-03-25 10:46:59'),
+	(46, 26, 1, '2026-2027', 8, 'even', '2022-2028', 'CR-09', '2026-01-05', NULL, '05-01-2026', 'draft', 466, NULL, NULL, 517, NULL, NULL, 517, '2026-03-25 10:52:30', '2026-03-25 11:03:31');
 
--- --------------------------------------------------------
-
---
--- Table structure for table `timetable_master_slots`
---
-
-CREATE TABLE `timetable_master_slots` (
-  `id` int(11) NOT NULL,
+-- Dumping structure for table eduvertex.timetable_master_slots
+CREATE TABLE IF NOT EXISTS `timetable_master_slots` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `master_id` int(11) NOT NULL,
   `day` enum('Monday','Tuesday','Wednesday','Thursday','Friday','Saturday') NOT NULL,
-  `period_slot_id` tinyint(3) UNSIGNED NOT NULL,
+  `period_slot_id` tinyint(3) unsigned NOT NULL,
   `subject_id` int(11) DEFAULT NULL,
   `faculty_id` int(11) DEFAULT NULL,
   `session_type` enum('theory','lab','tutorial','activity','project','free') NOT NULL DEFAULT 'theory',
@@ -1551,83 +3189,104 @@ CREATE TABLE `timetable_master_slots` (
   `room` varchar(50) DEFAULT NULL,
   `notes` varchar(200) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_slot_day_period` (`master_id`,`day`,`period_slot_id`,`lab_group`),
+  KEY `idx_tms_master` (`master_id`),
+  KEY `idx_tms_faculty` (`faculty_id`),
+  KEY `idx_tms_subject` (`subject_id`),
+  KEY `idx_tms_period` (`period_slot_id`),
+  CONSTRAINT `fk_tms_faculty` FOREIGN KEY (`faculty_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_tms_master` FOREIGN KEY (`master_id`) REFERENCES `timetable_master` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_tms_period` FOREIGN KEY (`period_slot_id`) REFERENCES `period_slots` (`id`),
+  CONSTRAINT `fk_tms_subject` FOREIGN KEY (`subject_id`) REFERENCES `subjects` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB AUTO_INCREMENT=428 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
---
--- Dumping data for table `timetable_master_slots`
---
-
+-- Dumping data for table eduvertex.timetable_master_slots: ~79 rows (approximately)
 INSERT INTO `timetable_master_slots` (`id`, `master_id`, `day`, `period_slot_id`, `subject_id`, `faculty_id`, `session_type`, `is_lab_session`, `lab_pair_slot_id`, `lab_group`, `room`, `notes`, `created_at`, `updated_at`) VALUES
-(329, 1, 'Monday', 1, 103, 513, 'tutorial', 0, NULL, NULL, NULL, 'YOGA', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
-(330, 1, 'Monday', 2, 102, 507, 'theory', 0, NULL, NULL, 'CR-15', 'ESIOT', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
-(331, 1, 'Monday', 4, 98, 406, 'theory', 0, NULL, NULL, 'CR-15', 'DM', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
-(332, 1, 'Monday', 6, 100, NULL, 'theory', 0, NULL, NULL, 'CR-15', 'GT', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
-(333, 1, 'Monday', 7, 94, 496, 'theory', 0, NULL, NULL, 'CR-15', 'APP', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
-(334, 1, 'Monday', 9, 98, 406, 'theory', 0, NULL, NULL, 'CR-15', 'DM', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
-(335, 1, 'Monday', 10, 94, 496, 'theory', 0, NULL, NULL, 'CR-15', 'APP', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
-(336, 1, 'Tuesday', 1, 94, 496, 'lab', 0, NULL, NULL, NULL, 'APP LAB', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
-(337, 1, 'Tuesday', 2, 94, 496, 'lab', 0, NULL, NULL, NULL, 'APP LAB', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
-(338, 1, 'Tuesday', 4, 100, NULL, 'theory', 0, NULL, NULL, 'CR-15', 'GT', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
-(339, 1, 'Tuesday', 6, 102, 507, 'lab', 0, NULL, NULL, NULL, 'ESIOT LAB', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
-(340, 1, 'Tuesday', 7, 102, 507, 'lab', 0, NULL, NULL, NULL, 'ESIOT LAB', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
-(341, 1, 'Tuesday', 9, 90, 435, 'theory', 0, NULL, NULL, 'CR-15', 'PPL', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
-(342, 1, 'Tuesday', 10, 105, NULL, 'free', 0, NULL, NULL, 'LIBRARY', 'LIBRARY', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
-(343, 1, 'Wednesday', 1, 102, 507, 'theory', 0, NULL, NULL, 'CR-15', 'ESIOT', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
-(344, 1, 'Wednesday', 2, 94, 496, 'theory', 0, NULL, NULL, 'CR-15', 'APP', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
-(345, 1, 'Wednesday', 4, 100, NULL, 'theory', 0, NULL, NULL, 'CR-15', 'GT', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
-(346, 1, 'Wednesday', 6, 90, 435, 'theory', 0, NULL, NULL, 'CR-15', 'PPL', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
-(347, 1, 'Wednesday', 7, 106, NULL, 'activity', 0, NULL, NULL, 'CR-15', 'PLACEMENT', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
-(348, 1, 'Wednesday', 9, 106, NULL, 'activity', 0, NULL, NULL, 'CR-15', 'PLACEMENT', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
-(349, 1, 'Wednesday', 10, 106, NULL, 'activity', 0, NULL, NULL, 'CR-15', 'PLACEMENT', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
-(350, 1, 'Thursday', 1, 98, 406, 'theory', 0, NULL, NULL, 'CR-15', 'DM', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
-(351, 1, 'Thursday', 2, 90, 435, 'theory', 0, NULL, NULL, 'CR-15', 'PPL', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
-(352, 1, 'Thursday', 4, 102, 507, 'theory', 0, NULL, NULL, 'CR-15', 'ESIOT', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
-(353, 1, 'Thursday', 6, 94, 496, 'theory', 0, NULL, NULL, 'CR-15', 'APP', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
-(354, 1, 'Thursday', 7, 100, NULL, 'theory', 0, NULL, NULL, 'CR-15', 'GT', '2026-03-15 14:48:29', '2026-03-19 06:51:00'),
-(355, 1, 'Thursday', 9, 98, 406, 'lab', 0, NULL, NULL, NULL, 'DM LAB', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
-(356, 1, 'Thursday', 10, 98, 406, 'lab', 0, NULL, NULL, NULL, 'DM LAB', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
-(357, 1, 'Friday', 1, 95, 406, 'project', 0, NULL, NULL, NULL, 'NM', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
-(358, 1, 'Friday', 2, 95, 406, 'project', 0, NULL, NULL, NULL, 'NM', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
-(359, 1, 'Friday', 4, 95, 406, 'project', 0, NULL, NULL, NULL, NULL, '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
-(360, 1, 'Friday', 6, 95, 406, 'project', 0, NULL, NULL, NULL, 'NAAN', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
-(361, 1, 'Friday', 7, 95, 406, 'project', 0, NULL, NULL, NULL, 'MUDHALVAN', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
-(362, 1, 'Friday', 9, 95, 406, 'project', 0, NULL, NULL, NULL, NULL, '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
-(363, 1, 'Friday', 10, 95, 406, 'project', 0, NULL, NULL, NULL, NULL, '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
-(364, 1, 'Saturday', 1, 100, NULL, 'theory', 0, NULL, NULL, 'CR-15', 'GT', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
-(365, 1, 'Saturday', 2, 90, 435, 'theory', 0, NULL, NULL, 'CR-15', 'PPL', '2026-03-15 14:48:29', '2026-03-21 06:23:43'),
-(366, 1, 'Saturday', 4, 102, 507, 'theory', 0, NULL, NULL, 'CR-15', 'ESIOT', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
-(367, 1, 'Saturday', 6, 94, 496, 'theory', 0, NULL, NULL, 'CR-15', 'APP', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
-(368, 1, 'Saturday', 7, 98, 406, 'theory', 0, NULL, NULL, 'CR-15', 'DM', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
-(369, 1, 'Saturday', 9, 107, NULL, 'activity', 0, NULL, NULL, 'CR-15', 'MINI HACKATHON', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
-(370, 1, 'Saturday', 10, 107, NULL, 'activity', 0, NULL, NULL, 'CR-15', 'MINI HACKATHON', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
-(371, 1, 'Monday', 3, NULL, NULL, '', 0, NULL, NULL, NULL, 'BREAK', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
-(372, 1, 'Monday', 5, NULL, NULL, '', 0, NULL, NULL, NULL, 'LUNCH BREAK', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
-(373, 1, 'Monday', 8, NULL, NULL, '', 0, NULL, NULL, NULL, 'BREAK', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
-(374, 1, 'Tuesday', 3, NULL, NULL, '', 0, NULL, NULL, NULL, 'BREAK', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
-(375, 1, 'Tuesday', 5, NULL, NULL, '', 0, NULL, NULL, NULL, 'LUNCH BREAK', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
-(376, 1, 'Tuesday', 8, NULL, NULL, '', 0, NULL, NULL, NULL, 'BREAK', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
-(377, 1, 'Wednesday', 3, NULL, NULL, '', 0, NULL, NULL, NULL, 'BREAK', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
-(378, 1, 'Wednesday', 5, NULL, NULL, '', 0, NULL, NULL, 'LUNCH BREAK', 'LUNCH BREAK', '2026-03-15 14:48:29', '2026-03-15 14:53:06'),
-(379, 1, 'Wednesday', 8, NULL, NULL, '', 0, NULL, NULL, NULL, 'BREAK', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
-(380, 1, 'Thursday', 3, NULL, NULL, '', 0, NULL, NULL, NULL, 'BREAK', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
-(381, 1, 'Thursday', 5, NULL, NULL, '', 0, NULL, NULL, NULL, 'LUNCH BREAK', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
-(382, 1, 'Thursday', 8, NULL, NULL, '', 0, NULL, NULL, NULL, 'BREAK', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
-(383, 1, 'Friday', 3, NULL, NULL, '', 0, NULL, NULL, NULL, 'BREAK', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
-(384, 1, 'Friday', 5, NULL, NULL, '', 0, NULL, NULL, NULL, 'LUNCH BREAK', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
-(385, 1, 'Friday', 8, NULL, NULL, '', 0, NULL, NULL, NULL, 'BREAK', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
-(386, 1, 'Saturday', 3, NULL, NULL, '', 0, NULL, NULL, NULL, 'BREAK', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
-(387, 1, 'Saturday', 5, NULL, NULL, '', 0, NULL, NULL, NULL, 'LUNCH BREAK', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
-(388, 1, 'Saturday', 8, NULL, NULL, '', 0, NULL, NULL, NULL, 'BREAK', '2026-03-15 14:48:29', '2026-03-15 14:48:29');
+	(329, 1, 'Monday', 1, 103, 513, 'tutorial', 0, NULL, NULL, NULL, 'YOGA', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
+	(330, 1, 'Monday', 2, 102, 507, 'theory', 0, NULL, NULL, 'CR-15', 'ESIOT', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
+	(331, 1, 'Monday', 4, 98, 406, 'theory', 0, NULL, NULL, 'CR-15', 'DM', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
+	(332, 1, 'Monday', 6, 100, NULL, 'theory', 0, NULL, NULL, 'CR-15', 'GT', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
+	(333, 1, 'Monday', 7, 94, 496, 'theory', 0, NULL, NULL, 'CR-15', 'APP', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
+	(334, 1, 'Monday', 9, 98, 406, 'theory', 0, NULL, NULL, 'CR-15', 'DM', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
+	(335, 1, 'Monday', 10, 94, 496, 'theory', 0, NULL, NULL, 'CR-15', 'APP', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
+	(336, 1, 'Tuesday', 1, 94, 496, 'lab', 0, NULL, NULL, NULL, 'APP LAB', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
+	(337, 1, 'Tuesday', 2, 94, 496, 'lab', 0, NULL, NULL, NULL, 'APP LAB', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
+	(338, 1, 'Tuesday', 4, 100, NULL, 'theory', 0, NULL, NULL, 'CR-15', 'GT', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
+	(339, 1, 'Tuesday', 6, 102, 507, 'lab', 0, NULL, NULL, NULL, 'ESIOT LAB', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
+	(340, 1, 'Tuesday', 7, 102, 507, 'lab', 0, NULL, NULL, NULL, 'ESIOT LAB', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
+	(341, 1, 'Tuesday', 9, 90, 435, 'theory', 0, NULL, NULL, 'CR-15', 'PPL', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
+	(342, 1, 'Tuesday', 10, 105, NULL, 'free', 0, NULL, NULL, 'LIBRARY', 'LIBRARY', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
+	(343, 1, 'Wednesday', 1, 102, 507, 'theory', 0, NULL, NULL, 'CR-15', 'ESIOT', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
+	(344, 1, 'Wednesday', 2, 94, 496, 'theory', 0, NULL, NULL, 'CR-15', 'APP', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
+	(345, 1, 'Wednesday', 4, 100, NULL, 'theory', 0, NULL, NULL, 'CR-15', 'GT', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
+	(346, 1, 'Wednesday', 6, 90, 435, 'theory', 0, NULL, NULL, 'CR-15', 'PPL', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
+	(347, 1, 'Wednesday', 7, 106, NULL, 'activity', 0, NULL, NULL, 'CR-15', 'PLACEMENT', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
+	(348, 1, 'Wednesday', 9, 106, NULL, 'activity', 0, NULL, NULL, 'CR-15', 'PLACEMENT', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
+	(349, 1, 'Wednesday', 10, 106, NULL, 'activity', 0, NULL, NULL, 'CR-15', 'PLACEMENT', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
+	(350, 1, 'Thursday', 1, 98, 406, 'theory', 0, NULL, NULL, 'CR-15', 'DM', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
+	(351, 1, 'Thursday', 2, 90, 435, 'theory', 0, NULL, NULL, 'CR-15', 'PPL', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
+	(352, 1, 'Thursday', 4, 102, 507, 'theory', 0, NULL, NULL, 'CR-15', 'ESIOT', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
+	(353, 1, 'Thursday', 6, 94, 496, 'theory', 0, NULL, NULL, 'CR-15', 'APP', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
+	(354, 1, 'Thursday', 7, 100, NULL, 'theory', 0, NULL, NULL, 'CR-15', 'GT', '2026-03-15 14:48:29', '2026-03-19 06:51:00'),
+	(355, 1, 'Thursday', 9, 98, 406, 'lab', 0, NULL, NULL, NULL, 'DM LAB', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
+	(356, 1, 'Thursday', 10, 98, 406, 'lab', 0, NULL, NULL, NULL, 'DM LAB', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
+	(357, 1, 'Friday', 1, 95, 406, 'project', 0, NULL, NULL, NULL, 'NM', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
+	(358, 1, 'Friday', 2, 95, 406, 'project', 0, NULL, NULL, NULL, 'NM', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
+	(359, 1, 'Friday', 4, 95, 406, 'project', 0, NULL, NULL, NULL, NULL, '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
+	(360, 1, 'Friday', 6, 95, 406, 'project', 0, NULL, NULL, NULL, 'NAAN', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
+	(361, 1, 'Friday', 7, 95, 406, 'project', 0, NULL, NULL, NULL, 'MUDHALVAN', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
+	(362, 1, 'Friday', 9, 95, 406, 'project', 0, NULL, NULL, NULL, NULL, '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
+	(363, 1, 'Friday', 10, 95, 406, 'project', 0, NULL, NULL, NULL, NULL, '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
+	(364, 1, 'Saturday', 1, 100, NULL, 'theory', 0, NULL, NULL, 'CR-15', 'GT', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
+	(365, 1, 'Saturday', 2, 90, 435, 'theory', 0, NULL, NULL, 'CR-15', 'PPL', '2026-03-15 14:48:29', '2026-03-21 06:23:43'),
+	(366, 1, 'Saturday', 4, 102, 507, 'theory', 0, NULL, NULL, 'CR-15', 'ESIOT', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
+	(367, 1, 'Saturday', 6, 94, 496, 'theory', 0, NULL, NULL, 'CR-15', 'APP', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
+	(368, 1, 'Saturday', 7, 98, 406, 'theory', 0, NULL, NULL, 'CR-15', 'DM', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
+	(369, 1, 'Saturday', 9, 107, NULL, 'activity', 0, NULL, NULL, 'CR-15', 'MINI HACKATHON', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
+	(370, 1, 'Saturday', 10, 107, NULL, 'activity', 0, NULL, NULL, 'CR-15', 'MINI HACKATHON', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
+	(371, 1, 'Monday', 3, NULL, NULL, '', 0, NULL, NULL, NULL, 'BREAK', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
+	(372, 1, 'Monday', 5, NULL, NULL, '', 0, NULL, NULL, NULL, 'LUNCH BREAK', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
+	(373, 1, 'Monday', 8, NULL, NULL, '', 0, NULL, NULL, NULL, 'BREAK', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
+	(374, 1, 'Tuesday', 3, NULL, NULL, '', 0, NULL, NULL, NULL, 'BREAK', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
+	(375, 1, 'Tuesday', 5, NULL, NULL, '', 0, NULL, NULL, NULL, 'LUNCH BREAK', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
+	(376, 1, 'Tuesday', 8, NULL, NULL, '', 0, NULL, NULL, NULL, 'BREAK', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
+	(377, 1, 'Wednesday', 3, NULL, NULL, '', 0, NULL, NULL, NULL, 'BREAK', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
+	(378, 1, 'Wednesday', 5, NULL, NULL, '', 0, NULL, NULL, 'LUNCH BREAK', 'LUNCH BREAK', '2026-03-15 14:48:29', '2026-03-15 14:53:06'),
+	(379, 1, 'Wednesday', 8, NULL, NULL, '', 0, NULL, NULL, NULL, 'BREAK', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
+	(380, 1, 'Thursday', 3, NULL, NULL, '', 0, NULL, NULL, NULL, 'BREAK', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
+	(381, 1, 'Thursday', 5, NULL, NULL, '', 0, NULL, NULL, NULL, 'LUNCH BREAK', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
+	(382, 1, 'Thursday', 8, NULL, NULL, '', 0, NULL, NULL, NULL, 'BREAK', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
+	(383, 1, 'Friday', 3, NULL, NULL, '', 0, NULL, NULL, NULL, 'BREAK', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
+	(384, 1, 'Friday', 5, NULL, NULL, '', 0, NULL, NULL, NULL, 'LUNCH BREAK', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
+	(385, 1, 'Friday', 8, NULL, NULL, '', 0, NULL, NULL, NULL, 'BREAK', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
+	(386, 1, 'Saturday', 3, NULL, NULL, '', 0, NULL, NULL, NULL, 'BREAK', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
+	(387, 1, 'Saturday', 5, NULL, NULL, '', 0, NULL, NULL, NULL, 'LUNCH BREAK', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
+	(388, 1, 'Saturday', 8, NULL, NULL, '', 0, NULL, NULL, NULL, 'BREAK', '2026-03-15 14:48:29', '2026-03-15 14:48:29'),
+	(389, 3, 'Monday', 1, NULL, NULL, 'theory', 0, NULL, NULL, NULL, NULL, '2026-03-25 05:44:02', '2026-03-25 05:44:02'),
+	(402, 5, 'Monday', 1, 111, 466, 'theory', 0, NULL, NULL, 'CR-10', NULL, '2026-03-25 10:49:27', '2026-03-25 10:49:27'),
+	(403, 5, 'Monday', 2, 120, 465, 'theory', 0, NULL, NULL, 'CR-10', NULL, '2026-03-25 10:50:00', '2026-03-25 10:50:00'),
+	(404, 5, 'Monday', 4, 112, 461, 'theory', 0, NULL, NULL, 'CR-10', NULL, '2026-03-25 10:52:56', '2026-03-25 10:52:56'),
+	(406, 5, 'Monday', 6, 116, 510, 'theory', 0, NULL, NULL, 'CR-10', NULL, '2026-03-25 10:54:06', '2026-03-25 10:54:06'),
+	(407, 5, 'Monday', 7, 115, 485, 'theory', 0, NULL, NULL, 'CR-10', NULL, '2026-03-25 10:54:35', '2026-03-25 10:54:35'),
+	(411, 5, 'Monday', 9, 111, 466, 'lab', 0, NULL, NULL, 'mahcine learning laboratory', NULL, '2026-03-25 10:56:30', '2026-03-25 10:56:30'),
+	(412, 5, 'Monday', 10, 116, 510, 'lab', 0, NULL, NULL, 'Marconi lab', NULL, '2026-03-25 10:57:19', '2026-03-25 10:57:48'),
+	(415, 5, 'Tuesday', 1, 120, 465, 'lab', 0, NULL, NULL, 'Mech cad lab', NULL, '2026-03-25 10:59:46', '2026-03-25 10:59:46'),
+	(417, 5, 'Tuesday', 2, 120, 465, 'lab', 0, NULL, NULL, 'Mech cad lab', NULL, '2026-03-25 11:00:23', '2026-03-25 11:00:23'),
+	(418, 5, 'Tuesday', 4, 116, 510, 'theory', 0, NULL, NULL, 'CR-10', NULL, '2026-03-25 11:00:52', '2026-03-25 11:00:52'),
+	(419, 5, 'Tuesday', 6, 114, 463, 'theory', 0, NULL, NULL, 'CR-10', NULL, '2026-03-25 11:01:20', '2026-03-25 11:01:20'),
+	(420, 5, 'Tuesday', 7, 120, 465, 'theory', 0, NULL, NULL, 'CR-10', NULL, '2026-03-25 11:01:52', '2026-03-25 11:01:52'),
+	(421, 5, 'Tuesday', 9, 118, 463, 'lab', 0, NULL, NULL, 'library', NULL, '2026-03-25 11:04:33', '2026-03-25 11:04:33'),
+	(422, 5, 'Tuesday', 10, 112, 461, 'theory', 0, NULL, NULL, 'CR-10', NULL, '2026-03-25 11:05:08', '2026-03-25 11:05:08'),
+	(424, 5, 'Wednesday', 1, 117, 468, 'theory', 0, NULL, NULL, 'CR-10', NULL, '2026-03-25 11:05:40', '2026-03-25 11:05:40'),
+	(425, 5, 'Wednesday', 2, 116, 510, 'theory', 0, NULL, NULL, 'CR-10', NULL, '2026-03-25 11:05:58', '2026-03-25 11:05:58'),
+	(426, 5, 'Wednesday', 4, 114, 463, 'lab', 0, NULL, NULL, 'Mobile Application Development lab', NULL, '2026-03-25 11:06:42', '2026-03-25 11:06:42'),
+	(427, 5, 'Wednesday', 6, 114, 463, 'lab', 0, NULL, NULL, 'Mobile Application Development lab', NULL, '2026-03-25 11:07:19', '2026-03-25 11:07:19');
 
--- --------------------------------------------------------
-
---
--- Table structure for table `timetable_notifications`
---
-
-CREATE TABLE `timetable_notifications` (
-  `id` int(11) NOT NULL,
+-- Dumping structure for table eduvertex.timetable_notifications
+CREATE TABLE IF NOT EXISTS `timetable_notifications` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `slot_assignment_id` int(11) NOT NULL,
   `subject_code` varchar(20) NOT NULL,
   `subject_name` varchar(255) NOT NULL,
@@ -1636,20 +3295,21 @@ CREATE TABLE `timetable_notifications` (
   `requested_by` int(11) NOT NULL,
   `status` enum('pending','approved','rejected') DEFAULT 'pending',
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
-  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `faculty_id` (`faculty_id`),
+  KEY `slot_assignment_id` (`slot_assignment_id`),
+  CONSTRAINT `fk_notifications_assignment` FOREIGN KEY (`slot_assignment_id`) REFERENCES `timetable_slot_assignments` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- --------------------------------------------------------
+-- Dumping data for table eduvertex.timetable_notifications: ~0 rows (approximately)
 
---
--- Table structure for table `timetable_overlay`
---
-
-CREATE TABLE `timetable_overlay` (
-  `id` int(11) NOT NULL,
+-- Dumping structure for table eduvertex.timetable_overlay
+CREATE TABLE IF NOT EXISTS `timetable_overlay` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `master_id` int(11) NOT NULL,
   `overlay_date` date NOT NULL,
-  `period_slot_id` tinyint(3) UNSIGNED NOT NULL,
+  `period_slot_id` tinyint(3) unsigned NOT NULL,
   `original_faculty_id` int(11) DEFAULT NULL,
   `substitute_faculty_id` int(11) DEFAULT NULL,
   `original_subject_id` int(11) DEFAULT NULL,
@@ -1660,40 +3320,27 @@ CREATE TABLE `timetable_overlay` (
   `status` enum('active','cancelled') NOT NULL DEFAULT 'active',
   `notes` text DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_overlay` (`master_id`,`overlay_date`,`period_slot_id`),
+  KEY `idx_ov_date` (`overlay_date`),
+  KEY `idx_ov_master` (`master_id`),
+  KEY `idx_ov_orig_fac` (`original_faculty_id`),
+  KEY `idx_ov_sub_fac` (`substitute_faculty_id`),
+  KEY `idx_ov_leave` (`leave_request_id`),
+  KEY `fk_ov_period` (`period_slot_id`),
+  CONSTRAINT `fk_ov_leave` FOREIGN KEY (`leave_request_id`) REFERENCES `leave_requests` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_ov_master` FOREIGN KEY (`master_id`) REFERENCES `timetable_master` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_ov_orig` FOREIGN KEY (`original_faculty_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_ov_period` FOREIGN KEY (`period_slot_id`) REFERENCES `period_slots` (`id`),
+  CONSTRAINT `fk_ov_sub` FOREIGN KEY (`substitute_faculty_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- --------------------------------------------------------
+-- Dumping data for table eduvertex.timetable_overlay: ~0 rows (approximately)
 
---
--- Table structure for table `timetable_slots`
---
-
-CREATE TABLE `timetable_slots` (
-  `id` int(11) NOT NULL,
-  `timetable_id` int(11) NOT NULL,
-  `day` enum('Monday','Tuesday','Wednesday','Thursday','Friday','Saturday') NOT NULL,
-  `period_number` int(11) NOT NULL,
-  `start_time` time NOT NULL,
-  `end_time` time NOT NULL,
-  `subject_id` int(11) DEFAULT NULL,
-  `faculty_id` int(11) DEFAULT NULL,
-  `class_id` int(11) DEFAULT NULL,
-  `room` varchar(50) DEFAULT NULL,
-  `type` enum('lecture','lab','tutorial') DEFAULT 'lecture',
-  `status` enum('active','cancelled') DEFAULT 'active',
-  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
-  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- --------------------------------------------------------
-
---
--- Table structure for table `timetable_slot_assignments`
---
-
-CREATE TABLE `timetable_slot_assignments` (
-  `id` int(11) NOT NULL,
+-- Dumping structure for table eduvertex.timetable_slot_assignments
+CREATE TABLE IF NOT EXISTS `timetable_slot_assignments` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `timetable_id` int(11) NOT NULL,
   `class_id` int(11) NOT NULL,
   `subject_code` varchar(20) NOT NULL,
@@ -1707,17 +3354,43 @@ CREATE TABLE `timetable_slot_assignments` (
   `year` varchar(20) DEFAULT NULL,
   `status` enum('active','pending_approval','rejected') DEFAULT 'pending_approval',
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
-  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `timetable_id` (`timetable_id`),
+  KEY `faculty_id` (`faculty_id`),
+  KEY `class_id` (`class_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- --------------------------------------------------------
+-- Dumping data for table eduvertex.timetable_slot_assignments: ~0 rows (approximately)
 
---
--- Table structure for table `users`
---
+-- Dumping structure for table eduvertex.timetable_slots
+CREATE TABLE IF NOT EXISTS `timetable_slots` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `timetable_id` int(11) NOT NULL,
+  `day` enum('Monday','Tuesday','Wednesday','Thursday','Friday','Saturday') NOT NULL,
+  `period_number` int(11) NOT NULL,
+  `start_time` time NOT NULL,
+  `end_time` time NOT NULL,
+  `subject_id` int(11) DEFAULT NULL,
+  `faculty_id` int(11) DEFAULT NULL,
+  `class_id` int(11) DEFAULT NULL,
+  `room` varchar(50) DEFAULT NULL,
+  `type` enum('lecture','lab','tutorial') DEFAULT 'lecture',
+  `status` enum('active','cancelled') DEFAULT 'active',
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `timetable_id` (`timetable_id`),
+  KEY `subject_id` (`subject_id`),
+  KEY `faculty_id` (`faculty_id`),
+  KEY `class_id` (`class_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=37 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-CREATE TABLE `users` (
-  `id` int(11) NOT NULL,
+-- Dumping data for table eduvertex.timetable_slots: ~0 rows (approximately)
+
+-- Dumping structure for table eduvertex.users
+CREATE TABLE IF NOT EXISTS `users` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(100) NOT NULL,
   `email` varchar(150) NOT NULL,
   `password` varchar(255) NOT NULL,
@@ -1727,1327 +3400,192 @@ CREATE TABLE `users` (
   `createdAt` datetime NOT NULL DEFAULT current_timestamp(),
   `updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `avatar` varchar(255) DEFAULT NULL,
-  `department_id` int(11) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `department_id` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `email` (`email`),
+  UNIQUE KEY `email_2` (`email`),
+  UNIQUE KEY `email_3` (`email`),
+  UNIQUE KEY `email_4` (`email`),
+  UNIQUE KEY `email_5` (`email`),
+  UNIQUE KEY `email_6` (`email`),
+  UNIQUE KEY `email_7` (`email`),
+  UNIQUE KEY `email_8` (`email`),
+  UNIQUE KEY `email_9` (`email`),
+  UNIQUE KEY `email_10` (`email`),
+  UNIQUE KEY `email_11` (`email`),
+  UNIQUE KEY `email_12` (`email`),
+  UNIQUE KEY `email_13` (`email`),
+  UNIQUE KEY `email_14` (`email`),
+  UNIQUE KEY `email_15` (`email`),
+  UNIQUE KEY `email_16` (`email`),
+  UNIQUE KEY `email_17` (`email`),
+  UNIQUE KEY `email_18` (`email`),
+  UNIQUE KEY `email_19` (`email`),
+  UNIQUE KEY `email_20` (`email`),
+  UNIQUE KEY `email_21` (`email`),
+  UNIQUE KEY `email_22` (`email`),
+  UNIQUE KEY `email_23` (`email`),
+  UNIQUE KEY `email_24` (`email`),
+  UNIQUE KEY `email_25` (`email`),
+  UNIQUE KEY `email_26` (`email`),
+  UNIQUE KEY `email_27` (`email`),
+  UNIQUE KEY `email_28` (`email`),
+  UNIQUE KEY `email_29` (`email`),
+  UNIQUE KEY `email_30` (`email`),
+  UNIQUE KEY `email_31` (`email`),
+  UNIQUE KEY `email_32` (`email`),
+  UNIQUE KEY `email_33` (`email`),
+  UNIQUE KEY `email_34` (`email`),
+  UNIQUE KEY `email_35` (`email`),
+  UNIQUE KEY `email_36` (`email`),
+  UNIQUE KEY `email_37` (`email`),
+  UNIQUE KEY `email_38` (`email`),
+  UNIQUE KEY `email_39` (`email`),
+  UNIQUE KEY `email_40` (`email`),
+  UNIQUE KEY `email_41` (`email`),
+  UNIQUE KEY `email_42` (`email`),
+  UNIQUE KEY `email_43` (`email`),
+  UNIQUE KEY `email_44` (`email`),
+  UNIQUE KEY `email_45` (`email`),
+  UNIQUE KEY `email_46` (`email`),
+  UNIQUE KEY `email_47` (`email`),
+  UNIQUE KEY `email_48` (`email`),
+  UNIQUE KEY `email_49` (`email`),
+  UNIQUE KEY `email_50` (`email`),
+  UNIQUE KEY `email_51` (`email`),
+  UNIQUE KEY `email_52` (`email`),
+  UNIQUE KEY `email_53` (`email`),
+  UNIQUE KEY `email_54` (`email`),
+  UNIQUE KEY `email_55` (`email`),
+  UNIQUE KEY `email_56` (`email`),
+  UNIQUE KEY `email_57` (`email`),
+  UNIQUE KEY `email_58` (`email`),
+  UNIQUE KEY `email_59` (`email`),
+  UNIQUE KEY `email_60` (`email`),
+  UNIQUE KEY `email_61` (`email`),
+  UNIQUE KEY `email_62` (`email`),
+  KEY `fk_users_role_id` (`role_id`),
+  CONSTRAINT `fk_users_role_id` FOREIGN KEY (`role_id`) REFERENCES `roles` (`role_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=119 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `users`
---
-
+-- Dumping data for table eduvertex.users: ~2 rows (approximately)
 INSERT INTO `users` (`id`, `name`, `email`, `password`, `role_id`, `phone`, `isActive`, `createdAt`, `updatedAt`, `avatar`, `department_id`) VALUES
-(2, 'mathalai sundaram', 'executive@nscet.org', '$2a$10$ELjprebdIeb3GTTMKk1oZujDrXZ2g8P41gNfiqVwVCKiflkwpO1eu', 3, '9876543211', 1, '2026-03-14 13:13:50', '2026-03-14 13:13:50', NULL, NULL),
-(3, 'Academic Admin', 'academic@nscet.org', '$2a$10$rtVcTSxhiJKb4Cm3GdJWTety1jN8MAbcweTMHTRw2TQOE79tziyEq', 4, '9876543212', 1, '2026-03-14 13:13:50', '2026-03-14 13:13:50', NULL, NULL),
-(109, 'Super admin', 'nscetadmin@gmail.com', '$2a$10$ELjprebdIeb3GTTMKk1oZujDrXZ2g8P41gNfiqVwVCKiflkwpO1eu', 2, '9876543210', 1, '2026-03-14 13:13:50', '2026-03-14 13:13:50', NULL, NULL);
+	(3, 'Academic Admin', 'academic@nscet.org', '$2a$10$rtVcTSxhiJKb4Cm3GdJWTety1jN8MAbcweTMHTRw2TQOE79tziyEq', 4, '9876543212', 1, '2026-03-14 13:13:50', '2026-03-14 13:13:50', NULL, NULL),
+	(109, 'Super admin', 'nscetadmin@gmail.com', '$2a$10$ELjprebdIeb3GTTMKk1oZujDrXZ2g8P41gNfiqVwVCKiflkwpO1eu', 2, '9876543210', 1, '2026-03-14 13:13:50', '2026-03-14 13:13:50', NULL, NULL);
 
--- --------------------------------------------------------
-
---
--- Stand-in structure for view `v_effective_timetable`
--- (See below for the actual view)
---
+-- Dumping structure for view eduvertex.v_effective_timetable
+-- Creating temporary table to overcome VIEW dependency errors
 CREATE TABLE `v_effective_timetable` (
-`master_id` int(11)
-,`class_id` int(11)
-,`class_name` varchar(100)
-,`batch` varchar(20)
-,`department_id` int(11)
-,`department_name` varchar(50)
-,`academic_year` varchar(9)
-,`semester` tinyint(2) unsigned
-,`room_no` varchar(20)
-,`revision_no` varchar(30)
-,`day` enum('Monday','Tuesday','Wednesday','Thursday','Friday','Saturday')
-,`slot_order` tinyint(3) unsigned
-,`period_number` tinyint(3) unsigned
-,`period_label` varchar(20)
-,`start_time` time
-,`end_time` time
-,`slot_type` enum('teaching','break')
-,`break_name` varchar(50)
-,`effective_subject_id` int(11)
-,`effective_faculty_id` int(11)
-,`session_type` enum('theory','lab','tutorial','activity','project','free')
-,`is_lab_session` tinyint(1)
-,`lab_group` varchar(20)
-,`notes` varchar(200)
-,`room` varchar(50)
-,`source` varchar(7)
-,`overlay_date` date
-,`absent_faculty_id` int(11)
-,`overlay_reason` varchar(255)
+	`master_id` INT(11) NOT NULL,
+	`class_id` INT(11) NOT NULL,
+	`class_name` VARCHAR(1) NOT NULL COLLATE 'utf8mb4_general_ci',
+	`batch` VARCHAR(1) NULL COLLATE 'utf8mb4_general_ci',
+	`department_id` INT(11) NOT NULL,
+	`department_name` VARCHAR(1) NOT NULL COLLATE 'utf8mb4_general_ci',
+	`academic_year` VARCHAR(1) NOT NULL COLLATE 'utf8mb4_unicode_ci',
+	`semester` TINYINT(2) UNSIGNED NOT NULL,
+	`room_no` VARCHAR(1) NULL COLLATE 'utf8mb4_unicode_ci',
+	`revision_no` VARCHAR(1) NULL COLLATE 'utf8mb4_unicode_ci',
+	`day` ENUM('Monday','Tuesday','Wednesday','Thursday','Friday','Saturday') NOT NULL COLLATE 'utf8mb4_unicode_ci',
+	`slot_order` TINYINT(3) UNSIGNED NOT NULL,
+	`period_number` TINYINT(3) UNSIGNED NULL COMMENT 'I=1..VII=7; NULL for breaks',
+	`period_label` VARCHAR(1) NOT NULL COLLATE 'utf8mb4_unicode_ci',
+	`start_time` TIME NOT NULL,
+	`end_time` TIME NOT NULL,
+	`slot_type` ENUM('teaching','break') NOT NULL COLLATE 'utf8mb4_unicode_ci',
+	`break_name` VARCHAR(1) NULL COLLATE 'utf8mb4_unicode_ci',
+	`effective_subject_id` INT(11) NULL,
+	`effective_faculty_id` INT(11) NULL,
+	`session_type` ENUM('theory','lab','tutorial','activity','project','free') NOT NULL COLLATE 'utf8mb4_unicode_ci',
+	`is_lab_session` TINYINT(1) NOT NULL,
+	`lab_group` VARCHAR(1) NULL COLLATE 'utf8mb4_unicode_ci',
+	`notes` VARCHAR(1) NULL COLLATE 'utf8mb4_unicode_ci',
+	`room` VARCHAR(1) NULL COLLATE 'utf8mb4_unicode_ci',
+	`source` VARCHAR(1) NOT NULL COLLATE 'utf8mb4_uca1400_ai_ci',
+	`overlay_date` DATE NULL,
+	`absent_faculty_id` INT(11) NULL,
+	`overlay_reason` VARCHAR(1) NULL COLLATE 'utf8mb4_unicode_ci'
 );
 
--- --------------------------------------------------------
-
---
--- Stand-in structure for view `v_faculty_timetable`
--- (See below for the actual view)
---
+-- Dumping structure for view eduvertex.v_faculty_timetable
+-- Creating temporary table to overcome VIEW dependency errors
 CREATE TABLE `v_faculty_timetable` (
-`faculty_id` int(11)
-,`faculty_name` varchar(100)
-,`department_id` int(11)
-,`faculty_dept` varchar(50)
-,`designation` varchar(100)
-,`class_id` int(11)
-,`class_name` varchar(100)
-,`batch` varchar(20)
-,`academic_year` varchar(9)
-,`semester` tinyint(2) unsigned
-,`day` enum('Monday','Tuesday','Wednesday','Thursday','Friday','Saturday')
-,`slot_order` tinyint(3) unsigned
-,`period_number` tinyint(3) unsigned
-,`period_label` varchar(20)
-,`start_time` time
-,`end_time` time
-,`session_type` enum('theory','lab','tutorial','activity','project','free')
-,`is_lab_session` tinyint(1)
-,`lab_group` varchar(20)
-,`room` varchar(50)
-,`notes` varchar(200)
-,`subject_code` varchar(20)
-,`subject_name` varchar(255)
-,`master_id` int(11)
-,`slot_id` int(11)
+	`faculty_id` INT(11) NULL,
+	`faculty_name` VARCHAR(1) NOT NULL COLLATE 'utf8mb4_general_ci',
+	`department_id` INT(11) NULL,
+	`faculty_dept` VARCHAR(1) NOT NULL COLLATE 'utf8mb4_general_ci',
+	`designation` VARCHAR(1) NULL COLLATE 'utf8mb4_general_ci',
+	`class_id` INT(11) NOT NULL,
+	`class_name` VARCHAR(1) NOT NULL COLLATE 'utf8mb4_general_ci',
+	`batch` VARCHAR(1) NULL COLLATE 'utf8mb4_general_ci',
+	`academic_year` VARCHAR(1) NOT NULL COLLATE 'utf8mb4_unicode_ci',
+	`semester` TINYINT(2) UNSIGNED NOT NULL,
+	`day` ENUM('Monday','Tuesday','Wednesday','Thursday','Friday','Saturday') NOT NULL COLLATE 'utf8mb4_unicode_ci',
+	`slot_order` TINYINT(3) UNSIGNED NOT NULL,
+	`period_number` TINYINT(3) UNSIGNED NULL COMMENT 'I=1..VII=7; NULL for breaks',
+	`period_label` VARCHAR(1) NOT NULL COLLATE 'utf8mb4_unicode_ci',
+	`start_time` TIME NOT NULL,
+	`end_time` TIME NOT NULL,
+	`session_type` ENUM('theory','lab','tutorial','activity','project','free') NOT NULL COLLATE 'utf8mb4_unicode_ci',
+	`is_lab_session` TINYINT(1) NOT NULL,
+	`lab_group` VARCHAR(1) NULL COLLATE 'utf8mb4_unicode_ci',
+	`room` VARCHAR(1) NULL COLLATE 'utf8mb4_unicode_ci',
+	`notes` VARCHAR(1) NULL COLLATE 'utf8mb4_unicode_ci',
+	`subject_code` VARCHAR(1) NULL COLLATE 'utf8mb4_general_ci',
+	`subject_name` VARCHAR(1) NULL COLLATE 'utf8mb4_general_ci',
+	`master_id` INT(11) NOT NULL,
+	`slot_id` INT(11) NOT NULL
 );
 
--- --------------------------------------------------------
-
---
--- Stand-in structure for view `v_subject_attendance_report`
--- (See below for the actual view)
---
+-- Dumping structure for view eduvertex.v_subject_attendance_report
+-- Creating temporary table to overcome VIEW dependency errors
 CREATE TABLE `v_subject_attendance_report` (
-`student_id` int(11)
-,`student_name` varchar(201)
-,`rollNumber` varchar(30)
-,`subject_id` int(11)
-,`subject_code` varchar(20)
-,`subject_name` varchar(255)
-,`class_id` int(11)
-,`class_name` varchar(100)
-,`academic_year` varchar(9)
-,`semester` tinyint(2) unsigned
-,`faculty_id` int(11)
-,`faculty_name` varchar(100)
-,`total_classes` bigint(21)
-,`attended` decimal(23,0)
-,`absent_count` decimal(23,0)
-,`attendance_pct` decimal(29,2)
-,`eligibility_status` varchar(11)
+	`student_id` INT(11) NOT NULL,
+	`student_name` VARCHAR(1) NOT NULL COLLATE 'utf8mb4_general_ci',
+	`rollNumber` VARCHAR(1) NOT NULL COLLATE 'utf8mb4_general_ci',
+	`subject_id` INT(11) NOT NULL,
+	`subject_code` VARCHAR(1) NOT NULL COLLATE 'utf8mb4_general_ci',
+	`subject_name` VARCHAR(1) NOT NULL COLLATE 'utf8mb4_general_ci',
+	`class_id` INT(11) NOT NULL,
+	`class_name` VARCHAR(1) NOT NULL COLLATE 'utf8mb4_general_ci',
+	`academic_year` VARCHAR(1) NOT NULL COLLATE 'utf8mb4_unicode_ci',
+	`semester` TINYINT(2) UNSIGNED NOT NULL,
+	`faculty_id` INT(11) NOT NULL,
+	`faculty_name` VARCHAR(1) NOT NULL COLLATE 'utf8mb4_general_ci',
+	`total_classes` BIGINT(21) NOT NULL,
+	`attended` DECIMAL(23,0) NULL,
+	`absent_count` DECIMAL(23,0) NULL,
+	`attendance_pct` DECIMAL(29,2) NULL,
+	`eligibility_status` VARCHAR(1) NULL COLLATE 'utf8mb4_uca1400_ai_ci'
 );
 
--- --------------------------------------------------------
-
---
--- Structure for view `course_file_section_x`
---
+-- Removing temporary table and create final VIEW structure
 DROP TABLE IF EXISTS `course_file_section_x`;
+CREATE ALGORITHM=UNDEFINED SQL SECURITY DEFINER VIEW `course_file_section_x` AS select `clp`.`sno` AS `sno`,`clp`.`unit_number` AS `unit_number`,`clp`.`unit_label` AS `unit_label`,`clp`.`topic` AS `topic`,`clp`.`co_number` AS `co_number`,`clp`.`btl` AS `btl`,`clp`.`delivery_mode` AS `delivery_mode`,`clp`.`reference_book` AS `reference_book`,`clp`.`periods_required` AS `periods_required`,`clp`.`cumulative_periods` AS `cumulative_periods`,`clp`.`periods_taken` AS `periods_taken`,case when `clp`.`periods_taken` >= `clp`.`periods_required` then 'Y' else 'N' end AS `covered`,`fp`.`Name` AS `faculty_name`,`s`.`subject_name` AS `subject_name`,`c`.`name` AS `class_name`,`clp`.`academic_year` AS `academic_year`,`clp`.`semester` AS `semester` from (((`course_lesson_plans` `clp` join `faculty_profiles` `fp` on(`fp`.`faculty_id` = `clp`.`faculty_id`)) join `subjects` `s` on(`s`.`id` = `clp`.`subject_id`)) join `classes` `c` on(`c`.`id` = `clp`.`class_id`)) order by `clp`.`sno`
+;
 
-CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `course_file_section_x`  AS SELECT `clp`.`sno` AS `sno`, `clp`.`unit_number` AS `unit_number`, `clp`.`unit_label` AS `unit_label`, `clp`.`topic` AS `topic`, `clp`.`co_number` AS `co_number`, `clp`.`btl` AS `btl`, `clp`.`delivery_mode` AS `delivery_mode`, `clp`.`reference_book` AS `reference_book`, `clp`.`periods_required` AS `periods_required`, `clp`.`cumulative_periods` AS `cumulative_periods`, `clp`.`periods_taken` AS `periods_taken`, CASE WHEN `clp`.`periods_taken` >= `clp`.`periods_required` THEN 'Y' ELSE 'N' END AS `covered`, `fp`.`Name` AS `faculty_name`, `s`.`subject_name` AS `subject_name`, `c`.`name` AS `class_name`, `clp`.`academic_year` AS `academic_year`, `clp`.`semester` AS `semester` FROM (((`course_lesson_plans` `clp` join `faculty_profiles` `fp` on(`fp`.`faculty_id` = `clp`.`faculty_id`)) join `subjects` `s` on(`s`.`id` = `clp`.`subject_id`)) join `classes` `c` on(`c`.`id` = `clp`.`class_id`)) ORDER BY `clp`.`sno` ASC ;
-
--- --------------------------------------------------------
-
---
--- Structure for view `course_lesson_plan_progress`
---
+-- Removing temporary table and create final VIEW structure
 DROP TABLE IF EXISTS `course_lesson_plan_progress`;
+CREATE ALGORITHM=UNDEFINED SQL SECURITY DEFINER VIEW `course_lesson_plan_progress` AS select `clp`.`faculty_id` AS `faculty_id`,`clp`.`subject_id` AS `subject_id`,`clp`.`class_id` AS `class_id`,`clp`.`academic_year` AS `academic_year`,`clp`.`semester` AS `semester`,`s`.`subject_name` AS `subject_name`,`c`.`name` AS `class_name`,count(`clp`.`id`) AS `total_topics`,sum(`clp`.`periods_required`) AS `total_periods_planned`,sum(`clp`.`periods_taken`) AS `total_periods_taught`,sum(case when `clp`.`is_completed` = 1 then 1 else 0 end) AS `topics_completed`,round(100 * sum(case when `clp`.`is_completed` = 1 then 1 else 0 end) / count(`clp`.`id`),2) AS `completion_percentage` from ((`course_lesson_plans` `clp` join `subjects` `s` on(`s`.`id` = `clp`.`subject_id`)) join `classes` `c` on(`c`.`id` = `clp`.`class_id`)) group by `clp`.`faculty_id`,`clp`.`subject_id`,`clp`.`class_id`,`clp`.`academic_year`,`clp`.`semester`
+;
 
-CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `course_lesson_plan_progress`  AS SELECT `clp`.`faculty_id` AS `faculty_id`, `clp`.`subject_id` AS `subject_id`, `clp`.`class_id` AS `class_id`, `clp`.`academic_year` AS `academic_year`, `clp`.`semester` AS `semester`, `s`.`subject_name` AS `subject_name`, `c`.`name` AS `class_name`, count(`clp`.`id`) AS `total_topics`, sum(`clp`.`periods_required`) AS `total_periods_planned`, sum(`clp`.`periods_taken`) AS `total_periods_taught`, sum(case when `clp`.`is_completed` = 1 then 1 else 0 end) AS `topics_completed`, round(100 * sum(case when `clp`.`is_completed` = 1 then 1 else 0 end) / count(`clp`.`id`),2) AS `completion_percentage` FROM ((`course_lesson_plans` `clp` join `subjects` `s` on(`s`.`id` = `clp`.`subject_id`)) join `classes` `c` on(`c`.`id` = `clp`.`class_id`)) GROUP BY `clp`.`faculty_id`, `clp`.`subject_id`, `clp`.`class_id`, `clp`.`academic_year`, `clp`.`semester` ;
-
--- --------------------------------------------------------
-
---
--- Structure for view `v_effective_timetable`
---
+-- Removing temporary table and create final VIEW structure
 DROP TABLE IF EXISTS `v_effective_timetable`;
+CREATE ALGORITHM=UNDEFINED SQL SECURITY DEFINER VIEW `v_effective_timetable` AS select `tm`.`id` AS `master_id`,`tm`.`class_id` AS `class_id`,`c`.`name` AS `class_name`,`c`.`batch` AS `batch`,`tm`.`department_id` AS `department_id`,`d`.`short_name` AS `department_name`,`tm`.`academic_year` AS `academic_year`,`tm`.`semester` AS `semester`,`tm`.`room_no` AS `room_no`,`tm`.`revision_no` AS `revision_no`,`tms`.`day` AS `day`,`ps`.`slot_order` AS `slot_order`,`ps`.`period_number` AS `period_number`,`ps`.`period_label` AS `period_label`,`ps`.`start_time` AS `start_time`,`ps`.`end_time` AS `end_time`,`ps`.`slot_type` AS `slot_type`,`ps`.`break_name` AS `break_name`,coalesce(`tov`.`substitute_subject_id`,`tms`.`subject_id`) AS `effective_subject_id`,coalesce(`tov`.`substitute_faculty_id`,`tms`.`faculty_id`) AS `effective_faculty_id`,`tms`.`session_type` AS `session_type`,`tms`.`is_lab_session` AS `is_lab_session`,`tms`.`lab_group` AS `lab_group`,`tms`.`notes` AS `notes`,`tms`.`room` AS `room`,case when `tov`.`id` is not null then 'overlay' else 'master' end AS `source`,`tov`.`overlay_date` AS `overlay_date`,`tov`.`original_faculty_id` AS `absent_faculty_id`,`tov`.`reason` AS `overlay_reason` from (((((`timetable_master` `tm` join `timetable_master_slots` `tms` on(`tms`.`master_id` = `tm`.`id`)) join `period_slots` `ps` on(`ps`.`id` = `tms`.`period_slot_id`)) join `classes` `c` on(`c`.`id` = `tm`.`class_id`)) join `departments` `d` on(`d`.`id` = `tm`.`department_id`)) left join `timetable_overlay` `tov` on(`tov`.`master_id` = `tm`.`id` and `tov`.`period_slot_id` = `tms`.`period_slot_id` and `tov`.`status` = 'active')) where `tm`.`status` = 'active'
+;
 
-CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `v_effective_timetable`  AS SELECT `tm`.`id` AS `master_id`, `tm`.`class_id` AS `class_id`, `c`.`name` AS `class_name`, `c`.`batch` AS `batch`, `tm`.`department_id` AS `department_id`, `d`.`short_name` AS `department_name`, `tm`.`academic_year` AS `academic_year`, `tm`.`semester` AS `semester`, `tm`.`room_no` AS `room_no`, `tm`.`revision_no` AS `revision_no`, `tms`.`day` AS `day`, `ps`.`slot_order` AS `slot_order`, `ps`.`period_number` AS `period_number`, `ps`.`period_label` AS `period_label`, `ps`.`start_time` AS `start_time`, `ps`.`end_time` AS `end_time`, `ps`.`slot_type` AS `slot_type`, `ps`.`break_name` AS `break_name`, coalesce(`tov`.`substitute_subject_id`,`tms`.`subject_id`) AS `effective_subject_id`, coalesce(`tov`.`substitute_faculty_id`,`tms`.`faculty_id`) AS `effective_faculty_id`, `tms`.`session_type` AS `session_type`, `tms`.`is_lab_session` AS `is_lab_session`, `tms`.`lab_group` AS `lab_group`, `tms`.`notes` AS `notes`, `tms`.`room` AS `room`, CASE WHEN `tov`.`id` is not null THEN 'overlay' ELSE 'master' END AS `source`, `tov`.`overlay_date` AS `overlay_date`, `tov`.`original_faculty_id` AS `absent_faculty_id`, `tov`.`reason` AS `overlay_reason` FROM (((((`timetable_master` `tm` join `timetable_master_slots` `tms` on(`tms`.`master_id` = `tm`.`id`)) join `period_slots` `ps` on(`ps`.`id` = `tms`.`period_slot_id`)) join `classes` `c` on(`c`.`id` = `tm`.`class_id`)) join `departments` `d` on(`d`.`id` = `tm`.`department_id`)) left join `timetable_overlay` `tov` on(`tov`.`master_id` = `tm`.`id` and `tov`.`period_slot_id` = `tms`.`period_slot_id` and `tov`.`status` = 'active')) WHERE `tm`.`status` = 'active' ;
-
--- --------------------------------------------------------
-
---
--- Structure for view `v_faculty_timetable`
---
+-- Removing temporary table and create final VIEW structure
 DROP TABLE IF EXISTS `v_faculty_timetable`;
+CREATE ALGORITHM=UNDEFINED SQL SECURITY DEFINER VIEW `v_faculty_timetable` AS select `tms`.`faculty_id` AS `faculty_id`,`fp`.`Name` AS `faculty_name`,`fp`.`department_id` AS `department_id`,`d`.`short_name` AS `faculty_dept`,`fp`.`designation` AS `designation`,`tm`.`class_id` AS `class_id`,`c`.`name` AS `class_name`,`c`.`batch` AS `batch`,`tm`.`academic_year` AS `academic_year`,`tm`.`semester` AS `semester`,`tms`.`day` AS `day`,`ps`.`slot_order` AS `slot_order`,`ps`.`period_number` AS `period_number`,`ps`.`period_label` AS `period_label`,`ps`.`start_time` AS `start_time`,`ps`.`end_time` AS `end_time`,`tms`.`session_type` AS `session_type`,`tms`.`is_lab_session` AS `is_lab_session`,`tms`.`lab_group` AS `lab_group`,`tms`.`room` AS `room`,`tms`.`notes` AS `notes`,`s`.`subject_code` AS `subject_code`,`s`.`subject_name` AS `subject_name`,`tm`.`id` AS `master_id`,`tms`.`id` AS `slot_id` from ((((((`timetable_master_slots` `tms` join `timetable_master` `tm` on(`tm`.`id` = `tms`.`master_id` and `tm`.`status` = 'active')) join `period_slots` `ps` on(`ps`.`id` = `tms`.`period_slot_id` and `ps`.`slot_type` = 'teaching')) join `faculty_profiles` `fp` on(`fp`.`faculty_id` = `tms`.`faculty_id`)) join `departments` `d` on(`d`.`id` = `fp`.`department_id`)) join `classes` `c` on(`c`.`id` = `tm`.`class_id`)) left join `subjects` `s` on(`s`.`id` = `tms`.`subject_id`)) order by `tms`.`faculty_id`,field(`tms`.`day`,'Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'),`ps`.`slot_order`
+;
 
-CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `v_faculty_timetable`  AS SELECT `tms`.`faculty_id` AS `faculty_id`, `fp`.`Name` AS `faculty_name`, `fp`.`department_id` AS `department_id`, `d`.`short_name` AS `faculty_dept`, `fp`.`designation` AS `designation`, `tm`.`class_id` AS `class_id`, `c`.`name` AS `class_name`, `c`.`batch` AS `batch`, `tm`.`academic_year` AS `academic_year`, `tm`.`semester` AS `semester`, `tms`.`day` AS `day`, `ps`.`slot_order` AS `slot_order`, `ps`.`period_number` AS `period_number`, `ps`.`period_label` AS `period_label`, `ps`.`start_time` AS `start_time`, `ps`.`end_time` AS `end_time`, `tms`.`session_type` AS `session_type`, `tms`.`is_lab_session` AS `is_lab_session`, `tms`.`lab_group` AS `lab_group`, `tms`.`room` AS `room`, `tms`.`notes` AS `notes`, `s`.`subject_code` AS `subject_code`, `s`.`subject_name` AS `subject_name`, `tm`.`id` AS `master_id`, `tms`.`id` AS `slot_id` FROM ((((((`timetable_master_slots` `tms` join `timetable_master` `tm` on(`tm`.`id` = `tms`.`master_id` and `tm`.`status` = 'active')) join `period_slots` `ps` on(`ps`.`id` = `tms`.`period_slot_id` and `ps`.`slot_type` = 'teaching')) join `faculty_profiles` `fp` on(`fp`.`faculty_id` = `tms`.`faculty_id`)) join `departments` `d` on(`d`.`id` = `fp`.`department_id`)) join `classes` `c` on(`c`.`id` = `tm`.`class_id`)) left join `subjects` `s` on(`s`.`id` = `tms`.`subject_id`)) ORDER BY `tms`.`faculty_id` ASC, field(`tms`.`day`,'Monday','Tuesday','Wednesday','Thursday','Friday','Saturday') ASC, `ps`.`slot_order` ASC ;
-
--- --------------------------------------------------------
-
---
--- Structure for view `v_subject_attendance_report`
---
+-- Removing temporary table and create final VIEW structure
 DROP TABLE IF EXISTS `v_subject_attendance_report`;
-
-CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `v_subject_attendance_report`  AS SELECT `sa`.`student_id` AS `student_id`, concat(`sp`.`firstName`,' ',`sp`.`lastName`) AS `student_name`, `sp`.`rollNumber` AS `rollNumber`, `sa`.`subject_id` AS `subject_id`, `s`.`subject_code` AS `subject_code`, `s`.`subject_name` AS `subject_name`, `sa`.`class_id` AS `class_id`, `c`.`name` AS `class_name`, `sa`.`academic_year` AS `academic_year`, `sa`.`semester` AS `semester`, `sa`.`faculty_id` AS `faculty_id`, `fp`.`Name` AS `faculty_name`, count(0) AS `total_classes`, sum(`sa`.`status` in ('present','late','od')) AS `attended`, sum(`sa`.`status` = 'absent') AS `absent_count`, round(sum(`sa`.`status` in ('present','late','od')) * 100.0 / nullif(count(0),0),2) AS `attendance_pct`, CASE WHEN round(sum(`sa`.`status` in ('present','late','od')) * 100.0 / nullif(count(0),0),2) >= 75 THEN 'eligible' WHEN round(sum(`sa`.`status` in ('present','late','od')) * 100.0 / nullif(count(0),0),2) >= 65 THEN 'condonation' ELSE 'detained' END AS `eligibility_status` FROM ((((`student_attendance` `sa` join `student_profile` `sp` on(`sp`.`id` = `sa`.`student_id`)) join `subjects` `s` on(`s`.`id` = `sa`.`subject_id`)) join `classes` `c` on(`c`.`id` = `sa`.`class_id`)) join `faculty_profiles` `fp` on(`fp`.`faculty_id` = `sa`.`faculty_id`)) GROUP BY `sa`.`student_id`, `sa`.`subject_id`, `sa`.`class_id`, `sa`.`faculty_id`, `sa`.`academic_year`, `sa`.`semester` ;
-
---
--- Indexes for dumped tables
---
-
---
--- Indexes for table `announcements`
---
-ALTER TABLE `announcements`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `createdById` (`createdById`),
-  ADD KEY `idx_announcements_type` (`type`),
-  ADD KEY `idx_announcements_active` (`isActive`);
-
---
--- Indexes for table `classes`
---
-ALTER TABLE `classes`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `department_id` (`department_id`);
-
---
--- Indexes for table `class_incharges`
---
-ALTER TABLE `class_incharges`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `unique_class_academic_year` (`class_id`,`academic_year`),
-  ADD KEY `idx_faculty_id` (`faculty_id`),
-  ADD KEY `idx_class_id` (`class_id`),
-  ADD KEY `idx_status` (`status`);
-
---
--- Indexes for table `course_files`
---
-ALTER TABLE `course_files`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `idx_course_file_assignment` (`faculty_id`,`subject_id`,`class_id`,`academic_year`,`semester`),
-  ADD KEY `idx_dept_status` (`department_id`,`status`),
-  ADD KEY `idx_status` (`status`),
-  ADD KEY `idx_submission_date` (`submission_date`),
-  ADD KEY `fk_cf_subject` (`subject_id`),
-  ADD KEY `fk_cf_class` (`class_id`),
-  ADD KEY `fk_cf_approved_by` (`approved_by`);
-
---
--- Indexes for table `course_file_notifications`
---
-ALTER TABLE `course_file_notifications`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `idx_recipient_read` (`recipient_id`,`is_read`),
-  ADD KEY `idx_course_file_id` (`course_file_id`),
-  ADD KEY `idx_created_at` (`created_at`);
-
---
--- Indexes for table `course_lesson_plans`
---
-ALTER TABLE `course_lesson_plans`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `uq_plan_topic` (`faculty_id`,`subject_id`,`class_id`,`academic_year`,`semester`,`sno`),
-  ADD KEY `idx_clp_faculty` (`faculty_id`),
-  ADD KEY `idx_clp_subject` (`subject_id`),
-  ADD KEY `idx_clp_class` (`class_id`),
-  ADD KEY `idx_clp_unit` (`unit_number`),
-  ADD KEY `idx_clp_completed` (`is_completed`),
-  ADD KEY `idx_pending` (`faculty_id`,`is_completed`),
-  ADD KEY `idx_approval_status` (`approval_status`),
-  ADD KEY `idx_batch_id` (`upload_batch_id`),
-  ADD KEY `idx_batch_submission` (`batch_submission_date`);
-
---
--- Indexes for table `departments`
---
-ALTER TABLE `departments`
-  ADD PRIMARY KEY (`id`);
-
---
--- Indexes for table `faculty_events`
---
-ALTER TABLE `faculty_events`
-  ADD PRIMARY KEY (`event_id`),
-  ADD KEY `idx_faculty_id` (`faculty_id`),
-  ADD KEY `idx_event_date` (`event_date`);
-
---
--- Indexes for table `faculty_experience`
---
-ALTER TABLE `faculty_experience`
-  ADD PRIMARY KEY (`exp_id`),
-  ADD KEY `idx_faculty_id` (`faculty_id`);
-
---
--- Indexes for table `faculty_industry_experience`
---
-ALTER TABLE `faculty_industry_experience`
-  ADD PRIMARY KEY (`exp_id`),
-  ADD KEY `idx_faculty_id` (`faculty_id`);
-
---
--- Indexes for table `faculty_leave_schedules`
---
-ALTER TABLE `faculty_leave_schedules`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `idx_faculty` (`faculty_id`),
-  ADD KEY `idx_date_range` (`from_date`,`to_date`),
-  ADD KEY `leave_id` (`leave_id`);
-
---
--- Indexes for table `faculty_phd`
---
-ALTER TABLE `faculty_phd`
-  ADD PRIMARY KEY (`phd_id`),
-  ADD KEY `faculty_id` (`faculty_id`);
-
---
--- Indexes for table `faculty_profiles`
---
-ALTER TABLE `faculty_profiles`
-  ADD PRIMARY KEY (`faculty_id`),
-  ADD UNIQUE KEY `email` (`email`),
-  ADD KEY `fk_department` (`department_id`);
-
---
--- Indexes for table `faculty_research`
---
-ALTER TABLE `faculty_research`
-  ADD PRIMARY KEY (`research_id`),
-  ADD UNIQUE KEY `uq_orcid` (`ORCID_ID`),
-  ADD KEY `idx_faculty_id` (`faculty_id`),
-  ADD KEY `idx_category` (`category`);
-
---
--- Indexes for table `faculty_subjects_handled`
---
-ALTER TABLE `faculty_subjects_handled`
-  ADD PRIMARY KEY (`faculty_id`);
-
---
--- Indexes for table `faculty_subject_assignments`
---
-ALTER TABLE `faculty_subject_assignments`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `unique_faculty_subject_class` (`faculty_id`,`subject_id`,`class_id`,`academic_year`),
-  ADD KEY `idx_fsa_subject` (`subject_id`),
-  ADD KEY `idx_fsa_class` (`class_id`),
-  ADD KEY `idx_fsa_academic_year` (`academic_year`),
-  ADD KEY `idx_fsa_status` (`status`);
-
---
--- Indexes for table `faculty_substitutes`
---
-ALTER TABLE `faculty_substitutes`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `faculty_id` (`faculty_id`),
-  ADD KEY `substitute_faculty_id` (`substitute_faculty_id`),
-  ADD KEY `requested_by` (`requested_by`),
-  ADD KEY `leave_id` (`leave_id`);
-
---
--- Indexes for table `faculy_edu_qualification`
---
-ALTER TABLE `faculy_edu_qualification`
-  ADD PRIMARY KEY (`membership_id`),
-  ADD KEY `idx_faculty_id` (`faculty_id`);
-
---
--- Indexes for table `leaves`
---
-ALTER TABLE `leaves`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `applicantId` (`applicantId`),
-  ADD KEY `departmentId` (`departmentId`),
-  ADD KEY `reassign_faculty_id` (`reassign_faculty_id`),
-  ADD KEY `substitute_faculty_id` (`substitute_faculty_id`),
-  ADD KEY `timetable_incharge_id` (`timetable_incharge_id`),
-  ADD KEY `executive_admin_id` (`executive_admin_id`);
-
---
--- Indexes for table `leave_approvals`
---
-ALTER TABLE `leave_approvals`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `uq_request_level` (`leave_request_id`,`level_number`),
-  ADD KEY `idx_la_request` (`leave_request_id`),
-  ADD KEY `idx_la_approver` (`approver_id`),
-  ADD KEY `idx_la_status` (`status`);
-
---
--- Indexes for table `leave_approval_levels`
---
-ALTER TABLE `leave_approval_levels`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `uq_type_level` (`applicant_type`,`level_number`);
-
---
--- Indexes for table `leave_balance_v2`
---
-ALTER TABLE `leave_balance_v2`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `uq_balance` (`applicant_type`,`applicant_id`,`leave_type_id`,`academic_year`),
-  ADD KEY `idx_lb_applicant` (`applicant_type`,`applicant_id`),
-  ADD KEY `idx_lb_type` (`leave_type_id`);
-
---
--- Indexes for table `leave_notifications_v2`
---
-ALTER TABLE `leave_notifications_v2`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `idx_ln_recipient` (`recipient_id`,`recipient_type`),
-  ADD KEY `idx_ln_request` (`leave_request_id`);
-
---
--- Indexes for table `leave_requests`
---
-ALTER TABLE `leave_requests`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `idx_lr_applicant` (`applicant_type`,`applicant_id`),
-  ADD KEY `idx_lr_dept` (`department_id`),
-  ADD KEY `idx_lr_class` (`class_id`),
-  ADD KEY `idx_lr_status` (`overall_status`),
-  ADD KEY `idx_lr_dates` (`start_date`,`end_date`),
-  ADD KEY `idx_lr_type` (`leave_type_id`),
-  ADD KEY `idx_lr_sub_fac` (`substitute_faculty_id`);
-
---
--- Indexes for table `leave_types`
---
-ALTER TABLE `leave_types`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `uq_code` (`code`);
-
---
--- Indexes for table `period_slots`
---
-ALTER TABLE `period_slots`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `uq_slot_order` (`slot_order`);
-
---
--- Indexes for table `period_topic_log`
---
-ALTER TABLE `period_topic_log`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `uq_ptl_date_period_class_subj` (`attendance_date`,`period_slot_id`,`class_id`,`subject_id`),
-  ADD KEY `idx_ptl_faculty` (`faculty_id`),
-  ADD KEY `idx_ptl_date` (`attendance_date`),
-  ADD KEY `idx_ptl_lesson_plan` (`lesson_plan_id`),
-  ADD KEY `idx_ptl_subject` (`subject_id`),
-  ADD KEY `fk_ptl_class` (`class_id`),
-  ADD KEY `fk_ptl_period` (`period_slot_id`),
-  ADD KEY `fk_ptl_slot` (`master_slot_id`),
-  ADD KEY `idx_date_faculty_subject` (`attendance_date`,`faculty_id`,`subject_id`);
-
---
--- Indexes for table `roles`
---
-ALTER TABLE `roles`
-  ADD PRIMARY KEY (`role_id`);
-
---
--- Indexes for table `staff_attendance`
---
-ALTER TABLE `staff_attendance`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `uq_staff_date` (`faculty_id`,`attendance_date`),
-  ADD KEY `idx_stf_faculty` (`faculty_id`),
-  ADD KEY `idx_stf_date` (`attendance_date`),
-  ADD KEY `idx_stf_dept` (`department_id`),
-  ADD KEY `idx_stf_status` (`day_status`),
-  ADD KEY `idx_stf_leave` (`leave_request_id`);
-
---
--- Indexes for table `staff_attendance_entry`
---
-ALTER TABLE `staff_attendance_entry`
-  ADD PRIMARY KEY (`staff_attendance_id`),
-  ADD UNIQUE KEY `uq_staff_date_period` (`staff_id`,`work_date`,`period_session_number`),
-  ADD KEY `idx_stf_att_work_date` (`work_date`);
-
---
--- Indexes for table `staff_period_attendance`
---
-ALTER TABLE `staff_period_attendance`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `uq_staff_period` (`faculty_id`,`attendance_date`,`period_slot_id`,`class_id`),
-  ADD KEY `idx_spa_staff_att` (`staff_att_id`),
-  ADD KEY `idx_spa_faculty` (`faculty_id`),
-  ADD KEY `idx_spa_class` (`class_id`),
-  ADD KEY `idx_spa_subject` (`subject_id`),
-  ADD KEY `idx_spa_date` (`attendance_date`),
-  ADD KEY `idx_spa_period` (`period_slot_id`),
-  ADD KEY `fk_spa_sub_fac` (`substitute_faculty_id`);
-
---
--- Indexes for table `student_attendance`
---
-ALTER TABLE `student_attendance`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `uq_student_date_period_subject` (`student_id`,`attendance_date`,`period_slot_id`,`subject_id`),
-  ADD KEY `idx_sa_student` (`student_id`),
-  ADD KEY `idx_sa_subject` (`subject_id`),
-  ADD KEY `idx_sa_class` (`class_id`),
-  ADD KEY `idx_sa_faculty` (`faculty_id`),
-  ADD KEY `idx_sa_date` (`attendance_date`),
-  ADD KEY `idx_sa_sem` (`academic_year`,`semester`),
-  ADD KEY `idx_sa_status` (`status`),
-  ADD KEY `idx_sa_date_class` (`attendance_date`,`class_id`,`period_slot_id`),
-  ADD KEY `idx_sa_period` (`period_slot_id`),
-  ADD KEY `idx_sa_slot` (`master_slot_id`),
-  ADD KEY `idx_student_attendance_lesson_plan` (`lesson_plan_id`);
-
---
--- Indexes for table `student_bio`
---
-ALTER TABLE `student_bio`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `uq_studentId` (`studentId`);
-
---
--- Indexes for table `student_certifications`
---
-ALTER TABLE `student_certifications`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `idx_student` (`studentId`),
-  ADD KEY `fk_cert_approver` (`approvedById`);
-
---
--- Indexes for table `student_events`
---
-ALTER TABLE `student_events`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `idx_student` (`studentId`),
-  ADD KEY `fk_event_approver` (`approvedById`);
-
---
--- Indexes for table `student_internal_marks`
---
-ALTER TABLE `student_internal_marks`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `uq_student_subject_sem_year_int` (`studentId`,`subjectId`,`semester`,`academicYear`,`internalNumber`),
-  ADD KEY `idx_subject_semester` (`subjectId`,`semester`);
-
---
--- Indexes for table `student_leaves`
---
-ALTER TABLE `student_leaves`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `idx_student` (`studentId`),
-  ADD KEY `fk_leave_approver` (`approvedById`);
-
---
--- Indexes for table `student_marks`
---
-ALTER TABLE `student_marks`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `uq_student_subject_sem_year` (`studentId`,`subjectId`,`semester`,`academicYear`),
-  ADD KEY `idx_subject_semester` (`subjectId`,`semester`);
-
---
--- Indexes for table `student_notifications`
---
-ALTER TABLE `student_notifications`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `idx_student` (`studentId`),
-  ADD KEY `idx_student_read` (`studentId`,`isRead`);
-
---
--- Indexes for table `student_profile`
---
-ALTER TABLE `student_profile`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `uq_studentId` (`studentId`),
-  ADD UNIQUE KEY `uq_email` (`email`),
-  ADD UNIQUE KEY `emisNo` (`emisNo`),
-  ADD KEY `fk_student_user` (`userId`),
-  ADD KEY `fk_student_department` (`departmentId`),
-  ADD KEY `idx_student_class` (`classId`),
-  ADD KEY `idx_student_batch_sem` (`batch`,`semester`);
-
---
--- Indexes for table `student_projects`
---
-ALTER TABLE `student_projects`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `idx_student` (`studentId`),
-  ADD KEY `fk_proj_approver` (`approvedById`);
-
---
--- Indexes for table `student_sports`
---
-ALTER TABLE `student_sports`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `idx_student` (`studentId`),
-  ADD KEY `fk_sport_approver` (`approvedById`);
-
---
--- Indexes for table `subjects`
---
-ALTER TABLE `subjects`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `subject_code` (`subject_code`),
-  ADD KEY `idx_subject_dept` (`department_id`),
-  ADD KEY `idx_subject_semester` (`semester`),
-  ADD KEY `idx_subject_class` (`class_id`),
-  ADD KEY `idx_subject_status` (`status`);
-
---
--- Indexes for table `subject_class_mappings`
---
-ALTER TABLE `subject_class_mappings`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `unique_subject_class_semester` (`subject_id`,`class_id`,`semester`,`academic_year`),
-  ADD KEY `idx_scm_class` (`class_id`),
-  ADD KEY `idx_scm_semester` (`semester`),
-  ADD KEY `idx_scm_dept` (`department_id`),
-  ADD KEY `idx_scm_subject` (`subject_id`);
-
---
--- Indexes for table `timetable_master`
---
-ALTER TABLE `timetable_master`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `uq_active_class_sem` (`class_id`,`academic_year`,`semester`,`status`),
-  ADD KEY `idx_ttm_class` (`class_id`),
-  ADD KEY `idx_ttm_dept` (`department_id`),
-  ADD KEY `idx_ttm_status` (`status`),
-  ADD KEY `idx_ttm_ci` (`class_coordinator_id`),
-  ADD KEY `idx_ttm_hod` (`hod_id`),
-  ADD KEY `fk_ttm_asst` (`asst_coordinator_id`);
-
---
--- Indexes for table `timetable_master_slots`
---
-ALTER TABLE `timetable_master_slots`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `uq_slot_day_period` (`master_id`,`day`,`period_slot_id`,`lab_group`),
-  ADD KEY `idx_tms_master` (`master_id`),
-  ADD KEY `idx_tms_faculty` (`faculty_id`),
-  ADD KEY `idx_tms_subject` (`subject_id`),
-  ADD KEY `idx_tms_period` (`period_slot_id`);
-
---
--- Indexes for table `timetable_notifications`
---
-ALTER TABLE `timetable_notifications`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `faculty_id` (`faculty_id`),
-  ADD KEY `slot_assignment_id` (`slot_assignment_id`);
-
---
--- Indexes for table `timetable_overlay`
---
-ALTER TABLE `timetable_overlay`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `uq_overlay` (`master_id`,`overlay_date`,`period_slot_id`),
-  ADD KEY `idx_ov_date` (`overlay_date`),
-  ADD KEY `idx_ov_master` (`master_id`),
-  ADD KEY `idx_ov_orig_fac` (`original_faculty_id`),
-  ADD KEY `idx_ov_sub_fac` (`substitute_faculty_id`),
-  ADD KEY `idx_ov_leave` (`leave_request_id`),
-  ADD KEY `fk_ov_period` (`period_slot_id`);
-
---
--- Indexes for table `timetable_slots`
---
-ALTER TABLE `timetable_slots`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `timetable_id` (`timetable_id`),
-  ADD KEY `subject_id` (`subject_id`),
-  ADD KEY `faculty_id` (`faculty_id`),
-  ADD KEY `class_id` (`class_id`);
-
---
--- Indexes for table `timetable_slot_assignments`
---
-ALTER TABLE `timetable_slot_assignments`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `timetable_id` (`timetable_id`),
-  ADD KEY `faculty_id` (`faculty_id`),
-  ADD KEY `class_id` (`class_id`);
-
---
--- Indexes for table `users`
---
-ALTER TABLE `users`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `email` (`email`),
-  ADD UNIQUE KEY `email_2` (`email`),
-  ADD UNIQUE KEY `email_3` (`email`),
-  ADD UNIQUE KEY `email_4` (`email`),
-  ADD UNIQUE KEY `email_5` (`email`),
-  ADD UNIQUE KEY `email_6` (`email`),
-  ADD UNIQUE KEY `email_7` (`email`),
-  ADD UNIQUE KEY `email_8` (`email`),
-  ADD UNIQUE KEY `email_9` (`email`),
-  ADD UNIQUE KEY `email_10` (`email`),
-  ADD UNIQUE KEY `email_11` (`email`),
-  ADD UNIQUE KEY `email_12` (`email`),
-  ADD UNIQUE KEY `email_13` (`email`),
-  ADD UNIQUE KEY `email_14` (`email`),
-  ADD UNIQUE KEY `email_15` (`email`),
-  ADD UNIQUE KEY `email_16` (`email`),
-  ADD UNIQUE KEY `email_17` (`email`),
-  ADD UNIQUE KEY `email_18` (`email`),
-  ADD UNIQUE KEY `email_19` (`email`),
-  ADD UNIQUE KEY `email_20` (`email`),
-  ADD UNIQUE KEY `email_21` (`email`),
-  ADD UNIQUE KEY `email_22` (`email`),
-  ADD UNIQUE KEY `email_23` (`email`),
-  ADD UNIQUE KEY `email_24` (`email`),
-  ADD UNIQUE KEY `email_25` (`email`),
-  ADD UNIQUE KEY `email_26` (`email`),
-  ADD UNIQUE KEY `email_27` (`email`),
-  ADD UNIQUE KEY `email_28` (`email`),
-  ADD UNIQUE KEY `email_29` (`email`),
-  ADD UNIQUE KEY `email_30` (`email`),
-  ADD UNIQUE KEY `email_31` (`email`),
-  ADD UNIQUE KEY `email_32` (`email`),
-  ADD UNIQUE KEY `email_33` (`email`),
-  ADD UNIQUE KEY `email_34` (`email`),
-  ADD UNIQUE KEY `email_35` (`email`),
-  ADD UNIQUE KEY `email_36` (`email`),
-  ADD UNIQUE KEY `email_37` (`email`),
-  ADD UNIQUE KEY `email_38` (`email`),
-  ADD UNIQUE KEY `email_39` (`email`),
-  ADD UNIQUE KEY `email_40` (`email`),
-  ADD UNIQUE KEY `email_41` (`email`),
-  ADD UNIQUE KEY `email_42` (`email`),
-  ADD UNIQUE KEY `email_43` (`email`),
-  ADD UNIQUE KEY `email_44` (`email`),
-  ADD UNIQUE KEY `email_45` (`email`),
-  ADD UNIQUE KEY `email_46` (`email`),
-  ADD UNIQUE KEY `email_47` (`email`),
-  ADD UNIQUE KEY `email_48` (`email`),
-  ADD UNIQUE KEY `email_49` (`email`),
-  ADD UNIQUE KEY `email_50` (`email`),
-  ADD UNIQUE KEY `email_51` (`email`),
-  ADD UNIQUE KEY `email_52` (`email`),
-  ADD UNIQUE KEY `email_53` (`email`),
-  ADD UNIQUE KEY `email_54` (`email`),
-  ADD UNIQUE KEY `email_55` (`email`),
-  ADD UNIQUE KEY `email_56` (`email`),
-  ADD UNIQUE KEY `email_57` (`email`),
-  ADD UNIQUE KEY `email_58` (`email`),
-  ADD UNIQUE KEY `email_59` (`email`),
-  ADD UNIQUE KEY `email_60` (`email`),
-  ADD UNIQUE KEY `email_61` (`email`),
-  ADD UNIQUE KEY `email_62` (`email`),
-  ADD KEY `fk_users_role_id` (`role_id`);
-
---
--- AUTO_INCREMENT for dumped tables
---
-
---
--- AUTO_INCREMENT for table `announcements`
---
-ALTER TABLE `announcements`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
-
---
--- AUTO_INCREMENT for table `classes`
---
-ALTER TABLE `classes`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
-
---
--- AUTO_INCREMENT for table `class_incharges`
---
-ALTER TABLE `class_incharges`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
-
---
--- AUTO_INCREMENT for table `course_files`
---
-ALTER TABLE `course_files`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `course_file_notifications`
---
-ALTER TABLE `course_file_notifications`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `course_lesson_plans`
---
-ALTER TABLE `course_lesson_plans`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=303;
-
---
--- AUTO_INCREMENT for table `departments`
---
-ALTER TABLE `departments`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
-
---
--- AUTO_INCREMENT for table `faculty_events`
---
-ALTER TABLE `faculty_events`
-  MODIFY `event_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
-
---
--- AUTO_INCREMENT for table `faculty_experience`
---
-ALTER TABLE `faculty_experience`
-  MODIFY `exp_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
-
---
--- AUTO_INCREMENT for table `faculty_industry_experience`
---
-ALTER TABLE `faculty_industry_experience`
-  MODIFY `exp_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
-
---
--- AUTO_INCREMENT for table `faculty_leave_schedules`
---
-ALTER TABLE `faculty_leave_schedules`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `faculty_phd`
---
-ALTER TABLE `faculty_phd`
-  MODIFY `phd_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
-
---
--- AUTO_INCREMENT for table `faculty_profiles`
---
-ALTER TABLE `faculty_profiles`
-  MODIFY `faculty_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=514;
-
---
--- AUTO_INCREMENT for table `faculty_research`
---
-ALTER TABLE `faculty_research`
-  MODIFY `research_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
-
---
--- AUTO_INCREMENT for table `faculty_subject_assignments`
---
-ALTER TABLE `faculty_subject_assignments`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=38;
-
---
--- AUTO_INCREMENT for table `faculty_substitutes`
---
-ALTER TABLE `faculty_substitutes`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `faculy_edu_qualification`
---
-ALTER TABLE `faculy_edu_qualification`
-  MODIFY `membership_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
-
---
--- AUTO_INCREMENT for table `leaves`
---
-ALTER TABLE `leaves`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `leave_approvals`
---
-ALTER TABLE `leave_approvals`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `leave_approval_levels`
---
-ALTER TABLE `leave_approval_levels`
-  MODIFY `id` tinyint(3) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
-
---
--- AUTO_INCREMENT for table `leave_balance_v2`
---
-ALTER TABLE `leave_balance_v2`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `leave_notifications_v2`
---
-ALTER TABLE `leave_notifications_v2`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
-
---
--- AUTO_INCREMENT for table `leave_requests`
---
-ALTER TABLE `leave_requests`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `leave_types`
---
-ALTER TABLE `leave_types`
-  MODIFY `id` tinyint(3) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
-
---
--- AUTO_INCREMENT for table `period_slots`
---
-ALTER TABLE `period_slots`
-  MODIFY `id` tinyint(3) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
-
---
--- AUTO_INCREMENT for table `period_topic_log`
---
-ALTER TABLE `period_topic_log`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `roles`
---
-ALTER TABLE `roles`
-  MODIFY `role_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
-
---
--- AUTO_INCREMENT for table `staff_attendance`
---
-ALTER TABLE `staff_attendance`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `staff_attendance_entry`
---
-ALTER TABLE `staff_attendance_entry`
-  MODIFY `staff_attendance_id` int(11) NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `staff_period_attendance`
---
-ALTER TABLE `staff_period_attendance`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `student_attendance`
---
-ALTER TABLE `student_attendance`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=34;
-
---
--- AUTO_INCREMENT for table `student_bio`
---
-ALTER TABLE `student_bio`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
-
---
--- AUTO_INCREMENT for table `student_certifications`
---
-ALTER TABLE `student_certifications`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
-
---
--- AUTO_INCREMENT for table `student_events`
---
-ALTER TABLE `student_events`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `student_internal_marks`
---
-ALTER TABLE `student_internal_marks`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `student_leaves`
---
-ALTER TABLE `student_leaves`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
-
---
--- AUTO_INCREMENT for table `student_marks`
---
-ALTER TABLE `student_marks`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `student_notifications`
---
-ALTER TABLE `student_notifications`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
-
---
--- AUTO_INCREMENT for table `student_profile`
---
-ALTER TABLE `student_profile`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4160;
-
---
--- AUTO_INCREMENT for table `student_projects`
---
-ALTER TABLE `student_projects`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `student_sports`
---
-ALTER TABLE `student_sports`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
-
---
--- AUTO_INCREMENT for table `subjects`
---
-ALTER TABLE `subjects`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=108;
-
---
--- AUTO_INCREMENT for table `subject_class_mappings`
---
-ALTER TABLE `subject_class_mappings`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
-
---
--- AUTO_INCREMENT for table `timetable_master`
---
-ALTER TABLE `timetable_master`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
-
---
--- AUTO_INCREMENT for table `timetable_master_slots`
---
-ALTER TABLE `timetable_master_slots`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=389;
-
---
--- AUTO_INCREMENT for table `timetable_notifications`
---
-ALTER TABLE `timetable_notifications`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `timetable_overlay`
---
-ALTER TABLE `timetable_overlay`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `timetable_slots`
---
-ALTER TABLE `timetable_slots`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=37;
-
---
--- AUTO_INCREMENT for table `timetable_slot_assignments`
---
-ALTER TABLE `timetable_slot_assignments`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `users`
---
-ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=119;
-
---
--- Constraints for dumped tables
---
-
---
--- Constraints for table `classes`
---
-ALTER TABLE `classes`
-  ADD CONSTRAINT `fk_cls_department` FOREIGN KEY (`department_id`) REFERENCES `departments` (`id`) ON DELETE SET NULL;
-
---
--- Constraints for table `class_incharges`
---
-ALTER TABLE `class_incharges`
-  ADD CONSTRAINT `class_incharges_ibfk_1` FOREIGN KEY (`class_id`) REFERENCES `classes` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  ADD CONSTRAINT `class_incharges_ibfk_2` FOREIGN KEY (`faculty_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE NO ACTION ON UPDATE CASCADE;
-
---
--- Constraints for table `course_files`
---
-ALTER TABLE `course_files`
-  ADD CONSTRAINT `fk_cf_approved_by` FOREIGN KEY (`approved_by`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `fk_cf_class` FOREIGN KEY (`class_id`) REFERENCES `classes` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `fk_cf_department` FOREIGN KEY (`department_id`) REFERENCES `departments` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `fk_cf_faculty` FOREIGN KEY (`faculty_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `fk_cf_subject` FOREIGN KEY (`subject_id`) REFERENCES `subjects` (`id`) ON DELETE CASCADE;
-
---
--- Constraints for table `course_file_notifications`
---
-ALTER TABLE `course_file_notifications`
-  ADD CONSTRAINT `fk_cfn_course_file` FOREIGN KEY (`course_file_id`) REFERENCES `course_files` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `fk_cfn_recipient` FOREIGN KEY (`recipient_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE CASCADE;
-
---
--- Constraints for table `course_lesson_plans`
---
-ALTER TABLE `course_lesson_plans`
-  ADD CONSTRAINT `fk_clp_class` FOREIGN KEY (`class_id`) REFERENCES `classes` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `fk_clp_faculty` FOREIGN KEY (`faculty_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `fk_clp_subject` FOREIGN KEY (`subject_id`) REFERENCES `subjects` (`id`) ON DELETE CASCADE;
-
---
--- Constraints for table `faculty_events`
---
-ALTER TABLE `faculty_events`
-  ADD CONSTRAINT `faculty_events_ibfk_1` FOREIGN KEY (`faculty_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE CASCADE;
-
---
--- Constraints for table `faculty_experience`
---
-ALTER TABLE `faculty_experience`
-  ADD CONSTRAINT `faculty_experience_ibfk_1` FOREIGN KEY (`faculty_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
---
--- Constraints for table `faculty_industry_experience`
---
-ALTER TABLE `faculty_industry_experience`
-  ADD CONSTRAINT `fk_industry_faculty` FOREIGN KEY (`faculty_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE CASCADE;
-
---
--- Constraints for table `faculty_leave_schedules`
---
-ALTER TABLE `faculty_leave_schedules`
-  ADD CONSTRAINT `fk_fls_faculty` FOREIGN KEY (`faculty_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `fk_fls_leave` FOREIGN KEY (`leave_id`) REFERENCES `leave_requests` (`id`) ON DELETE SET NULL;
-
---
--- Constraints for table `faculty_phd`
---
-ALTER TABLE `faculty_phd`
-  ADD CONSTRAINT `faculty_phd_ibfk_1` FOREIGN KEY (`faculty_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE CASCADE;
-
---
--- Constraints for table `faculty_profiles`
---
-ALTER TABLE `faculty_profiles`
-  ADD CONSTRAINT `fk_fp_department` FOREIGN KEY (`department_id`) REFERENCES `departments` (`id`) ON DELETE SET NULL;
-
---
--- Constraints for table `faculty_research`
---
-ALTER TABLE `faculty_research`
-  ADD CONSTRAINT `faculty_research_ibfk_1` FOREIGN KEY (`faculty_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE CASCADE;
-
---
--- Constraints for table `faculty_subject_assignments`
---
-ALTER TABLE `faculty_subject_assignments`
-  ADD CONSTRAINT `fk_fsa_class` FOREIGN KEY (`class_id`) REFERENCES `classes` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `fk_fsa_faculty` FOREIGN KEY (`faculty_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `fk_fsa_subject` FOREIGN KEY (`subject_id`) REFERENCES `subjects` (`id`) ON DELETE CASCADE;
-
---
--- Constraints for table `faculty_substitutes`
---
-ALTER TABLE `faculty_substitutes`
-  ADD CONSTRAINT `fk_fsub_faculty` FOREIGN KEY (`faculty_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `fk_fsub_leave` FOREIGN KEY (`leave_id`) REFERENCES `leave_requests` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `fk_fsub_requested_by` FOREIGN KEY (`requested_by`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `fk_fsub_substitute` FOREIGN KEY (`substitute_faculty_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE CASCADE;
-
---
--- Constraints for table `faculy_edu_qualification`
---
-ALTER TABLE `faculy_edu_qualification`
-  ADD CONSTRAINT `faculy_edu_qualification_ibfk_1` FOREIGN KEY (`faculty_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE CASCADE;
-
---
--- Constraints for table `leaves`
---
-ALTER TABLE `leaves`
-  ADD CONSTRAINT `leaves_ibfk_1` FOREIGN KEY (`applicantId`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE NO ACTION ON UPDATE CASCADE,
-  ADD CONSTRAINT `leaves_ibfk_2` FOREIGN KEY (`departmentId`) REFERENCES `departments` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
-  ADD CONSTRAINT `leaves_ibfk_3` FOREIGN KEY (`reassign_faculty_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE SET NULL ON UPDATE CASCADE,
-  ADD CONSTRAINT `leaves_ibfk_4` FOREIGN KEY (`substitute_faculty_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE SET NULL ON UPDATE CASCADE,
-  ADD CONSTRAINT `leaves_ibfk_5` FOREIGN KEY (`timetable_incharge_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE SET NULL ON UPDATE CASCADE,
-  ADD CONSTRAINT `leaves_ibfk_6` FOREIGN KEY (`executive_admin_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE SET NULL ON UPDATE CASCADE;
-
---
--- Constraints for table `leave_approvals`
---
-ALTER TABLE `leave_approvals`
-  ADD CONSTRAINT `fk_la_request` FOREIGN KEY (`leave_request_id`) REFERENCES `leave_requests` (`id`) ON DELETE CASCADE;
-
---
--- Constraints for table `leave_balance_v2`
---
-ALTER TABLE `leave_balance_v2`
-  ADD CONSTRAINT `fk_lb_type` FOREIGN KEY (`leave_type_id`) REFERENCES `leave_types` (`id`);
-
---
--- Constraints for table `leave_notifications_v2`
---
-ALTER TABLE `leave_notifications_v2`
-  ADD CONSTRAINT `fk_ln_request` FOREIGN KEY (`leave_request_id`) REFERENCES `leave_requests` (`id`) ON DELETE CASCADE;
-
---
--- Constraints for table `leave_requests`
---
-ALTER TABLE `leave_requests`
-  ADD CONSTRAINT `fk_lr_class` FOREIGN KEY (`class_id`) REFERENCES `classes` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `fk_lr_dept` FOREIGN KEY (`department_id`) REFERENCES `departments` (`id`),
-  ADD CONSTRAINT `fk_lr_sub_fac` FOREIGN KEY (`substitute_faculty_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `fk_lr_type` FOREIGN KEY (`leave_type_id`) REFERENCES `leave_types` (`id`);
-
---
--- Constraints for table `period_topic_log`
---
-ALTER TABLE `period_topic_log`
-  ADD CONSTRAINT `fk_ptl_class` FOREIGN KEY (`class_id`) REFERENCES `classes` (`id`),
-  ADD CONSTRAINT `fk_ptl_faculty` FOREIGN KEY (`faculty_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `fk_ptl_lesson_plan` FOREIGN KEY (`lesson_plan_id`) REFERENCES `course_lesson_plans` (`id`),
-  ADD CONSTRAINT `fk_ptl_period` FOREIGN KEY (`period_slot_id`) REFERENCES `period_slots` (`id`),
-  ADD CONSTRAINT `fk_ptl_slot` FOREIGN KEY (`master_slot_id`) REFERENCES `timetable_master_slots` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `fk_ptl_subject` FOREIGN KEY (`subject_id`) REFERENCES `subjects` (`id`);
-
---
--- Constraints for table `staff_attendance`
---
-ALTER TABLE `staff_attendance`
-  ADD CONSTRAINT `fk_stf_dept` FOREIGN KEY (`department_id`) REFERENCES `departments` (`id`),
-  ADD CONSTRAINT `fk_stf_faculty` FOREIGN KEY (`faculty_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `fk_stf_leave` FOREIGN KEY (`leave_request_id`) REFERENCES `leave_requests` (`id`) ON DELETE SET NULL;
-
---
--- Constraints for table `staff_period_attendance`
---
-ALTER TABLE `staff_period_attendance`
-  ADD CONSTRAINT `fk_spa_class` FOREIGN KEY (`class_id`) REFERENCES `classes` (`id`),
-  ADD CONSTRAINT `fk_spa_faculty` FOREIGN KEY (`faculty_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `fk_spa_period` FOREIGN KEY (`period_slot_id`) REFERENCES `period_slots` (`id`),
-  ADD CONSTRAINT `fk_spa_staff_att` FOREIGN KEY (`staff_att_id`) REFERENCES `staff_attendance` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `fk_spa_sub_fac` FOREIGN KEY (`substitute_faculty_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `fk_spa_subject` FOREIGN KEY (`subject_id`) REFERENCES `subjects` (`id`);
-
---
--- Constraints for table `student_attendance`
---
-ALTER TABLE `student_attendance`
-  ADD CONSTRAINT `fk_sa_class` FOREIGN KEY (`class_id`) REFERENCES `classes` (`id`),
-  ADD CONSTRAINT `fk_sa_faculty` FOREIGN KEY (`faculty_id`) REFERENCES `faculty_profiles` (`faculty_id`),
-  ADD CONSTRAINT `fk_sa_period` FOREIGN KEY (`period_slot_id`) REFERENCES `period_slots` (`id`),
-  ADD CONSTRAINT `fk_sa_slot` FOREIGN KEY (`master_slot_id`) REFERENCES `timetable_master_slots` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `fk_sa_student` FOREIGN KEY (`student_id`) REFERENCES `student_profile` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `fk_sa_subject` FOREIGN KEY (`subject_id`) REFERENCES `subjects` (`id`),
-  ADD CONSTRAINT `fk_student_attendance_lesson_plan` FOREIGN KEY (`lesson_plan_id`) REFERENCES `course_lesson_plans` (`id`) ON DELETE SET NULL;
-
---
--- Constraints for table `student_bio`
---
-ALTER TABLE `student_bio`
-  ADD CONSTRAINT `fk_bio_student` FOREIGN KEY (`studentId`) REFERENCES `student_profile` (`id`) ON DELETE CASCADE;
-
---
--- Constraints for table `student_certifications`
---
-ALTER TABLE `student_certifications`
-  ADD CONSTRAINT `fk_cert_approver` FOREIGN KEY (`approvedById`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `fk_cert_student` FOREIGN KEY (`studentId`) REFERENCES `student_profile` (`id`) ON DELETE CASCADE;
-
---
--- Constraints for table `student_events`
---
-ALTER TABLE `student_events`
-  ADD CONSTRAINT `fk_event_approver` FOREIGN KEY (`approvedById`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `fk_event_student` FOREIGN KEY (`studentId`) REFERENCES `student_profile` (`id`) ON DELETE CASCADE;
-
---
--- Constraints for table `student_internal_marks`
---
-ALTER TABLE `student_internal_marks`
-  ADD CONSTRAINT `fk_intmarks_student` FOREIGN KEY (`studentId`) REFERENCES `student_profile` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `fk_intmarks_subject` FOREIGN KEY (`subjectId`) REFERENCES `subjects` (`id`) ON DELETE CASCADE;
-
---
--- Constraints for table `student_leaves`
---
-ALTER TABLE `student_leaves`
-  ADD CONSTRAINT `fk_sleave_approver` FOREIGN KEY (`approvedById`) REFERENCES `users` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `fk_sleave_student` FOREIGN KEY (`studentId`) REFERENCES `student_profile` (`id`) ON DELETE CASCADE;
-
---
--- Constraints for table `student_marks`
---
-ALTER TABLE `student_marks`
-  ADD CONSTRAINT `fk_marks_student` FOREIGN KEY (`studentId`) REFERENCES `student_profile` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `fk_marks_subject` FOREIGN KEY (`subjectId`) REFERENCES `subjects` (`id`) ON DELETE CASCADE;
-
---
--- Constraints for table `student_notifications`
---
-ALTER TABLE `student_notifications`
-  ADD CONSTRAINT `fk_notif_student` FOREIGN KEY (`studentId`) REFERENCES `student_profile` (`id`) ON DELETE CASCADE;
-
---
--- Constraints for table `student_profile`
---
-ALTER TABLE `student_profile`
-  ADD CONSTRAINT `fk_student_class` FOREIGN KEY (`classId`) REFERENCES `classes` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `fk_student_dept` FOREIGN KEY (`departmentId`) REFERENCES `departments` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `fk_student_user` FOREIGN KEY (`userId`) REFERENCES `users` (`id`) ON DELETE SET NULL;
-
---
--- Constraints for table `student_projects`
---
-ALTER TABLE `student_projects`
-  ADD CONSTRAINT `fk_proj_approver` FOREIGN KEY (`approvedById`) REFERENCES `users` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `fk_proj_student` FOREIGN KEY (`studentId`) REFERENCES `student_profile` (`id`) ON DELETE CASCADE;
-
---
--- Constraints for table `student_sports`
---
-ALTER TABLE `student_sports`
-  ADD CONSTRAINT `fk_sport_approver` FOREIGN KEY (`approvedById`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `fk_sport_student` FOREIGN KEY (`studentId`) REFERENCES `student_profile` (`id`) ON DELETE CASCADE;
-
---
--- Constraints for table `subjects`
---
-ALTER TABLE `subjects`
-  ADD CONSTRAINT `fk_subj_class` FOREIGN KEY (`class_id`) REFERENCES `classes` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `fk_subj_dept` FOREIGN KEY (`department_id`) REFERENCES `departments` (`id`);
-
---
--- Constraints for table `subject_class_mappings`
---
-ALTER TABLE `subject_class_mappings`
-  ADD CONSTRAINT `fk_scm_class` FOREIGN KEY (`class_id`) REFERENCES `classes` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `fk_scm_dept` FOREIGN KEY (`department_id`) REFERENCES `departments` (`id`),
-  ADD CONSTRAINT `fk_scm_subject` FOREIGN KEY (`subject_id`) REFERENCES `subjects` (`id`) ON DELETE CASCADE;
-
---
--- Constraints for table `timetable_master`
---
-ALTER TABLE `timetable_master`
-  ADD CONSTRAINT `fk_ttm_asst` FOREIGN KEY (`asst_coordinator_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `fk_ttm_class` FOREIGN KEY (`class_id`) REFERENCES `classes` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `fk_ttm_coord` FOREIGN KEY (`class_coordinator_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `fk_ttm_dept` FOREIGN KEY (`department_id`) REFERENCES `departments` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `fk_ttm_hod` FOREIGN KEY (`hod_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE SET NULL;
-
---
--- Constraints for table `timetable_master_slots`
---
-ALTER TABLE `timetable_master_slots`
-  ADD CONSTRAINT `fk_tms_faculty` FOREIGN KEY (`faculty_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `fk_tms_master` FOREIGN KEY (`master_id`) REFERENCES `timetable_master` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `fk_tms_period` FOREIGN KEY (`period_slot_id`) REFERENCES `period_slots` (`id`),
-  ADD CONSTRAINT `fk_tms_subject` FOREIGN KEY (`subject_id`) REFERENCES `subjects` (`id`) ON DELETE SET NULL;
-
---
--- Constraints for table `timetable_notifications`
---
-ALTER TABLE `timetable_notifications`
-  ADD CONSTRAINT `fk_notifications_assignment` FOREIGN KEY (`slot_assignment_id`) REFERENCES `timetable_slot_assignments` (`id`) ON DELETE CASCADE;
-
---
--- Constraints for table `timetable_overlay`
---
-ALTER TABLE `timetable_overlay`
-  ADD CONSTRAINT `fk_ov_leave` FOREIGN KEY (`leave_request_id`) REFERENCES `leave_requests` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `fk_ov_master` FOREIGN KEY (`master_id`) REFERENCES `timetable_master` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `fk_ov_orig` FOREIGN KEY (`original_faculty_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `fk_ov_period` FOREIGN KEY (`period_slot_id`) REFERENCES `period_slots` (`id`),
-  ADD CONSTRAINT `fk_ov_sub` FOREIGN KEY (`substitute_faculty_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE SET NULL;
-
---
--- Constraints for table `users`
---
-ALTER TABLE `users`
-  ADD CONSTRAINT `fk_users_role_id` FOREIGN KEY (`role_id`) REFERENCES `roles` (`role_id`);
-COMMIT;
-
+CREATE ALGORITHM=UNDEFINED SQL SECURITY DEFINER VIEW `v_subject_attendance_report` AS select `sa`.`student_id` AS `student_id`,concat(`sp`.`firstName`,' ',`sp`.`lastName`) AS `student_name`,`sp`.`rollNumber` AS `rollNumber`,`sa`.`subject_id` AS `subject_id`,`s`.`subject_code` AS `subject_code`,`s`.`subject_name` AS `subject_name`,`sa`.`class_id` AS `class_id`,`c`.`name` AS `class_name`,`sa`.`academic_year` AS `academic_year`,`sa`.`semester` AS `semester`,`sa`.`faculty_id` AS `faculty_id`,`fp`.`Name` AS `faculty_name`,count(0) AS `total_classes`,sum(`sa`.`status` in ('present','late','od')) AS `attended`,sum(`sa`.`status` = 'absent') AS `absent_count`,round(sum(`sa`.`status` in ('present','late','od')) * 100.0 / nullif(count(0),0),2) AS `attendance_pct`,case when round(sum(`sa`.`status` in ('present','late','od')) * 100.0 / nullif(count(0),0),2) >= 75 then 'eligible' when round(sum(`sa`.`status` in ('present','late','od')) * 100.0 / nullif(count(0),0),2) >= 65 then 'condonation' else 'detained' end AS `eligibility_status` from ((((`student_attendance` `sa` join `student_profile` `sp` on(`sp`.`id` = `sa`.`student_id`)) join `subjects` `s` on(`s`.`id` = `sa`.`subject_id`)) join `classes` `c` on(`c`.`id` = `sa`.`class_id`)) join `faculty_profiles` `fp` on(`fp`.`faculty_id` = `sa`.`faculty_id`)) group by `sa`.`student_id`,`sa`.`subject_id`,`sa`.`class_id`,`sa`.`faculty_id`,`sa`.`academic_year`,`sa`.`semester`
+;
+
+/*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
+/*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;
+/*!40014 SET FOREIGN_KEY_CHECKS=IFNULL(@OLD_FOREIGN_KEY_CHECKS, 1) */;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
-/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
-/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+/*!40111 SET SQL_NOTES=IFNULL(@OLD_SQL_NOTES, 1) */;

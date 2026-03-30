@@ -18,6 +18,8 @@ const StudentBio = (sequelize) => {
         permanentAddress: { type: DataTypes.JSON, allowNull: true },
         parentInfo: { type: DataTypes.JSON, allowNull: true, field: 'parentinfo' },
         references: { type: DataTypes.JSON, allowNull: true },
+        familyPhoto: { type: DataTypes.STRING(255), allowNull: true, field: 'family_photo' },
+        siblings: { type: DataTypes.JSON, allowNull: true },
         previousEducation: { type: DataTypes.JSON, allowNull: true },
         scholarshipDetails: { type: DataTypes.JSON, allowNull: true },
         documents: { type: DataTypes.JSON, allowNull: true },

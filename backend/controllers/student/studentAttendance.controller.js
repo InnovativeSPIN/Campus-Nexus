@@ -1,6 +1,6 @@
 import initModels from '../../models/index.js';
 
-const { AttendanceStudent, Student, Subject, Class, PeriodSlot, TimetableMasterSlots, TimetableMaster } = initModels();
+const { StudentAttendance, AttendanceStudent, Student, Subject, Class, PeriodSlot, TimetableMasterSlots, TimetableMaster } = initModels();
 
 // Simple error response helper
 const errorResponse = (res, statusCode, message) => {
@@ -188,7 +188,8 @@ export const getClassAttendanceSummary = async (req, res) => {
  */
 export const getStudentAttendance = async (req, res) => {
   try {
-    const { studentId, semester, academicYear } = req.query;
+    const studentId = req.params.studentId || req.query.studentId;
+    const { semester, academicYear } = req.query;
 
     if (!studentId) {
       return errorResponse(res, 400, 'Student ID is required');
@@ -199,30 +200,60 @@ export const getStudentAttendance = async (req, res) => {
       return errorResponse(res, 404, 'Student not found');
     }
 
-    // Get all attendance records for this student
+    // Determine target semester
+    const targetSemester = semester ? parseInt(semester) : student.semester;
+
+    // Pre-populate stats with all subjects for this semester
+    const enrolledSubjects = await Subject.findAll({
+      where: {
+        department_id: student.departmentId,
+        semester: targetSemester
+      }
+    });
+
+    const subjectWiseStats = {};
+    enrolledSubjects.forEach(subject => {
+      subjectWiseStats[subject.id] = {
+        subjectId: subject.id,
+        subjectName: subject.subject_name ? subject.subject_name.trim() : 'Unknown',
+        subjectCode: subject.subject_code || 'Unknown',
+        total: 0,
+        present: 0,
+        absent: 0,
+        late: 0,
+        onDuty: 0,
+        percentage: 0,
+        byPeriod: {},
+      };
+    });
+
+    // Get all attendance records for this student and semester
     let query = {
       student_id: parseInt(studentId),
+      semester: targetSemester
     };
+    
+    if (academicYear) {
+      query.academic_year = academicYear;
+    }
 
-    const records = await AttendanceStudent.findAll({
+    const records = await StudentAttendance.findAll({
       where: query,
       include: [
         { model: Subject, as: 'subject', attributes: ['id', 'subject_code', 'subject_name'] },
-        { model: Class, as: 'classSection', attributes: ['id', 'section'] },
+        { model: Class, as: 'class', attributes: ['id', 'section'] },
         { model: PeriodSlot, as: 'period', attributes: ['id', 'period_label', 'start_time', 'end_time'] },
       ],
-      order: [['class_date', 'DESC'], ['period_session_number', 'ASC']],
+      order: [['attendance_date', 'DESC'], ['period_slot_id', 'ASC']],
     });
 
-    // Group by subject and calculate statistics
-    const subjectWiseStats = {};
     records.forEach(record => {
       const subjectId = record.subject_id;
       if (!subjectWiseStats[subjectId]) {
         subjectWiseStats[subjectId] = {
           subjectId,
-          subjectName: record.subject.subject_name,
-          subjectCode: record.subject.subject_code,
+          subjectName: record.subject?.subject_name || 'Unknown',
+          subjectCode: record.subject?.subject_code || 'N/A',
           total: 0,
           present: 0,
           absent: 0,
@@ -236,23 +267,25 @@ export const getStudentAttendance = async (req, res) => {
       const stats = subjectWiseStats[subjectId];
       stats.total++;
 
-      switch (record.attendance_status) {
-        case 'Present':
+      switch (record.status) {
+        case 'present':
           stats.present++;
           break;
-        case 'Absent':
+        case 'absent':
           stats.absent++;
           break;
-        case 'Late':
+        case 'late':
           stats.late++;
           break;
-        case 'On-Duty':
+        case 'od':
+        case 'medical_leave':
+        case 'duty_leave':
           stats.onDuty++;
           break;
       }
 
       // Track by period
-      const periodId = record.period_session_number;
+      const periodId = record.period_slot_id;
       if (!stats.byPeriod[periodId]) {
         stats.byPeriod[periodId] = {
           periodId,
@@ -262,11 +295,12 @@ export const getStudentAttendance = async (req, res) => {
       }
 
       stats.byPeriod[periodId].records.push({
-        date: record.class_date,
-        status: record.attendance_status,
-        markedAt: record.marked_timestamp,
+        date: record.attendance_date,
+        status: record.status,
+        markedAt: record.marked_at,
       });
     });
+
 
     // Calculate percentages
     Object.keys(subjectWiseStats).forEach(subjectId => {
@@ -280,8 +314,8 @@ export const getStudentAttendance = async (req, res) => {
       success: true,
       data: {
         studentId,
-        studentName: `${student.first_name} ${student.last_name}`,
-        rollNumber: student.roll_number,
+        studentName: `${student.firstName} ${student.lastName}`,
+        rollNumber: student.rollNumber,
         subjectWiseStats: Object.values(subjectWiseStats),
         totalRecords: records.length,
       },
@@ -365,8 +399,8 @@ export const getClassAttendanceReport = async (req, res) => {
       if (!stats.subjectWise[subjectId]) {
         stats.subjectWise[subjectId] = {
           subjectId,
-          subjectName: record.subject.subject_name,
-          subjectCode: record.subject.subject_code,
+          subjectName: record.subject?.subject_name || 'Unknown',
+          subjectCode: record.subject?.subject_code || 'Unknown',
           total: 0,
           present: 0,
           percentage: 0,

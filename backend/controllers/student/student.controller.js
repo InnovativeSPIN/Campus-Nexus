@@ -2,12 +2,14 @@ import ErrorResponse from '../../utils/errorResponse.js';
 import asyncHandler from '../../middleware/async.js';
 import { models } from '../../models/index.js';
 import path from 'path';
+import fs from 'fs';
+import { promises as fsPromises } from 'fs';
 const { Student, Department, Class: ClassModel, Subject, StudentBio, CourseLessonPlan, Faculty } = models;
 
 // Helper function to ensure parentInfo has all required fields with defaults
 const ensureCompleteParentInfo = (parentInfo) => {
   if (!parentInfo) return null;
-  
+
   // Handle case where parentInfo might be a string from the database
   let data = parentInfo;
   if (typeof parentInfo === 'string') {
@@ -18,10 +20,18 @@ const ensureCompleteParentInfo = (parentInfo) => {
       return null;
     }
   }
-  
+
   const f = data.father || {};
   const m = data.mother || {};
-  const g = data.guardian || {};
+
+  // Handle guardians - could be array or single object (legacy)
+  let guardiansArray = [];
+  if (Array.isArray(data.guardians)) {
+    guardiansArray = data.guardians;
+  } else if (data.guardian && typeof data.guardian === 'object') {
+    // Legacy: single guardian object, convert to array
+    guardiansArray = [data.guardian];
+  }
 
   return {
     father: {
@@ -41,12 +51,7 @@ const ensureCompleteParentInfo = (parentInfo) => {
       qualification: m.qualification || '',
       annualIncome: m.annualIncome || m.annualincome || '',
     },
-    guardian: {
-      name: g.name || '',
-      relation: g.relation || '',
-      phone: g.phone || '',
-      address: g.address || '',
-    },
+    guardians: guardiansArray,
     siblings: data.siblings || [],
   };
 };
@@ -178,7 +183,7 @@ export const getStudent = asyncHandler(async (req, res, next) => {
   // for now we drop the subjects include; add a proper association later
   // if subject information is actually required.
   const { StudentBio } = models;
-  
+
   const student = await Student.findByPk(req.params.id, {
     attributes: { exclude: ['userId'] },
     include: [
@@ -192,7 +197,7 @@ export const getStudent = asyncHandler(async (req, res, next) => {
   }
 
   const studentData = student.toJSON();
-  
+
   // Fetch student bio data and merge it (if StudentBio model exists)
   try {
     if (StudentBio) {
@@ -560,7 +565,14 @@ export const getMyProfile = asyncHandler(async (req, res, next) => {
     include: [
       { model: Department, as: 'department', attributes: ['short_name', 'full_name'] },
       { model: ClassModel, as: 'class', attributes: ['name', 'section', 'room'] },
-      { model: StudentBio, as: 'bio' }
+      {
+        model: StudentBio,
+        as: 'bio',
+        attributes: ['id', 'studentId', 'alternatePhone', 'linkedinUrl', 'dateOfBirth', 'bloodGroup',
+          'nationality', 'religion', 'category', 'aadharNo', 'motherTongue', 'residenceType',
+          'address', 'permanentAddress', 'parentInfo', 'references', 'familyPhoto',
+          'previousEducation', 'scholarshipDetails', 'documents', 'createdAt', 'updatedAt']
+      }
     ]
   });
 
@@ -569,7 +581,18 @@ export const getMyProfile = asyncHandler(async (req, res, next) => {
   }
 
   const studentData = student.toJSON();
-  
+
+  // Ensure address is properly parsed if it's a string
+  if (studentData.bio && studentData.bio.address) {
+    if (typeof studentData.bio.address === 'string') {
+      try {
+        studentData.bio.address = JSON.parse(studentData.bio.address);
+      } catch (e) {
+        console.error('[DEBUG-getMyProfile] Failed to parse address string:', e);
+      }
+    }
+  }
+
   // Ensure parentInfo has all required fields if it exists
   if (studentData.bio && studentData.bio.parentInfo) {
     studentData.bio.parentInfo = ensureCompleteParentInfo(studentData.bio.parentInfo);
@@ -587,10 +610,10 @@ export const getMyProfile = asyncHandler(async (req, res, next) => {
 export const updateMyProfile = asyncHandler(async (req, res, next) => {
   const {
     email, phone, linkedinUrl, alternatePhone,
-    address, city, state, pincode,
+    address, city, district, state, pincode,
     nationality, religion, category, aadharNo,
     bloodGroup, motherTongue, residenceType,
-    dateOfBirth, parentInfo, references
+    dateOfBirth, parentInfo, references, siblings
   } = req.body;
 
   const student = await Student.findOne({ where: { id: req.user.id } });
@@ -621,24 +644,47 @@ export const updateMyProfile = asyncHandler(async (req, res, next) => {
   if (motherTongue !== undefined) bio.motherTongue = motherTongue;
   if (residenceType !== undefined) bio.residenceType = residenceType;
   if (dateOfBirth !== undefined) bio.dateOfBirth = dateOfBirth;
-  if (parentInfo !== undefined) bio.parentInfo = ensureCompleteParentInfo(parentInfo);
+  if (parentInfo !== undefined) {
+    const cleanedParentInfo = ensureCompleteParentInfo(parentInfo);
+    console.log('[PARENT INFO UPDATE] Received:', JSON.stringify(parentInfo));
+    console.log('[PARENT INFO UPDATE] Processed:', JSON.stringify(cleanedParentInfo));
+    bio.parentInfo = cleanedParentInfo;
+  }
   if (references !== undefined) bio.references = references;
+  if (siblings !== undefined) bio.siblings = siblings;
 
-  // Manage address JSON
-  let addrObj = bio.address || {};
+  // Manage address JSON - ensure it's an object, not a string
+  let addrObj = bio.address;
+  if (typeof addrObj === 'string') {
+    try {
+      addrObj = JSON.parse(addrObj);
+    } catch (e) {
+      addrObj = {};
+    }
+  }
+  if (!addrObj || typeof addrObj !== 'object') {
+    addrObj = {};
+  }
+
   if (address !== undefined) addrObj.street = address;
   if (city !== undefined) addrObj.city = city;
+  if (district !== undefined) addrObj.city = district; // Map district to city field for storage
   if (state !== undefined) addrObj.state = state;
   if (pincode !== undefined) addrObj.pincode = pincode;
   bio.address = addrObj;
+  bio.changed('address', true); // Mark address field as changed for Sequelize to detect updates
 
   // Track changes but don't auto-approve if we want a formal approval flow later.
   // For now, we update it directly to ensure the "dynamic" promise is met.
   await bio.save();
+  console.log('[PARENT INFO SAVED] Bio after save:', JSON.stringify(bio.toJSON(), null, 2));
 
   res.status(200).json({
     success: true,
-    data: { student, bio }
+    data: {
+      student: student.toJSON ? student.toJSON() : student,
+      bio: bio.toJSON ? bio.toJSON() : bio
+    }
   });
 });
 
@@ -704,26 +750,24 @@ export const uploadStudentPhotoAdmin = asyncHandler(async (req, res, next) => {
   const studentNameFormatted = `${student.firstName}_${student.lastName}`.replace(/\s+/g, '_').toLowerCase();
   const ext = path.extname(req.file.originalname);
   const filename = `student_${student.id}_${studentNameFormatted}${ext}`;
-  
+
   // Move file to permanent location with student name
   const uploadsDir = path.join(process.cwd(), 'public', 'uploads', 'photos');
-  
+
   try {
     // Create the photos directory if it doesn't exist
-    const fs = await import('fs').then(m => m.promises);
-    const fsSync = require('fs');
-    if (!fsSync.existsSync(uploadsDir)) {
-      fsSync.mkdirSync(uploadsDir, { recursive: true });
+    if (!fs.existsSync(uploadsDir)) {
+      fs.mkdirSync(uploadsDir, { recursive: true });
     }
-    
+
     const filepath = path.join(uploadsDir, filename);
-    
+
     // Read the uploaded file and write to new location
-    await fs.rename(req.file.path, filepath);
-    
+    await fsPromises.rename(req.file.path, filepath);
+
     const photoPath = `/uploads/photos/${filename}`;
     await Student.update({ photo: photoPath }, { where: { id: req.params.id } });
-    
+
     res.status(200).json({
       success: true,
       message: 'Photo uploaded successfully',
@@ -747,17 +791,138 @@ export const uploadStudentPhoto = asyncHandler(async (req, res, next) => {
     return next(new ErrorResponse('Student not found', 404));
   }
 
-  const photoPath = `/uploads/photos/${req.file.filename}`;
-  student.photo = photoPath;
-  await student.save();
+  // Generate filename with student name and ID
+  const studentNameFormatted = `${student.firstName}_${student.lastName}`.replace(/\s+/g, '_').toLowerCase();
+  const ext = path.extname(req.file.originalname);
+  const filename = `student_${student.id}_${studentNameFormatted}${ext}`;
 
-  res.status(200).json({
-    success: true,
-    message: 'Photo uploaded successfully',
-    data: {
-      photo: student.photo
+  // Move file to permanent location with student name
+  const uploadsDir = path.join(process.cwd(), 'public', 'uploads', 'photos', 'profile');
+
+  try {
+    // Create the directory if it doesn't exist
+    if (!fs.existsSync(uploadsDir)) {
+      fs.mkdirSync(uploadsDir, { recursive: true });
     }
-  });
+
+    const filepath = path.join(uploadsDir, filename);
+
+    // Move the uploaded file to permanent location
+    await fsPromises.rename(req.file.path, filepath);
+
+    const photoPath = `/uploads/photos/profile/${filename}`;
+    student.photo = photoPath;
+    await student.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Profile photo updated successfully',
+      data: {
+        photo: student.photo
+      }
+    });
+  } catch (err) {
+    console.error('Error uploading photo:', err);
+    next(new ErrorResponse(`Error uploading photo: ${err.message}`, 500));
+  }
+});
+
+// @desc      Upload family photo
+// @route     PUT /api/v1/students/me/family-photo
+// @access    Private/Student
+export const uploadFamilyPhoto = asyncHandler(async (req, res, next) => {
+  if (!req.file) {
+    return next(new ErrorResponse('No family photo uploaded', 400));
+  }
+
+  const student = await Student.findOne({ where: { id: req.user.id } });
+  if (!student) {
+    return next(new ErrorResponse('Student not found', 404));
+  }
+
+  // Generate filename with student name and ID
+  const studentNameFormatted = `${student.firstName}_${student.lastName}`.replace(/\s+/g, '_').toLowerCase();
+  const ext = path.extname(req.file.originalname);
+  const filename = `family_${student.id}_${studentNameFormatted}${ext}`;
+
+  // Move file to permanent location with student name
+  const uploadsDir = path.join(process.cwd(), 'public', 'uploads', 'photos', 'family');
+
+  try {
+    // Create the directory if it doesn't exist
+    if (!fs.existsSync(uploadsDir)) {
+      fs.mkdirSync(uploadsDir, { recursive: true });
+    }
+
+    const filepath = path.join(uploadsDir, filename);
+
+    // Move the uploaded file to permanent location
+    await fsPromises.rename(req.file.path, filepath);
+
+    const familyPhotoPath = `/uploads/photos/family/${filename}`;
+
+    // Store in StudentBio if available, or create new bio record
+    let bio = await StudentBio.findOne({ where: { studentId: student.id } });
+
+    if (!bio) {
+      bio = await StudentBio.create({
+        studentId: student.id,
+        familyPhoto: familyPhotoPath
+      });
+    } else {
+      bio.familyPhoto = familyPhotoPath;
+      await bio.save();
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Family photo updated successfully',
+      data: {
+        familyPhoto: familyPhotoPath
+      }
+    });
+  } catch (err) {
+    console.error('Error uploading family photo:', err);
+    next(new ErrorResponse(`Error uploading family photo: ${err.message}`, 500));
+  }
+});
+
+// @desc      Upload reference photo
+// @route     POST /api/v1/students/me/reference-photo
+// @access    Private/Student
+export const uploadReferencePhoto = asyncHandler(async (req, res, next) => {
+  if (!req.file) {
+    return next(new ErrorResponse('No reference photo uploaded', 400));
+  }
+
+  const student = await Student.findOne({ where: { id: req.user.id } });
+  if (!student) {
+    return next(new ErrorResponse('Student not found', 404));
+  }
+
+  const studentNameFormatted = `${student.firstName}_${student.lastName}`.replace(/\s+/g, '_').toLowerCase();
+  const ext = path.extname(req.file.originalname);
+  const timeStamp = Date.now();
+  const filename = `reference_${student.id}_${studentNameFormatted}_${timeStamp}${ext}`;
+  const uploadsDir = path.join(process.cwd(), 'public', 'uploads', 'photos', 'references');
+
+  try {
+    if (!fs.existsSync(uploadsDir)) {
+      fs.mkdirSync(uploadsDir, { recursive: true });
+    }
+    const filepath = path.join(uploadsDir, filename);
+    await fsPromises.rename(req.file.path, filepath);
+    const referencePhotoPath = `/uploads/photos/references/${filename}`;
+
+    res.status(200).json({
+      success: true,
+      message: 'Reference photo uploaded successfully',
+      data: { photo: referencePhotoPath }
+    });
+  } catch (err) {
+    console.error('Error uploading reference photo:', err);
+    next(new ErrorResponse(`Error uploading reference photo: ${err.message}`, 500));
+  }
 });
 
 // @desc      Download student bulk upload template
@@ -766,10 +931,10 @@ export const uploadStudentPhoto = asyncHandler(async (req, res, next) => {
 export const downloadBulkTemplate = asyncHandler(async (req, res, next) => {
   // Get departments for reference
   const departments = await Department.findAll({ attributes: ['id', 'short_name'] });
-  
+
   // CSV headers with example data
   const headers = ['studentId', 'rollNumber', 'firstName', 'lastName', 'email', 'phone', 'gender', 'departmentId', 'batch', 'semester', 'year', 'admissionNo', 'emisNo', 'status'];
-  
+
   // Create example row
   const exampleRow = [
     'STU001',
@@ -791,7 +956,7 @@ export const downloadBulkTemplate = asyncHandler(async (req, res, next) => {
   // Create CSV content
   let csvContent = headers.join(',') + '\n';
   csvContent += exampleRow.join(',') + '\n';
-  
+
   // Add reference section as comments
   csvContent += '\n# Field Descriptions:\n';
   csvContent += '# studentId: Unique student identifier (required, must be unique)\n';
@@ -826,7 +991,7 @@ export const bulkUploadStudents = asyncHandler(async (req, res, next) => {
     // Parse CSV content
     const fileContent = req.file.buffer.toString('utf8');
     const lines = fileContent.split('\n').filter(line => line.trim() && !line.startsWith('#'));
-    
+
     if (lines.length < 2) {
       return next(new ErrorResponse('CSV must contain headers and at least one data row', 400));
     }
@@ -834,7 +999,7 @@ export const bulkUploadStudents = asyncHandler(async (req, res, next) => {
     // Extract headers
     const headers = lines[0].split(',').map(h => h.trim());
     const requiredFields = ['studentId', 'rollNumber', 'firstName', 'lastName', 'email', 'phone', 'gender', 'departmentId', 'batch', 'semester', 'year'];
-    
+
     // Validate headers
     const missingHeaders = requiredFields.filter(field => !headers.includes(field));
     if (missingHeaders.length > 0) {
@@ -844,11 +1009,11 @@ export const bulkUploadStudents = asyncHandler(async (req, res, next) => {
     // Parse data rows
     const students = [];
     const errors = [];
-    
+
     for (let i = 1; i < lines.length; i++) {
       const values = lines[i].split(',').map(v => v.trim());
       const row = {};
-      
+
       headers.forEach((header, idx) => {
         row[header] = values[idx] || null;
       });
@@ -873,7 +1038,7 @@ export const bulkUploadStudents = asyncHandler(async (req, res, next) => {
         row.departmentId = parseInt(row.departmentId);
         row.semester = parseInt(row.semester);
         row.year = String(row.year);
-        
+
         students.push(row);
       }
     }
@@ -976,10 +1141,10 @@ export const getStudentSyllabus = asyncHandler(async (req, res, next) => {
 
     // Group topics by subject and faculty
     const groupedBySubject = {};
-    
+
     coursePlans.forEach(plan => {
       const subjectId = plan.subject.id;
-      
+
       if (!groupedBySubject[subjectId]) {
         groupedBySubject[subjectId] = {
           id: plan.id,
