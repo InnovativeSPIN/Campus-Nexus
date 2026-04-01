@@ -4,7 +4,7 @@ const StudentProject = (sequelize) => {
     const StudentProjectModel = sequelize.define('StudentProject', {
         id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
         studentId: { type: DataTypes.INTEGER, allowNull: false },
-        title: { type: DataTypes.STRING(200), allowNull: false },
+        title: { type: DataTypes.STRING(200), allowNull: true },
         description: { type: DataTypes.TEXT, allowNull: true },
         role: { type: DataTypes.STRING(100), allowNull: true },
         techStack: { type: DataTypes.JSON, allowNull: true },
@@ -12,6 +12,7 @@ const StudentProject = (sequelize) => {
         endDate: { type: DataTypes.DATEONLY, allowNull: true },
         demoUrl: { type: DataTypes.STRING(500), allowNull: true },
         repoUrl: { type: DataTypes.STRING(500), allowNull: true },
+        documentUrl: { type: DataTypes.STRING(500), allowNull: true },
         status: {
             type: DataTypes.ENUM('in-progress', 'completed', 'planned', 'paused'),
             defaultValue: 'in-progress',
