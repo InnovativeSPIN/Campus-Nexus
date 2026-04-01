@@ -59,7 +59,7 @@ export const createSport = asyncHandler(async (req, res, next) => {
     if (!student) return next(new ErrorResponse('Student not found', 404));
 
     const data = { ...req.body, studentId, classId: student.classId, approvalStatus: 'pending' };
-    if (req.file) data.documentUrl = req.file.filename;
+    if (req.file) data.documentUrl = req.uploadSubFolder ? `${req.uploadSubFolder}/${req.file.filename}` : req.file.filename;
     const sport = await StudentSport.create(data);
 
     // Notification to class incharge (non-blocking)
@@ -84,7 +84,7 @@ export const updateSport = asyncHandler(async (req, res, next) => {
 
     delete req.body.approvedById; delete req.body.approvalDate; delete req.body.studentId;
     const dataToUpdate = { ...req.body, approvalStatus: 'pending' };
-    if (req.file) dataToUpdate.documentUrl = req.file.filename;
+    if (req.file) dataToUpdate.documentUrl = req.uploadSubFolder ? `${req.uploadSubFolder}/${req.file.filename}` : req.file.filename;
 
     await sport.update(dataToUpdate);
     res.status(200).json({ success: true, data: sport });
@@ -110,7 +110,7 @@ export const deleteSport = asyncHandler(async (req, res, next) => {
 export const updateSportApproval = asyncHandler(async (req, res, next) => {
     const { approvalStatus, approvalRemarks } = req.body;
     if (!['approved', 'rejected'].includes(approvalStatus)) {
-        return next(new ErrorResponse('approvalStatus must be approved or rejected', 400));
+        return next(new ErrorResponse(`approvalStatus must be approved or rejected, received: "${approvalStatus}"`, 400));
     }
     const sport = await StudentSport.findByPk(req.params.id);
     if (!sport) return next(new ErrorResponse('Sport record not found', 404));
@@ -222,7 +222,7 @@ export const createEvent = asyncHandler(async (req, res, next) => {
     if (!student) return next(new ErrorResponse('Student not found', 404));
 
     const data = { ...req.body, studentId, classId: student.classId, approvalStatus: 'pending' };
-    if (req.file) data.certificateUrl = req.file.filename;
+    if (req.file) data.certificateUrl = req.uploadSubFolder ? `${req.uploadSubFolder}/${req.file.filename}` : req.file.filename;
     const event = await StudentEvent.create(data);
 
     // Notification to class incharge (non-blocking)
@@ -247,7 +247,7 @@ export const updateEvent = asyncHandler(async (req, res, next) => {
 
     delete req.body.approvedById; delete req.body.approvalDate; delete req.body.studentId;
     const dataToUpdate = { ...req.body, approvalStatus: 'pending' };
-    if (req.file) dataToUpdate.certificateUrl = req.file.filename;
+    if (req.file) dataToUpdate.certificateUrl = req.uploadSubFolder ? `${req.uploadSubFolder}/${req.file.filename}` : req.file.filename;
 
     await event.update(dataToUpdate);
     res.status(200).json({ success: true, data: event });
@@ -273,7 +273,7 @@ export const deleteEvent = asyncHandler(async (req, res, next) => {
 export const updateEventApproval = asyncHandler(async (req, res, next) => {
     const { approvalStatus, approvalRemarks } = req.body;
     if (!['approved', 'rejected'].includes(approvalStatus)) {
-        return next(new ErrorResponse('approvalStatus must be approved or rejected', 400));
+        return next(new ErrorResponse(`approvalStatus must be approved or rejected, received: "${approvalStatus}"`, 400));
     }
     const event = await StudentEvent.findByPk(req.params.id);
     if (!event) return next(new ErrorResponse('Event record not found', 404));

@@ -25,7 +25,7 @@ router.use(protect);
 
 // SPORTS CLASS INCHARGE (FACULTY/ADMIN) - MUST BE FIRST
 router.get('/sports/class-incharge', authorize('faculty', 'admin', 'department-admin'), getClassInchargeSports);
-router.put('/sports/class-incharge/:approvalId/approval', authorize('admin', 'faculty'), updateSportApproval);
+router.put('/sports/:id/approval', authorize('admin', 'faculty'), updateSportApproval);
 
 // SPORTS STUDENT ROUTES
 router.get('/sports', authorize('student'), getMySports);
@@ -36,7 +36,7 @@ router.delete('/sports/:id', authorize('student'), deleteSport);
 
 // EVENTS CLASS INCHARGE (FACULTY/ADMIN) - MUST BE BEFORE GENERIC EVENTS ROUTES
 router.get('/events/class-incharge', authorize('faculty', 'admin', 'department-admin'), getClassInchargeEvents);
-router.put('/events/class-incharge/:approvalId/approval', authorize('admin', 'faculty'), updateEventApproval);
+router.put('/events/:id/approval', authorize('admin', 'faculty'), updateEventApproval);
 
 // EVENTS STUDENT ROUTES
 router.get('/events', authorize('student'), getMyEvents);

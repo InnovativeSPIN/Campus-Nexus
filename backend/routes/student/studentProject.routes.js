@@ -18,7 +18,7 @@ router.use(protect);
 
 // FACULTY/ADMIN CLASS INCHARGE ROUTES - MUST BE FIRST BEFORE ANY OTHER ROUTES
 router.get('/class-incharge', authorize('faculty', 'admin', 'department-admin'), getClassInchargeProjects);
-router.put('/class-incharge/:approvalId/approval', authorize('admin', 'faculty'), updateProjectApproval);
+router.put('/:id/approval', authorize('admin', 'faculty'), updateProjectApproval);
 
 // STUDENT ROUTES
 router.get('/', authorize('student'), getMyProjects);

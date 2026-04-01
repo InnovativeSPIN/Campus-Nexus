@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import Modal from '@/pages/student/components/common/Modal';
 import Badge from '@/pages/student/components/common/Badge';
 import { Plus, ExternalLink, Github, Edit2, Trash2, Loader2 } from 'lucide-react';
