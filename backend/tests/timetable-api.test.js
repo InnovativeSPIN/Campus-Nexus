@@ -3,18 +3,48 @@
  * Tests all critical endpoints for timetable management and leave alteration workflow
  */
 
-import axios from 'axios';
-
 const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:5000/api/v1';
 const AUTH_TOKEN = process.env.AUTH_TOKEN || 'your-jwt-token-here';
 
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${AUTH_TOKEN}`,
-  },
-});
+async function request(method, path, payload = undefined) {
+  const url = `${API_BASE_URL}${path}`;
+  const options = {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${AUTH_TOKEN}`,
+    },
+  };
+
+  if (payload !== undefined) {
+    options.body = JSON.stringify(payload);
+  }
+
+  const response = await fetch(url, options);
+  const text = await response.text();
+
+  let jsonData = null;
+  if (text) {
+    try {
+      jsonData = JSON.parse(text);
+    } catch (err) {
+      throw new Error(`Invalid JSON response from ${url}: ${err.message}`);
+    }
+  }
+
+  if (!response.ok) {
+    const message = jsonData?.message || response.statusText || 'Request failed';
+    throw new Error(`HTTP ${response.status} ${message}`);
+  }
+
+  return jsonData;
+}
+
+const api = {
+  get: (path) => request('GET', path),
+  post: (path, body) => request('POST', path, body),
+  patch: (path, body) => request('PATCH', path, body),
+};
 
 // Test data
 const testData = {
