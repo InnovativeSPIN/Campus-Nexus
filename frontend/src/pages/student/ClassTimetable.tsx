@@ -186,14 +186,18 @@ ${breakTimings.map(b => `${b.break_name}: ${b.start_time} - ${b.end_time}`).join
                 {days.map(day => {
                   const slot = getTimetableSlot(day, period.period_number);
                   
+                  // Check if this is a break period - by is_break flag or period_type
+                  const isBreakPeriod = slot?.is_break || slot?.period_type?.toLowerCase().includes('break');
+                  
                   return (
-                    <td key={`${day}-${period.period_number}`} className="px-4 py-4 text-center">
-                      {slot?.is_break ? (
-                        <div className="bg-amber-100 border border-amber-300 rounded p-2">
-                          <div className="text-xs font-semibold text-amber-900">BREAK</div>
+                    <td key={`${day}-${period.period_number}`} className="px-4 py-4 text-center min-h-[100px] flex items-center justify-center">
+                      {isBreakPeriod ? (
+                        <div className="bg-amber-100 border-2 border-amber-400 rounded p-3 w-full">
+                          <div className="text-sm font-bold text-amber-900">BREAK</div>
+                          <div className="text-xs text-amber-700 mt-1">{period.start_time} - {period.end_time}</div>
                         </div>
                       ) : slot?.subject ? (
-                        <div className="bg-blue-50 border border-blue-200 rounded p-2 space-y-1">
+                        <div className="bg-blue-50 border border-blue-200 rounded p-2 space-y-1 w-full">
                           <div className="text-sm font-semibold text-gray-900">
                             {slot.subject.subject_code}
                           </div>

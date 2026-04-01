@@ -213,6 +213,34 @@ export default function SuperAdminSubjectManagement() {
         batch: formData.batch && formData.batch !== 'none' ? formData.batch : undefined,
       };
 
+      // Check for exact duplicate: same code + name + department + semester
+      const exactDuplicate = subjects.find(s =>
+        s.code.trim().toLowerCase() === payload.code.trim().toLowerCase() &&
+        s.name.trim().toLowerCase() === payload.name.trim().toLowerCase() &&
+        s.department_id === payload.department_id &&
+        s.semester === payload.semester &&
+        (formModal.mode === 'add' || s.id !== formModal.data?.id)
+      );
+
+      if (exactDuplicate) {
+        toast.error(`"${payload.name}" already exists in this department for semester ${payload.semester}`);
+        return;
+      }
+
+      // Check if this subject exists in other departments/semesters and show info
+      const existingAllocations = subjects.filter(s =>
+        s.code.trim().toLowerCase() === payload.code.trim().toLowerCase() &&
+        s.name.trim().toLowerCase() === payload.name.trim().toLowerCase()
+      );
+
+      if (existingAllocations.length > 0 && formModal.mode === 'add') {
+        const allocations = existingAllocations
+          .map(s => `${s.department?.short_name || 'Unknown'} - Sem ${s.semester}`)
+          .join(', ');
+        console.log(`ℹ️ Info: "${payload.name}" already allocated to: ${allocations}`);
+        toast.info(`Note: "${payload.name}" is already allocated to: ${allocations}. Creating new allocation.`);
+      }
+
       const url =
         formModal.mode === 'add'
           ? '/api/v1/admin/subjects'
