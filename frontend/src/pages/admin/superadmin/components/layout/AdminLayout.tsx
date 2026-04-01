@@ -39,21 +39,27 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   return (
     <div className="min-h-screen bg-background flex flex-col lg:flex-row relative overflow-x-hidden">
       {/* Mobile Top Bar */}
-      <div className="lg:hidden flex items-center justify-between px-4 py-3 bg-[#800000] text-white shadow-md z-[60] sticky top-0">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
-            <GraduationCap className="w-5 h-5 text-white" />
+      <div className="lg:hidden flex items-center justify-between px-6 py-4 bg-[#800000] text-white shadow-lg z-[60] sticky top-0 backdrop-blur-md bg-opacity-95">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center border border-white/10">
+            <GraduationCap className="w-6 h-6 text-white" />
           </div>
-          <span className="font-serif font-bold text-lg">NSCET Admin</span>
+          <div className="flex flex-col">
+            <span className="font-serif font-bold text-lg leading-tight">NSCET</span>
+            <span className="text-[10px] uppercase tracking-widest text-white/60 font-black">Super Admin</span>
+          </div>
         </div>
-        <button 
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-          tabIndex={0}
-          aria-label="Toggle Menu"
-        >
-          {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-        </button>
+        <div className="flex items-center gap-2">
+          <IntegratedNotificationBell />
+          <button 
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="p-2 hover:bg-white/10 rounded-xl transition-all active:scale-95"
+            tabIndex={0}
+            aria-label="Toggle Menu"
+          >
+            {isMobileMenuOpen ? <X className="w-7 h-7" /> : <Menu className="w-7 h-7" />}
+          </button>
+        </div>
       </div>
 
       {/* Sidebar Component */}
@@ -71,20 +77,23 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         "ml-0",
         collapsed ? "lg:ml-20" : "lg:ml-[280px]"
       )}>
-        {/* Header Bar */}
-        <header className="sticky top-0 z-40 h-16 border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
-          <div className="flex h-full items-center justify-between px-6">
-            <div className="text-foreground font-semibold hidden md:block">
-              Welcome, {user.name}
+        {/* Header Bar - Hidden on Mobile */}
+        <header className="sticky top-0 z-40 h-16 border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60 hidden lg:block">
+          <div className="flex h-full items-center justify-between px-8">
+            <div className="flex items-center gap-3">
+               <div className="h-2 w-2 rounded-full bg-success animate-pulse" />
+               <span className="text-foreground font-semibold">
+                 Howdy, <span className="text-primary">{user.name || 'Admin'}</span>
+               </span>
             </div>
-            <div className="flex-1 md:flex-initial flex justify-end">
+            <div className="flex items-center gap-6">
               <IntegratedNotificationBell />
             </div>
           </div>
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 p-4 md:p-6 lg:p-8 max-w-7xl mx-auto w-full">
+        <main className="flex-1 p-5 md:p-8 lg:p-10 max-w-7xl mx-auto w-full transition-all">
           {children}
         </main>
       </div>

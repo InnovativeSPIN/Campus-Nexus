@@ -15,6 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/pages/admin/superadm
 import { Badge } from '@/pages/admin/superadmin/components/ui/badge';
 import { useAnnouncementNotification } from '@/hooks/useAnnouncementNotification';
 import { AnnouncementNotificationModal } from '@/components/common/AnnouncementNotificationModal';
+import { cn } from '@/lib/utils';
 
 
 // Hook: animate a number counting up from 0 to target
@@ -148,25 +149,30 @@ export default function SuperAdminDashboard() {
           updatedAt={announcement.updatedAt}
         />
       )}
-      <div className="space-y-6">
+      <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Dashboard Overview</h1>
-            <p className="text-muted-foreground">Welcome back! Here's what's happening today.</p>
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground">Dashboard</h1>
+            <p className="text-muted-foreground mt-1">Real-time overview of the campus ecosystem.</p>
           </div>
-          <button
-            onClick={handleRefresh}
-            disabled={refreshing}
-            className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-50"
-          >
-            <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
-            Refresh
-          </button>
+          <div className="flex items-center gap-3">
+             <button
+              onClick={handleRefresh}
+              disabled={refreshing}
+              className={cn(
+                "flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-border shadow-sm text-sm font-semibold transition-all",
+                "bg-card text-muted-foreground hover:text-foreground hover:bg-muted active:scale-95 disabled:opacity-50"
+              )}
+            >
+              <RefreshCw className={cn("h-4 w-4", refreshing && "animate-spin")} />
+              <span>Refresh Stats</span>
+            </button>
+          </div>
         </div>
 
         {/* Stats Grid */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
           {/* Total Students */}
           <div className="relative">
             <StatsCard

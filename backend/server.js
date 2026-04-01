@@ -183,7 +183,17 @@ const startServer = () => {
     }
 
     // Use express-fileupload for all other routes (admin, faculty, etc.)
-    uploader(req, res, next);
+    // Only apply for state-changing methods AND non-multer routes
+    const isStateChangingMethod = ['POST', 'PUT', 'PATCH'].includes(req.method);
+    
+    if (isStateChangingMethod && !isMulterRoute) {
+      if (process.env.NODE_ENV === 'development' && req.path.includes('/api/v1/')) {
+        console.log(`[FILE-MW] Processing: ${req.method} ${req.path}`.magenta);
+      }
+      return uploader(req, res, next);
+    }
+    
+    next();
   });
 
   // Security middlewares - apply only to API routes to be safe
