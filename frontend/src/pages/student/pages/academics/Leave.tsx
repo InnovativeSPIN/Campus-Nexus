@@ -505,8 +505,8 @@ export default function Leave() {
         title="Apply for Leave"
         size="lg"
       >
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+        <form onSubmit={handleSubmit} className="space-y-4 max-h-[80vh] overflow-y-auto px-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium mb-1.5">From Date *</label>
               <input
@@ -514,7 +514,7 @@ export default function Leave() {
                 required
                 value={formData.startDate}
                 onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                className="input-field"
+                className="input-field w-full"
               />
             </div>
             <div>
@@ -524,7 +524,7 @@ export default function Leave() {
                 required
                 value={formData.endDate}
                 onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                className="input-field"
+                className="input-field w-full"
               />
             </div>
           </div>
@@ -538,14 +538,14 @@ export default function Leave() {
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium mb-1.5">Submit To *</label>
               <select
                 required
                 value={formData.recipient}
                 onChange={(e) => setFormData({ ...formData, recipient: e.target.value })}
-                className="input-field cursor-pointer"
+                className="input-field w-full cursor-pointer"
               >
                 <option value="Class Incharge">Class Incharge</option>
                 <option value="Faculty Advisor">Mentor</option>
@@ -558,7 +558,7 @@ export default function Leave() {
                 required
                 value={formData.leaveType}
                 onChange={(e) => setFormData({ ...formData, leaveType: e.target.value })}
-                className="input-field cursor-pointer"
+                className="input-field w-full cursor-pointer"
               >
                 <option value="Leave">Leave</option>
                 <option value="On-Duty">On-Duty</option>
@@ -572,19 +572,19 @@ export default function Leave() {
               required
               value={formData.reason}
               onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
-              className="input-field resize-none min-h-[100px]"
+              className="input-field w-full resize-none min-h-[100px]"
               placeholder="Please provide a clear reason for your leave request..."
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium mb-1.5">Leave Sub-Type *</label>
               <select
                 required
                 value={formData.leaveSubType}
                 onChange={(e) => setFormData({ ...formData, leaveSubType: e.target.value })}
-                className="input-field cursor-pointer"
+                className="input-field w-full cursor-pointer"
               >
                 <option value="">Select Sub-Type</option>
                 {formData.leaveType === 'Leave' && (
@@ -607,26 +607,26 @@ export default function Leave() {
               <input
                 type="file"
                 onChange={(e) => setFormData({ ...formData, attachment: e.target.files?.[0] || null })}
-                className="input-field py-1.5"
+                className="input-field w-full py-1.5"
                 accept=".pdf,.jpg,.jpeg,.png"
               />
               <p className="text-[10px] text-muted-foreground mt-1">Accepts PDF, JPG, PNG (Max 5MB)</p>
             </div>
           </div>
 
-          <div className="flex justify-end gap-3 pt-6">
+          <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-6 border-t">
             <button
               type="button"
               disabled={loading}
               onClick={closeModal}
-              className="px-4 py-2 rounded-lg border border-border hover:bg-muted transition-colors disabled:opacity-50"
+              className="px-4 py-2 rounded-lg border border-border hover:bg-muted transition-colors disabled:opacity-50 w-full sm:w-auto"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="btn-primary flex items-center gap-2 shadow-lg shadow-primary/20"
+              className="btn-primary flex items-center justify-center gap-2 shadow-lg shadow-primary/20 w-full sm:w-auto"
             >
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
               {loading ? 'Submitting...' : 'Submit Application'}

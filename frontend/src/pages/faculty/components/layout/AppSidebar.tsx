@@ -73,8 +73,11 @@ export function AppSidebar({
     const controller = new AbortController();
     const checkTimetableRoles = async () => {
       try {
+        const token = localStorage.getItem('authToken');
+        if (!token) return; // Skip if token not available yet
+        
         const res = await fetch('/api/v1/faculty/me/timetable-roles', {
-          headers: { Authorization: `Bearer ${localStorage.getItem('authToken')}` },
+          headers: { Authorization: `Bearer ${token}` },
           signal: controller.signal,
         });
         if (!res.ok) return;

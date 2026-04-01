@@ -191,23 +191,23 @@ export default function Events({ onPendingChange }: EventsProps) {
       )}
 
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-sm sm:max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingId ? 'Edit Event' : 'Add New Event'}</DialogTitle>
             <DialogDescription>Fill in the details about your event participation.</DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-4 px-2">
             <div>
               <label className="block text-sm font-medium mb-2">Event Name *</label>
-              <input type="text" placeholder="e.g., Annual Tech Fest" value={formData.eventName} onChange={(e) => setFormData({ ...formData, eventName: e.target.value })} className="w-full px-3 py-2 border border-input rounded-lg bg-background" />
+              <input type="text" placeholder="e.g., Annual Tech Fest" value={formData.eventName} onChange={(e) => setFormData({ ...formData, eventName: e.target.value })} className="w-full px-3 py-2 border border-input rounded-lg bg-background text-base" />
             </div>
             <div>
               <label className="block text-sm font-medium mb-2">Event Date *</label>
-              <input type="date" value={formData.eventDate} onChange={(e) => setFormData({ ...formData, eventDate: e.target.value })} className="w-full px-3 py-2 border border-input rounded-lg bg-background" />
+              <input type="date" value={formData.eventDate} onChange={(e) => setFormData({ ...formData, eventDate: e.target.value })} className="w-full px-3 py-2 border border-input rounded-lg bg-background text-base" />
             </div>
             <div>
               <label className="block text-sm font-medium mb-2">Event Type</label>
-              <select value={formData.eventType} onChange={(e) => setFormData({ ...formData, eventType: e.target.value })} className="w-full px-3 py-2 border border-input rounded-lg bg-background">
+              <select value={formData.eventType} onChange={(e) => setFormData({ ...formData, eventType: e.target.value })} className="w-full px-3 py-2 border border-input rounded-lg bg-background text-base">
                 <option value="cultural">Cultural</option>
                 <option value="technical">Technical</option>
                 <option value="sports">Sports</option>
@@ -219,11 +219,11 @@ export default function Events({ onPendingChange }: EventsProps) {
             </div>
             <div>
               <label className="block text-sm font-medium mb-2">Organizer</label>
-              <input type="text" placeholder="e.g., College, District Org" value={formData.organizer || ''} onChange={(e) => setFormData({ ...formData, organizer: e.target.value })} className="w-full px-3 py-2 border border-input rounded-lg bg-background" />
+              <input type="text" placeholder="e.g., College, District Org" value={formData.organizer || ''} onChange={(e) => setFormData({ ...formData, organizer: e.target.value })} className="w-full px-3 py-2 border border-input rounded-lg bg-background text-base" />
             </div>
             <div>
               <label className="block text-sm font-medium mb-2">Role</label>
-              <select value={formData.role} onChange={(e) => setFormData({ ...formData, role: e.target.value })} className="w-full px-3 py-2 border border-input rounded-lg bg-background">
+              <select value={formData.role} onChange={(e) => setFormData({ ...formData, role: e.target.value })} className="w-full px-3 py-2 border border-input rounded-lg bg-background text-base">
                 <option value="participant">Participant</option>
                 <option value="organizer">Organizer</option>
                 <option value="volunteer">Volunteer</option>
@@ -234,7 +234,7 @@ export default function Events({ onPendingChange }: EventsProps) {
             </div>
             <div>
               <label className="block text-sm font-medium mb-2">Level</label>
-              <select value={formData.level} onChange={(e) => setFormData({ ...formData, level: e.target.value })} className="w-full px-3 py-2 border border-input rounded-lg bg-background">
+              <select value={formData.level} onChange={(e) => setFormData({ ...formData, level: e.target.value })} className="w-full px-3 py-2 border border-input rounded-lg bg-background text-base">
                 <option value="college">College</option>
                 <option value="district">District</option>
                 <option value="state">State</option>
@@ -244,17 +244,20 @@ export default function Events({ onPendingChange }: EventsProps) {
             </div>
             <div>
               <label className="block text-sm font-medium mb-2">Achievement</label>
-              <input type="text" placeholder="e.g., 1st Place, Best Speaker" value={formData.achievement || ''} onChange={(e) => setFormData({ ...formData, achievement: e.target.value })} className="w-full px-3 py-2 border border-input rounded-lg bg-background" />
+              <input type="text" placeholder="e.g., 1st Place, Best Speaker" value={formData.achievement || ''} onChange={(e) => setFormData({ ...formData, achievement: e.target.value })} className="w-full px-3 py-2 border border-input rounded-lg bg-background text-base" />
             </div>
             <div>
               <label className="block text-sm font-medium mb-2">Upload Certificate (Optional)</label>
-              <input type="file" onChange={(e) => setFormData({ ...formData, document: e.target.files?.[0] || null })} className="w-full px-3 py-1.5 border border-input rounded-lg bg-background" accept=".jpg,.jpeg,.png,.pdf" />
+              <input type="file" onChange={(e) => setFormData({ ...formData, document: e.target.files?.[0] || null })} className="w-full px-3 py-1.5 border border-input rounded-lg bg-background text-sm" accept=".jpg,.jpeg,.png,.pdf" />
+              {formData.document && (
+                <p className="text-xs text-muted-foreground mt-1 truncate">Selected: {formData.document.name}</p>
+              )}
             </div>
-            <div className="flex gap-2 justify-end mt-6">
+            <div className="flex flex-col-reverse sm:flex-row gap-2 justify-end mt-6 pt-4 border-t">
               <DialogClose asChild>
-                <button onClick={handleCancel} className="px-4 py-2 rounded-lg border border-border hover:bg-muted transition-colors">Cancel</button>
+                <button onClick={handleCancel} className="px-4 py-2 rounded-lg border border-border hover:bg-muted transition-colors w-full sm:w-auto">Cancel</button>
               </DialogClose>
-              <button onClick={handleSave} disabled={isSaving} className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center gap-2">
+              <button onClick={handleSave} disabled={isSaving} className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 w-full sm:w-auto">
                 {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                 {isSaving ? 'Saving...' : 'Submit'}
               </button>

@@ -246,44 +246,47 @@ export default function Certifications({ onPendingChange }: CertificationsProps)
       )}
 
       <Modal isOpen={isModalOpen} onClose={closeModal} title={editingCert ? 'Edit Certification' : 'Add New Certification'} size="lg">
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 max-h-[80vh] overflow-y-auto px-2">
           <div>
             <label className="block text-sm font-medium mb-2">Certification Name *</label>
-            <input type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="input-field" placeholder="e.g., AWS Certified Cloud Practitioner" />
+            <input type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="input-field w-full" placeholder="e.g., AWS Certified Cloud Practitioner" />
           </div>
           <div>
             <label className="block text-sm font-medium mb-2">Issuing Organization *</label>
-            <input type="text" value={formData.issuer} onChange={(e) => setFormData({ ...formData, issuer: e.target.value })} className="input-field" placeholder="e.g., Amazon Web Services" />
+            <input type="text" value={formData.issuer} onChange={(e) => setFormData({ ...formData, issuer: e.target.value })} className="input-field w-full" placeholder="e.g., Amazon Web Services" />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium mb-2">Issue Date *</label>
-              <input type="date" value={formData.issueDate} onChange={(e) => setFormData({ ...formData, issueDate: e.target.value })} className="input-field" />
+              <input type="date" value={formData.issueDate} onChange={(e) => setFormData({ ...formData, issueDate: e.target.value })} className="input-field w-full" />
             </div>
             <div>
               <label className="block text-sm font-medium mb-2">Expiry Date</label>
-              <input type="date" value={formData.expiryDate} onChange={(e) => setFormData({ ...formData, expiryDate: e.target.value })} className="input-field" />
+              <input type="date" value={formData.expiryDate} onChange={(e) => setFormData({ ...formData, expiryDate: e.target.value })} className="input-field w-full" />
             </div>
           </div>
           <div>
             <label className="block text-sm font-medium mb-2">Credential ID</label>
-            <input type="text" value={formData.credentialId} onChange={(e) => setFormData({ ...formData, credentialId: e.target.value })} className="input-field" placeholder="e.g., AWS-CCP-123456" />
+            <input type="text" value={formData.credentialId} onChange={(e) => setFormData({ ...formData, credentialId: e.target.value })} className="input-field w-full" placeholder="e.g., AWS-CCP-123456" />
           </div>
           <div>
             <label className="block text-sm font-medium mb-2">Verification URL</label>
-            <input type="url" value={formData.credentialUrl} onChange={(e) => setFormData({ ...formData, credentialUrl: e.target.value })} className="input-field" placeholder="https://..." />
+            <input type="url" value={formData.credentialUrl} onChange={(e) => setFormData({ ...formData, credentialUrl: e.target.value })} className="input-field w-full" placeholder="https://..." />
           </div>
           <div>
             <label className="block text-sm font-medium mb-2">Skills</label>
-            <input type="text" value={formData.skills} onChange={(e) => setFormData({ ...formData, skills: e.target.value })} className="input-field" placeholder="Cloud, AWS, Infrastructure (comma separated)" />
+            <input type="text" value={formData.skills} onChange={(e) => setFormData({ ...formData, skills: e.target.value })} className="input-field w-full" placeholder="Cloud, AWS, Infrastructure (comma separated)" />
           </div>
           <div>
             <label className="block text-sm font-medium mb-2">Upload Certificate (Optional)</label>
-            <input type="file" onChange={(e) => setFormData({ ...formData, document: e.target.files?.[0] || null })} className="input-field py-1.5" accept=".jpg,.jpeg,.png,.pdf" />
+            <input type="file" onChange={(e) => setFormData({ ...formData, document: e.target.files?.[0] || null })} className="input-field w-full py-1.5" accept=".jpg,.jpeg,.png,.pdf" />
+            {formData.document && (
+              <p className="text-xs text-muted-foreground mt-1 truncate">Selected: {formData.document.name}</p>
+            )}
           </div>
-          <div className="flex justify-end gap-3 pt-4">
-            <button type="button" onClick={closeModal} className="px-4 py-2 rounded-lg border border-border hover:bg-muted transition-colors">Cancel</button>
-            <button type="submit" disabled={saving} className="btn-primary flex items-center gap-2">
+          <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-4 border-t">
+            <button type="button" onClick={closeModal} className="px-4 py-2 rounded-lg border border-border hover:bg-muted transition-colors w-full sm:w-auto">Cancel</button>
+            <button type="submit" disabled={saving} className="btn-primary flex items-center justify-center gap-2 w-full sm:w-auto">
               {saving && <Loader2 className="w-4 h-4 animate-spin" />}
               {editingCert ? 'Submit Changes' : 'Add Certification'}
             </button>

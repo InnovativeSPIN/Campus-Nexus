@@ -85,6 +85,7 @@ interface PortfolioItem {
   issueDate?: string;
   documentUrl?: string;
   certificateUrl?: string;
+  document_path?: string;
   techStack?: string | any;
   demoUrl?: string;
   repoUrl?: string;
@@ -298,24 +299,38 @@ export default function ClassInchargeView() {
         setProcessingPortfolioId(null);
         return;
       }
+      
       let endpoint = '';
-      switch (category) {
-        case 'sports': endpoint = `/api/v1/student/extracurricular/sports/${id}/approval`; break;
-        case 'events': endpoint = `/api/v1/student/extracurricular/events/${id}/approval`; break;
-        case 'certs': endpoint = `/api/v1/student/certifications/${id}/approval`; break;
-        case 'projects': endpoint = `/api/v1/student/projects/${id}/approval`; break;
+      let method = 'PUT';
+      const body: any = {
+        approvalStatus: status
+      };
+      
+      // Only include remarks if there's actual content
+      if (portfolioRemarks?.trim()) {
+        body.approvalRemarks = portfolioRemarks.trim();
+      }
+
+      // Projects use a different endpoint format
+      if (category === 'projects') {
+        endpoint = `/api/v1/student/projects/${id}/approval`;
+        method = 'PUT';
+      } else {
+        // Sports, Events, Certs use the same approval endpoint
+        switch (category) {
+          case 'sports': endpoint = `/api/v1/student/extracurricular/sports/${id}/approval`; break;
+          case 'events': endpoint = `/api/v1/student/extracurricular/events/${id}/approval`; break;
+          case 'certs': endpoint = `/api/v1/student/certifications/${id}/approval`; break;
+        }
       }
 
       const res = await fetch(endpoint, {
-        method: 'PUT',
+        method: method,
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          approvalStatus: status,
-          approvalRemarks: portfolioRemarks || undefined
-        }),
+        body: JSON.stringify(body),
       });
 
       if (res.ok) {
@@ -324,9 +339,16 @@ export default function ClassInchargeView() {
         setSelectedPortfolioItem(null);
         setPortfolioRemarks('');
         fetchPortfolioVerification();
+      } else {
+        const errorData = await res.json().catch(() => ({ message: 'Unknown error' }));
+        toast({ 
+          title: '❌ Error', 
+          description: errorData.message || `Failed to ${status} portfolio item. Status: ${res.status}` 
+        });
       }
     } catch (err) {
       console.error('Error updating portfolio status:', err);
+      toast({ title: '❌ Error', description: 'Failed to update portfolio item. Please try again.' });
     } finally {
       setProcessingPortfolioId(null);
     }
@@ -613,29 +635,29 @@ export default function ClassInchargeView() {
 
       {/* Portfolio Review Dialog */}
       <Dialog open={isPortfolioDialogOpen} onOpenChange={o => !o && setIsPortfolioDialogOpen(false)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle className="font-serif text-xl border-b pb-2 italic">Portfolio Submission Review</DialogTitle></DialogHeader>
+        <DialogContent className="max-w-sm sm:max-w-2xl max-h-[90vh] overflow-y-auto w-[95vw] sm:w-auto">
+          <DialogHeader><DialogTitle className="font-serif text-lg sm:text-xl border-b pb-2 italic">Portfolio Submission Review</DialogTitle></DialogHeader>
           {selectedPortfolioItem && (
-            <div className="space-y-6 pt-2">
-              <div className="bg-muted/40 p-5 rounded-2xl border-2 border-muted-foreground/10 space-y-5">
+            <div className="space-y-4 sm:space-y-6 pt-2">
+              <div className="bg-muted/40 p-4 sm:p-5 rounded-2xl border-2 border-muted-foreground/10 space-y-4 sm:space-y-5">
                 <div className="flex flex-col gap-1 border-b border-muted-foreground/10 pb-3">
                   <Label className="text-[10px] text-muted-foreground uppercase tracking-widest font-black">STUDENT NAME</Label>
-                  <p className="font-black text-xl text-primary tracking-tight">{selectedPortfolioItem.student ? `${selectedPortfolioItem.student.firstName} ${selectedPortfolioItem.student.lastName}` : '—'}</p>
+                  <p className="font-black text-lg sm:text-xl text-primary tracking-tight">{selectedPortfolioItem.student ? `${selectedPortfolioItem.student.firstName} ${selectedPortfolioItem.student.lastName}` : '—'}</p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-8">
                   <div className="space-y-1">
                     <Label className="text-[10px] text-muted-foreground font-black uppercase tracking-widest">CATEGORY</Label>
                     <p className="font-bold capitalize text-sm">{activePortfolioCategory === 'certs' ? 'Certifications' : activePortfolioCategory}</p>
                   </div>
-                  <div className="space-y-1 text-right">
+                  <div className="space-y-1 sm:text-right">
                     <Label className="text-[10px] text-muted-foreground font-black uppercase tracking-widest">SUBMISSION TITLE</Label>
-                    <p className="font-bold text-primary text-sm">{selectedPortfolioItem.name || selectedPortfolioItem.eventName || selectedPortfolioItem.title}</p>
+                    <p className="font-bold text-primary text-sm break-words">{selectedPortfolioItem.name || selectedPortfolioItem.eventName || selectedPortfolioItem.title}</p>
                   </div>
                 </div>
 
                 {/* Info Grid */}
-                <div className="grid grid-cols-2 gap-y-6 gap-x-8 pt-4 border-t border-muted-foreground/10">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-y-6 sm:gap-x-8 pt-4 border-t border-muted-foreground/10">
                   {[
                     { show: !!selectedPortfolioItem.issuer, label: 'ISSUER', val: selectedPortfolioItem.issuer },
                     { show: !!selectedPortfolioItem.category, label: 'CATEGORY', val: selectedPortfolioItem.category },
@@ -651,16 +673,16 @@ export default function ClassInchargeView() {
                 </div>
 
                 {/* Evidence Link */}
-                {(selectedPortfolioItem.documentUrl || selectedPortfolioItem.certificateUrl || selectedPortfolioItem.fileUrl) && (
-                  <div className="pt-4 border-t border-muted-foreground/10 flex items-center justify-between bg-blue-50/50 p-3 rounded-xl border border-blue-100">
+                {(selectedPortfolioItem.documentUrl || selectedPortfolioItem.certificateUrl || selectedPortfolioItem.fileUrl || selectedPortfolioItem.document_path) && (
+                  <div className="pt-4 border-t border-muted-foreground/10 flex flex-col sm:flex-row items-start sm:items-center justify-between bg-blue-50/50 p-3 rounded-xl border border-blue-100 gap-3">
                     <div className="flex items-center gap-2">
-                      <FileText className="w-5 h-5 text-blue-600" />
+                      <FileText className="w-5 h-5 text-blue-600 flex-shrink-0" />
                       <span className="text-xs font-bold text-blue-800">Supportive Evidence Provided</span>
                     </div>
                     <a
-                      href={`/uploads/students/${selectedPortfolioItem.documentUrl || selectedPortfolioItem.certificateUrl || selectedPortfolioItem.fileUrl}`}
+                      href={`/uploads/students/${selectedPortfolioItem.documentUrl || selectedPortfolioItem.certificateUrl || selectedPortfolioItem.fileUrl || selectedPortfolioItem.document_path}`}
                       target="_blank" rel="noreferrer"
-                      className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-[10px] font-black hover:bg-blue-700 transition-all uppercase tracking-wider"
+                      className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-[10px] font-black hover:bg-blue-700 transition-all uppercase tracking-wider whitespace-nowrap"
                     >
                       View File
                     </a>
@@ -669,32 +691,54 @@ export default function ClassInchargeView() {
 
                 {/* Tech & Links */}
                 {(selectedPortfolioItem.techStack || selectedPortfolioItem.demoUrl || selectedPortfolioItem.repoUrl) && (
-                  <div className="space-y-4 pt-4 border-t border-muted-foreground/10">
+                  <div className="space-y-3 sm:space-y-4 pt-4 border-t border-muted-foreground/10">
                     {selectedPortfolioItem.techStack && (
                       <div className="space-y-1.5">
                         <Label className="text-[10px] text-muted-foreground font-black uppercase tracking-widest">TECH STACK / TOOLS</Label>
                         <div className="flex flex-wrap gap-1.5">
                           {(() => {
                             try {
-                              const tags = typeof selectedPortfolioItem.techStack === 'string' ? JSON.parse(selectedPortfolioItem.techStack) : selectedPortfolioItem.techStack;
-                              return (Array.isArray(tags) ? tags : [tags]).map((t: string, i: number) => (
-                                <span key={i} className="px-2 py-0.5 bg-primary/10 text-primary border border-primary/20 rounded-md text-[10px] font-black uppercase">{t}</span>
-                              ));
-                            } catch { return <span className="text-xs">{selectedPortfolioItem.techStack}</span>; }
+                              let tags: any[] = [];
+                              if (typeof selectedPortfolioItem.techStack === 'string') {
+                                try {
+                                  tags = JSON.parse(selectedPortfolioItem.techStack);
+                                } catch {
+                                  // If JSON parse fails, treat as comma-separated string
+                                  tags = selectedPortfolioItem.techStack.split(',').map(t => t.trim()).filter(t => t);
+                                }
+                              } else {
+                                tags = Array.isArray(selectedPortfolioItem.techStack) ? selectedPortfolioItem.techStack : [selectedPortfolioItem.techStack];
+                              }
+                              return tags.map((t: any, i: number) => {
+                                const tagStr = typeof t === 'string' ? t : (t?.name || JSON.stringify(t));
+                                return <span key={i} className="px-2 py-0.5 bg-primary/10 text-primary border border-primary/20 rounded-md text-[9px] sm:text-[10px] font-black uppercase whitespace-nowrap">{tagStr}</span>;
+                              });
+                            } catch { return <span className="text-xs">{String(selectedPortfolioItem.techStack)}</span>; }
                           })()}
                         </div>
                       </div>
                     )}
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                       {selectedPortfolioItem.demoUrl && <div className="space-y-1"><Label className="text-[9px] text-muted-foreground font-bold tracking-widest">LIVE DEMO</Label><a href={selectedPortfolioItem.demoUrl} target="_blank" rel="noreferrer" className="text-xs text-blue-600 font-bold hover:underline truncate block">Visit Link</a></div>}
                       {selectedPortfolioItem.repoUrl && <div className="space-y-1"><Label className="text-[9px] text-muted-foreground font-bold tracking-widest">SOURCE CODE</Label><a href={selectedPortfolioItem.repoUrl} target="_blank" rel="noreferrer" className="text-xs text-blue-600 font-bold hover:underline truncate block">GitHub Repository</a></div>}
                     </div>
                   </div>
                 )}
 
+                {/* Date Range for Projects */}
+                {(activePortfolioCategory === 'projects' && selectedPortfolioItem.startDate) && (
+                  <div className="pt-4 border-t border-muted-foreground/10 space-y-2">
+                    <Label className="text-[10px] text-muted-foreground font-black uppercase tracking-widest">PROJECT DURATION</Label>
+                    <div className="flex flex-col sm:flex-row gap-2 text-xs">
+                      <span className="font-semibold">Start: <span className="text-primary">{new Date(selectedPortfolioItem.startDate).toLocaleDateString()}</span></span>
+                      {selectedPortfolioItem.endDate && <span className="font-semibold">End: <span className="text-primary">{new Date(selectedPortfolioItem.endDate).toLocaleDateString()}</span></span>}
+                    </div>
+                  </div>
+                )}
+
                 {/* Description & Achievement */}
                 {(selectedPortfolioItem.description || selectedPortfolioItem.achievements || selectedPortfolioItem.achievement) && (
-                  <div className="space-y-4 pt-4 border-t border-muted-foreground/10">
+                  <div className="space-y-3 sm:space-y-4 pt-4 border-t border-muted-foreground/10">
                     {(selectedPortfolioItem.achievements || selectedPortfolioItem.achievement) && (
                       <div className="space-y-1">
                         <Label className="text-[10px] text-muted-foreground font-black uppercase tracking-widest">KEY ACHIEVEMENTS</Label>
@@ -717,11 +761,22 @@ export default function ClassInchargeView() {
                     <div className="flex flex-wrap gap-1.5">
                       {(() => {
                         try {
-                          const s = typeof selectedPortfolioItem.skills === 'string' ? JSON.parse(selectedPortfolioItem.skills) : selectedPortfolioItem.skills;
-                          return (Array.isArray(s) ? s : [s]).map((skill: string, i: number) => (
-                            <span key={i} className="px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-md text-[9px] font-black uppercase">{skill}</span>
-                          ));
-                        } catch { return <span className="text-xs">{selectedPortfolioItem.skills}</span>; }
+                          let skills: any[] = [];
+                          if (typeof selectedPortfolioItem.skills === 'string') {
+                            try {
+                              skills = JSON.parse(selectedPortfolioItem.skills);
+                            } catch {
+                              // If JSON parse fails, treat as comma-separated string
+                              skills = selectedPortfolioItem.skills.split(',').map(s => s.trim()).filter(s => s);
+                            }
+                          } else {
+                            skills = Array.isArray(selectedPortfolioItem.skills) ? selectedPortfolioItem.skills : [selectedPortfolioItem.skills];
+                          }
+                          return skills.map((skill: any, i: number) => {
+                            const skillStr = typeof skill === 'string' ? skill : (skill?.name || JSON.stringify(skill));
+                            return <span key={i} className="px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-md text-[9px] font-black uppercase whitespace-nowrap">{skillStr}</span>;
+                          });
+                        } catch { return <span className="text-xs">{String(selectedPortfolioItem.skills)}</span>; }
                       })()}
                     </div>
                   </div>
@@ -729,31 +784,31 @@ export default function ClassInchargeView() {
               </div>
 
               {/* Action Area */}
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4 border-t border-muted-foreground/10 pt-4">
                 <div className="space-y-2">
                   <Label className="text-xs font-black text-muted-foreground tracking-widest flex items-center gap-1.5"><AlertCircle className="w-4 h-4" /> VERIFICATION FEEDBACK</Label>
                   <Textarea
                     value={portfolioRemarks}
                     onChange={e => setPortfolioRemarks(e.target.value)}
                     placeholder="Provide feedback on the submission (e.g. proof invalid, missing details)..."
-                    className="min-h-[120px] text-sm bg-background border-2 focus-visible:ring-primary/40 resize-none font-medium p-4 rounded-2xl"
+                    className="min-h-[100px] sm:min-h-[120px] text-sm bg-background border-2 focus-visible:ring-primary/40 resize-none font-medium p-3 sm:p-4 rounded-2xl"
                   />
                 </div>
-                <div className="flex gap-4">
-                  <Button
-                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-black h-14 shadow-xl shadow-emerald-600/20 rounded-2xl transition-all active:scale-[0.98]"
-                    onClick={() => handlePortfolioApproval(selectedPortfolioItem.id, activePortfolioCategory, 'approved')}
-                    disabled={!!processingPortfolioId}
-                  >
-                    {processingPortfolioId ? <Clock className="animate-spin w-5 h-5" /> : 'VERIFY & APPROVE'}
-                  </Button>
+                <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-4">
                   <Button
                     variant="destructive"
-                    className="flex-1 font-black h-14 shadow-xl shadow-red-600/20 rounded-2xl transition-all active:scale-[0.98]"
+                    className="flex-1 font-black h-12 sm:h-14 shadow-xl shadow-red-600/20 rounded-2xl transition-all active:scale-[0.98]"
                     onClick={() => handlePortfolioApproval(selectedPortfolioItem.id, activePortfolioCategory, 'rejected')}
                     disabled={!!processingPortfolioId}
                   >
-                    {processingPortfolioId ? '...' : 'REJECT SUBMISSION'}
+                    {processingPortfolioId ? '...' : 'REJECT'}
+                  </Button>
+                  <Button
+                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-black h-12 sm:h-14 shadow-xl shadow-emerald-600/20 rounded-2xl transition-all active:scale-[0.98]"
+                    onClick={() => handlePortfolioApproval(selectedPortfolioItem.id, activePortfolioCategory, 'approved')}
+                    disabled={!!processingPortfolioId}
+                  >
+                    {processingPortfolioId ? <Clock className="animate-spin w-5 h-5" /> : 'APPROVE'}
                   </Button>
                 </div>
               </div>

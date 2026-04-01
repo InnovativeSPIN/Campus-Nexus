@@ -209,21 +209,21 @@ export default function Sports({ onPendingChange }: SportsProps) {
             )}
 
             <Dialog open={showDialog} onOpenChange={setShowDialog}>
-                <DialogContent className="max-w-md">
+                <DialogContent className="max-w-sm sm:max-w-md max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle>{editingId ? 'Edit Sport' : 'Add New Sport'}</DialogTitle>
                         <DialogDescription>
                             Fill in the details about your sports participation and achievements.
                         </DialogDescription>
                     </DialogHeader>
-                    <div className="space-y-4">
+                    <div className="space-y-4 px-2">
                         <div>
                             <label className="block text-sm font-medium mb-2">Sport Name *</label>
-                            <input type="text" placeholder="Enter sport name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="w-full px-3 py-2 border border-input rounded-lg bg-background" />
+                            <input type="text" placeholder="Enter sport name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="w-full px-3 py-2 border border-input rounded-lg bg-background text-base" />
                         </div>
                         <div>
                             <label className="block text-sm font-medium mb-2">Category</label>
-                            <select value={formData.category} onChange={(e) => setFormData({ ...formData, category: e.target.value })} className="w-full px-3 py-2 border border-input rounded-lg bg-background">
+                            <select value={formData.category} onChange={(e) => setFormData({ ...formData, category: e.target.value })} className="w-full px-3 py-2 border border-input rounded-lg bg-background text-base">
                                 <option value="">Select category</option>
                                 <option value="Team Sports">Team Sports</option>
                                 <option value="Individual Sports">Individual Sports</option>
@@ -234,28 +234,31 @@ export default function Sports({ onPendingChange }: SportsProps) {
                         </div>
                         <div>
                             <label className="block text-sm font-medium mb-2">Joined Date</label>
-                            <input type="date" value={formData.joinedDate} onChange={(e) => setFormData({ ...formData, joinedDate: e.target.value })} className="w-full px-3 py-2 border border-input rounded-lg bg-background" />
+                            <input type="date" value={formData.joinedDate} onChange={(e) => setFormData({ ...formData, joinedDate: e.target.value })} className="w-full px-3 py-2 border border-input rounded-lg bg-background text-base" />
                         </div>
                         <div>
                             <label className="block text-sm font-medium mb-2">Achievements</label>
-                            <input type="text" placeholder="e.g., Winner, Runner-up" value={formData.achievements} onChange={(e) => setFormData({ ...formData, achievements: e.target.value })} className="w-full px-3 py-2 border border-input rounded-lg bg-background" />
+                            <input type="text" placeholder="e.g., Winner, Runner-up" value={formData.achievements} onChange={(e) => setFormData({ ...formData, achievements: e.target.value })} className="w-full px-3 py-2 border border-input rounded-lg bg-background text-base" />
                         </div>
                         <div>
                             <label className="block text-sm font-medium mb-2">Status</label>
-                            <select value={formData.status} onChange={(e) => setFormData({ ...formData, status: e.target.value as 'active' | 'inactive' })} className="w-full px-3 py-2 border border-input rounded-lg bg-background">
+                            <select value={formData.status} onChange={(e) => setFormData({ ...formData, status: e.target.value as 'active' | 'inactive' })} className="w-full px-3 py-2 border border-input rounded-lg bg-background text-base">
                                 <option value="active">Active</option>
                                 <option value="inactive">Inactive</option>
                             </select>
                         </div>
                         <div>
                             <label className="block text-sm font-medium mb-2">Upload Certificate (Optional)</label>
-                            <input type="file" onChange={(e) => setFormData({ ...formData, document: e.target.files?.[0] || null })} className="w-full px-3 py-1.5 border border-input rounded-lg bg-background" accept=".jpg,.jpeg,.png,.pdf" />
+                            <input type="file" onChange={(e) => setFormData({ ...formData, document: e.target.files?.[0] || null })} className="w-full px-3 py-1.5 border border-input rounded-lg bg-background text-sm" accept=".jpg,.jpeg,.png,.pdf" />
+                            {formData.document && (
+                                <p className="text-xs text-muted-foreground mt-1 truncate">Selected: {formData.document.name}</p>
+                            )}
                         </div>
-                        <div className="flex gap-2 justify-end mt-6">
+                        <div className="flex flex-col-reverse sm:flex-row gap-2 justify-end mt-6 pt-4 border-t">
                             <DialogClose asChild>
-                                <button onClick={handleCancel} className="px-4 py-2 rounded-lg border border-border hover:bg-muted transition-colors">Cancel</button>
+                                <button onClick={handleCancel} className="px-4 py-2 rounded-lg border border-border hover:bg-muted transition-colors w-full sm:w-auto">Cancel</button>
                             </DialogClose>
-                            <button onClick={handleSave} disabled={isSaving} className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center gap-2">
+                            <button onClick={handleSave} disabled={isSaving} className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 w-full sm:w-auto">
                                 {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                                 {isSaving ? 'Saving...' : 'Submit'}
                             </button>
