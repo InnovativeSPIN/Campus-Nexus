@@ -11,7 +11,27 @@ if (!fs.existsSync(studentsUploadDir)) {
 // Configure storage
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, studentsUploadDir);
+        let subFolder = req.uploadSubFolder || '';
+        
+        // Auto-detect subfolder from path if not explicitly provided
+        if (!subFolder) {
+            const url = req.originalUrl || '';
+            if (url.includes('/sports')) subFolder = 'portfolio/sports';
+            else if (url.includes('/events')) subFolder = 'portfolio/events';
+            else if (url.includes('/certifications')) subFolder = 'portfolio/certificates';
+            else if (url.includes('/projects')) subFolder = 'portfolio/projects';
+        }
+        
+        const finalDest = subFolder ? path.join(studentsUploadDir, subFolder) : studentsUploadDir;
+        
+        // Ensure directory exists
+        if (!fs.existsSync(finalDest)) {
+            fs.mkdirSync(finalDest, { recursive: true });
+        }
+        
+        // Store subFolder in req for use in controllers to prepend to filename
+        req.uploadSubFolder = subFolder;
+        cb(null, finalDest);
     },
     filename: (req, file, cb) => {
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);

@@ -61,7 +61,7 @@ export const createProject = asyncHandler(async (req, res, next) => {
     if (!student) return next(new ErrorResponse('Student not found', 404));
 
     const data = { ...req.body, studentId, classId: student.classId, approvalStatus: 'pending' };
-    if (req.file) data.documentUrl = req.file.filename;
+    if (req.file) data.documentUrl = req.uploadSubFolder ? `${req.uploadSubFolder}/${req.file.filename}` : req.file.filename;
 
     const project = await StudentProject.create(data);
 
@@ -90,7 +90,7 @@ export const updateProject = asyncHandler(async (req, res, next) => {
     delete req.body.studentId;
 
     const dataToUpdate = { ...req.body, approvalStatus: 'pending' };
-    if (req.file) dataToUpdate.documentUrl = req.file.filename;
+    if (req.file) dataToUpdate.documentUrl = req.uploadSubFolder ? `${req.uploadSubFolder}/${req.file.filename}` : req.file.filename;
 
     await project.update(dataToUpdate);
     res.status(200).json({ success: true, data: project });
@@ -114,9 +114,11 @@ export const deleteProject = asyncHandler(async (req, res, next) => {
 // @route  PUT /api/student/projects/:id/approval
 // @access Private/Faculty/Admin
 export const updateProjectApproval = asyncHandler(async (req, res, next) => {
+    console.log('[DEBUG-PROJECT-APPROVAL] Params:', req.params);
+    console.log('[DEBUG-PROJECT-APPROVAL] Body:', req.body);
     const { approvalStatus, approvalRemarks } = req.body;
     if (!['approved', 'rejected'].includes(approvalStatus)) {
-        return next(new ErrorResponse('approvalStatus must be approved or rejected', 400));
+        return next(new ErrorResponse(`approvalStatus must be approved or rejected, received: "${approvalStatus}"`, 400));
     }
     const project = await StudentProject.findByPk(req.params.id);
     if (!project) return next(new ErrorResponse('Project not found', 404));

@@ -66,7 +66,7 @@ export const createCertification = asyncHandler(async (req, res, next) => {
         studentId,
         classId: student.classId,
         approvalStatus: 'pending',
-        documentUrl: req.file ? req.file.filename : req.body.documentUrl
+        documentUrl: req.file ? (req.uploadSubFolder ? `${req.uploadSubFolder}/${req.file.filename}` : req.file.filename) : req.body.documentUrl
     });
 
     // Notification to class incharge (non-blocking)
@@ -95,7 +95,7 @@ export const updateCertification = asyncHandler(async (req, res, next) => {
     delete req.body.studentId;
 
     const dataToUpdate = { ...req.body, approvalStatus: 'pending' };
-    if (req.file) dataToUpdate.documentUrl = req.file.filename;
+    if (req.file) dataToUpdate.documentUrl = req.uploadSubFolder ? `${req.uploadSubFolder}/${req.file.filename}` : req.file.filename;
 
     await cert.update(dataToUpdate);
     res.status(200).json({ success: true, data: cert });
@@ -121,7 +121,7 @@ export const deleteCertification = asyncHandler(async (req, res, next) => {
 export const updateApprovalStatus = asyncHandler(async (req, res, next) => {
     const { approvalStatus, approvalRemarks } = req.body;
     if (!['approved', 'rejected'].includes(approvalStatus)) {
-        return next(new ErrorResponse('approvalStatus must be approved or rejected', 400));
+        return next(new ErrorResponse(`approvalStatus must be approved or rejected, received: "${approvalStatus}"`, 400));
     }
 
     const cert = await StudentCertification.findByPk(req.params.id);
