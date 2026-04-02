@@ -32,7 +32,9 @@ const StudentProject = (sequelize) => {
 
     StudentProjectModel.associate = (models) => {
         StudentProjectModel.belongsTo(models.Student, { foreignKey: 'studentId', as: 'student' });
-        StudentProjectModel.belongsTo(models.Faculty, { foreignKey: 'approvedById', as: 'approvedBy', targetKey: 'faculty_id' });
+        // Note: approvedById stores user.id (from users table, not faculty_profiles)
+        // Association removed because Faculty/User are separate ID sequences
+        // Use manual queries to load approver info if needed
     };
 
     return StudentProjectModel;
