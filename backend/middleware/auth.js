@@ -148,9 +148,11 @@ export const protect = asyncHandler(async (req, res, next) => {
       req.user.department_id = req.user.department_id || req.user.departmentId || req.user.department?.id || null;
       req.user.departmentId = req.user.department_id;
       req.user.faculty_id = req.user.faculty_id || req.user.facultyId || req.user.id || null;
-      req.user.id = req.user.faculty_id;
+      // IMPORTANT: Keep req.user.id as decoded.id (the users.id from JWT), not faculty_id
+      // This is needed for foreign key constraints that reference users(id)
+      req.user.id = decoded.id;
 
-      console.log('[AUTH OK] Faculty logged in - ID:', req.user.id);
+      console.log('[AUTH OK] Faculty logged in - User ID:', req.user.id, 'Faculty ID:', req.user.faculty_id);
       return next();
 
     }
@@ -179,7 +181,8 @@ export const protect = asyncHandler(async (req, res, next) => {
       req.user.department_id = req.user.department_id || req.user.departmentId || req.user.department?.id || null;
       req.user.departmentId = req.user.department_id;
       req.user.faculty_id = req.user.faculty_id || req.user.facultyId || req.user.id || null;
-      req.user.id = req.user.faculty_id;
+      // IMPORTANT: Keep req.user.id as decoded.id (the users.id from JWT), not faculty_id
+      req.user.id = decoded.id;
       return next();
     }
 
