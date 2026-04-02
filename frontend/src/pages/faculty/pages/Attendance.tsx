@@ -66,6 +66,8 @@ interface PendingTopic {
   periods_taken: number;
   co_number?: string;
   btl?: string;
+  unit_label?: string;
+  is_completed?: boolean;
 }
 
 interface Slot {
@@ -93,6 +95,7 @@ interface Slot {
 
 export default function Attendance() {
   const { authToken, user } = useAuth();
+  const isDepartmentAdmin = user?.role === 'department-admin';
   const [attendanceData, setAttendanceData] = useState<Record<string, string>>({});
   const [markAllPresent, setMarkAllPresent] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -126,6 +129,12 @@ export default function Attendance() {
   const [pendingTopics, setPendingTopics] = useState<PendingTopic[]>([]);
   const [loadingTopics, setLoadingTopics] = useState(false);
   const [selectedLessonPlanId, setSelectedLessonPlanId] = useState<string>("");
+  
+  // Class Coverage form states
+  const [selectedUnit, setSelectedUnit] = useState<string>("");
+  const [periodsCovered, setPeriodsCovered] = useState<number>(1);
+  const [coverageCompletionStatus, setCoverageCompletionStatus] = useState<"completed" | "deviation">("completed");
+  const [deviationReasonForCoverage, setDeviationReasonForCoverage] = useState<string>("");
 
   // Coverage Tracking states
   const [coverageTopics, setCoverageTopics] = useState<any[]>([]);
@@ -269,6 +278,13 @@ export default function Attendance() {
 
       loadPendingTopics();
 
+      // Reset class coverage form fields when new period is selected
+      setSelectedUnit("");
+      setPeriodsCovered(1);
+      setCoverageCompletionStatus("completed");
+      setDeviationReasonForCoverage("");
+      setTopicCovered("");
+
       // Load existing attendance for this date + class + period
       const attendanceQuery = new URLSearchParams({
         class: String(classId),
@@ -325,6 +341,17 @@ export default function Attendance() {
 
   const handleSave = async (showSummary = false) => {
     if (!slotInfo) return;
+    
+    // Validate required fields for coverage
+    if (!selectedLessonPlanId) {
+      toast.error("Please select a topic for class coverage");
+      return;
+    }
+    
+    if (coverageCompletionStatus === "deviation" && !deviationReasonForCoverage.trim()) {
+      toast.error("Please provide a reason for the deviation");
+      return;
+    }
 
     const studentsArray = slotStudents.map(student => ({
       studentId: parseInt(student.id),
@@ -350,16 +377,33 @@ export default function Attendance() {
           isLabSession: Boolean(slotInfo.isLabSession),
           labGroup: slotInfo.labGroup || null,
           lesson_plan_id: selectedLessonPlanId ? parseInt(selectedLessonPlanId) : null,
-          students: studentsArray
+          students: studentsArray,
+          // Coverage tracking info
+          coverageStatus: coverageCompletionStatus,
+          periodsCovered: coverageCompletionStatus === "completed" ? periodsCovered : 0,
+          deviationReason: coverageCompletionStatus === "deviation" ? deviationReasonForCoverage : null
         })
       });
       const result = await response.json();
       if (response.ok && result.success) {
         setLocked(true);
+        
+        // Show appropriate message based on coverage status
+        if (coverageCompletionStatus === "completed") {
+          toast.success(`✅ Attendance marked and topic marked as completed (+${periodsCovered} period${periodsCovered > 1 ? 's' : ''})`);
+        } else {
+          toast.success("✅ Attendance marked. Coverage marked as deviation (topic not completed)");
+        }
+        
+        // Reset coverage form
+        setSelectedUnit("");
+        setPeriodsCovered(1);
+        setCoverageCompletionStatus("completed");
+        setDeviationReasonForCoverage("");
+        
         if (showSummary) {
           setShowAttendanceSummary(true);
         }
-        toast.success("Attendance marked successfully!");
       } else {
         toast.error(result.message || "Failed to save attendance");
       }
@@ -969,13 +1013,16 @@ export default function Attendance() {
                 Save Attendance
               </Button>
 
-              {locked && isToday && (
+              {locked && isToday && isDepartmentAdmin && (
                 <Button
                   variant="outline"
                   onClick={() => setLocked(false)}
                 >
                   Reassign
                 </Button>
+              )}
+              {locked && isToday && !isDepartmentAdmin && (
+                <span className="text-xs text-muted-foreground">Attendance is locked (only department admin can reassign).</span>
               )}
             </div>
           </motion.div>
@@ -1277,7 +1324,35 @@ export default function Attendance() {
           >
             <h3 className="text-lg font-semibold mb-4 text-primary">Class Coverage Details</h3>
             
-            {/* Topic Dropdown */}
+            {/* Unit Filter */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Select Unit *</Label>
+                {pendingTopics.length > 0 ? (
+                  <Select value={selectedUnit} onValueChange={(value) => {
+                    setSelectedUnit(value);
+                    setSelectedLessonPlanId(""); // Reset topic when unit changes
+                  }} disabled={locked}>
+                    <SelectTrigger className="bg-background/50">
+                      <SelectValue placeholder="Choose a unit" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.from(new Set(pendingTopics.map(t => t.unit_label || "Unassigned"))).map((unit) => (
+                        <SelectItem key={unit} value={unit as string}>
+                          {unit}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <div className="p-3 bg-info/10 border border-info/30 rounded-md text-sm text-info">
+                    No units available
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            {/* Topic Dropdown - Filtered by Unit */}
             <div className="mb-4 space-y-2">
               <Label className="text-sm font-medium">Which topic did you teach? *</Label>
               {loadingTopics ? (
@@ -1291,16 +1366,19 @@ export default function Attendance() {
                     <SelectValue placeholder="Select a topic to track" />
                   </SelectTrigger>
                   <SelectContent>
-                    {pendingTopics.map((topic) => (
-                      <SelectItem key={topic.id} value={topic.id.toString()}>
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">{topic.topic}</span>
-                          <span className="text-xs text-muted-foreground">
-                            ({topic.periods_taken}/{topic.periods_required} periods)
-                          </span>
-                        </div>
-                      </SelectItem>
-                    ))}
+                    {pendingTopics
+                      .filter(topic => !selectedUnit || topic.unit_label === selectedUnit || (selectedUnit === "Unassigned" && !topic.unit_label))
+                      .map((topic) => (
+                        <SelectItem key={topic.id} value={topic.id.toString()}>
+                          <div className="flex items-center gap-2">
+                            {topic.is_completed && <span className="text-success">✓</span>}
+                            <span className="font-medium">{topic.topic}</span>
+                            <span className="text-xs text-muted-foreground">
+                              ({topic.periods_taken}/{topic.periods_required} periods)
+                            </span>
+                          </div>
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               ) : (
@@ -1309,6 +1387,81 @@ export default function Attendance() {
                 </div>
               )}
             </div>
+
+            {/* Periods Covered Dropdown */}
+            {selectedLessonPlanId && (
+              <div className="mb-4 space-y-2">
+                <Label className="text-sm font-medium">Periods Covered *</Label>
+                <Select value={periodsCovered.toString()} onValueChange={(value) => setPeriodsCovered(parseInt(value))} disabled={locked}>
+                  <SelectTrigger className="bg-background/50">
+                    <SelectValue placeholder="Select periods covered" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.from({ length: 5 }, (_, i) => i + 1).map((period) => (
+                      <SelectItem key={period} value={period.toString()}>
+                        {period} period{period > 1 ? 's' : ''}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {/* Coverage Status Selection */}
+            {selectedLessonPlanId && (
+              <div className="mb-4 space-y-2">
+                <Label className="text-sm font-medium">Coverage Status *</Label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={() => {
+                      setCoverageCompletionStatus("completed");
+                      setDeviationReasonForCoverage("");
+                    }}
+                    disabled={locked}
+                    className={cn(
+                      "p-3 rounded-lg border-2 transition-all text-sm font-medium",
+                      coverageCompletionStatus === "completed"
+                        ? "border-success bg-success/10 text-success"
+                        : "border-border bg-background hover:border-success/50",
+                      locked && "opacity-50 cursor-not-allowed"
+                    )}
+                  >
+                    ✅ Completed
+                  </button>
+                  <button
+                    onClick={() => {
+                      setCoverageCompletionStatus("deviation");
+                    }}
+                    disabled={locked}
+                    className={cn(
+                      "p-3 rounded-lg border-2 transition-all text-sm font-medium",
+                      coverageCompletionStatus === "deviation"
+                        ? "border-warning bg-warning/10 text-warning"
+                        : "border-border bg-background hover:border-warning/50",
+                      locked && "opacity-50 cursor-not-allowed"
+                    )}
+                  >
+                    ⚠️ Deviation
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Deviation Reason - Only show if Deviation is selected */}
+            {coverageCompletionStatus === "deviation" && selectedLessonPlanId && (
+              <div className="mb-4 space-y-2 p-4 bg-warning/10 border border-warning/30 rounded-md">
+                <Label className="text-sm font-medium flex items-center gap-2">
+                  <span className="text-warning">*</span> Reason for Deviation
+                </Label>
+                <Textarea
+                  placeholder="E.g., Cultural event, Unexpected holiday, Technical issues, Class rescheduled, etc."
+                  value={deviationReasonForCoverage}
+                  onChange={(e) => setDeviationReasonForCoverage(e.target.value)}
+                  className="min-h-[80px] bg-background/50"
+                  disabled={locked}
+                />
+              </div>
+            )}
 
             {/* Free-form notes (optional) */}
             <div className="space-y-2">
@@ -1325,228 +1478,26 @@ export default function Attendance() {
             <div className="mt-6 flex justify-end">
               <Button
                 onClick={() => handleSave(false)}
-                disabled={locked || !isToday || !selectedLessonPlanId}
+                disabled={
+                  locked || 
+                  !isToday || 
+                  !selectedLessonPlanId || 
+                  (coverageCompletionStatus === "deviation" && !deviationReasonForCoverage.trim())
+                }
                 className="bg-primary hover:bg-primary/90 min-w-[200px]"
+                title={
+                  !selectedLessonPlanId ? "Please select a topic" :
+                  coverageCompletionStatus === "deviation" && !deviationReasonForCoverage.trim() ? "Please provide a deviation reason" :
+                  "Submit attendance and class coverage"
+                }
               >
                 <Save className="w-4 h-4 mr-2" />
-                Submit Class Coverage
+                {coverageCompletionStatus === "completed" ? "✅ Mark as Completed" : "⚠️ Mark as Deviation"}
               </Button>
             </div>
           </motion.div>
 
-          {/* Coverage Tracking Section */}
-          {slotInfo && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="widget-card mt-8"
-            >
-              <div className="mb-6">
-                <h3 className="section-title flex items-center gap-2 mb-2">
-                  <BookOpen className="w-5 h-5 text-primary" />
-                  Syllabus Coverage Tracking
-                </h3>
-                <p className="text-sm text-muted-foreground">Record which topics were covered in today's class</p>
-              </div>
-
-              {coverageSuccess && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="mb-4 p-4 bg-success/10 border border-success/30 rounded-lg flex items-center gap-3"
-                >
-                  <CheckCircle2 className="w-5 h-5 text-success" />
-                  <p className="text-success font-medium">{coverageSuccess}</p>
-                </motion.div>
-              )}
-
-              {/* Units and Topics List */}
-              {coverageTopics.length > 0 ? (
-                <div className="space-y-3">
-                  {groupTopicsByUnit(coverageTopics).map(([unit, unitTopics]) => {
-                    const isExpanded = expandedUnits[unit] ?? true;
-                    
-                    return (
-                      <div key={unit} className="border border-border rounded-lg overflow-hidden">
-                        {/* Unit Header */}
-                        <button
-                          onClick={() => toggleUnit(unit)}
-                          className="w-full px-4 py-3 bg-primary/5 hover:bg-primary/10 transition-colors flex items-center justify-between"
-                        >
-                          <div className="flex items-center gap-3 text-left">
-                            {isExpanded ? (
-                              <ChevronDown className="w-5 h-5 text-primary" />
-                            ) : (
-                              <ChevronRight className="w-5 h-5 text-primary" />
-                            )}
-                            <h4 className="font-semibold text-foreground">{unit}</h4>
-                          </div>
-                          <span className="text-xs bg-primary/20 text-primary px-2 py-1 rounded">
-                            {unitTopics.length} topic{unitTopics.length !== 1 ? 's' : ''}
-                          </span>
-                        </button>
-
-                        {/* Topics */}
-                        {isExpanded && (
-                          <div className="p-4 space-y-3 bg-muted/20">
-                            {unitTopics.map((topic) => (
-                              <label
-                                key={topic.id}
-                                className={cn(
-                                  "flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all",
-                                  selectedTopicId === topic.id.toString()
-                                    ? "bg-primary/10 border-primary/40"
-                                    : "bg-background border-border hover:border-primary/30"
-                                )}
-                              >
-                                <input
-                                  type="radio"
-                                  name="coverage-topic"
-                                  value={topic.id.toString()}
-                                  checked={selectedTopicId === topic.id.toString()}
-                                  onChange={(e) => {
-                                    setSelectedTopicId(e.target.value);
-                                    setSelectedTopic(topic);
-                                  }}
-                                  className="mt-1"
-                                />
-                                <div className="flex-1">
-                                  <p className="font-medium text-sm">{topic.topic}</p>
-                                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-2 text-xs text-muted-foreground">
-                                    <span>Required: {topic.periods_required}</span>
-                                    <span>Taken: {topic.periods_taken}</span>
-                                    <span>Remaining: {topic.periods_required - topic.periods_taken}</span>
-                                    {topic.co_number && <span>CO: {topic.co_number}</span>}
-                                  </div>
-                                </div>
-                              </label>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="text-center py-8 border border-dashed border-border rounded-lg">
-                  <BookOpen className="w-10 h-10 text-muted-foreground mx-auto mb-2 opacity-30" />
-                  <p className="text-sm text-muted-foreground">No topics available for this subject</p>
-                </div>
-              )}
-
-              {/* Status Selection and Submission */}
-              {selectedTopic && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="mt-6 p-6 rounded-lg bg-muted/30 border-t-2 border-primary"
-                >
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Left: Status Selection */}
-                    <div className="space-y-4">
-                      <Label className="font-semibold text-base">Coverage Status *</Label>
-                      <RadioGroup value={coverageStatus} onValueChange={(value) => setCoverageStatus(value as "completed" | "deviation")}>
-                        <div className="flex items-center gap-3 p-3 rounded-lg border border-border hover:border-primary/50 cursor-pointer">
-                          <RadioGroupItem value="completed" id="cov-completed" />
-                          <Label htmlFor="cov-completed" className="cursor-pointer flex-1">
-                            <span className="font-medium inline-flex items-center gap-2">
-                              <CheckCircle2 className="w-4 h-4 text-success" />
-                              Completed
-                            </span>
-                            <p className="text-xs text-muted-foreground mt-1">Topic was fully covered</p>
-                          </Label>
-                        </div>
-                        <div className="flex items-center gap-3 p-3 rounded-lg border border-border hover:border-warning/50 cursor-pointer">
-                          <RadioGroupItem value="deviation" id="cov-deviation" />
-                          <Label htmlFor="cov-deviation" className="cursor-pointer flex-1">
-                            <span className="font-medium inline-flex items-center gap-2">Could not complete</span>
-                            <p className="text-xs text-muted-foreground mt-1">Topic requires rescheduling</p>
-                          </Label>
-                        </div>
-                      </RadioGroup>
-                    </div>
-
-                    {/* Right: Topic Details */}
-                    <div className="p-4 bg-background rounded-lg border border-border">
-                      <h5 className="font-semibold text-foreground mb-3">Coverage Details</h5>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Topic:</span>
-                          <span className="font-medium">{selectedTopic.topic}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Unit:</span>
-                          <span className="font-medium">{selectedTopic.unit_label}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Periods Required:</span>
-                          <span className="font-medium">{selectedTopic.periods_required}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Periods Taken:</span>
-                          <span className="font-medium">{selectedTopic.periods_taken}</span>
-                        </div>
-                        <div className="flex justify-between pt-2 border-t border-border">
-                          <span className="text-muted-foreground">Remaining:</span>
-                          <span className="font-bold text-primary">{selectedTopic.periods_required - selectedTopic.periods_taken}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Deviation Reason (if selected) */}
-                  {coverageStatus === 'deviation' && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      className="mt-6 p-4 bg-warning/5 border border-warning/30 rounded-lg"
-                    >
-                      <Label className="text-sm font-semibold flex items-center gap-2 mb-3">
-                        <span className="text-warning">*</span> Reason for Deviation
-                      </Label>
-                      <Textarea
-                        placeholder="E.g., Unexpected leave, Technical issues, Curriculum changes, etc."
-                        value={deviationReason}
-                        onChange={(e) => setDeviationReason(e.target.value)}
-                        className="min-h-20"
-                      />
-                    </motion.div>
-                  )}
-
-                  {/* Additional Notes */}
-                  <div className="mt-6 space-y-2">
-                    <Label>Additional Notes</Label>
-                    <Textarea
-                      placeholder="Optional: Add any notes about this topic coverage..."
-                      value={coverageNotes}
-                      onChange={(e) => setCoverageNotes(e.target.value)}
-                      className="min-h-16"
-                    />
-                  </div>
-
-                  {/* Submit Button */}
-                  <Button
-                    onClick={handleCoverageSubmit}
-                    disabled={coverageSubmitting || (coverageStatus === 'deviation' && !deviationReason)}
-                    className="w-full mt-6"
-                  >
-                    {coverageSubmitting ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Submitting Coverage Data...
-                      </>
-                    ) : (
-                      <>
-                        <Save className="w-4 h-4 mr-2" />
-                        Submit Coverage for {selectedTopic.topic}
-                      </>
-                    )}
-                  </Button>
-                </motion.div>
-              )}
-            </motion.div>
-          )}
+          {/* Coverage Tracking Section - REMOVED: Duplicate with above Class Coverage Details */}
         </TabsContent>
 
         <TabsContent value="history">

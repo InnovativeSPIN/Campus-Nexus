@@ -65,6 +65,10 @@ interface Topic {
   hours: number;
   completed: boolean;
   unit_label?: string;
+  coverage_status?: 'completed' | 'deviation' | null;
+  deviation_reason?: string | null;
+  periods_taken?: number;
+  periods_required?: number;
 }
 
 interface Material {
@@ -125,6 +129,8 @@ interface CourseLessonPlan {
   approved_by?: number;
   approved_date?: string;
   approval_remarks?: string;
+  coverage_status?: string | null;
+  deviation_reason?: string | null;
 }
 
 // API fetch helper
@@ -281,7 +287,10 @@ export default function Academics() {
 
   // Load course lesson plans when class is selected
   const loadCoursePlans = async () => {
-    if (!selectedClassId || !selectedClass?.id) return;    
+    if (!selectedClassId || !selectedClass?.id || !selectedClass.class_id || !selectedClass.subject_id) {
+      console.warn('Course plans load skipped: missing class/subject information', { selectedClassId, selectedClass });
+      return;
+    }
 
     try {
       setLoadingPlans(true);
@@ -319,7 +328,11 @@ export default function Academics() {
             name: plan.topic,
             hours: plan.periods_required || 1,
             completed: plan.is_completed || false,
-            unit_label: plan.unit_label || 'Unassigned'
+            unit_label: plan.unit_label || 'Unassigned',
+            coverage_status: plan.coverage_status || null,
+            deviation_reason: plan.deviation_reason || null,
+            periods_taken: plan.periods_taken || 0,
+            periods_required: plan.periods_required || 1
           }));
         
         setTopicsData(prev => ({ ...prev, [selectedClassId]: syllabusTopics }));
@@ -909,13 +922,26 @@ export default function Academics() {
             className="widget-card mb-6"
           >
             <div className="space-y-4">
-              <div>
-                <h3 className="text-2xl font-bold text-foreground mb-1">
-                  {selectedClass.subject}
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  {selectedClass.program} • Semester {selectedClass.semester} • Section {selectedClass.section}
-                </p>
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1">
+                  <h3 className="text-2xl font-bold text-foreground mb-1">
+                    {selectedClass.subject}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedClass.program} • Semester {selectedClass.semester} • Section {selectedClass.section}
+                  </p>
+                </div>
+                <Button
+                  onClick={loadCoursePlans}
+                  disabled={loadingPlans}
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-2 whitespace-nowrap"
+                  title="Refresh course plans and completion status"
+                >
+                  <RefreshCw className={cn("w-4 h-4", loadingPlans && "animate-spin")} />
+                  {loadingPlans ? "Refreshing..." : "Refresh"}
+                </Button>
               </div>
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -1172,26 +1198,41 @@ export default function Academics() {
                             transition={{ delay: 0.05 + index * 0.02 }}
                             className={cn(
                               "flex items-center justify-between p-3 rounded-lg border transition-all cursor-pointer",
-                              topic.completed
-                                ? "bg-success/5 border-success/30"
-                                : "bg-background border-border hover:border-primary/30"
+                              topic.coverage_status === 'deviation'
+                                ? "bg-warning/5 border-warning/30"
+                                : topic.completed
+                                  ? "bg-success/5 border-success/30"
+                                  : "bg-background border-border hover:border-primary/30"
                             )}
                             onClick={() => toggleTopic(topic.id)}
+                            title={topic.deviation_reason ? `Deviation: ${topic.deviation_reason}` : topic.completed ? 'Topic completed' : 'Pending'}
                           >
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-3 flex-1">
                               <Checkbox checked={topic.completed} />
-                              <div>
+                              <div className="flex-1">
                                 <p className={cn(
                                   "font-medium text-sm",
+                                  topic.coverage_status === 'deviation' && "text-warning",
                                   topic.completed && "text-success"
                                 )}>
                                   {topic.name}
                                 </p>
-                                <p className="text-xs text-muted-foreground">{topic.hours} periods</p>
+                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                  <span>{topic.periods_taken || 0}/{topic.periods_required || topic.hours} periods</span>
+                                  {topic.coverage_status === 'deviation' && (
+                                    <span className="text-warning font-medium">⚠️ Deviation</span>
+                                  )}
+                                </div>
+                                {topic.deviation_reason && (
+                                  <p className="text-xs text-warning mt-1 italic">Reason: {topic.deviation_reason}</p>
+                                )}
                               </div>
                             </div>
-                            {topic.completed && (
-                              <Check className="w-4 h-4 text-success" />
+                            {topic.completed && topic.coverage_status !== 'deviation' && (
+                              <Check className="w-4 h-4 text-success ml-2" />
+                            )}
+                            {topic.coverage_status === 'deviation' && (
+                              <span className="text-warning ml-2">⚠️</span>
                             )}
                           </motion.div>
                         ))}
