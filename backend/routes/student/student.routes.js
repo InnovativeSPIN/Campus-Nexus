@@ -5,6 +5,7 @@ import {
   createStudent,
   updateStudent,
   deleteStudent,
+  changePassword,
   getStudentsByClass,
   getStudentsByDepartment,
   updateStudentStatus,
@@ -43,9 +44,6 @@ router.put('/me/family-photo', authorize('student'), studentUpload.single('famil
 // Student can upload their reference person's photo
 router.post('/me/reference-photo', authorize('student'), studentUpload.single('referencePhoto'), uploadReferencePhoto);
 
-// Admin can upload student photo
-router.put('/:id/photo', authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin'), studentUpload.single('photo'), uploadStudentPhotoAdmin);
-
 // fetch academic years (batches) for dropdowns
 router.get('/academic-years', authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin', 'department-admin', 'faculty'), getAcademicYears);
 
@@ -56,19 +54,27 @@ router.post('/bulk/upload', authorize('superadmin', 'super-admin', 'executiveadm
 // Stats route
 router.get('/stats', authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin'), getStudentStats);
 
-// Routes for admin and faculty
+// Specific student routes (must come BEFORE generic /:id route)
+router.get('/class/:classId', authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin', 'department-admin', 'faculty'), getStudentsByClass);
+router.get('/department/:departmentId', authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin', 'department-admin', 'faculty'), getStudentsByDepartment);
+router.put('/promote', authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin'), promoteStudents);
+
+// Admin can upload student photo
+router.put('/:id/photo', authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin'), studentUpload.single('photo'), uploadStudentPhotoAdmin);
+
+// Specific :id routes (must come BEFORE generic /:id route)
+router.put('/:id/status', authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin'), updateStudentStatus);
+router.put('/:id/change-password', authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin'), changePassword);
+
+// Generic routes for admin and faculty
 router.route('/')
   .get(authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin', 'faculty'), getAllStudents)
   .post(authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin'), createStudent);
 
+// Generic :id route (must come LAST)
 router.route('/:id')
   .get(authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin', 'faculty', 'student'), getStudent)
   .put(authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin'), updateStudent)
   .delete(authorize('superadmin', 'super-admin'), deleteStudent);
-
-router.get('/class/:classId', authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin', 'department-admin', 'faculty'), getStudentsByClass);
-router.get('/department/:departmentId', authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin', 'department-admin', 'faculty'), getStudentsByDepartment);
-router.put('/:id/status', authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin'), updateStudentStatus);
-router.put('/promote', authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin'), promoteStudents);
 
 export default router;
