@@ -27,7 +27,6 @@ export const getMyProjects = asyncHandler(async (req, res, next) => {
 
     const projects = await StudentProject.findAll({
         where,
-        include: [{ model: Faculty, as: 'approvedBy', attributes: [['Name', 'name']] }],
         order: [['startDate', 'DESC']]
     });
 
@@ -42,8 +41,7 @@ export const getProject = asyncHandler(async (req, res, next) => {
     if (!studentId) return;
 
     const project = await StudentProject.findOne({
-        where: { id: req.params.id, studentId },
-        include: [{ model: Faculty, as: 'approvedBy', attributes: [['Name', 'name']] }]
+        where: { id: req.params.id, studentId }
     });
 
     if (!project) return next(new ErrorResponse('Project not found', 404));
@@ -116,6 +114,7 @@ export const deleteProject = asyncHandler(async (req, res, next) => {
 export const updateProjectApproval = asyncHandler(async (req, res, next) => {
     console.log('[DEBUG-PROJECT-APPROVAL] Params:', req.params);
     console.log('[DEBUG-PROJECT-APPROVAL] Body:', req.body);
+    console.log('[DEBUG-PROJECT-APPROVAL] Faculty ID:', req.user.faculty_id);
     const { approvalStatus, approvalRemarks } = req.body;
     if (!['approved', 'rejected'].includes(approvalStatus)) {
         return next(new ErrorResponse(`approvalStatus must be approved or rejected, received: "${approvalStatus}"`, 400));
@@ -123,7 +122,22 @@ export const updateProjectApproval = asyncHandler(async (req, res, next) => {
     const project = await StudentProject.findByPk(req.params.id);
     if (!project) return next(new ErrorResponse('Project not found', 404));
 
-    await project.update({ approvalStatus, approvalRemarks: approvalRemarks || null, approvedById: req.user.id, approvalDate: new Date() });
+    try {
+        const updateData = { 
+            approvalStatus, 
+            approvalRemarks: approvalRemarks || null, 
+            approvedById: req.user.faculty_id,  // Use faculty_id which FK expects
+            approvalDate: new Date() 
+        };
+        console.log('[DEBUG-PROJECT-APPROVAL] Update data:', updateData);
+        
+        await project.update(updateData);
+        console.log('[DEBUG-PROJECT-APPROVAL] Update successful');
+    } catch (error) {
+        console.error('[DEBUG-PROJECT-APPROVAL] Update failed:', error.message);
+        console.error('[DEBUG-PROJECT-APPROVAL] Error details:', error);
+        throw error;
+    }
 
     // Notify student (non-blocking)
     notifyStudentPortfolioResult(project.studentId, {

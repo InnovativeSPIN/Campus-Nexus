@@ -1,7 +1,7 @@
 import ErrorResponse from '../../utils/errorResponse.js';
 import asyncHandler from '../../middleware/async.js';
 import { models } from '../../models/index.js';
-const { Attendance, FacultyAttendance, Student, StudentAttendance, Class: ClassModel, Subject, Faculty, FacultySubjectAssignment, PeriodTopicLog } = models;
+const { Attendance, FacultyAttendance, Student, StudentAttendance, Class: ClassModel, Subject, Faculty, FacultySubjectAssignment, PeriodTopicLog, CourseLessonPlan } = models;
 import { Op } from 'sequelize';
 
 // Teaching period slot IDs (breaks should not be marked)
@@ -276,23 +276,67 @@ export const markAttendance = asyncHandler(async (req, res, next) => {
   // Normalize date to YYYY-MM-DD (database stores DATE only)
   const attendanceDateStr = new Date(attendanceDate).toISOString().slice(0, 10);
 
-  // If lesson_plan_id is provided, create a period_topic_log entry
+  // Extract coverage tracking fields
+  const coverageStatus = req.body.coverageStatus || null; // 'completed' or 'deviation'
+  const periodsCovered = req.body.periodsCovered ? parseInt(req.body.periodsCovered, 10) : 0;
+  const deviationReason = req.body.deviationReason || null;
+  const additionalNotes = req.body.additionalNotes || null;
+
+  // If lesson_plan_id is provided, update coverage and period_topic_log
   if (lessonPlanId) {
     try {
-      await PeriodTopicLog.upsert({
-        attendance_date: attendanceDateStr,
-        period_slot_id: periodSlotId,
-        faculty_id: facultyId,
-        class_id: classId,
-        subject_id: subjectId,
-        lesson_plan_id: lessonPlanId,
-        is_deviation: 0,
-        deviation_note: null,
-        master_slot_id: masterSlotId,
+      // Fetch current lesson plan to calculate periods
+      const currentLesson = await CourseLessonPlan.findByPk(lessonPlanId, {
+        attributes: ['id', 'periods_taken', 'periods_required', 'unit_number', 'topic']
       });
+
+      if (currentLesson && coverageStatus) {
+        const updateData = {
+          coverage_status: coverageStatus,
+          coverage_date: new Date(),
+          additional_notes: additionalNotes,
+        };
+
+        if (coverageStatus === 'completed') {
+          // Mark as completed: increment periods_taken, set is_completed if full
+          const newPeriodsTaken = currentLesson.periods_taken + periodsCovered;
+          updateData.periods_taken = newPeriodsTaken;
+          updateData.completed_date = new Date();
+          
+          // Set is_completed if total periods >= periods_required
+          if (newPeriodsTaken >= currentLesson.periods_required) {
+            updateData.is_completed = true;
+          }
+        } else if (coverageStatus === 'deviation') {
+          // Deviation: don't update periods_taken, just store the reason
+          updateData.deviation_reason = deviationReason;
+        }
+
+        await CourseLessonPlan.update(
+          updateData,
+          { where: { id: lessonPlanId } }
+        );
+
+        // Create period_topic_log entry with lesson details
+        const isDeviation = coverageStatus === 'deviation' ? 1 : 0;
+        await PeriodTopicLog.upsert({
+          attendance_date: attendanceDateStr,
+          period_slot_id: periodSlotId,
+          faculty_id: facultyId,
+          class_id: classId,
+          subject_id: subjectId,
+          lesson_plan_id: lessonPlanId,
+          unit_number: currentLesson.unit_number,
+          topic_summary: currentLesson.topic,
+          periods_covered: periodsCovered > 0 ? periodsCovered : 1,
+          is_deviation: isDeviation,
+          deviation_note: deviationReason,
+          master_slot_id: masterSlotId,
+        });
+      }
     } catch (err) {
-      console.warn('Could not create period_topic_log:', err);
-      // Don't fail the entire request if period_topic_log fails
+      console.error('Coverage tracking error:', err);
+      // Don't fail the entire request if coverage tracking fails
     }
   }
 

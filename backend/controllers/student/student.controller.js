@@ -4,6 +4,8 @@ import { models } from '../../models/index.js';
 import path from 'path';
 import fs from 'fs';
 import { promises as fsPromises } from 'fs';
+import { Op as sequelizeOp } from 'sequelize';
+import bcrypt from 'bcryptjs';
 const { Student, Department, Class: ClassModel, Subject, StudentBio, CourseLessonPlan, Faculty } = models;
 
 // Helper function to ensure parentInfo has all required fields with defaults
@@ -364,11 +366,22 @@ export const updateStudent = asyncHandler(async (req, res, next) => {
 
   // Update student profile
   try {
-    // If studentId is being updated, check for duplicates
-    if (profileData.studentId && profileData.studentId !== student.studentId) {
-      const existingStudent = await Student.findOne({ where: { studentId: profileData.studentId } });
-      if (existingStudent) {
-        return next(new ErrorResponse(`Student ID '${profileData.studentId}' is already in use by another student`, 400));
+    // If studentId is being updated, check for duplicates (but exclude the current student)
+    if (profileData.studentId && String(profileData.studentId).trim()) {
+      const currentStudentId = String(student.studentId || '').trim();
+      const newStudentId = String(profileData.studentId).trim();
+      
+      // Only check for duplicates if the studentId is actually changing
+      if (newStudentId !== currentStudentId) {
+        const existingStudent = await Student.findOne({ 
+          where: { 
+            studentId: newStudentId,
+            id: { [sequelizeOp.ne]: req.params.id } // Exclude current student
+          } 
+        });
+        if (existingStudent) {
+          return next(new ErrorResponse(`Student ID '${profileData.studentId}' is already in use by another student`, 400));
+        }
       }
     }
     console.log('Updating student with data:', JSON.stringify(profileData, null, 2));
@@ -461,6 +474,38 @@ export const deleteStudent = asyncHandler(async (req, res, next) => {
 
   res.status(200).json({
     success: true,
+    data: {}
+  });
+});
+
+// @desc      Change student password (by superadmin)
+// @route     PUT /api/v1/students/:id/change-password
+// @access    Private (admin/superadmin)
+export const changePassword = asyncHandler(async (req, res, next) => {
+  const { password } = req.body;
+
+  // Validate password
+  if (!password) {
+    return next(new ErrorResponse('Please provide a password', 400));
+  }
+
+  if (password.length < 6) {
+    return next(new ErrorResponse('Password must be at least 6 characters', 400));
+  }
+
+  const student = await Student.findByPk(req.params.id);
+
+  if (!student) {
+    return next(new ErrorResponse(`Student not found with id of ${req.params.id}`, 404));
+  }
+
+  // Set the new password - the beforeUpdate hook will automatically hash it
+  student.password = password;
+  await student.save();
+
+  res.status(200).json({
+    success: true,
+    message: 'Password changed successfully',
     data: {}
   });
 });

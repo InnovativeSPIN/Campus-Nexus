@@ -2,6 +2,9 @@ import asyncHandler from '../../middleware/async.js';
 import ErrorResponse from '../../utils/errorResponse.js';
 import { models } from '../../models/index.js';
 import { Op } from 'sequelize';
+import fs from 'fs';
+import path from 'path';
+import crypto from 'crypto';
 
 const { 
   FacultySubjectAssignment, 
@@ -9,7 +12,9 @@ const {
   Department, 
   Class: ClassModel,
   Faculty,
-  CourseLessonPlan
+  CourseLessonPlan,
+  CourseFile,
+  CourseFileNotification
 } = models;
 
 // @route   GET /api/v1/faculty/academics/my-subjects
@@ -717,11 +722,6 @@ export const getCourseLessonPlanProgress = asyncHandler(async (req, res, next) =
 });
 
 // ==================== COURSE FILE UPLOAD ENDPOINTS ====================
-
-const { CourseFile, CourseFileNotification } = models;
-import fs from 'fs';
-import path from 'path';
-import crypto from 'crypto';
 
 /**
  * @desc    Upload course file (PDF) and submit for approval
