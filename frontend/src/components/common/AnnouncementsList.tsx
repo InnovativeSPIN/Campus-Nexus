@@ -40,7 +40,11 @@ export function AnnouncementsList({ onSelectAnnouncement }: AnnouncementsListPro
                 });
                 const result = await response.json();
                 if (result.success) {
-                    setAnnouncements(result.data || []);
+                    // Deduplicate announcements by ID to prevent duplicates
+                    const uniqueAnnouncements = Array.from(
+                        new Map((result.data || []).map((item: Announcement) => [item.id, item])).values()
+                    ) as Announcement[];
+                    setAnnouncements(uniqueAnnouncements);
                 }
             } catch (error) {
                 console.error('Error fetching announcements:', error);

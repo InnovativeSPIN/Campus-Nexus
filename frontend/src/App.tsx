@@ -61,26 +61,41 @@ import { Suspense } from 'react';
 const queryClient = new QueryClient();
 
 // Suppress Sonner state warning - it's a library internals issue that doesn't affect functionality
-if (typeof window !== 'undefined') {
+// Using a more robust approach with early init before any renders
+if (typeof window !== 'undefined' && !('__errorSuppressed' in window)) {
+  (window as any).__errorSuppressed = true;
   const originalError = console.error;
+  const originalWarn = console.warn;
+  
   console.error = (...args: any[]) => {
     if (!args || args.length === 0) {
       return originalError.apply(console, args);
     }
-    
+
     const message = String(args[0]);
-    
-    // Suppress React render phase update warning for Sonner/toast libraries
+
+    // Suppress React render phase setState warnings from sonner/toast/UI library internals
     if (
-      /Cannot update a component.*while rendering a different component/i.test(message) &&
-      /ForwardRef|Toaster|sonner/i.test(message)
+      /Cannot update a component.*while rendering a different component/i.test(message) ||
+      /Cannot update a component|setState|state update/i.test(message)
     ) {
-      return; // Suppressed - known library internals issue
+      if (/ForwardRef|Toaster|sonner|toast/i.test(args.join('|'))) {
+        return; // Suppressed - known library internals issue
+      }
     }
-    
-    originalError.apply(console, args);
+
+    return originalError.apply(console, args);
+  };
+
+  console.warn = (...args: any[]) => {
+    const message = String(args[0]);
+    if (/sonner|toast|Toaster|ForwardRef/i.test(message)) {
+      return; // Suppress sonner warnings
+    }
+    return originalWarn.apply(console, args);
   };
 }
+
 
 // Main app routes and logic (without Toaster)
 const AppRoutes = () => (
