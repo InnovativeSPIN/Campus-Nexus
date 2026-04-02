@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/pages/admin/superadmin/components/ui/select';
-import { ChevronLeft, Mail, Phone, Edit2, Save, X } from 'lucide-react';
+import { ChevronLeft, Mail, Phone, Edit2, Save, X, Lock, Eye, EyeOff } from 'lucide-react';
 import { Badge } from '@/pages/admin/superadmin/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/pages/admin/superadmin/components/ui/tabs';
 import { toast } from '@/components/ui/sonner';
@@ -43,6 +43,18 @@ export default function SuperAdminStudentProfile() {
     const [formData, setFormData] = useState<any>({});
     const [saving, setSaving] = useState(false);
     const [uploading, setUploading] = useState(false);
+    
+    // Attendance and Projects states
+    const [attendance, setAttendance] = useState<any[]>([]);
+    const [projects, setProjects] = useState<any[]>([]);
+    const [attendanceLoading, setAttendanceLoading] = useState(false);
+    const [projectsLoading, setProjectsLoading] = useState(false);
+    
+    // Password change states
+    const [passwordModalOpen, setPasswordModalOpen] = useState(false);
+    const [passwordForm, setPasswordForm] = useState({ newPassword: '', confirmPassword: '' });
+    const [passwordLoading, setPasswordLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState({ new: false, confirm: false });
 
     useEffect(() => {
         fetchStudent();
@@ -88,6 +100,92 @@ export default function SuperAdminStudentProfile() {
             setError(err.message || 'Unable to load student');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchAttendance = async () => {
+        if (!id) return;
+        try {
+            setAttendanceLoading(true);
+            const token = localStorage.getItem('authToken');
+            const res = await fetch(`/api/v1/student/attendance/student/${id}`, {
+                headers: {
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                }
+            });
+            const json = await res.json();
+            if (json.success && json.data) {
+                setAttendance(Array.isArray(json.data) ? json.data : [json.data]);
+            }
+        } catch (err: any) {
+            console.error('Error loading attendance', err);
+        } finally {
+            setAttendanceLoading(false);
+        }
+    };
+
+    const fetchProjects = async () => {
+        if (!id) return;
+        try {
+            setProjectsLoading(true);
+            const token = localStorage.getItem('authToken');
+            // Fetch all projects, we'll filter by student later
+            const res = await fetch(`/api/v1/student/projects`, {
+                headers: {
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                }
+            });
+            const json = await res.json();
+            if (json.success && json.data) {
+                // Filter projects by current student ID
+                const studentProjects = (Array.isArray(json.data) ? json.data : []).filter((p: any) => p.studentId === id);
+                setProjects(studentProjects);
+            }
+        } catch (err: any) {
+            console.error('Error loading projects', err);
+        } finally {
+            setProjectsLoading(false);
+        }
+    };
+
+    const handleChangePassword = async () => {
+        if (!passwordForm.newPassword || !passwordForm.confirmPassword) {
+            toast.error('Please fill in all password fields');
+            return;
+        }
+        if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+            toast.error('Passwords do not match');
+            return;
+        }
+        if (passwordForm.newPassword.length < 6) {
+            toast.error('Password must be at least 6 characters');
+            return;
+        }
+
+        setPasswordLoading(true);
+        try {
+            const token = localStorage.getItem('authToken');
+            const res = await fetch(`/api/v1/students/${id}/change-password`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
+                body: JSON.stringify({ password: passwordForm.newPassword })
+            });
+            const json = await res.json();
+            if (json.success) {
+                toast.success('Password changed successfully');
+                setPasswordModalOpen(false);
+                setPasswordForm({ newPassword: '', confirmPassword: '' });
+            } else {
+                toast.error(json.message || 'Failed to change password');
+            }
+        } catch (err: any) {
+            console.error('Error changing password', err);
+            toast.error('Unable to change password');
+        } finally {
+            setPasswordLoading(false);
         }
     };
 
@@ -319,19 +417,39 @@ export default function SuperAdminStudentProfile() {
                                 </div>
                                 <div className="pb-2">
                                     <h1 className="text-2xl font-bold text-foreground">{student.name}</h1>
-                                    <p className="text-muted-foreground">
-                                        {student.departmentName || (student.department && typeof student.department === 'object' ? (student.department.name || student.department.short_name || student.department.full_name) : student.department) || ''} • Batch {student.academicYear || student.enrollmentYear || 'N/A'}
-                                    </p>
+                                    <div className="flex items-center gap-4 mt-1">
+                                        <p className="text-sm font-semibold text-primary">Student ID: {student.studentId}</p>
+                                        <p className="text-muted-foreground">
+                                            {student.departmentName || (student.department && typeof student.department === 'object' ? (student.department.name || student.department.short_name || student.department.full_name) : student.department) || ''} • Batch {student.academicYear || student.enrollmentYear || 'N/A'}
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
                             <div className="flex items-center gap-3">
                                 <Badge variant={student.status === 'active' ? 'default' : 'secondary'} className={student.status === 'active' ? 'bg-success text-white' : ''}>
                                     {student.status}
                                 </Badge>
+                                <Button
+                                    onClick={() => {
+                                        setPasswordModalOpen(true);
+                                        fetchAttendance();
+                                        fetchProjects();
+                                    }}
+                                    className="ml-auto flex items-center gap-2 bg-primary hover:bg-primary/90"
+                                >
+                                    <Lock className="h-4 w-4" />
+                                    Change Password
+                                </Button>
                             </div>
                         </div>
 
-                        <Tabs defaultValue="personal" className="space-y-6">
+                        <Tabs defaultValue="personal" className="space-y-6" onValueChange={(value) => {
+                            if (value === 'attendance' && attendance.length === 0) {
+                                fetchAttendance();
+                            } else if (value === 'portfolio' && projects.length === 0) {
+                                fetchProjects();
+                            }
+                        }}>
                             <TabsList className="bg-muted/50 p-1 border border-border overflow-x-auto">
                                 <TabsTrigger value="personal">Personal Info</TabsTrigger>
                                 <TabsTrigger value="academic">Academics</TabsTrigger>
@@ -818,21 +936,169 @@ export default function SuperAdminStudentProfile() {
                             </TabsContent>
 
                             {/* Attendance Tab */}
-                            <TabsContent value="attendance">
-                                <div className="p-12 text-center text-muted-foreground border-2 border-dashed border-border rounded-xl">
-                                    Attendance details for all subjects. Overall: 85%
-                                </div>
+                            <TabsContent value="attendance" className="space-y-4">
+                                {attendanceLoading ? (
+                                    <div className="p-12 text-center text-muted-foreground">
+                                        <div className="inline-block">
+                                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                                        </div>
+                                        <p className="mt-2">Loading attendance...</p>
+                                    </div>
+                                ) : attendance.length === 0 ? (
+                                    <div className="p-12 text-center text-muted-foreground border-2 border-dashed border-border rounded-xl">
+                                        No attendance records found
+                                    </div>
+                                ) : (
+                                    <div className="border border-border rounded-lg overflow-hidden">
+                                        <table className="w-full">
+                                            <thead className="bg-muted/50 border-b border-border">
+                                                <tr>
+                                                    <th className="text-left px-4 py-3 font-semibold">Subject</th>
+                                                    <th className="text-left px-4 py-3 font-semibold">Classes Held</th>
+                                                    <th className="text-left px-4 py-3 font-semibold">Classes Attended</th>
+                                                    <th className="text-left px-4 py-3 font-semibold">Percentage</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {attendance.map((record: any, idx: number) => (
+                                                    <tr key={idx} className="border-b border-border hover:bg-muted/30">
+                                                        <td className="px-4 py-3">{record.subject || record.subjectName || 'N/A'}</td>
+                                                        <td className="px-4 py-3">{record.totalClasses || record.classesHeld || 0}</td>
+                                                        <td className="px-4 py-3">{record.attendedClasses || record.classesAttended || 0}</td>
+                                                        <td className="px-4 py-3">
+                                                            <Badge variant={record.percentage >= 75 ? 'default' : record.percentage >= 50 ? 'secondary' : 'destructive'}>
+                                                                {Number(record.percentage || 0).toFixed(2)}%
+                                                            </Badge>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
                             </TabsContent>
 
-                            {/* Portfolio Tab */}
-                            <TabsContent value="portfolio">
-                                <div className="p-12 text-center text-muted-foreground border-2 border-dashed border-border rounded-xl">
-                                    Project, Events, and Extra-curricular achievements.
-                                </div>
+                            {/* Portfolio/Projects Tab */}
+                            <TabsContent value="portfolio" className="space-y-4">
+                                {projectsLoading ? (
+                                    <div className="p-12 text-center text-muted-foreground">
+                                        <div className="inline-block">
+                                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                                        </div>
+                                        <p className="mt-2">Loading projects...</p>
+                                    </div>
+                                ) : projects.length === 0 ? (
+                                    <div className="p-12 text-center text-muted-foreground border-2 border-dashed border-border rounded-xl">
+                                        No projects found
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {projects.map((project: any) => (
+                                            <div key={project.id} className="p-4 border border-border rounded-lg hover:shadow-md transition-shadow">
+                                                <h4 className="font-semibold mb-2 text-foreground">{project.title || project.projectName}</h4>
+                                                <p className="text-sm text-muted-foreground mb-3 line-clamp-3">{project.description || 'No description'}</p>
+                                                <div className="space-y-2 text-sm mb-3">
+                                                    {project.technology && <p><span className="font-medium">Technology:</span> {project.technology}</p>}
+                                                    {project.startDate && <p><span className="font-medium">Date:</span> {new Date(project.startDate).toLocaleDateString()}</p>}
+                                                </div>
+                                                <Badge variant={project.status === 'approved' ? 'default' : project.status === 'pending' ? 'secondary' : 'destructive'}>
+                                                    {project.status || 'Pending'}
+                                                </Badge>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </TabsContent>
                         </Tabs>
                     </div>
                 </div>
+
+                {/* Password Change Modal */}
+                {passwordModalOpen && (
+                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                        <div className="bg-card rounded-lg border border-border shadow-lg max-w-md w-full">
+                            <div className="flex items-center justify-between p-6 border-b border-border">
+                                <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
+                                    <Lock className="h-5 w-5" />
+                                    Change Password
+                                </h2>
+                                <button
+                                    onClick={() => {
+                                        setPasswordModalOpen(false);
+                                        setPasswordForm({ newPassword: '', confirmPassword: '' });
+                                    }}
+                                    className="text-muted-foreground hover:text-foreground"
+                                >
+                                    <X className="h-5 w-5" />
+                                </button>
+                            </div>
+                            
+                            <div className="p-6 space-y-4">
+                                <div>
+                                    <Label htmlFor="newPassword" className="text-foreground mb-2">New Password</Label>
+                                    <div className="relative">
+                                        <Input
+                                            id="newPassword"
+                                            type={showPassword.new ? 'text' : 'password'}
+                                            value={passwordForm.newPassword}
+                                            onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+                                            placeholder="Enter new password"
+                                            className="pr-10"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPassword({ ...showPassword, new: !showPassword.new })}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                        >
+                                            {showPassword.new ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <Label htmlFor="confirmPassword" className="text-foreground mb-2">Confirm Password</Label>
+                                    <div className="relative">
+                                        <Input
+                                            id="confirmPassword"
+                                            type={showPassword.confirm ? 'text' : 'password'}
+                                            value={passwordForm.confirmPassword}
+                                            onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+                                            placeholder="Confirm password"
+                                            className="pr-10"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPassword({ ...showPassword, confirm: !showPassword.confirm })}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                        >
+                                            {showPassword.confirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="flex gap-2 p-6 border-t border-border">
+                                <Button
+                                    variant="outline"
+                                    onClick={() => {
+                                        setPasswordModalOpen(false);
+                                        setPasswordForm({ newPassword: '', confirmPassword: '' });
+                                    }}
+                                    className="flex-1"
+                                >
+                                    Cancel
+                                </Button>
+                                <Button
+                                    onClick={handleChangePassword}
+                                    disabled={passwordLoading}
+                                    className="flex-1 bg-primary hover:bg-primary/90"
+                                >
+                                    {passwordLoading ? 'Changing...' : 'Change Password'}
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </AdminLayout>
     );

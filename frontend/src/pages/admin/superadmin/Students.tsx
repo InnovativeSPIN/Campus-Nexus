@@ -27,11 +27,20 @@ import {
 
 export default function SuperAdminStudents() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [students, setStudents] = useState<Student[]>([]);
   const [departments, setDepartments] = useState<any[]>([]);
-  const [departmentFilter, setDepartmentFilter] = useState<string>('all');
-  const [yearFilter, setYearFilter] = useState<string>('all');
-  const [academicYearFilter, setAcademicYearFilter] = useState<string>('all');
+  
+  // Initialize filters from sessionStorage or default to 'all'
+  const [departmentFilter, setDepartmentFilter] = useState<string>(() => {
+    return sessionStorage.getItem('studentDepartmentFilter') || 'all';
+  });
+  const [yearFilter, setYearFilter] = useState<string>(() => {
+    return sessionStorage.getItem('studentYearFilter') || 'all';
+  });
+  const [academicYearFilter, setAcademicYearFilter] = useState<string>(() => {
+    return sessionStorage.getItem('studentAcademicYearFilter') || 'all';
+  });
   const [academicYears, setAcademicYears] = useState<string[]>([]);
 
   // helper to load students & departments
@@ -111,13 +120,25 @@ export default function SuperAdminStudents() {
     loadData();
   }, []);
 
+  // Save filters to sessionStorage whenever they change
+  useEffect(() => {
+    sessionStorage.setItem('studentDepartmentFilter', departmentFilter);
+  }, [departmentFilter]);
+
+  useEffect(() => {
+    sessionStorage.setItem('studentYearFilter', yearFilter);
+  }, [yearFilter]);
+
+  useEffect(() => {
+    sessionStorage.setItem('studentAcademicYearFilter', academicYearFilter);
+  }, [academicYearFilter]);
+
   // reload when filters change
   useEffect(() => {
     loadData();
   }, [departmentFilter, yearFilter, academicYearFilter]);
 
   // open edit modal when url contains ?edit=<id>
-  const location = useLocation();
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const editId = params.get('edit');
@@ -158,6 +179,14 @@ export default function SuperAdminStudents() {
   }, [students, departmentFilter, yearFilter, academicYearFilter]);
 
   const columns = [
+    { 
+      key: 'studentId', 
+      label: 'Student ID',
+      render: (student: Student) => {
+        const displayId = student.studentId || student.rollNumber || `ID-${student.id}`;
+        return displayId;
+      }
+    },
     { key: 'name', label: 'Name' },
     { key: 'email', label: 'Email' },
     { key: 'department', label: 'Department' },
@@ -182,7 +211,7 @@ export default function SuperAdminStudents() {
   ];
 
   const handleAdd = () => {
-    setFormModal({ open: true, mode: 'add' });
+    setFormModal({ open: true, mode: 'add', data: undefined });
   };
 
   const handleBulkUpload = () => {
@@ -196,7 +225,12 @@ export default function SuperAdminStudents() {
 
   const handleEdit = (student: Student) => {
     // pass departmentId (string) rather than department name so modal selects correctly
-    const editData = { ...student, department: student.departmentId != null ? String(student.departmentId) : '' } as any;
+    const editData = { 
+      ...student, 
+      department: student.departmentId != null ? String(student.departmentId) : '',
+      departmentId: student.departmentId,
+      name: student.name || `${student.firstName || ''} ${student.lastName || ''}`.trim()
+    } as any;
     setFormModal({ open: true, mode: 'edit', data: editData });
   };
 
@@ -230,6 +264,10 @@ export default function SuperAdminStudents() {
     
     // Remove frontend-only fields
     delete payload.avatarFile;
+    delete payload.departmentId;
+    delete payload.enrollmentYear;
+    delete payload.studyYear;
+    delete payload.academicYear;
     
     // Split full name into firstName and lastName if present
     if (payload.name && typeof payload.name === 'string') {
@@ -241,8 +279,9 @@ export default function SuperAdminStudents() {
 
     // Transform department value to id if it is string
     if (payload.department && typeof payload.department !== 'number') {
-      payload.department = parseInt(payload.department, 10);
+      payload.departmentId = parseInt(payload.department, 10);
     }
+    delete payload.department;
 
     // Ensure classId is an integer
     if (payload.classId && typeof payload.classId === 'string') {
@@ -263,8 +302,8 @@ export default function SuperAdminStudents() {
         const json = await res.json();
         if (json.success) {
           toast.success('Student added successfully');
-          await loadData();
-          navigate('/admin/superadmin/students', { replace: true });
+          setFormModal({ open: false, mode: 'add' });
+          await loadData(); // Reload with current filters
         } else {
           toast.error(json.message || 'Failed to add student');
         }
@@ -281,9 +320,8 @@ export default function SuperAdminStudents() {
         const json = await res.json();
         if (json.success) {
           toast.success('Student updated successfully');
-          await loadData();
-          // clear query param after editing
-          navigate('/admin/superadmin/students', { replace: true });
+          setFormModal({ open: false, mode: 'add' });
+          await loadData(); // Reload with current filters preserved
         } else {
           toast.error(json.message || 'Failed to update student');
         }
@@ -319,7 +357,7 @@ export default function SuperAdminStudents() {
         </div>
 
         {/* Filters */}
-        <div className="flex flex-col sm:flex-row gap-4 p-4 bg-card rounded-lg border border-border shadow-sm">
+        <div className="flex flex-col sm:flex-row gap-4 p-4 bg-card rounded-lg border border-border shadow-sm items-end">
           <div className="flex-1">
             <Select value={academicYearFilter} onValueChange={setAcademicYearFilter}>
               <SelectTrigger>
@@ -360,6 +398,16 @@ export default function SuperAdminStudents() {
               </SelectContent>
             </Select>
           </div>
+          <button
+            onClick={() => {
+              setDepartmentFilter('all');
+              setYearFilter('all');
+              setAcademicYearFilter('all');
+            }}
+            className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Clear Filters
+          </button>
         </div>
 
         <DataTable

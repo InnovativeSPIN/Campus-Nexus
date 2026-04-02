@@ -152,6 +152,12 @@ export default function SuperAdminFaculty() {
     return departments.find((d) => d.id === Number(deptId))?.full_name || 'N/A';
   };
 
+  const handleClearFilters = () => {
+    setSearchFilter('');
+    setDepartmentFilter('all');
+    setDesignationFilter('all');
+  };
+
   return (
     <AdminLayout>
       <div className="space-y-6">
@@ -179,7 +185,7 @@ export default function SuperAdminFaculty() {
         </div>
 
         {/* Filters */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
           <div className="space-y-2">
             <label className="text-sm font-medium">Search</label>
             <Input
@@ -223,8 +229,16 @@ export default function SuperAdminFaculty() {
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium">Results</label>
-            <div className="flex items-center justify-center h-9 rounded-md border border-input bg-muted/50 px-3">
-              <span className="text-sm font-medium">{filteredFaculty.length} found</span>
+            <div className="flex items-center gap-2">
+              <div className="flex-1 flex items-center justify-center h-9 rounded-md border border-input bg-muted/50 px-3">
+                <span className="text-sm font-medium">{filteredFaculty.length} found</span>
+              </div>
+              <button
+                onClick={handleClearFilters}
+                className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Clear
+              </button>
             </div>
           </div>
         </div>
