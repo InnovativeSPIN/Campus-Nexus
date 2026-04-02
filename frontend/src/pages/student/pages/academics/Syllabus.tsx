@@ -42,12 +42,14 @@ interface CoursePlan {
 
 export default function Syllabus({ showHeader = true }: { showHeader?: boolean }) {
   const [selectedSemester, setSelectedSemester] = useState<number>(6);
+  const [selectedSubject, setSelectedSubject] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [syllabusData, setSyllabusData] = useState<CoursePlan[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [expandedUnits, setExpandedUnits] = useState<{ [key: string]: boolean }>({});
 
   useEffect(() => {
+    setSelectedSubject(null); // Reset subject filter when semester changes
     fetchSyllabus();
   }, [selectedSemester]);
 
@@ -125,6 +127,11 @@ export default function Syllabus({ showHeader = true }: { showHeader?: boolean }
     }));
   };
 
+  // Filter syllabusData by selected subject
+  const filteredSyllabusData = selectedSubject
+    ? syllabusData.filter(course => course.subject.id === selectedSubject)
+    : syllabusData;
+
   return (
     <div className="space-y-6">
       {showHeader && (
@@ -137,19 +144,39 @@ export default function Syllabus({ showHeader = true }: { showHeader?: boolean }
 
       {/* Semester Selector */}
       <SectionCard>
-        <div className="flex gap-4 items-center">
-          <label className="font-semibold text-foreground">Select Semester:</label>
-          <select
-            value={selectedSemester}
-            onChange={(e) => setSelectedSemester(Number(e.target.value))}
-            className="px-4 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-          >
-            {[1, 2, 3, 4, 5, 6, 7, 8].map((sem) => (
-              <option key={sem} value={sem}>
-                Semester {sem}
-              </option>
-            ))}
-          </select>
+        <div className="flex gap-4 items-center flex-wrap">
+          <div className="flex gap-4 items-center">
+            <label className="font-semibold text-foreground">Select Semester:</label>
+            <select
+              value={selectedSemester}
+              onChange={(e) => setSelectedSemester(Number(e.target.value))}
+              className="px-4 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+            >
+              {[1, 2, 3, 4, 5, 6, 7, 8].map((sem) => (
+                <option key={sem} value={sem}>
+                  Semester {sem}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {syllabusData.length > 0 && (
+            <div className="flex gap-4 items-center">
+              <label className="font-semibold text-foreground">Filter by Subject:</label>
+              <select
+                value={selectedSubject || ''}
+                onChange={(e) => setSelectedSubject(e.target.value ? Number(e.target.value) : null)}
+                className="px-4 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              >
+                <option value="">All Subjects</option>
+                {syllabusData.map((course) => (
+                  <option key={course.subject.id} value={course.subject.id}>
+                    {course.subject.subject_name} ({course.subject.subject_code})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
       </SectionCard>
 
@@ -195,10 +222,23 @@ export default function Syllabus({ showHeader = true }: { showHeader?: boolean }
         </SectionCard>
       )}
 
+      {/* Empty State - No Results After Filter */}
+      {!loading && !error && syllabusData.length > 0 && filteredSyllabusData.length === 0 && (
+        <SectionCard className="border-2 border-info/40 bg-info/5">
+          <div className="text-center py-12">
+            <BookOpen className="w-16 h-16 text-info mb-4 mx-auto opacity-60" />
+            <p className="text-lg font-semibold text-info mb-2">No Subjects Match Filter</p>
+            <p className="text-info/80 text-sm">
+              The selected subject filter returned no results. Try selecting a different subject.
+            </p>
+          </div>
+        </SectionCard>
+      )}
+
       {/* Syllabus Content */}
-      {!loading && syllabusData.length > 0 && (
+      {!loading && filteredSyllabusData.length > 0 && (
         <div className="space-y-4">
-          {syllabusData.map((coursePlan) => (
+          {filteredSyllabusData.map((coursePlan) => (
             <SectionCard key={coursePlan.id}>
               {/* Course Header */}
               <div className="mb-6 pb-4 border-b border-border">

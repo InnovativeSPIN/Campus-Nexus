@@ -29,13 +29,12 @@ export default function Attendance() {
         }) as any;
         
         if (res.success && res.data) {
-          // Backend returns subjectWiseStats: [{subjectId, subjectName, subjectCode, total, present, absent, late, onDuty, percentage}]
-          // We filter by semester if the backend doesn't handle it, though backend seems to check query params
+          // Backend returns subjectWiseStats: [{subjectId, subjectName, subjectCode, totalPeriodsRequired, attended, percentage}]
           const subjects = res.data.subjectWiseStats.map((s: any) => ({
             code: s.subjectCode,
             name: s.subjectName,
-            attended: s.present + s.onDuty + s.late, // Calculate attended as present + OD + late (since OD count as present)
-            total: s.total
+            attended: s.attended || 0, // Periods attended
+            total: s.totalPeriodsRequired || 0 // Total periods from course plan
           }));
           
           const overallAttended = subjects.reduce((acc: number, s: any) => acc + s.attended, 0);
