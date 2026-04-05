@@ -66,9 +66,10 @@ const FacultySubjectAssignment = (sequelize) => {
     timestamps: false,
     indexes: [
       {
-        // Ensure a subject can only have one assigned faculty per academic year + semester
+        // Prevent duplicate assignments: same faculty cannot teach same subject in same class/year
+        // But allow: one faculty to teach multiple subjects, and multiple faculties to teach same subject
         unique: true,
-        fields: ['subject_id', 'academic_year', 'semester']
+        fields: ['faculty_id', 'subject_id', 'class_id', 'academic_year']
       },
       {
         fields: ['faculty_id', 'academic_year']

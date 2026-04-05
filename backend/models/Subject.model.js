@@ -19,7 +19,8 @@ const Subject = (sequelize) => {
     },
     department_id: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
+      comment: 'Department ID (null if available_to_all_departments is true)',
     },
     semester: {
       type: DataTypes.INTEGER,
@@ -72,6 +73,16 @@ const Subject = (sequelize) => {
     is_laboratory: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
+    },
+    subject_category: {
+      type: DataTypes.ENUM('academic', 'library', 'sports', 'placement'),
+      defaultValue: 'academic',
+      comment: 'Category of subject (academic/library/sports/placement)',
+    },
+    available_to_all_departments: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      comment: 'If true, subject is available to all departments regardless of department_id',
     },
     class_id: {
       type: DataTypes.INTEGER,
