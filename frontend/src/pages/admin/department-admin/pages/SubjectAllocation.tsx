@@ -275,8 +275,14 @@ export default function SubjectAllocation() {
       // Find the subject to get its semester
       const selectedSubject = subjects.find(s => s.id.toString() === mappingForm.subject_id);
       if (selectedSubject) {
-        fetchClasses(selectedSubject.semester.toString());
-        setMappingForm(f => ({ ...f, semester: selectedSubject.semester.toString() }));
+        // Handle subjects with null semester (available to all departments)
+        if (selectedSubject.semester) {
+          fetchClasses(selectedSubject.semester.toString());
+          setMappingForm(f => ({ ...f, semester: selectedSubject.semester.toString() }));
+        } else {
+          // Subject has no specific semester, fetch all classes
+          fetchClasses();
+        }
       }
     } else if (showMappingModal) {
       // Modal opened without subject, fetch all classes
@@ -332,16 +338,20 @@ export default function SubjectAllocation() {
       subject_id: subjectData.id.toString(),
       faculty_id: assigned?.faculty_id?.toString() || '',
       class_id: '',
-      year: subjectData.year ? subjectData.year.toString() : Math.ceil(subjectData.semester / 2).toString(),
+      year: subjectData.year ? subjectData.year.toString() : (subjectData.semester ? Math.ceil(subjectData.semester / 2).toString() : ''),
       academic_year: subjectData.academic_year || (new Date().getFullYear() + '-' + (new Date().getFullYear() + 1)),
-      semester: subjectData.semester.toString(),
+      semester: subjectData.semester ? subjectData.semester.toString() : '',
       total_hours: '45',
       no_of_periods: '3',
       batch: subjectData.batch || '',
     });
 
-    // pass year along when fetching classes in case backend later supports filtering
-    fetchClasses(subjectData.semester.toString(), subjectData.year?.toString());
+    // Fetch classes - if semester exists, filter by it; otherwise fetch all
+    if (subjectData.semester) {
+      fetchClasses(subjectData.semester.toString(), subjectData.year?.toString());
+    } else {
+      fetchClasses();
+    }
 
     // Load all faculty (cross-dept allowed) for allocation dropdown
     setFacultyDeptFilter('all');
@@ -360,10 +370,28 @@ export default function SubjectAllocation() {
   // ── Save allocation ────────────────────────────────────────────────────────
 
   const handleSaveAllocation = async () => {
-    if (!allocForm.faculty_id || !allocForm.subject_id || !allocForm.class_id || !allocForm.academic_year || !allocForm.semester) {
-      console.warn('Missing required fields for allocation');
+    // Validate required fields
+    if (!allocForm.faculty_id) {
+      toast.error('Please select a faculty member');
       return;
     }
+    if (!allocForm.subject_id) {
+      toast.error('Subject ID missing');
+      return;
+    }
+    if (!allocForm.class_id) {
+      toast.error('Class ID missing');
+      return;
+    }
+    if (!allocForm.academic_year) {
+      toast.error('Academic year missing');
+      return;
+    }
+    if (!allocForm.semester) {
+      toast.error('Please select a semester');
+      return;
+    }
+
     setSaving(true);
     try {
       const yearValue = Math.min(Math.max(parseInt(allocForm.year) || 1, 1), 4);
@@ -383,21 +411,30 @@ export default function SubjectAllocation() {
         payload.batch = allocForm.batch;
       }
 
-      // include year if present (backend will ignore if unsupported)
-      if (allocForm.year) payload.year = allocForm.year;
+      console.log('📤 Saving allocation with payload:', payload);
       const data = await apiFetch('/api/v1/department-admin/faculty-allocations', {
         method: 'POST',
         body: JSON.stringify(payload),
       });
+
       if (data.success) {
+        toast.success(`✅ Faculty allocated to subject successfully!`);
         setShowAllocModal(false);
-        fetchSubjects();
-        fetchAllocations();
+        
+        // Add small delay to ensure backend has committed the data
+        setTimeout(() => {
+          console.log('🔄 Refreshing allocations and mappings after save...');
+          fetchAllocations();   // Refresh allocations list
+          fetchMappings();      // Refresh curriculum mappings
+          fetchSubjects();      // Refresh subject list
+        }, 300);
       } else {
         console.error('Failed to save allocation:', data);
+        toast.error(data.error || data.message || 'Failed to save allocation');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving allocation:', error);
+      toast.error(error.message || 'Error saving allocation');
     }
     finally { setSaving(false); }
   };
@@ -578,6 +615,19 @@ export default function SubjectAllocation() {
                 />
                 <button
                   onClick={() => {
+                    fetchSubjects();
+                    fetchMappings();
+                  }}
+                  className="flex gap-2 items-center px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-all"
+                  title="Refresh subjects and mappings"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  Refresh
+                </button>
+                <button
+                  onClick={() => {
                     setMappingForm({
                       subject_id: '',
                       class_id: '',
@@ -588,7 +638,7 @@ export default function SubjectAllocation() {
                     });
                     setShowMappingModal(true);
                   }}
-                  className="ml-auto flex gap-2 items-center px-4 py-2 bg-[#790c0c] text-white rounded-lg hover:bg-[#590909] transition-all"
+                  className="flex gap-2 items-center px-4 py-2 bg-[#790c0c] text-white rounded-lg hover:bg-[#590909] transition-all"
                 >
                   <Plus className="w-4 h-4" />
                   Add Mapping
@@ -811,6 +861,19 @@ export default function SubjectAllocation() {
                   className="border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#790c0c]/20"
                 />
                 <button
+                  onClick={() => {
+                    fetchSubjects();
+                    fetchMappings();
+                  }}
+                  className="flex gap-2 items-center px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-all"
+                  title="Refresh subjects and mappings"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  Refresh
+                </button>
+                <button
                   onClick={() => setAllocFilters({ semester: '', academic_year: '', class_id: '' })}
                   className="text-sm text-gray-500 underline hover:text-gray-700"
                 >
@@ -847,38 +910,14 @@ export default function SubjectAllocation() {
                           const className = mapping.class?.name || 'N/A';
                           const type = mapping.is_core ? 'Core' : 'Elective';
                           
-                          // Find allocation for this mapping
+                          // Find allocation for this specific subject-class combination
+                          // With new rule: one faculty can teach multiple subjects, multiple faculty can teach same subject
                           const allocation = allocations.find(a => 
                             a.subject_id === mapping.subject_id && 
                             a.class_id === mapping.class_id &&
                             a.semester === mapping.semester &&
                             a.academic_year === mapping.academic_year
                           );
-                          
-                          // Debug logging
-                          if (!allocation) {
-                            console.log(`[ALLOC-SEARCH] No match for mapping ${mapping.id}:`, {
-                              lookingFor: {
-                                subject_id: mapping.subject_id,
-                                class_id: mapping.class_id,
-                                semester: mapping.semester,
-                                academic_year: mapping.academic_year
-                              },
-                              availableAllocations: allocations.map(a => ({
-                                id: a.id,
-                                subject_id: a.subject_id,
-                                class_id: a.class_id,
-                                semester: a.semester,
-                                academic_year: a.academic_year,
-                                faculty: a.faculty?.Name
-                              }))
-                            });
-                          } else {
-                            console.log(`[ALLOC-FOUND] Mapping ${mapping.id} matched allocation ${allocation.id}:`, {
-                              facultyName: allocation.faculty?.Name,
-                              hasFaculty: Boolean(allocation.faculty)
-                            });
-                          }
                           
                           const facultyName = allocation?.faculty?.Name || 'Unallocated';
                           const facultyDesignation = allocation?.faculty?.designation || '';
@@ -921,13 +960,23 @@ export default function SubjectAllocation() {
                                   <button
                                     onClick={() => {
                                       // Open allocation modal for this mapping
+                                      console.log('📋 Opening allocation modal for mapping:', {
+                                        mapping_id: mapping.id,
+                                        subject_id: mapping.subject_id,
+                                        subject_name: subjectName,
+                                        class_id: mapping.class_id,
+                                        semester: mapping.semester,
+                                        academic_year: mapping.academic_year,
+                                        existing_allocation: !!allocation
+                                      });
+                                      
                                       setAllocForm({
                                         subject_id: mapping.subject_id.toString(),
                                         faculty_id: allocation?.faculty_id?.toString() || '',
                                         class_id: mapping.class_id.toString(),
-                                        year: Math.ceil(mapping.semester / 2).toString(),
+                                        year: mapping.semester ? Math.ceil(mapping.semester / 2).toString() : '',
                                         academic_year: mapping.academic_year,
-                                        semester: mapping.semester.toString(),
+                                        semester: mapping.semester ? mapping.semester.toString() : '',
                                         total_hours: (allocation?.total_hours || '45').toString(),
                                         no_of_periods: (allocation?.no_of_periods || '3').toString(),
                                         batch: '',

@@ -427,8 +427,8 @@ export default function Academics() {
     if (creditsData.length > 0 && !creditsDepartment) {
       const firstDept = creditsData[0];
       setCreditsDepartment(firstDept.department);
-      setCreditsYear(firstDept.year.toString());
-      setCreditsSemester(firstDept.semester.toString());
+      setCreditsYear(firstDept.year ? firstDept.year.toString() : '');
+      setCreditsSemester(firstDept.semester ? firstDept.semester.toString() : '');
     }
   }, [creditsData, creditsDepartment]);
 

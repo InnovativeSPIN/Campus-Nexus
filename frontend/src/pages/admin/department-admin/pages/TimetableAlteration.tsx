@@ -326,7 +326,7 @@ export default function TimetableAlteration() {
                         onClick={() => {
                           setEditingId(alteration.id);
                           setFormData({
-                            semester: alteration.semester.toString(),
+                            semester: alteration.semester ? alteration.semester.toString() : '',
                             slot_id: alteration.slot_id.toString(),
                             old_faculty_id: alteration.old_faculty_id.toString(),
                             new_faculty_id: alteration.new_faculty_id.toString(),

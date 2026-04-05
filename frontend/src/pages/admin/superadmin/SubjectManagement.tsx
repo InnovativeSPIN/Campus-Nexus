@@ -33,6 +33,8 @@ interface Subject {
   type: string;
   is_elective: boolean;
   is_laboratory: boolean;
+  subject_category?: 'academic' | 'library' | 'sports' | 'placement';
+  available_to_all_departments?: boolean;
   status: 'active' | 'inactive' | 'archived';
   created_at: string;
   updated_at: string;
@@ -51,8 +53,6 @@ export default function SuperAdminSubjectManagement() {
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
     department_id: '',
-    semester: '',
-    sem_type: '',
     status: ''
   });
 
@@ -77,6 +77,7 @@ export default function SuperAdminSubjectManagement() {
     open: boolean;
     file: File | null;
     uploading: boolean;
+    errors?: string[];
     results?: {
       successful: Array<{ row: number; code: string; name: string; message: string }>;
       failed: Array<{ row: number; code: string; error: string }>;
@@ -94,16 +95,12 @@ export default function SuperAdminSubjectManagement() {
     name: '',
     description: '',
     department_id: '',
-    semester: '',
-    sem_type: 'odd',
-    academic_year: '',
-    batch: 'none',
-    year: '',
-    lab_name: '',
     credits: 4,
     type: 'Theory',
+    subject_category: 'academic', // 'academic', 'library', 'sports', 'placement'
     is_elective: false,
     is_laboratory: false,
+    available_to_all_departments: false,
     status: 'active',
   });
 
@@ -136,8 +133,6 @@ export default function SuperAdminSubjectManagement() {
       setLoading(true);
       const params = new URLSearchParams();
       if (filters.department_id) params.append('department_id', filters.department_id);
-      if (filters.semester) params.append('semester', filters.semester);
-      if (filters.sem_type) params.append('sem_type', filters.sem_type);
       if (filters.status) params.append('status', filters.status);
 
       const response = await fetch(`/api/v1/admin/subjects?${params}`);
@@ -159,16 +154,12 @@ export default function SuperAdminSubjectManagement() {
       name: '',
       description: '',
       department_id: '',
-      semester: '',
-      sem_type: 'odd',
-      academic_year: '',
-      batch: '',
-      year: '',
-      lab_name: '',
       credits: 4,
       type: 'Theory',
+      subject_category: 'academic',
       is_elective: false,
       is_laboratory: false,
+      available_to_all_departments: false,
       status: 'active',
     });
     setFormModal({ open: true, mode: 'add' });
@@ -179,17 +170,15 @@ export default function SuperAdminSubjectManagement() {
       code: subject.code,
       name: subject.name,
       description: subject.description || '',
-      department_id: subject.department_id.toString(),
-      semester: subject.semester.toString(),
-      sem_type: subject.sem_type,
-      academic_year: subject.academic_year || '',
-      batch: subject.batch || 'none',
-      year: subject.year?.toString() || '',
-      lab_name: subject.lab_name || '',
+      department_id: subject.department_id ? subject.department_id.toString() : '',
       credits: subject.credits,
       type: subject.type,
+      subject_category: subject.code === 'LIB' || subject.name?.includes('Library') ? 'library' : 
+                        subject.code === 'SPT' || subject.name?.includes('Sports') ? 'sports' :
+                        subject.code === 'PLC' || subject.name?.includes('Placement') ? 'placement' : 'academic',
       is_elective: subject.is_elective,
       is_laboratory: subject.is_laboratory,
+      available_to_all_departments: subject.available_to_all_departments || false,
       status: subject.status,
     });
     setFormModal({ open: true, mode: 'edit', data: subject });
@@ -197,48 +186,56 @@ export default function SuperAdminSubjectManagement() {
 
   const handleSubmit = async () => {
     try {
-      // Validation
-      if (!formData.code || !formData.name || !formData.department_id || !formData.semester) {
-        toast.error('Please fill all required fields');
+      // Validation - different rules for special subjects
+      const isSpecialSubject = ['library', 'sports', 'placement'].includes(formData.subject_category);
+      
+      // Department is required if NOT assigning to all departments
+      if (!formData.name) {
+        toast.error('Please fill all required fields (Name)');
+        return;
+      }
+
+      if (!formData.available_to_all_departments && (!formData.department_id || formData.department_id === '')) {
+        toast.error('Please select a Department or check "Assign to All Departments"');
+        return;
+      }
+
+      // For academic subjects, code and credits are required
+      if (!isSpecialSubject && (!formData.code || formData.credits === null)) {
+        toast.error('Subject Code and Credits are required for academic subjects');
         return;
       }
 
       const payload = {
-        ...formData,
-        department_id: parseInt(formData.department_id),
-        semester: parseInt(formData.semester),
-        year: formData.year ? parseInt(formData.year) : Math.ceil(parseInt(formData.semester) / 2),
-        credits: parseInt(formData.credits.toString()),
-        academic_year: formData.academic_year || undefined,
-        batch: formData.batch && formData.batch !== 'none' ? formData.batch : undefined,
+        code: isSpecialSubject ? formData.subject_category.toUpperCase().substring(0, 3) : formData.code,
+        name: formData.name,
+        description: formData.description || null,
+        department_id: formData.available_to_all_departments ? null : (formData.department_id ? parseInt(formData.department_id) : null),
+        credits: isSpecialSubject ? 0 : parseInt(formData.credits.toString()),
+        type: formData.type,
+        subject_category: formData.subject_category,
+        is_elective: formData.is_elective,
+        is_laboratory: formData.is_laboratory,
+        available_to_all_departments: formData.available_to_all_departments,
+        status: formData.status,
       };
 
-      // Check for exact duplicate: same code + name + department + semester
+      console.log('📦 Payload being sent:', payload);
+
+      // VALIDATION CRITERIA:
+      // ✓ Same subject (code + name) CAN be allocated to different departments
+      // ✗ Prevent exact duplicate: same code + name + department
+      
       const exactDuplicate = subjects.find(s =>
         s.code.trim().toLowerCase() === payload.code.trim().toLowerCase() &&
         s.name.trim().toLowerCase() === payload.name.trim().toLowerCase() &&
         s.department_id === payload.department_id &&
-        s.semester === payload.semester &&
         (formModal.mode === 'add' || s.id !== formModal.data?.id)
       );
 
       if (exactDuplicate) {
-        toast.error(`"${payload.name}" already exists in this department for semester ${payload.semester}`);
+        toast.error(`"${payload.name}" (${payload.code}) already exists in this department`);
         return;
-      }
-
-      // Check if this subject exists in other departments/semesters and show info
-      const existingAllocations = subjects.filter(s =>
-        s.code.trim().toLowerCase() === payload.code.trim().toLowerCase() &&
-        s.name.trim().toLowerCase() === payload.name.trim().toLowerCase()
-      );
-
-      if (existingAllocations.length > 0 && formModal.mode === 'add') {
-        const allocations = existingAllocations
-          .map(s => `${s.department?.short_name || 'Unknown'} - Sem ${s.semester}`)
-          .join(', ');
-        console.log(`ℹ️ Info: "${payload.name}" already allocated to: ${allocations}`);
-        toast.info(`Note: "${payload.name}" is already allocated to: ${allocations}. Creating new allocation.`);
       }
 
       const url =
@@ -246,7 +243,7 @@ export default function SuperAdminSubjectManagement() {
           ? '/api/v1/admin/subjects'
           : `/api/v1/admin/subjects/${formModal.data?.id}`;
 
-      console.log('SUBJECT SAVE payload:', payload, 'url:', url);
+      console.log('🔵 SUBJECT SAVE payload:', payload, 'url:', url);
       const response = await fetch(url, {
         method: formModal.mode === 'add' ? 'POST' : 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -254,7 +251,15 @@ export default function SuperAdminSubjectManagement() {
       });
 
       const result = await response.json();
-      console.log('SUBJECT SAVE response:', result);
+      console.log('🔵 SUBJECT SAVE response:', result, 'Status:', response.status);
+      
+      if (!response.ok) {
+        const errorMsg = result.error || result.message || `Server error (${response.status})`;
+        console.error('❌ API Error:', errorMsg);
+        toast.error(errorMsg);
+        return;
+      }
+
       if (result.success) {
         toast.success(formModal.mode === 'add' ? 'Subject created successfully' : 'Subject updated successfully');
         setFormModal({ open: false, mode: 'add' });
@@ -263,6 +268,7 @@ export default function SuperAdminSubjectManagement() {
         toast.error(result.error || 'Failed to save subject');
       }
     } catch (error: any) {
+      console.error('❌ Exception:', error);
       toast.error(error.message || 'Error saving subject');
     }
   };
@@ -295,11 +301,16 @@ export default function SuperAdminSubjectManagement() {
     }
 
     const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
-    const requiredHeaders = ['code', 'name', 'department_id', 'semester'];
-    const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
+    // Accept either 'department' or 'department_id'
+    const hasDepartmentInfo = headers.includes('department') || headers.includes('department_id');
+    
+    // Check for essential fields
+    if (!headers.includes('name') || !headers.includes('code')) {
+      throw new Error('Missing required columns: "name" and "code" are mandatory');
+    }
 
-    if (missingHeaders.length > 0) {
-      throw new Error(`Missing required headers: ${missingHeaders.join(', ')}`);
+    if (!hasDepartmentInfo) {
+      throw new Error('Missing department info: provide either "department" (name) or "department_id" (numeric ID)');
     }
 
     const data: Array<Record<string, any>> = [];
@@ -312,10 +323,15 @@ export default function SuperAdminSubjectManagement() {
       headers.forEach((header, index) => {
         const value = values[index];
         // Convert string values to appropriate types
-        if (header === 'department_id' || header === 'semester' || header === 'credits') {
+        if (header === 'department_id') {
           row[header] = value ? parseInt(value) : null;
+        } else if (header === 'credits') {
+          row[header] = value ? parseInt(value) : 0;
         } else if (header === 'is_elective' || header === 'is_laboratory') {
           row[header] = value?.toLowerCase() === 'true' || value === '1';
+        } else if (header === 'department') {
+          // Store department name for later resolution
+          row['department_name'] = value || null;
         } else {
           row[header] = value || null;
         }
@@ -334,52 +350,128 @@ export default function SuperAdminSubjectManagement() {
     }
 
     try {
-      setBulkUploadModal(prev => ({ ...prev, uploading: true }));
+      setBulkUploadModal(prev => ({ ...prev, uploading: true, errors: [] }));
 
       const fileContent = await bulkUploadModal.file.text();
-      const subjects = parseCSV(fileContent);
+      const parsedSubjects = parseCSV(fileContent);
 
-      if (subjects.length === 0) {
-        toast.error('No valid subjects found in the file');
-        setBulkUploadModal(prev => ({ ...prev, uploading: false }));
+      if (parsedSubjects.length === 0) {
+        const errorMsg = 'No valid subjects found in the file';
+        toast.error(errorMsg);
+        setBulkUploadModal(prev => ({ ...prev, uploading: false, errors: [errorMsg] }));
+        return;
+      }
+
+      // Resolve department names to IDs
+      const processedSubjects = parsedSubjects.map((subj, index) => {
+        const processed = { ...subj };
+        const errors: string[] = [];
+        
+        // If department name is provided, resolve it to ID
+        if (processed.department_name) {
+          const dept = departments.find(d => 
+            d.full_name.toLowerCase() === processed.department_name.toLowerCase() ||
+            d.short_name.toLowerCase() === processed.department_name.toLowerCase()
+          );
+          
+          if (!dept) {
+            errors.push(`Row ${index + 2}: Department "${processed.department_name}" not found. Available: ${departments.map(d => d.short_name).join(', ')}`);
+          } else {
+            processed.department_id = dept.id;
+            delete processed.department_name;
+          }
+        }
+
+        // Auto-generate code for special subjects if not provided
+        if (!processed.code) {
+          if (processed.name?.toLowerCase().includes('library')) {
+            processed.code = 'LIB';
+          } else if (processed.name?.toLowerCase().includes('sports')) {
+            processed.code = 'SPT';
+          } else if (processed.name?.toLowerCase().includes('placement')) {
+            processed.code = 'PLC';
+          } else {
+            // For academic subjects, require code
+            errors.push(`Row ${index + 2}: Subject code is required for "${processed.name}"`);
+          }
+        }
+
+        // Set default credits to 0 for special subjects
+        if (!processed.credits && ['LIB', 'SPT', 'PLC'].includes(processed.code)) {
+          processed.credits = 0;
+        }
+
+        // Store errors if any
+        if (errors.length > 0) {
+          processed._rowErrors = errors;
+        }
+
+        return processed;
+      });
+
+      // Separate rows with errors
+      const rowsWithErrors = processedSubjects.filter(s => s._rowErrors && s._rowErrors.length > 0);
+      const validRows = processedSubjects.filter(s => !s._rowErrors || s._rowErrors.length === 0);
+
+      if (rowsWithErrors.length > 0) {
+        const errorMessages = rowsWithErrors.flatMap(s => s._rowErrors || []);
+        setBulkUploadModal(prev => ({ ...prev, uploading: false, errors: errorMessages }));
+        
+        toast.error(`⚠️ Found ${errorMessages.length} validation error(s) in CSV file`);
         return;
       }
 
       const response = await fetch('/api/v1/admin/subjects/bulk', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ subjects }),
+        body: JSON.stringify({ subjects: validRows }),
       });
 
       const result = await response.json();
 
       if (result.success) {
+        const successCount = result.data.successful.length;
+        const failCount = result.data.failed.length;
+        
         setBulkUploadModal(prev => ({
           ...prev,
           results: result.data,
           uploading: false,
         }));
-        toast.success(`${result.data.successful.length} subjects uploaded successfully`);
+        
+        if (failCount === 0) {
+          toast.success(`✓ All ${successCount} subjects uploaded successfully!`);
+        } else {
+          toast.warning(`⚠️ ${successCount} successful, ${failCount} failed`);
+        }
         
         // Refetch subjects after successful upload
         setTimeout(() => {
           fetchSubjects();
         }, 1000);
       } else {
-        toast.error(result.error || 'Failed to upload subjects');
-        setBulkUploadModal(prev => ({ ...prev, uploading: false }));
+        const errorMsg = result.error || 'Failed to upload subjects';
+        toast.error(errorMsg);
+        setBulkUploadModal(prev => ({ ...prev, uploading: false, errors: [errorMsg] }));
       }
     } catch (error: any) {
-      toast.error(error.message || 'Error parsing CSV file');
-      setBulkUploadModal(prev => ({ ...prev, uploading: false }));
+      const errorMsg = error.message || 'Error processing CSV file';
+      toast.error(`❌ ${errorMsg}`);
+      setBulkUploadModal(prev => ({ ...prev, uploading: false, errors: [errorMsg] }));
     }
   };
 
   const downloadTemplate = () => {
-    const template = `code,name,description,department_id,semester,sem_type,academic_year,year,lab_name,credits,type,is_elective,is_laboratory,status
-CS101,Programming Fundamentals,Introduction to programming,1,1,odd,2025-2026,1,,4,Theory,false,false,active
-CS102,Data Structures,Basic data structures,1,2,even,2025-2026,1,,4,Theory,false,false,active
-CS201,Database Management Lab,Database concepts,1,3,odd,2025-2026,2,Computer Lab A,4,Practical,false,true,active`;
+    const template = `code,name,department,credits,type,is_elective,is_laboratory,status
+CS101,Programming Fundamentals,Computer Science,4,Theory,false,false,active
+CS102,Data Structures,Computer Science,4,Theory,false,false,active
+CS201,Database Management,Computer Science,4,Practical,false,true,active
+IT102,Web Development,Information Technology,3,Practical,false,true,active
+CS301,Theory of Computation,Computer Science,4,Theory,false,false,active
+CS305,Design Patterns,Computer Science,4,Practical,true,false,active
+LIB,Library Services,Computer Science,0,Seminar,false,false,active
+SPT,Sports Activities,Computer Science,0,Seminar,false,false,active
+PLC,Placement Drive,Computer Science,0,Seminar,false,false,active`;
 
     const blob = new Blob([template], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
@@ -421,96 +513,35 @@ CS201,Database Management Lab,Database concepts,1,3,odd,2025-2026,2,Computer Lab
 
           {/* Filters */}
           <div className="bg-white rounded-lg shadow p-4 mb-6">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <Select value={filters.department_id} onValueChange={(value) => setFilters({ ...filters, department_id: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Department" />
-                </SelectTrigger>
-                <SelectContent>
-                  {departments.map(dept => (
-                    <SelectItem key={dept.id} value={dept.id.toString()}>
-                      {dept.short_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <div className="flex gap-2 items-center">
-                {filters.department_id && (
-                  <button
-                    onClick={() => setFilters({ ...filters, department_id: '' })}
-                    className="px-3 py-2 text-sm bg-gray-200 hover:bg-gray-300 rounded"
-                  >
-                    Clear
-                  </button>
-                )}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Department</label>
+                <Select value={filters.department_id} onValueChange={(value) => setFilters({ ...filters, department_id: value })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Department" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {departments.map(dept => (
+                      <SelectItem key={dept.id} value={dept.id.toString()}>
+                        {dept.short_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
-              <Select value={filters.semester} onValueChange={(value) => setFilters({ ...filters, semester: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Semester" />
-                </SelectTrigger>
-                <SelectContent>
-                  {[1, 2, 3, 4, 5, 6, 7, 8].map(sem => (
-                    <SelectItem key={sem} value={sem.toString()}>
-                      Semester {sem}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <div className="flex gap-2 items-center">
-                {filters.semester && (
-                  <button
-                    onClick={() => setFilters({ ...filters, semester: '' })}
-                    className="px-3 py-2 text-sm bg-gray-200 hover:bg-gray-300 rounded"
-                  >
-                    Clear
-                  </button>
-                )}
-              </div>
-
-              <Select value={filters.sem_type} onValueChange={(value) => setFilters({ ...filters, sem_type: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Sem Type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="odd">Odd</SelectItem>
-                  <SelectItem value="even">Even</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <div className="flex gap-2 items-center">
-                {filters.sem_type && (
-                  <button
-                    onClick={() => setFilters({ ...filters, sem_type: '' })}
-                    className="px-3 py-2 text-sm bg-gray-200 hover:bg-gray-300 rounded"
-                  >
-                    Clear
-                  </button>
-                )}
-              </div>
-
-              <Select value={filters.status} onValueChange={(value) => setFilters({ ...filters, status: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="inactive">Inactive</SelectItem>
-                  <SelectItem value="archived">Archived</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <div className="flex gap-2 items-center">
-                {filters.status && (
-                  <button
-                    onClick={() => setFilters({ ...filters, status: '' })}
-                    className="px-3 py-2 text-sm bg-gray-200 hover:bg-gray-300 rounded"
-                  >
-                    Clear
-                  </button>
-                )}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                <Select value={filters.status} onValueChange={(value) => setFilters({ ...filters, status: value })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
+                    <SelectItem value="archived">Archived</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </div>
@@ -523,17 +554,15 @@ CS201,Database Management Lab,Database concepts,1,3,odd,2025-2026,2,Computer Lab
               <div className="p-8 text-center text-gray-500">No subjects found</div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[1100px] table-auto">
+                <table className="w-full min-w-[900px] table-auto">
                   <thead className="bg-gray-100 border-b">
                     <tr>
                       <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap">Code</th>
                       <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap">Name</th>
                       <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap">Department</th>
-                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap">Sem / Year</th>
-                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap">Acad. Year</th>
                       <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap">Type</th>
-                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap">Lab</th>
                       <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap">Credits</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap">Lab</th>
                       <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap">Status</th>
                       <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap">Actions</th>
                     </tr>
@@ -544,16 +573,11 @@ CS201,Database Management Lab,Database concepts,1,3,odd,2025-2026,2,Computer Lab
                         <td className="px-6 py-3 text-sm font-medium text-gray-900 whitespace-nowrap">{subject.code}</td>
                         <td className="px-6 py-3 text-sm text-gray-600 max-w-[240px] truncate" title={subject.name}>{subject.name}</td>
                         <td className="px-6 py-3 text-sm text-gray-600 whitespace-nowrap">{subject.department?.short_name}</td>
-                        <td className="px-6 py-3 text-sm text-gray-600 whitespace-nowrap">
-                          <div className="flex items-baseline gap-1">
-                            <span>S{subject.semester} / Yr{subject.year ?? Math.ceil(subject.semester / 2)}</span>
-                            <span className="text-xs text-gray-400">({subject.sem_type})</span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-3 text-sm text-gray-600 whitespace-nowrap">{subject.academic_year || '—'}</td>
                         <td className="px-6 py-3 text-sm text-gray-600 whitespace-nowrap">{subject.type}</td>
-                        <td className="px-6 py-3 text-sm text-gray-600 whitespace-nowrap">{subject.is_laboratory ? (subject.lab_name || '—') : '—'}</td>
                         <td className="px-6 py-3 text-sm text-gray-600 whitespace-nowrap">{subject.credits}</td>
+                        <td className="px-6 py-3 text-sm text-gray-600 whitespace-nowrap">
+                          {subject.is_laboratory ? '✓ Lab' : '—'}
+                        </td>
                         <td className="px-6 py-3 text-sm whitespace-nowrap">
                           <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
                             subject.status === 'active' ? 'bg-green-100 text-green-800' :
@@ -592,20 +616,56 @@ CS201,Database Management Lab,Database concepts,1,3,odd,2025-2026,2,Computer Lab
       {/* Form Modal */}
       {formModal.open && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-96 overflow-y-auto">
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <h2 className="text-xl font-bold mb-4">{formModal.mode === 'add' ? 'Add Subject' : 'Edit Subject'}</h2>
 
+              {formModal.mode === 'add' && (
+                <div className="bg-blue-50 border border-blue-200 rounded p-3 mb-4">
+                  <p className="text-xs text-blue-700">
+                    <span className="font-semibold">✓ Note:</span> Subjects with the same code and name can be allocated to different departments and semesters. Only exact duplicates (same code + name + department + semester) are prevented.
+                  </p>
+                </div>
+              )}
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Subject Code *</label>
-                  <Input
-                    value={formData.code}
-                    onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                    placeholder="e.g., CS101"
-                  />
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Subject Category *</label>
+                  <Select value={formData.subject_category} onValueChange={(value) => {
+                    setFormData({ 
+                      ...formData, 
+                      subject_category: value as any,
+                      code: value !== 'academic' ? value.toUpperCase().substring(0, 3) : formData.code,
+                      credits: value !== 'academic' ? 0 : formData.credits
+                    });
+                  }}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="academic">Academic (Theory/Practical)</SelectItem>
+                      <SelectItem value="library">Library Services</SelectItem>
+                      <SelectItem value="sports">Sports Activities</SelectItem>
+                      <SelectItem value="placement">Placement & Internship</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {formData.subject_category !== 'academic' ? '✓ Code will be auto-generated (LIB/SPT/PLC)' : 'Requires manual code entry'}
+                  </p>
                 </div>
-                <div>
+
+                {formData.subject_category === 'academic' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Subject Code *</label>
+                    <Input
+                      value={formData.code}
+                      onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+                      placeholder="e.g., CS101"
+                    />
+                  </div>
+                )}
+
+                <div className={formData.subject_category === 'academic' ? '' : 'md:col-span-2'}>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Subject Name *</label>
                   <Input
                     value={formData.name}
@@ -616,7 +676,11 @@ CS201,Database Management Lab,Database concepts,1,3,odd,2025-2026,2,Computer Lab
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Department *</label>
-                  <Select value={formData.department_id} onValueChange={(value) => setFormData({ ...formData, department_id: value })}>
+                  <Select 
+                    value={formData.department_id} 
+                    onValueChange={(value) => setFormData({ ...formData, department_id: value })}
+                    disabled={formData.available_to_all_departments}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select Department" />
                     </SelectTrigger>
@@ -630,44 +694,35 @@ CS201,Database Management Lab,Database concepts,1,3,odd,2025-2026,2,Computer Lab
                   </Select>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Semester *</label>
-                  <Select value={formData.semester} onValueChange={(value) => setFormData({ ...formData, semester: value })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Semester" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {[1, 2, 3, 4, 5, 6, 7, 8].map(sem => {
-                        const year = Math.ceil(sem / 2);
-                        return (
-                          <SelectItem key={sem} value={sem.toString()}>
-                            Semester {sem} (Year {year})
-                          </SelectItem>
-                        );
-                      })}
-                    </SelectContent>
-                  </Select>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="assign-all-depts"
+                    checked={formData.available_to_all_departments}
+                    onChange={(e) => setFormData({ 
+                      ...formData, 
+                      available_to_all_departments: e.target.checked,
+                      department_id: e.target.checked ? '' : formData.department_id
+                    })}
+                    className="w-4 h-4 text-blue-600 rounded"
+                  />
+                  <label htmlFor="assign-all-depts" className="text-sm font-medium text-gray-700">
+                    Assign to All Departments
+                  </label>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Semester Type</label>
-                  <Select value={formData.sem_type} onValueChange={(value) => setFormData({ ...formData, sem_type: value as 'odd' | 'even' })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Sem Type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="odd">Odd Semester</SelectItem>
-                      <SelectItem value="even">Even Semester</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Credits (1-10)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Credits (1-10) *</label>
                   <Input
                     type="number"
-                    value={formData.credits}
-                    onChange={(e) => setFormData({ ...formData, credits: parseInt(e.target.value) })}
+                    value={String(formData.credits || '')}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setFormData({ 
+                        ...formData, 
+                        credits: value === '' ? 0 : parseInt(value) || 0
+                      });
+                    }}
                     min="1"
                     max="10"
                     placeholder="e.g., 4"
@@ -705,54 +760,18 @@ CS201,Database Management Lab,Database concepts,1,3,odd,2025-2026,2,Computer Lab
                     <input
                       type="checkbox"
                       checked={formData.is_laboratory}
-                      onChange={(e) => setFormData({ ...formData, is_laboratory: e.target.checked, lab_name: e.target.checked ? formData.lab_name : '' })}
+                      onChange={(e) => setFormData({ ...formData, is_laboratory: e.target.checked })}
                       className="w-4 h-4"
                     />
-                    <span>Lab</span>
+                    <span>Lab (Dept Admin adds lab name)</span>
                   </label>
                 </div>
+              </div>
 
-                {formData.is_laboratory && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Lab Name *</label>
-                    <Input
-                      value={formData.lab_name}
-                      onChange={(e) => setFormData({ ...formData, lab_name: e.target.value })}
-                      placeholder="e.g., Computer Lab A, Electronics Lab"
-                    />
-                  </div>
-                )}
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Academic Year</label>
-                  <Input
-                    value={formData.academic_year}
-                    onChange={(e) => setFormData({ ...formData, academic_year: e.target.value })}
-                    placeholder="e.g., 2025-2026"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Batch Year</label>
-                  <Select value={formData.batch} onValueChange={(value) => setFormData({ ...formData, batch: value })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Batch" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">None</SelectItem>
-                      {batches.map(batch => (
-                        <SelectItem key={batch} value={batch}>
-                          {batch}
-                        </SelectItem>
-                      ))}
-                      {formData.batch && formData.batch !== 'none' && !batches.includes(formData.batch) && (
-                        <SelectItem key="current" value={formData.batch}>
-                          {formData.batch} (current)
-                        </SelectItem>
-                      )}
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-xs text-blue-800">
+                  <span className="font-semibold">ℹ️ Note:</span> Semester, academic year, batch, and lab names are handled by department admins during subject allocation and faculty assignment.
+                </p>
               </div>
 
               <div className="mt-4">
@@ -774,8 +793,9 @@ CS201,Database Management Lab,Database concepts,1,3,odd,2025-2026,2,Computer Lab
                   Cancel
                 </Button>
                 <Button
-                  className="bg-blue-600 hover:bg-blue-700"
+                  className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
                   onClick={handleSubmit}
+                  disabled={!formData.name || (!formData.department_id && !formData.available_to_all_departments)}
                 >
                   {formModal.mode === 'add' ? 'Create Subject' : 'Update Subject'}
                 </Button>
@@ -812,45 +832,71 @@ CS201,Database Management Lab,Database concepts,1,3,odd,2025-2026,2,Computer Lab
             <div className="p-6">
               <h2 className="text-xl font-bold mb-4">Bulk Upload Subjects</h2>
 
-              {bulkUploadModal.results ? (
-                // Show results
+              {bulkUploadModal.results || bulkUploadModal.errors ? (
+                // Show results or errors
                 <div className="space-y-4">
-                  <div className="bg-blue-50 border border-blue-200 rounded p-4">
-                    <p className="text-sm font-semibold text-blue-900">
-                      Upload Summary: {bulkUploadModal.results.successful.length} successful, {bulkUploadModal.results.failed.length} failed out of {bulkUploadModal.results.total} total
-                    </p>
-                  </div>
-
-                  {bulkUploadModal.results.successful.length > 0 && (
-                    <div>
-                      <h3 className="font-semibold text-green-700 mb-2">Successful uploads:</h3>
-                      <div className="bg-green-50 border border-green-200 rounded max-h-48 overflow-y-auto">
-                        {bulkUploadModal.results.successful.map((item, idx) => (
-                          <div key={idx} className="p-2 border-b border-green-200 text-sm text-gray-700">
-                            <span className="font-medium">{item.code}</span> - {item.name}
+                  {bulkUploadModal.errors && bulkUploadModal.errors.length > 0 && (
+                    <div className="bg-red-50 border-2 border-red-300 rounded p-4">
+                      <div className="flex items-start gap-3">
+                        <div className="text-red-600 font-bold text-xl">❌</div>
+                        <div className="flex-1">
+                          <p className="text-sm font-bold text-red-900 mb-2">CSV Validation Errors Found:</p>
+                          <div className="bg-white border border-red-200 rounded max-h-64 overflow-y-auto">
+                            {bulkUploadModal.errors.map((error, idx) => (
+                              <div key={idx} className="p-3 border-b border-red-100 text-sm text-red-800 last:border-b-0">
+                                <p className="font-medium">• {error}</p>
+                              </div>
+                            ))}
                           </div>
-                        ))}
+                          <p className="text-xs text-red-700 mt-3 font-semibold">Please fix the errors above and upload again.</p>
+                        </div>
                       </div>
                     </div>
                   )}
 
-                  {bulkUploadModal.results.failed.length > 0 && (
-                    <div>
-                      <h3 className="font-semibold text-red-700 mb-2">Failed uploads:</h3>
-                      <div className="bg-red-50 border border-red-200 rounded max-h-48 overflow-y-auto">
-                        {bulkUploadModal.results.failed.map((item, idx) => (
-                          <div key={idx} className="p-2 border-b border-red-200 text-sm">
-                            <span className="font-medium text-red-900">Row {item.row}: {item.code}</span>
-                            <p className="text-red-700 text-xs">{item.error}</p>
-                          </div>
-                        ))}
+                  {bulkUploadModal.results && (
+                    <>
+                      <div className={`border rounded p-4 ${bulkUploadModal.results.failed.length === 0 ? 'bg-green-50 border-green-300' : 'bg-yellow-50 border-yellow-300'}`}>
+                        <p className={`text-sm font-bold ${bulkUploadModal.results.failed.length === 0 ? 'text-green-900' : 'text-yellow-900'}`}>
+                          {bulkUploadModal.results.failed.length === 0 
+                            ? `✓ Upload Complete: ${bulkUploadModal.results.successful.length}/${bulkUploadModal.results.total} subjects uploaded successfully!`
+                            : `⚠️ Upload Summary: ${bulkUploadModal.results.successful.length} successful, ${bulkUploadModal.results.failed.length} failed out of ${bulkUploadModal.results.total} total`
+                          }
+                        </p>
                       </div>
-                    </div>
+
+                      {bulkUploadModal.results.successful.length > 0 && (
+                        <div>
+                          <h3 className="font-semibold text-green-700 mb-2">✓ Successful uploads ({bulkUploadModal.results.successful.length}):</h3>
+                          <div className="bg-green-50 border border-green-200 rounded max-h-48 overflow-y-auto">
+                            {bulkUploadModal.results.successful.map((item, idx) => (
+                              <div key={idx} className="p-3 border-b border-green-200 text-sm text-gray-700 last:border-b-0">
+                                <span className="font-medium text-green-900">{item.code}</span> - {item.name}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {bulkUploadModal.results.failed.length > 0 && (
+                        <div>
+                          <h3 className="font-semibold text-red-700 mb-2">❌ Failed uploads ({bulkUploadModal.results.failed.length}):</h3>
+                          <div className="bg-red-50 border-2 border-red-300 rounded max-h-48 overflow-y-auto">
+                            {bulkUploadModal.results.failed.map((item, idx) => (
+                              <div key={idx} className="p-3 border-b border-red-200 text-sm last:border-b-0">
+                                <span className="font-bold text-red-900">Row {item.row}: {item.code || 'N/A'}</span>
+                                <p className="text-red-700 text-xs mt-1">Error: {item.error}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </>
                   )}
 
                   <div className="mt-6 flex gap-3 justify-end">
                     <Button
-                      className="bg-blue-600 hover:bg-blue-700"
+                      variant="outline"
                       onClick={() => setBulkUploadModal({ open: false, file: null, uploading: false })}
                     >
                       Close
@@ -887,14 +933,31 @@ CS201,Database Management Lab,Database concepts,1,3,odd,2025-2026,2,Computer Lab
                   )}
 
                   <div className="bg-yellow-50 border border-yellow-200 rounded p-4">
-                    <p className="text-sm font-semibold text-yellow-900 mb-2">Required CSV columns:</p>
+                    <p className="text-sm font-semibold text-yellow-900 mb-2">✓ Required CSV Columns:</p>
                     <ul className="text-xs text-yellow-800 space-y-1 list-disc list-inside">
-                      <li><span className="font-semibold">code</span> - Subject code (e.g., CS101)</li>
-                      <li><span className="font-semibold">name</span> - Subject name</li>
-                      <li><span className="font-semibold">department_id</span> - Department ID</li>
-                      <li><span className="font-semibold">semester</span> - Semester number (1-8)</li>
+                      <li><span className="font-semibold">code</span> - Subject code (e.g., CS101 for academic, LIB/SPT/PLC for special)</li>
+                      <li><span className="font-semibold">name</span> - Subject name (required)</li>
+                      <li><span className="font-semibold">department</span> - Department name (e.g., "Computer Science", "IT") - <span className="font-bold text-blue-900">Use department name, NOT ID!</span></li>
+                      <li><span className="font-semibold">credits</span> - Credit hours 1-10 (0 for Library/Sports/Placement)</li>
                     </ul>
-                    <p className="text-xs text-yellow-800 mt-2">Optional: description, sem_type (odd/even), academic_year (e.g. 2025-2026), year (1-4), lab_name (if lab), credits, type, is_elective, is_laboratory, status</p>
+                    <p className="text-xs text-yellow-800 mt-3 font-semibold mb-2">Optional Columns:</p>
+                    <ul className="text-xs text-yellow-800 space-y-1 list-disc list-inside">
+                      <li><span className="font-semibold">type</span> - "Theory", "Practical", "Theory+Practical", "Project", "Seminar", "Internship" (optional)</li>
+                      <li><span className="font-semibold">is_elective</span> - true/false (optional)</li>
+                      <li><span className="font-semibold">is_laboratory</span> - true/false (for Lab subjects - leave empty; dept admin adds lab name)</li>
+                      <li><span className="font-semibold">status</span> - "active", "inactive", "archived" (default: active)</li>
+                    </ul>
+                    <p className="text-xs bg-blue-100 text-blue-900 p-2 rounded mt-3 font-semibold">📋 Note: Semester, Academic Year, and Batch are handled by Department Admins during faculty allocation. Just add the subject details here!</p>
+                  </div>
+
+                  <div className="bg-green-50 border border-green-200 rounded p-4">
+                    <p className="text-sm font-semibold text-green-700 mb-2">✓ Subject Management Workflow:</p>
+                    <ul className="text-xs text-green-700 space-y-1 list-disc list-inside">
+                      <li><span className="font-semibold">SuperAdmin:</span> Adds generic subject details (code, name, type, credits)</li>
+                      <li><span className="font-semibold">Dept Admin:</span> Maps subjects to semesters, assigns faculty, adds lab names</li>
+                      <li>Lab subjects: Leave lab_name empty here → Department admin fills it during allocation</li>
+                      <li>Same subject can exist in multiple departments with different mapping details</li>
+                    </ul>
                   </div>
 
                   <div className="mt-6 flex gap-3 justify-end">
