@@ -52,7 +52,7 @@ export const submitAlterationRequest = asyncHandler(async (req, res, next) => {
     return next(new ErrorResponse('Substitute faculty not found', 404));
   }
 
-  if (substituteFaculty.department_id !== applicant.department_id) {
+  if (substituteFaculty.department_id && applicant.department_id && Number(substituteFaculty.department_id) !== Number(applicant.department_id)) {
     return next(new ErrorResponse('Substitute faculty must be from the same department', 400));
   }
 
@@ -145,7 +145,7 @@ export const acceptAlteration = asyncHandler(async (req, res, next) => {
     if (!userDepartmentId) {
       return next(new ErrorResponse('User department ID not found', 400));
     }
-    if (substituteFaculty.department_id !== userDepartmentId) {
+    if (substituteFaculty.department_id && Number(substituteFaculty.department_id) !== Number(userDepartmentId)) {
       return next(new ErrorResponse('You do not have permission to accept alterations for other departments', 403));
     }
   }
@@ -227,7 +227,7 @@ export const rejectAlteration = asyncHandler(async (req, res, next) => {
     if (!userDepartmentId) {
       return next(new ErrorResponse('User department ID not found', 400));
     }
-    if (substituteFaculty.department_id !== userDepartmentId) {
+    if (substituteFaculty.department_id && Number(substituteFaculty.department_id) !== Number(userDepartmentId)) {
       return next(new ErrorResponse('You do not have permission to reject alterations for other departments', 403));
     }
   }
@@ -288,7 +288,7 @@ export const applyAlteration = asyncHandler(async (req, res, next) => {
       return next(new ErrorResponse('User department ID not found', 400));
     }
     // Verify the leave request belongs to the user's department
-    if (leaveRequest.department_id !== userDepartmentId) {
+    if (leaveRequest.department_id && Number(leaveRequest.department_id) !== Number(userDepartmentId)) {
       return next(new ErrorResponse('You do not have permission to apply alterations for other departments', 403));
     }
   }
@@ -528,7 +528,7 @@ export const revertAlteration = asyncHandler(async (req, res, next) => {
       return next(new ErrorResponse('User department ID not found', 400));
     }
     // Validate user can only revert alterations in their own department's timetable
-    if (master.department_id !== userDepartmentId) {
+    if (master.department_id && Number(master.department_id) !== Number(userDepartmentId)) {
       return next(new ErrorResponse('You do not have permission to revert alterations for this timetable', 403));
     }
   }

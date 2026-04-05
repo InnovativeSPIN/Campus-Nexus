@@ -256,7 +256,7 @@ export const getTimetableMaster = asyncHandler(async (req, res, next) => {
   const userDepartmentId = req.user?.department_id;
   
   if (userRole === 'department-admin' || userRole === 'timetable-incharge') {
-    if (timetable.department_id !== userDepartmentId) {
+    if (timetable.department_id && userDepartmentId && Number(timetable.department_id) !== Number(userDepartmentId)) {
       return next(new ErrorResponse('You do not have permission to access this timetable', 403));
     }
   }

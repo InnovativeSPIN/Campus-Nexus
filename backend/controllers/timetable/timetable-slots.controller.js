@@ -46,11 +46,11 @@ export const createSlot = asyncHandler(async (req, res, next) => {
   const userDepartmentId = req.user?.department_id;
 
   if (userRole === 'department-admin' || userRole === 'timetable-incharge') {
-    if (!userDepartmentId) {
-      return next(new ErrorResponse('User department ID not found', 400));
+    if (!userDepartmentId || !master.department_id) {
+      return next(new ErrorResponse('User or timetable department ID not found', 400));
     }
     // Validate user can only create slots for their own department's timetable
-    if (master.department_id !== userDepartmentId) {
+    if (Number(master.department_id) !== Number(userDepartmentId)) {
       return next(new ErrorResponse('You do not have permission to add slots for this timetable', 403));
     }
   }
@@ -127,11 +127,11 @@ export const getSlots = asyncHandler(async (req, res, next) => {
   const userDepartmentId = req.user?.department_id;
 
   if (userRole === 'department-admin' || userRole === 'timetable-incharge') {
-    if (!userDepartmentId) {
-      return next(new ErrorResponse('User department ID not found', 400));
+    if (!userDepartmentId || !master.department_id) {
+      return next(new ErrorResponse('User or timetable department ID not found', 400));
     }
     // Validate user can only view slots from their own department's timetable
-    if (master.department_id !== userDepartmentId) {
+    if (Number(master.department_id) !== Number(userDepartmentId)) {
       return next(new ErrorResponse('You do not have permission to view slots for this timetable', 403));
     }
   }
@@ -181,11 +181,11 @@ export const updateSlot = asyncHandler(async (req, res, next) => {
   const userDepartmentId = req.user?.department_id;
 
   if (userRole === 'department-admin' || userRole === 'timetable-incharge') {
-    if (!userDepartmentId) {
-      return next(new ErrorResponse('User department ID not found', 400));
+    if (!userDepartmentId || !master.department_id) {
+      return next(new ErrorResponse('User or timetable department ID not found', 400));
     }
     // Validate user can only update slots in their own department's timetable
-    if (master.department_id !== userDepartmentId) {
+    if (Number(master.department_id) !== Number(userDepartmentId)) {
       return next(new ErrorResponse('You do not have permission to update slots for this timetable', 403));
     }
   }
@@ -239,11 +239,11 @@ export const deleteSlot = asyncHandler(async (req, res, next) => {
   const userDepartmentId = req.user?.department_id;
 
   if (userRole === 'department-admin' || userRole === 'timetable-incharge') {
-    if (!userDepartmentId) {
-      return next(new ErrorResponse('User department ID not found', 400));
+    if (!userDepartmentId || !master.department_id) {
+      return next(new ErrorResponse('User or timetable department ID not found', 400));
     }
     // Validate user can only delete slots from their own department's timetable
-    if (master.department_id !== userDepartmentId) {
+    if (Number(master.department_id) !== Number(userDepartmentId)) {
       return next(new ErrorResponse('You do not have permission to delete slots for this timetable', 403));
     }
   }
@@ -279,11 +279,11 @@ export const bulkCreateSlots = asyncHandler(async (req, res, next) => {
   const userDepartmentId = req.user?.department_id;
 
   if (userRole === 'department-admin' || userRole === 'timetable-incharge') {
-    if (!userDepartmentId) {
-      return next(new ErrorResponse('User department ID not found', 400));
+    if (!userDepartmentId || !master.department_id) {
+      return next(new ErrorResponse('User or timetable department ID not found', 400));
     }
     // Validate user can only create slots for their own department's timetable
-    if (master.department_id !== userDepartmentId) {
+    if (Number(master.department_id) !== Number(userDepartmentId)) {
       return next(new ErrorResponse('You do not have permission to create slots for this timetable', 403));
     }
   }
