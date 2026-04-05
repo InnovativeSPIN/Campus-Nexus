@@ -149,10 +149,31 @@ export const getTimetableMasters = asyncHandler(async (req, res, next) => {
 
   const where = {};
 
-  // Filters
-  if (req.query.department_id) {
+  // For department-admin users, restrict to their own department
+  const userRole = req.user?.role?.name;
+  const userDepartmentId = req.user?.department_id;
+  
+  console.log('[TIMETABLE-MASTER] getTimetableMasters called by user:', {
+    userId: req.user?.id,
+    role: userRole,
+    userDepartmentId,
+    queryDepartmentId: req.query.department_id,
+  });
+
+  // If user is department-admin or timetable-incharge, they can only see their own department's timetables
+  if (userRole === 'department-admin' || userRole === 'timetable-incharge') {
+    if (!userDepartmentId) {
+      return next(new ErrorResponse('User department ID not found', 400));
+    }
+    // Always restrict to user's department, ignore any department_id from query
+    where.department_id = userDepartmentId;
+    console.log('[TIMETABLE-MASTER] Restricting to user department:', userDepartmentId);
+  } else if (req.query.department_id) {
+    // For superadmin, allow filtering by department_id if provided
     where.department_id = req.query.department_id;
   }
+
+  // Filters
   if (req.query.class_id) {
     where.class_id = req.query.class_id;
   }
@@ -172,10 +193,10 @@ export const getTimetableMasters = asyncHandler(async (req, res, next) => {
     include: [
       { model: ClassModel, as: 'class' },
       { model: Department, as: 'department' },
-      { model: Faculty, as: 'class_coordinator', attributes: ['faculty_id', 'Name', 'email'] },
-      { model: Faculty, as: 'asst_coordinator', attributes: ['faculty_id', 'Name', 'email'] },
-      { model: Faculty, as: 'timetable_incharge', attributes: ['faculty_id', 'Name', 'email'] },
-      { model: Faculty, as: 'hod', attributes: ['faculty_id', 'Name', 'email'] },
+      { model: Faculty, as: 'class_coordinator', attributes: ['faculty_id', 'Name', 'email', 'faculty_college_code'] },
+      { model: Faculty, as: 'asst_coordinator', attributes: ['faculty_id', 'Name', 'email', 'faculty_college_code'] },
+      { model: Faculty, as: 'timetable_incharge', attributes: ['faculty_id', 'Name', 'email', 'faculty_college_code'] },
+      { model: Faculty, as: 'hod', attributes: ['faculty_id', 'Name', 'email', 'faculty_college_code'] },
     ],
     offset,
     limit,
@@ -211,10 +232,10 @@ export const getTimetableMaster = asyncHandler(async (req, res, next) => {
     include: [
       { model: ClassModel, as: 'class' },
       { model: Department, as: 'department' },
-      { model: Faculty, as: 'class_coordinator', attributes: ['faculty_id', 'Name', 'email'] },
-      { model: Faculty, as: 'asst_coordinator', attributes: ['faculty_id', 'Name', 'email'] },
-      { model: Faculty, as: 'timetable_incharge', attributes: ['faculty_id', 'Name', 'email'] },
-      { model: Faculty, as: 'hod', attributes: ['faculty_id', 'Name', 'email'] },
+      { model: Faculty, as: 'class_coordinator', attributes: ['faculty_id', 'Name', 'email', 'faculty_college_code'] },
+      { model: Faculty, as: 'asst_coordinator', attributes: ['faculty_id', 'Name', 'email', 'faculty_college_code'] },
+      { model: Faculty, as: 'timetable_incharge', attributes: ['faculty_id', 'Name', 'email', 'faculty_college_code'] },
+      { model: Faculty, as: 'hod', attributes: ['faculty_id', 'Name', 'email', 'faculty_college_code'] },
       {
         model: models.TimetableMasterSlots,
         as: 'slots',
@@ -228,6 +249,16 @@ export const getTimetableMaster = asyncHandler(async (req, res, next) => {
 
   if (!timetable) {
     return next(new ErrorResponse(`Timetable master not found with id ${req.params.id}`, 404));
+  }
+
+  // Check department access for non-superadmin users
+  const userRole = req.user?.role?.name;
+  const userDepartmentId = req.user?.department_id;
+  
+  if (userRole === 'department-admin' || userRole === 'timetable-incharge') {
+    if (timetable.department_id !== userDepartmentId) {
+      return next(new ErrorResponse('You do not have permission to access this timetable', 403));
+    }
   }
 
   res.status(200).json({

@@ -140,9 +140,9 @@ export const createMapping = asyncHandler(async (req, res, next) => {
     return next(new ErrorResponse('Subject ID, Class ID, Semester, and Academic Year are required', 400));
   }
 
-  // Verify subject belongs to department
+  // Verify subject belongs to department OR is available to all departments
   const subject = await Subject.findByPk(subject_id);
-  if (!subject || subject.department_id !== departmentId) {
+  if (!subject || (subject.department_id !== departmentId && !subject.available_to_all_departments)) {
     return next(new ErrorResponse('Subject not found or does not belong to your department', 404));
   }
 
@@ -266,8 +266,13 @@ export const getUnmappedSubjects = asyncHandler(async (req, res, next) => {
   const { semester, academic_year } = req.query;
   const departmentId = req.user.department_id;
 
-  // Build where clause for subjects
-  const subjectWhere = { department_id: departmentId };
+  // Build where clause for subjects - include both department-specific and cross-department subjects
+  const subjectWhere = {
+    [Op.or]: [
+      { department_id: departmentId },
+      { available_to_all_departments: true }
+    ]
+  };
   if (semester) {
     subjectWhere.semester = parseInt(semester);
   }

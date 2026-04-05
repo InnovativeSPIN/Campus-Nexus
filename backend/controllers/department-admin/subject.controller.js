@@ -1,17 +1,26 @@
 import asyncHandler from '../../middleware/async.js';
 import ErrorResponse from '../../utils/errorResponse.js';
 import { models } from '../../models/index.js';
+import { Op } from 'sequelize';
 
 const { Subject, Department, Faculty, FacultySubjectAssignment, User } = models;
 
 // @route   GET /api/v1/department-admin/subjects
-// @desc    Get all subjects for the department
+// @desc    Get all subjects for the department (including cross-department subjects)
 // @access  Private (Department Admin)
 export const getDepartmentSubjects = asyncHandler(async (req, res, next) => {
   const departmentId = req.user.department_id;
   const { semester, status, academic_year } = req.query;
 
-  const where = { department_id: departmentId };
+  // Show subjects that are either:
+  // 1. Specific to this department, OR
+  // 2. Available to all departments
+  const where = {
+    [Op.or]: [
+      { department_id: departmentId },
+      { available_to_all_departments: true }
+    ]
+  };
   
   if (semester) where.semester = semester;
   if (status) where.status = status;
@@ -68,7 +77,13 @@ export const getSubjectDetails = asyncHandler(async (req, res, next) => {
   const departmentId = req.user.department_id;
 
   const subject = await Subject.findOne({
-    where: { id, department_id: departmentId },
+    where: {
+      id,
+      [Op.or]: [
+        { department_id: departmentId },
+        { available_to_all_departments: true }
+      ]
+    },
     include: [
       {
         model: Department,

@@ -41,6 +41,20 @@ export const createSlot = asyncHandler(async (req, res, next) => {
     return next(new ErrorResponse(`Timetable master not found with id ${masterId}`, 404));
   }
 
+  // Check department access for non-superadmin users
+  const userRole = req.user?.role?.name;
+  const userDepartmentId = req.user?.department_id;
+
+  if (userRole === 'department-admin' || userRole === 'timetable-incharge') {
+    if (!userDepartmentId) {
+      return next(new ErrorResponse('User department ID not found', 400));
+    }
+    // Validate user can only create slots for their own department's timetable
+    if (master.department_id !== userDepartmentId) {
+      return next(new ErrorResponse('You do not have permission to add slots for this timetable', 403));
+    }
+  }
+
   // Break periods (period_slot_id 3, 5, 8) should only be used for breaks
   if ([3, 5, 8].includes(period_slot_id) && session_type !== 'break') {
     return next(
@@ -102,6 +116,26 @@ export const getSlots = asyncHandler(async (req, res, next) => {
   const { masterId } = req.params;
   const { day } = req.query;
 
+  // Check if master exists
+  const master = await TimetableMaster.findByPk(masterId);
+  if (!master) {
+    return next(new ErrorResponse(`Timetable master not found with id ${masterId}`, 404));
+  }
+
+  // Check department access for non-superadmin users
+  const userRole = req.user?.role?.name;
+  const userDepartmentId = req.user?.department_id;
+
+  if (userRole === 'department-admin' || userRole === 'timetable-incharge') {
+    if (!userDepartmentId) {
+      return next(new ErrorResponse('User department ID not found', 400));
+    }
+    // Validate user can only view slots from their own department's timetable
+    if (master.department_id !== userDepartmentId) {
+      return next(new ErrorResponse('You do not have permission to view slots for this timetable', 403));
+    }
+  }
+
   const where = { master_id: masterId };
   if (day) {
     where.day = day;
@@ -111,7 +145,7 @@ export const getSlots = asyncHandler(async (req, res, next) => {
     where,
     include: [
       { model: Subject, as: 'subject' },
-      { model: Faculty, as: 'faculty', attributes: ['faculty_id', 'Name', 'email'] },
+      { model: Faculty, as: 'faculty', attributes: ['faculty_id', 'Name', 'email', 'faculty_college_code'] },
     ],
     order: [['day', 'ASC'], ['period_slot_id', 'ASC']],
   });
@@ -134,6 +168,26 @@ export const updateSlot = asyncHandler(async (req, res, next) => {
   const slot = await TimetableMasterSlots.findByPk(slotId);
   if (!slot) {
     return next(new ErrorResponse(`Slot not found with id ${slotId}`, 404));
+  }
+
+  // Get the parent timetable master to check department access
+  const master = await TimetableMaster.findByPk(slot.master_id);
+  if (!master) {
+    return next(new ErrorResponse('Parent timetable master not found', 404));
+  }
+
+  // Check department access for non-superadmin users
+  const userRole = req.user?.role?.name;
+  const userDepartmentId = req.user?.department_id;
+
+  if (userRole === 'department-admin' || userRole === 'timetable-incharge') {
+    if (!userDepartmentId) {
+      return next(new ErrorResponse('User department ID not found', 400));
+    }
+    // Validate user can only update slots in their own department's timetable
+    if (master.department_id !== userDepartmentId) {
+      return next(new ErrorResponse('You do not have permission to update slots for this timetable', 403));
+    }
   }
 
   const updateFields = {};
@@ -174,6 +228,26 @@ export const deleteSlot = asyncHandler(async (req, res, next) => {
     return next(new ErrorResponse(`Slot not found with id ${slotId}`, 404));
   }
 
+  // Get the parent timetable master to check department access
+  const master = await TimetableMaster.findByPk(slot.master_id);
+  if (!master) {
+    return next(new ErrorResponse('Parent timetable master not found', 404));
+  }
+
+  // Check department access for non-superadmin users
+  const userRole = req.user?.role?.name;
+  const userDepartmentId = req.user?.department_id;
+
+  if (userRole === 'department-admin' || userRole === 'timetable-incharge') {
+    if (!userDepartmentId) {
+      return next(new ErrorResponse('User department ID not found', 400));
+    }
+    // Validate user can only delete slots from their own department's timetable
+    if (master.department_id !== userDepartmentId) {
+      return next(new ErrorResponse('You do not have permission to delete slots for this timetable', 403));
+    }
+  }
+
   await slot.destroy();
 
   res.status(200).json({
@@ -198,6 +272,20 @@ export const bulkCreateSlots = asyncHandler(async (req, res, next) => {
   const master = await TimetableMaster.findByPk(masterId);
   if (!master) {
     return next(new ErrorResponse(`Timetable master not found with id ${masterId}`, 404));
+  }
+
+  // Check department access for non-superadmin users
+  const userRole = req.user?.role?.name;
+  const userDepartmentId = req.user?.department_id;
+
+  if (userRole === 'department-admin' || userRole === 'timetable-incharge') {
+    if (!userDepartmentId) {
+      return next(new ErrorResponse('User department ID not found', 400));
+    }
+    // Validate user can only create slots for their own department's timetable
+    if (master.department_id !== userDepartmentId) {
+      return next(new ErrorResponse('You do not have permission to create slots for this timetable', 403));
+    }
   }
 
   // Delete existing slots for this master

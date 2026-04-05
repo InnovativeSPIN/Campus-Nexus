@@ -38,8 +38,8 @@ export const getClassTimetable = asyncHandler(async (req, res, next) => {
     include: [
       { model: ClassModel, as: 'class', attributes: ['id', 'name', 'semester', 'batch'] },
       { model: Department, as: 'department', attributes: ['id', 'full_name', 'short_name'] },
-      { model: Faculty, as: 'class_coordinator', attributes: ['faculty_id', 'Name', 'email'] },
-      { model: Faculty, as: 'timetable_incharge', attributes: ['faculty_id', 'Name', 'email'] },
+      { model: Faculty, as: 'class_coordinator', attributes: ['faculty_id', 'Name', 'email', 'faculty_college_code'] },
+      { model: Faculty, as: 'timetable_incharge', attributes: ['faculty_id', 'Name', 'email', 'faculty_college_code'] },
     ]
   });
 
@@ -55,7 +55,7 @@ export const getClassTimetable = asyncHandler(async (req, res, next) => {
     where: { master_id: timetableMaster.id },
     include: [
       { model: Subject, as: 'subject', attributes: ['id', 'subject_name', 'subject_code', 'type'] },
-      { model: Faculty, as: 'faculty', attributes: ['faculty_id', 'Name', 'email'] },
+      { model: Faculty, as: 'faculty', attributes: ['faculty_id', 'Name', 'email', 'faculty_college_code'] },
       { model: PeriodSlot, as: 'period', attributes: ['id', 'id_label', 'start_time', 'end_time'] },
     ],
     order: [

@@ -46,6 +46,16 @@ export const submitAlterationRequest = asyncHandler(async (req, res, next) => {
     return next(new ErrorResponse('Faculty profile not found', 404));
   }
 
+  // Get substitute faculty's department to ensure they're in the same department
+  const substituteFaculty = await Faculty.findByPk(substitute_faculty_id);
+  if (!substituteFaculty) {
+    return next(new ErrorResponse('Substitute faculty not found', 404));
+  }
+
+  if (substituteFaculty.department_id !== applicant.department_id) {
+    return next(new ErrorResponse('Substitute faculty must be from the same department', 400));
+  }
+
   // DB WRITE 1: Create leave request
   const leaveRequest = await Leave.create({
     applicant_id: req.user.faculty_id || req.user.id,
@@ -120,6 +130,26 @@ export const acceptAlteration = asyncHandler(async (req, res, next) => {
     return next(new ErrorResponse(`Can only accept pending requests`, 400));
   }
 
+  // Verify that the current user is the substitute faculty
+  const currentUserId = req.user.faculty_id || req.user.id;
+  if (facultySubstitute.substitute_faculty_id !== currentUserId) {
+    return next(new ErrorResponse('You are not the substitute faculty for this request', 403));
+  }
+
+  // Verify the substitute faculty is in the same department
+  const substituteFaculty = facultySubstitute.substitute_faculty;
+  const userRole = req.user?.role?.name;
+  const userDepartmentId = req.user?.department_id;
+
+  if (userRole === 'department-admin' || userRole === 'timetable-incharge') {
+    if (!userDepartmentId) {
+      return next(new ErrorResponse('User department ID not found', 400));
+    }
+    if (substituteFaculty.department_id !== userDepartmentId) {
+      return next(new ErrorResponse('You do not have permission to accept alterations for other departments', 403));
+    }
+  }
+
   // Update substitute record
   await facultySubstitute.update({
     status: 'approved',
@@ -182,6 +212,26 @@ export const rejectAlteration = asyncHandler(async (req, res, next) => {
     return next(new ErrorResponse('Can only reject pending requests', 400));
   }
 
+  // Verify that the current user is the substitute faculty
+  const currentUserId = req.user.faculty_id || req.user.id;
+  if (facultySubstitute.substitute_faculty_id !== currentUserId) {
+    return next(new ErrorResponse('You are not the substitute faculty for this request', 403));
+  }
+
+  // Verify the substitute faculty is in the same department
+  const substituteFaculty = facultySubstitute.substitute_faculty;
+  const userRole = req.user?.role?.name;
+  const userDepartmentId = req.user?.department_id;
+
+  if (userRole === 'department-admin' || userRole === 'timetable-incharge') {
+    if (!userDepartmentId) {
+      return next(new ErrorResponse('User department ID not found', 400));
+    }
+    if (substituteFaculty.department_id !== userDepartmentId) {
+      return next(new ErrorResponse('You do not have permission to reject alterations for other departments', 403));
+    }
+  }
+
   // Update substitute record
   await facultySubstitute.update({
     status: 'rejected',
@@ -227,6 +277,20 @@ export const applyAlteration = asyncHandler(async (req, res, next) => {
 
   if (!leaveRequest) {
     return next(new ErrorResponse(`Leave request not found`, 404));
+  }
+
+  // Check department access - timetable incharge can only apply alterations from their department
+  const userRole = req.user?.role?.name;
+  const userDepartmentId = req.user?.department_id;
+
+  if (userRole === 'department-admin' || userRole === 'timetable-incharge') {
+    if (!userDepartmentId) {
+      return next(new ErrorResponse('User department ID not found', 400));
+    }
+    // Verify the leave request belongs to the user's department
+    if (leaveRequest.department_id !== userDepartmentId) {
+      return next(new ErrorResponse('You do not have permission to apply alterations for other departments', 403));
+    }
   }
 
   const affectedPeriods = JSON.parse(leaveRequest.affected_periods || '[]');
@@ -327,6 +391,34 @@ export const applyAlteration = asyncHandler(async (req, res, next) => {
  */
 export const getPendingAlteration = asyncHandler(async (req, res, next) => {
   const { facultyId } = req.params;
+  const currentUserId = req.user.faculty_id || req.user.id;
+
+  // Verify that the requesting user is viewing their own pending alterations
+  // or is a department-admin/timetable-incharge viewing their department's alteration
+  const userRole = req.user?.role?.name;
+  const userDepartmentId = req.user?.department_id;
+
+  // Only the substitute faculty or an authorized admin can view
+  if (facultyId != currentUserId) {
+    // If not viewing their own, must be department-admin or timetable-incharge
+    if (userRole !== 'department-admin' && userRole !== 'timetable-incharge' && userRole !== 'superadmin') {
+      return next(new ErrorResponse('You do not have permission to view other faculty\'s alterations', 403));
+    }
+
+    // If admin/incharge, verify the faculty is in their department
+    if (userRole === 'department-admin' || userRole === 'timetable-incharge') {
+      if (!userDepartmentId) {
+        return next(new ErrorResponse('User department ID not found', 400));
+      }
+      const faculty = await Faculty.findByPk(facultyId);
+      if (!faculty) {
+        return next(new ErrorResponse('Faculty not found', 404));
+      }
+      if (faculty.department_id !== userDepartmentId) {
+        return next(new ErrorResponse('You do not have permission to view alterations for other departments', 403));
+      }
+    }
+  }
 
   const pending = await FacultySubstitutes.findAll({
     where: {
@@ -334,12 +426,12 @@ export const getPendingAlteration = asyncHandler(async (req, res, next) => {
       status: 'pending',
     },
     include: [
-      { model: Faculty, as: 'absent_faculty', attributes: ['faculty_id', 'Name', 'email'] },
-      { model: Faculty, as: 'substitute_faculty', attributes: ['faculty_id', 'Name', 'email'] },
+      { model: Faculty, as: 'absent_faculty', attributes: ['faculty_id', 'Name', 'email', 'department_id'] },
+      { model: Faculty, as: 'substitute_faculty', attributes: ['faculty_id', 'Name', 'email', 'department_id'] },
       {
         model: Leave,
         as: 'leave_request',
-        attributes: ['id', 'start_date', 'end_date', 'reason', 'leave_type'],
+        attributes: ['id', 'start_date', 'end_date', 'reason', 'leave_type', 'department_id'],
       },
     ],
     order: [['created_at', 'DESC']],
@@ -359,15 +451,29 @@ export const getPendingAlteration = asyncHandler(async (req, res, next) => {
  */
 export const getAlterationsToApply = asyncHandler(async (req, res, next) => {
   const { facultyId } = req.params;
+  const userRole = req.user?.role?.name;
+  const userDepartmentId = req.user?.department_id;
+
+  // Only timetable incharge or department-admin can view alterations to apply
+  if (userRole !== 'department-admin' && userRole !== 'timetable-incharge' && userRole !== 'superadmin') {
+    return next(new ErrorResponse('Only timetable incharge can view pending alterations to apply', 403));
+  }
+
+  // Verify department access
+  if (userRole === 'department-admin' || userRole === 'timetable-incharge') {
+    if (!userDepartmentId) {
+      return next(new ErrorResponse('User department ID not found', 400));
+    }
+  }
 
   // Find approved substitutes where timetable incharge needs to apply
-  const approved = await FacultySubstitutes.findAll({
+  let query = {
     where: {
       status: 'approved',
     },
     include: [
-      { model: Faculty, as: 'absent_faculty' },
-      { model: Faculty, as: 'substitute_faculty' },
+      { model: Faculty, as: 'absent_faculty', attributes: ['faculty_id', 'Name', 'email', 'department_id'] },
+      { model: Faculty, as: 'substitute_faculty', attributes: ['faculty_id', 'Name', 'email', 'department_id'] },
       {
         model: Leave,
         as: 'leave_request',
@@ -377,7 +483,15 @@ export const getAlterationsToApply = asyncHandler(async (req, res, next) => {
       },
     ],
     order: [['approval_date', 'ASC']],
-  });
+  };
+
+  // If not superadmin, filter by department
+  if (userRole === 'department-admin' || userRole === 'timetable-incharge') {
+    // Filter Leave records by department_id
+    query.include[2].where.department_id = userDepartmentId;
+  }
+
+  const approved = await FacultySubstitutes.findAll(query);
 
   res.status(200).json({
     success: true,
@@ -397,6 +511,26 @@ export const revertAlteration = asyncHandler(async (req, res, next) => {
   const overlay = await TimetableOverlay.findByPk(overlayId);
   if (!overlay) {
     return next(new ErrorResponse(`Overlay not found with id ${overlayId}`, 404));
+  }
+
+  // Get the parent timetable master to check department access
+  const master = await TimetableMaster.findByPk(overlay.master_id);
+  if (!master) {
+    return next(new ErrorResponse('Parent timetable master not found', 404));
+  }
+
+  // Check department access for non-superadmin users
+  const userRole = req.user?.role?.name;
+  const userDepartmentId = req.user?.department_id;
+
+  if (userRole === 'department-admin' || userRole === 'timetable-incharge') {
+    if (!userDepartmentId) {
+      return next(new ErrorResponse('User department ID not found', 400));
+    }
+    // Validate user can only revert alterations in their own department's timetable
+    if (master.department_id !== userDepartmentId) {
+      return next(new ErrorResponse('You do not have permission to revert alterations for this timetable', 403));
+    }
   }
 
   await overlay.update({

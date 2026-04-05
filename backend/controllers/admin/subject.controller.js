@@ -45,8 +45,10 @@ export const getSubjects = asyncHandler(async (req, res, next) => {
         lab_name: subject.lab_name,
         credits: subject.credits,
         type: subject.type,
+        subject_category: subject.subject_category,
         is_elective: subject.is_elective,
         is_laboratory: subject.is_laboratory,
+        available_to_all_departments: subject.available_to_all_departments,
         status: subject.status,
         created_at: subject.created_at,
         updated_at: subject.updated_at
@@ -93,8 +95,10 @@ export const getSubject = asyncHandler(async (req, res, next) => {
       sem_type: subjectData.sem_type,
       credits: subjectData.credits,
       type: subjectData.type,
+      subject_category: subjectData.subject_category,
       is_elective: subjectData.is_elective,
       is_laboratory: subjectData.is_laboratory,
+      available_to_all_departments: subjectData.available_to_all_departments,
       batch: subjectData.batch,
       status: subjectData.status,
       created_at: subjectData.created_at,
@@ -116,101 +120,147 @@ export const getSubject = asyncHandler(async (req, res, next) => {
 // @route     POST /api/v1/admin/subjects
 // @access    Private/SuperAdmin
 export const createSubject = asyncHandler(async (req, res, next) => {
-  const {
-    code,
-    name,
-    description,
-    department_id,
-    semester,
-    sem_type,
-    academic_year,
-    year,
-    batch,
-    lab_name,
-    credits,
-    type,
-    is_elective,
-    is_laboratory,
-    class_id,
-    max_students,
-    status
-  } = req.body;
+  try {
+    const {
+      code,
+      name,
+      description,
+      department_id,
+      semester,
+      sem_type,
+      academic_year,
+      year,
+      batch,
+      lab_name,
+      credits,
+      type,
+      is_elective,
+      is_laboratory,
+      available_to_all_departments,
+      class_id,
+      max_students,
+      status,
+      subject_category
+    } = req.body;
 
-  // Validate required fields
-  if (!code || !name || !department_id || !semester) {
-    return next(new ErrorResponse('Please provide code, name, department_id, and semester', 400));
-  }
+    console.log('📌 CREATE SUBJECT - Received payload:', {
+      code, name, department_id, available_to_all_departments,
+      credits, type, subject_category, is_elective, is_laboratory
+    });
 
-  // Check if code already exists
-  const existingSubject = await Subject.findOne({ where: { subject_code: code } });
-  if (existingSubject) {
-    return next(new ErrorResponse(`Subject code "${code}" already exists`, 400));
-  }
-
-  // Validate semester is 1-8
-  if (semester < 1 || semester > 8) {
-    return next(new ErrorResponse('Semester must be between 1 and 8', 400));
-  }
-
-  // Validate sem_type is odd or even
-  if (sem_type && !['odd', 'even'].includes(sem_type)) {
-    return next(new ErrorResponse('Semester type must be either "odd" or "even"', 400));
-  }
-
-  const subject = await Subject.create({
-    subject_code: code,
-    subject_name: name,
-    description,
-    department_id: parseInt(department_id),
-    semester: parseInt(semester),
-    sem_type: sem_type || (parseInt(semester) % 2 === 1 ? 'odd' : 'even'),
-    academic_year: academic_year || null,
-    year: year ? parseInt(year) : Math.ceil(parseInt(semester) / 2),
-    batch: batch || null,
-    lab_name: is_laboratory ? (lab_name || null) : null,
-    credits: credits ? parseFloat(credits) : 4.0,
-    type: type || 'Theory',
-    is_elective: is_elective || false,
-    is_laboratory: is_laboratory || false,
-    class_id: class_id || null,
-    max_students: max_students || null,
-    status: status || 'active',
-    created_by: req.user?.id || 1
-  });
-
-  // Reload with associations
-  const createdSubject = await Subject.findByPk(subject.id, {
-    include: [
-      { model: Department, as: 'department', attributes: ['id', 'short_name', 'full_name'] }
-    ]
-  });
-
-  // Format response
-  const formatted = createdSubject.toJSON();
-  res.status(201).json({
-    success: true,
-    data: {
-      id: formatted.id,
-      code: formatted.subject_code,
-      name: formatted.subject_name,
-      description: formatted.description,
-      department_id: formatted.department_id,
-      department: formatted.department,
-      semester: formatted.semester,
-      sem_type: formatted.sem_type,
-      academic_year: formatted.academic_year,
-      year: formatted.year,
-      batch: formatted.batch,
-      lab_name: formatted.lab_name,
-      credits: formatted.credits,
-      type: formatted.type,
-      is_elective: formatted.is_elective,
-      is_laboratory: formatted.is_laboratory,
-      status: formatted.status,
-      created_at: formatted.created_at,
-      updated_at: formatted.updated_at
+    // Validate required fields
+    if (!code || !name) {
+      return next(new ErrorResponse('Please provide code and name', 400));
     }
-  });
+
+    // Department is required if NOT assigning to all departments
+    const deptId = department_id ? parseInt(department_id) : null;
+    if (!available_to_all_departments && (!deptId || isNaN(deptId))) {
+      return next(new ErrorResponse('Please provide a valid department_id or set available_to_all_departments to true', 400));
+    }
+
+    // Check if subject already exists
+    let existingSubject;
+    if (available_to_all_departments) {
+      // For all-departments subjects, check if code + name already exists with same flag
+      existingSubject = await Subject.findOne({ 
+        where: { 
+          subject_code: code,
+          subject_name: name,
+          available_to_all_departments: true
+        } 
+      });
+      if (existingSubject) {
+        return next(new ErrorResponse(`Subject "${code} - ${name}" (all departments) already exists`, 400));
+      }
+    } else {
+      // For department-specific subjects, check code + name + department combo
+      existingSubject = await Subject.findOne({ 
+        where: { 
+          subject_code: code,
+          subject_name: name,
+          department_id: deptId
+        } 
+      });
+      if (existingSubject) {
+        return next(new ErrorResponse(`Subject "${code} - ${name}" already exists in this department`, 400));
+      }
+    }
+
+    // Validate semester is 1-8 if provided
+    if (semester && (semester < 1 || semester > 8)) {
+      return next(new ErrorResponse('Semester must be between 1 and 8', 400));
+    }
+
+    // Validate sem_type is odd or even if provided
+    if (sem_type && !['odd', 'even'].includes(sem_type)) {
+      return next(new ErrorResponse('Semester type must be either "odd" or "even"', 400));
+    }
+
+    const subject = await Subject.create({
+      subject_code: code,
+      subject_name: name,
+      description: description || null,
+      department_id: available_to_all_departments ? null : deptId,
+      semester: semester ? parseInt(semester) : null,
+      sem_type: sem_type || (semester && parseInt(semester) % 2 === 1 ? 'odd' : 'even'),
+      academic_year: academic_year || null,
+      year: year ? parseInt(year) : (semester ? Math.ceil(parseInt(semester) / 2) : null),
+      batch: batch || null,
+      lab_name: is_laboratory ? (lab_name || null) : null,
+      credits: credits ? parseFloat(credits) : 4.0,
+      type: type || 'Theory',
+      subject_category: subject_category || 'academic',
+      is_elective: is_elective || false,
+      is_laboratory: is_laboratory || false,
+      available_to_all_departments: available_to_all_departments || false,
+      class_id: class_id || null,
+      max_students: max_students || null,
+      status: status || 'active',
+      created_by: req.user?.id || 1
+    });
+
+    // Reload with associations
+    const createdSubject = await Subject.findByPk(subject.id, {
+      include: [
+        { model: Department, as: 'department', attributes: ['id', 'short_name', 'full_name'] }
+      ]
+    });
+
+    // Format response
+    const formatted = createdSubject.toJSON();
+    console.log('✅ Subject created successfully:', code);
+    
+    res.status(201).json({
+      success: true,
+      data: {
+        id: formatted.id,
+        code: formatted.subject_code,
+        name: formatted.subject_name,
+        description: formatted.description,
+        department_id: formatted.department_id,
+        department: formatted.department,
+        semester: formatted.semester,
+        sem_type: formatted.sem_type,
+        academic_year: formatted.academic_year,
+        year: formatted.year,
+        batch: formatted.batch,
+        lab_name: formatted.lab_name,
+        credits: formatted.credits,
+        type: formatted.type,
+        subject_category: formatted.subject_category,
+        is_elective: formatted.is_elective,
+        is_laboratory: formatted.is_laboratory,
+        available_to_all_departments: formatted.available_to_all_departments,
+        status: formatted.status,
+        created_at: formatted.created_at,
+        updated_at: formatted.updated_at
+      }
+    });
+  } catch (error) {
+    console.error('❌ Error in createSubject:', error.message);
+    return next(new ErrorResponse(error.message || 'Failed to create subject', 500));
+  }
 });
 
 // @desc      Update subject
@@ -227,6 +277,7 @@ export const updateSubject = asyncHandler(async (req, res, next) => {
     code,
     name,
     description,
+    department_id,
     semester,
     sem_type,
     academic_year,
@@ -235,19 +286,30 @@ export const updateSubject = asyncHandler(async (req, res, next) => {
     lab_name,
     credits,
     type,
+    subject_category,
     is_elective,
     is_laboratory,
+    available_to_all_departments,
     class_id,
     min_hours_per_week,
     max_students,
     status
   } = req.body;
 
-  // If code is being changed, check for duplicates
-  if (code && code !== subject.subject_code) {
-    const existingSubject = await Subject.findOne({ where: { subject_code: code } });
+  // If code or name is being changed, check for duplicates (same department + code + name)
+  if ((code && code !== subject.subject_code) || (name && name !== subject.subject_name)) {
+    const checkCode = code || subject.subject_code;
+    const checkName = name || subject.subject_name;
+    const existingSubject = await Subject.findOne({ 
+      where: { 
+        subject_code: checkCode,
+        subject_name: checkName,
+        department_id: subject.department_id,
+        id: { [Op.ne]: req.params.id } // Exclude current subject
+      } 
+    });
     if (existingSubject) {
-      return next(new ErrorResponse(`Subject code "${code}" already exists`, 400));
+      return next(new ErrorResponse(`Subject "${checkCode} - ${checkName}" already exists in this department`, 400));
     }
   }
 
@@ -266,7 +328,8 @@ export const updateSubject = asyncHandler(async (req, res, next) => {
     subject_code: code || subject.subject_code,
     subject_name: name || subject.subject_name,
     description: description !== undefined ? description : subject.description,
-    semester: semester || subject.semester,
+    department_id: available_to_all_departments ? null : (department_id !== undefined ? parseInt(department_id) : subject.department_id),
+    semester: semester !== undefined ? (semester ? parseInt(semester) : null) : subject.semester,
     sem_type: sem_type || subject.sem_type,
     academic_year: academic_year !== undefined ? academic_year : subject.academic_year,
     year: year !== undefined ? parseInt(year) : subject.year,
@@ -276,8 +339,11 @@ export const updateSubject = asyncHandler(async (req, res, next) => {
       : (subject.is_laboratory ? (lab_name !== undefined ? lab_name : subject.lab_name) : null),
     credits: credits !== undefined ? parseFloat(credits) : subject.credits,
     type: type || subject.type,
+    subject_category: subject_category || subject.subject_category,
     is_elective: is_elective !== undefined ? is_elective : subject.is_elective,
     is_laboratory: is_laboratory !== undefined ? is_laboratory : subject.is_laboratory,
+    available_to_all_departments: available_to_all_departments !== undefined ? available_to_all_departments : subject.available_to_all_departments,
+    available_to_all_departments: available_to_all_departments !== undefined ? available_to_all_departments : subject.available_to_all_departments,
     class_id: class_id !== undefined ? class_id : subject.class_id,
     min_hours_per_week: min_hours_per_week || subject.min_hours_per_week,
     max_students: max_students || subject.max_students,
@@ -308,6 +374,7 @@ export const updateSubject = asyncHandler(async (req, res, next) => {
     lab_name: subjectData.lab_name,
     credits: subjectData.credits,
     type: subjectData.type,
+    subject_category: subjectData.subject_category,
     is_elective: subjectData.is_elective,
     is_laboratory: subjectData.is_laboratory,
     status: subjectData.status,
@@ -427,37 +494,46 @@ export const bulkUploadSubjects = asyncHandler(async (req, res, next) => {
         // Validate required fields
         const { code, name, description, department_id, semester, sem_type, academic_year, year, lab_name, credits, type, is_elective, is_laboratory, status } = subjectData;
 
-        if (!code || !name || !department_id || !semester) {
-          throw new Error('Missing required fields: code, name, department_id, semester');
+        if (!code || !name || !department_id) {
+          throw new Error('Missing required fields: code, name, department_id');
         }
 
-        // Check if code already exists
-        const existingSubject = await Subject.findOne({ where: { subject_code: code } });
+        // Check if code + name + department already exists
+        const existingSubject = await Subject.findOne({ 
+          where: { 
+            subject_code: code,
+            subject_name: name,
+            department_id: parseInt(department_id)
+          } 
+        });
         if (existingSubject) {
-          throw new Error(`Subject code "${code}" already exists`);
+          throw new Error(`Subject "${code} - ${name}" already exists in this department`);
         }
 
-        // Validate semester
-        const semesterNum = parseInt(semester);
-        if (isNaN(semesterNum) || semesterNum < 1 || semesterNum > 8) {
-          throw new Error('Semester must be a number between 1 and 8');
+        // Validate semester if provided
+        if (semester) {
+          const semesterNum = parseInt(semester);
+          if (isNaN(semesterNum) || semesterNum < 1 || semesterNum > 8) {
+            throw new Error('Semester must be a number between 1 and 8');
+          }
         }
 
-        // Validate sem_type
+        // Validate sem_type if provided
         if (sem_type && !['odd', 'even'].includes(String(sem_type).toLowerCase())) {
           throw new Error('Semester type must be either "odd" or "even"');
         }
 
         // Create subject
+        const semesterNum = semester ? parseInt(semester) : null;
         const newSubject = await Subject.create({
           subject_code: code,
           subject_name: name,
           description: description || null,
           department_id: parseInt(department_id),
           semester: semesterNum,
-          sem_type: String(sem_type || (semesterNum % 2 === 1 ? 'odd' : 'even')).toLowerCase(),
+          sem_type: sem_type || (semesterNum && semesterNum % 2 === 1 ? 'odd' : 'even'),
           academic_year: academic_year || null,
-          year: year ? parseInt(year) : Math.ceil(semesterNum / 2),
+          year: year ? parseInt(year) : (semesterNum ? Math.ceil(semesterNum / 2) : null),
           lab_name: is_laboratory ? (lab_name || null) : null,
           credits: credits ? parseFloat(credits) : 4.0,
           type: type || 'Theory',
