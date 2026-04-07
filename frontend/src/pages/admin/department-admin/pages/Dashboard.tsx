@@ -110,9 +110,9 @@ export default function Dashboard() {
             </p>
           </div>
           <div className="flex items-center gap-2 ml-auto">
-             <div className="sm:hidden text-right mr-2">
-               <p className="text-[10px] font-bold text-primary">{formatDate(currentTime)}</p>
-               <p className="text-[10px] text-muted-foreground">{formatTime(currentTime)}</p>
+            <div className="sm:hidden text-right mr-2">
+              <p className="text-[10px] font-bold text-primary">{formatDate(currentTime)}</p>
+              <p className="text-[10px] text-muted-foreground">{formatTime(currentTime)}</p>
             </div>
             <LeaveNotificationBell />
             <IntegratedNotificationBell />

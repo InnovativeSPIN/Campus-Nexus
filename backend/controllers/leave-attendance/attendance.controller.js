@@ -223,14 +223,15 @@ export const getAttendance = asyncHandler(async (req, res, next) => {
 export const markAttendance = asyncHandler(async (req, res, next) => {
   const classId = parseInt(req.body.classId ?? req.body.class, 10);
   const subjectId = parseInt(req.body.subjectId ?? req.body.subject, 10);
-  const facultyId = parseInt(req.body.facultyId ?? req.body.faculty, 10) || req.user.facultyId || req.user.id;
+  // Support both faculty (req.user.facultyId) and department-admin (req.user.faculty_id) users
+  const facultyId = parseInt(req.body.facultyId ?? req.body.faculty, 10) || req.user.faculty_id || req.user.facultyId || req.user.id;
   const periodSlotId = parseInt(req.body.periodSlotId ?? req.body.period, 10);
   const periodNumber = parseInt(req.body.periodNumber, 10) || PERIOD_NUMBER_BY_SLOT[periodSlotId] || periodSlotId;
   const attendanceDate = req.body.attendanceDate ?? req.body.date;
   const students = Array.isArray(req.body.students) ? req.body.students : [];
   const masterSlotId = req.body.masterSlotId ? parseInt(req.body.masterSlotId, 10) : null;
   const lessonPlanId = req.body.lesson_plan_id ? parseInt(req.body.lesson_plan_id, 10) : null;
-  const markedBy = req.user.facultyId || req.user.id;
+  const markedBy = req.user.faculty_id || req.user.facultyId || req.user.id;
 
   if (!classId || !subjectId || !periodSlotId || !attendanceDate || !students.length) {
     return next(new ErrorResponse('Missing required fields', 400));
@@ -787,7 +788,8 @@ export const getAttendanceStats = asyncHandler(async (req, res, next) => {
  */
 export const getFacultyTimetableSlots = asyncHandler(async (req, res, next) => {
   const { date } = req.params;
-  const facultyId = req.user.facultyId || req.user.id;
+  // Support both faculty and department-admin users (field names differ)
+  const facultyId = req.user.faculty_id || req.user.facultyId || req.user.id;
 
   if (!date) {
     return res.status(400).json({ success: false, error: 'Date parameter is required' });

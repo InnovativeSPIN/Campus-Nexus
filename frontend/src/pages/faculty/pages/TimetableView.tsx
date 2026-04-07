@@ -6,6 +6,13 @@ import { Alert, AlertDescription } from '@/pages/faculty/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/pages/faculty/components/ui/tabs';
 import { Loader2, AlertCircle, Clock, User } from 'lucide-react';
 import { toast } from '@/pages/faculty/hooks/use-toast';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/pages/faculty/components/ui/select";
 
 interface Period {
   id: number;
@@ -71,6 +78,7 @@ const FacultyIndividualTimetable: React.FC = () => {
   const [timetableData, setTimetableData] = useState<TimetableResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedClassIndex, setSelectedClassIndex] = useState<string>("0");
 
   useEffect(() => {
     fetchTimetable();
@@ -143,12 +151,14 @@ const FacultyIndividualTimetable: React.FC = () => {
     );
   }
 
-  if (!timetableData) {
+  if (!timetableData || (timetableData.timetables && timetableData.timetables.length === 0)) {
     return (
       <div className="p-6 max-w-6xl mx-auto">
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>No timetable found. You are not assigned to any classes yet.</AlertDescription>
+        <Alert className="bg-slate-50 border-slate-200">
+          <AlertCircle className="h-4 w-4 text-slate-500" />
+          <AlertDescription className="text-slate-600">
+            No timetable found. You are not assigned to any classes yet.
+          </AlertDescription>
         </Alert>
       </div>
     );
@@ -267,121 +277,135 @@ const FacultyIndividualTimetable: React.FC = () => {
           </p>
         </div>
 
-        {/* Tabs for Multiple Classes */}
+        {/* Class Selection Dropdown */}
         {timetableData.timetables.length > 0 ? (
-          <Tabs defaultValue={`0`} className="w-full">
-            <TabsList className="grid w-full gap-2 mb-6">
-              {timetableData.timetables.map((tt, index) => (
-                <TabsTrigger
-                  key={tt.id}
-                  value={`${index}`}
-                  className="text-sm font-semibold"
-                >
-                  {tt.class.name} (Sem {tt.semester})
-                </TabsTrigger>
-              ))}
-            </TabsList>
+          <div className="space-y-6">
+            <div className="flex items-center gap-4 bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                <div className="flex items-center gap-2 text-gray-700 font-semibold">
+                    <User className="w-5 h-5 text-blue-600" />
+                    <span>Select Class:</span>
+                </div>
+                <div className="w-full max-w-md">
+                    <Select value={selectedClassIndex} onValueChange={setSelectedClassIndex}>
+                        <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Choose a class..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {timetableData.timetables.map((tt, index) => (
+                                <SelectItem key={tt.id} value={`${index}`}>
+                                    {tt.class.name} (Sem {tt.semester}) - {tt.academicYear}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+            </div>
 
-            {timetableData.timetables.map((timetable, index) => (
-              <TabsContent key={timetable.id} value={`${index}`} className="space-y-6">
-                {/* Class Overview Cards */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {(() => {
+              const selectedTimetable = timetableData.timetables[parseInt(selectedClassIndex)];
+              if (!selectedTimetable) return null;
+
+              return (
+                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300" key={selectedTimetable.id}>
+                  {/* Class Overview Cards */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <Card>
+                      <CardContent className="pt-6">
+                        <p className="text-sm text-gray-600">Class</p>
+                        <p className="text-lg font-semibold">{selectedTimetable.class.name}</p>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="pt-6">
+                        <p className="text-sm text-gray-600">Academic Year</p>
+                        <p className="text-lg font-semibold">{selectedTimetable.academicYear}</p>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="pt-6">
+                        <p className="text-sm text-gray-600">Semester</p>
+                        <p className="text-lg font-semibold">
+                          {selectedTimetable.semester} ({selectedTimetable.semesterType})
+                        </p>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="pt-6">
+                        <p className="text-sm text-gray-600">Department</p>
+                        <p className="text-lg font-semibold">{selectedTimetable.department.code}</p>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  {/* Admin Info */}
                   <Card>
-                    <CardContent className="pt-6">
-                      <p className="text-sm text-gray-600">Class</p>
-                      <p className="text-lg font-semibold">{timetable.class.name}</p>
+                    <CardHeader>
+                      <CardTitle className="text-lg">Class Administration</CardTitle>
+                    </CardHeader>
+                    <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="flex items-start space-x-3">
+                        <User className="w-5 h-5 text-blue-600 mt-1" />
+                        <div>
+                          <p className="text-sm text-gray-600">Class Coordinator</p>
+                          <p className="font-semibold">{selectedTimetable.department.name}</p>
+                          <p className="text-xs text-gray-500">Department assigned</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start space-x-3">
+                        <Clock className="w-5 h-5 text-green-600 mt-1" />
+                        <div>
+                          <p className="text-sm text-gray-600">Batch</p>
+                          <p className="font-semibold">{selectedTimetable.batch}</p>
+                          <p className="text-xs text-gray-500">Effective from {new Date(selectedTimetable.effectiveFrom).toLocaleDateString()}</p>
+                        </div>
+                      </div>
                     </CardContent>
                   </Card>
+
+                  {/* Timetable Grid */}
                   <Card>
-                    <CardContent className="pt-6">
-                      <p className="text-sm text-gray-600">Academic Year</p>
-                      <p className="text-lg font-semibold">{timetable.academicYear}</p>
+                    <CardHeader>
+                      <CardTitle className="text-lg">Weekly Schedule</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <TimetableGrid timetable={selectedTimetable} />
                     </CardContent>
                   </Card>
-                  <Card>
-                    <CardContent className="pt-6">
-                      <p className="text-sm text-gray-600">Semester</p>
-                      <p className="text-lg font-semibold">
-                        {timetable.semester} ({timetable.semesterType})
-                      </p>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardContent className="pt-6">
-                      <p className="text-sm text-gray-600">Department</p>
-                      <p className="text-lg font-semibold">{timetable.department.code}</p>
+
+                  {/* Legend */}
+                  <Card className="bg-gray-50">
+                    <CardHeader>
+                      <CardTitle className="text-lg">Session Types</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                        <div className="flex items-center space-x-2">
+                          <div className="w-4 h-4 bg-blue-50 border-l-4 border-blue-500 rounded"></div>
+                          <span className="text-sm text-gray-700">Theory</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <div className="w-4 h-4 bg-green-50 border-l-4 border-green-500 rounded"></div>
+                          <span className="text-sm text-gray-700">Lab</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <div className="w-4 h-4 bg-purple-50 border-l-4 border-purple-500 rounded"></div>
+                          <span className="text-sm text-gray-700">Project</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <div className="w-4 h-4 bg-cyan-50 border-l-4 border-cyan-500 rounded"></div>
+                          <span className="text-sm text-gray-700">Tutorial</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <div className="w-4 h-4 bg-yellow-50 border-l-4 border-yellow-500 rounded"></div>
+                          <span className="text-sm text-gray-700">Activity</span>
+                        </div>
+                      </div>
                     </CardContent>
                   </Card>
                 </div>
-
-                {/* Admin Info */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Class Administration</CardTitle>
-                  </CardHeader>
-                  <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="flex items-start space-x-3">
-                      <User className="w-5 h-5 text-blue-600 mt-1" />
-                      <div>
-                        <p className="text-sm text-gray-600">Class Coordinator</p>
-                        <p className="font-semibold">{timetable.department.name}</p>
-                        <p className="text-xs text-gray-500">Department assigned</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start space-x-3">
-                      <Clock className="w-5 h-5 text-green-600 mt-1" />
-                      <div>
-                        <p className="text-sm text-gray-600">Batch</p>
-                        <p className="font-semibold">{timetable.batch}</p>
-                        <p className="text-xs text-gray-500">Effective from {new Date(timetable.effectiveFrom).toLocaleDateString()}</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Timetable Grid */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Weekly Schedule</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <TimetableGrid timetable={timetable} />
-                  </CardContent>
-                </Card>
-
-                {/* Legend */}
-                <Card className="bg-gray-50">
-                  <CardHeader>
-                    <CardTitle className="text-lg">Session Types</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                      <div className="flex items-center space-x-2">
-                        <div className="w-4 h-4 bg-blue-50 border-l-4 border-blue-500 rounded"></div>
-                        <span className="text-sm text-gray-700">Theory</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <div className="w-4 h-4 bg-green-50 border-l-4 border-green-500 rounded"></div>
-                        <span className="text-sm text-gray-700">Lab</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <div className="w-4 h-4 bg-purple-50 border-l-4 border-purple-500 rounded"></div>
-                        <span className="text-sm text-gray-700">Project</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <div className="w-4 h-4 bg-cyan-50 border-l-4 border-cyan-500 rounded"></div>
-                        <span className="text-sm text-gray-700">Tutorial</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <div className="w-4 h-4 bg-yellow-50 border-l-4 border-yellow-500 rounded"></div>
-                        <span className="text-sm text-gray-700">Activity</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            ))}
-          </Tabs>
+              );
+            })()}
+          </div>
         ) : (
           <Alert>
             <AlertCircle className="h-4 w-4" />

@@ -42,6 +42,8 @@ interface TimetableSlot {
   lab_group: string | null;
   room: string | null;
   notes: string | null;
+  start_time: string | null;
+  end_time: string | null;
   subject?: { id: number; name: string; code: string };
   faculty?: { faculty_id: number; Name: string; email: string; college_code?: string };
 }
@@ -105,6 +107,8 @@ export default function TimetableSlotsManagement() {
     lab_group: "",
     room: "",
     notes: "",
+    start_time: "",
+    end_time: "",
   });
 
   // Fetch slots
@@ -402,6 +406,8 @@ export default function TimetableSlotsManagement() {
       lab_group: "",
       room: "",
       notes: "",
+      start_time: "",
+      end_time: "",
     });
   };
 
@@ -441,6 +447,8 @@ export default function TimetableSlotsManagement() {
       lab_group: slot.lab_group || "",
       room: slot.room || "",
       notes: slot.notes || "",
+      start_time: slot.start_time || "",
+      end_time: slot.end_time || "",
     });
     setIsDialogOpen(true);
   };
@@ -908,11 +916,29 @@ export default function TimetableSlotsManagement() {
                     <SelectContent>
                       {periods.map((p) => (
                         <SelectItem key={p.id} value={p.id.toString()}>
-                          {p.label} ({p.time})
+                          {p.label}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+
+                <div>
+                  <Label>Start Time</Label>
+                  <Input
+                    type="time"
+                    value={formData.start_time}
+                    onChange={(e) => setFormData({ ...formData, start_time: e.target.value })}
+                  />
+                </div>
+
+                <div>
+                  <Label>End Time</Label>
+                  <Input
+                    type="time"
+                    value={formData.end_time}
+                    onChange={(e) => setFormData({ ...formData, end_time: e.target.value })}
+                  />
                 </div>
 
                 <div>
@@ -1073,6 +1099,12 @@ export default function TimetableSlotsManagement() {
                   <div className="space-y-2">
                     {periods.map((period) => {
                       const slot = daySlots.find((s) => s.period_slot_id === period.id);
+                      
+                      // Display custom timing if available, otherwise use period default
+                      const displayTime = slot?.start_time && slot?.end_time 
+                        ? `${slot.start_time.substring(0, 5)} - ${slot.end_time.substring(0, 5)}`
+                        : period.time;
+                      
                       return (
                         <div
                           key={`${day}-${period.id}`}
@@ -1080,7 +1112,7 @@ export default function TimetableSlotsManagement() {
                         >
                           <div className="flex-1">
                             <p className="font-semibold text-sm">
-                              {period.label} ({period.time})
+                              {period.label} ({displayTime})
                             </p>
                             {slot ? (
                               <div className="mt-1 space-y-1">

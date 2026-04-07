@@ -4,8 +4,6 @@ import { models } from '../../models/index.js';
 import path from 'path';
 import fs from 'fs';
 import { promises as fsPromises } from 'fs';
-import { Op as sequelizeOp } from 'sequelize';
-import bcrypt from 'bcryptjs';
 const { Student, Department, Class: ClassModel, Subject, StudentBio, CourseLessonPlan, Faculty } = models;
 
 // Helper function to ensure parentInfo has all required fields with defaults
@@ -186,6 +184,7 @@ export const getStudent = asyncHandler(async (req, res, next) => {
   // if subject information is actually required.
   const { StudentBio } = models;
 
+  console.log(`[GET_STUDENT] Attempting to find student with ID: "${req.params.id}"`);
   const student = await Student.findByPk(req.params.id, {
     attributes: { exclude: ['userId'] },
     include: [
@@ -195,6 +194,7 @@ export const getStudent = asyncHandler(async (req, res, next) => {
   });
 
   if (!student) {
+    console.warn(`[GET_STUDENT] Student ID "${req.params.id}" NOT FOUND in database.`);
     return next(new ErrorResponse(`Student not found with id of ${req.params.id}`, 404));
   }
 
@@ -212,7 +212,10 @@ export const getStudent = asyncHandler(async (req, res, next) => {
         }
         studentData.bio = bioData;
         // Merge bio fields into main object for easier frontend access
-        Object.assign(studentData, bioData);
+        // IMPORTANT: exclude the bio table's own id/studentId/timestamps so they
+        // do NOT overwrite the student's primary key (id) or timestamps.
+        const { id: _bioId, studentId: _bioStudentId, createdAt: _bioCAt, updatedAt: _bioUAt, ...bioFields } = bioData;
+        Object.assign(studentData, bioFields);
       }
     }
   } catch (err) {
@@ -276,13 +279,36 @@ export const createStudent = asyncHandler(async (req, res, next) => {
   }
 
   // Normalize department and class fields
-  if (req.body.department) {
-    req.body.departmentId = req.body.department;
+  // Handle department: only set departmentId from a plain numeric ID,
+  // not from the full association object { short_name, full_name }.
+  if (req.body.department != null) {
+    const dept = req.body.department;
+    if (typeof dept === 'number') {
+      req.body.departmentId = dept;
+    } else if (typeof dept === 'string' && !isNaN(parseInt(dept, 10))) {
+      req.body.departmentId = parseInt(dept, 10);
+    }
     delete req.body.department;
   }
-  if (req.body.class) {
-    req.body.classId = req.body.class;
+  // Handle class: only set classId from a plain numeric ID,
+  // not from the full association object { name, room }.
+  if (req.body.class != null) {
+    const cls = req.body.class;
+    if (typeof cls === 'number') {
+      req.body.classId = cls;
+    } else if (typeof cls === 'string' && !isNaN(parseInt(cls, 10))) {
+      req.body.classId = parseInt(cls, 10);
+    }
     delete req.body.class;
+  }
+  // If classId is still an object (association leaked from frontend), extract id or null
+  if (req.body.classId != null && typeof req.body.classId === 'object') {
+    req.body.classId = req.body.classId.id ? parseInt(req.body.classId.id, 10) : null;
+  }
+  if (req.body.classId === '') req.body.classId = null;
+  // If departmentId is an object, extract id
+  if (req.body.departmentId != null && typeof req.body.departmentId === 'object') {
+    req.body.departmentId = req.body.departmentId.id ? parseInt(req.body.departmentId.id, 10) : null;
   }
 
   const student = await Student.create(req.body);
@@ -361,32 +387,37 @@ export const updateStudent = asyncHandler(async (req, res, next) => {
   });
 
   // Remove computed/frontend-only fields that don't exist in Student model
-  const invalidFields = ['name', 'avatar', 'enrollmentYear', 'departmentName', 'bio', 'department', 'class'];
+  const invalidFields = ['id', 'userId', 'name', 'avatar', 'enrollmentYear', 'departmentName', 'academicYear', 'bio', 'department', 'class', 'createdAt', 'updatedAt'];
   invalidFields.forEach(field => delete profileData[field]);
+
+  // Clean empty strings for optional unique/nullable fields
+  const nullableFields = ['admissionNo', 'emisNo', 'year', 'admissionDate', 'admissionType', 'feeStatus'];
+  nullableFields.forEach(field => {
+    if (profileData[field] === '') {
+      profileData[field] = null;
+    }
+  });
 
   // Update student profile
   try {
-    // If studentId is being updated, check for duplicates (but exclude the current student)
-    if (profileData.studentId && String(profileData.studentId).trim()) {
-      const currentStudentId = String(student.studentId || '').trim();
-      const newStudentId = String(profileData.studentId).trim();
-      
-      // Only check for duplicates if the studentId is actually changing
-      if (newStudentId !== currentStudentId) {
-        const existingStudent = await Student.findOne({ 
-          where: { 
-            studentId: newStudentId,
-            id: { [sequelizeOp.ne]: req.params.id } // Exclude current student
-          } 
-        });
-        if (existingStudent) {
-          return next(new ErrorResponse(`Student ID '${profileData.studentId}' is already in use by another student`, 400));
-        }
+    // If studentId is being updated, check for duplicates exclusively
+    if (profileData.studentId && profileData.studentId !== student.studentId) {
+      const existingStudent = await Student.findOne({ where: { studentId: profileData.studentId } });
+      if (existingStudent) {
+        return next(new ErrorResponse(`Student ID '${profileData.studentId}' is already in use by another student`, 400));
       }
     }
+    
+    // Explicitly check for email duplication before updating
+    if (profileData.email && profileData.email !== student.email) {
+      const existingEmail = await Student.findOne({ where: { email: profileData.email } });
+      if (existingEmail) {
+        return next(new ErrorResponse(`Email '${profileData.email}' is already in use by another student`, 400));
+      }
+    }
+
     console.log('Updating student with data:', JSON.stringify(profileData, null, 2));
-    const updateResult = await Student.update(profileData, { where: { id: req.params.id } });
-    console.log('Update result:', updateResult);
+    await Student.update(profileData, { where: { id: req.params.id } });
   } catch (err) {
     console.error('Error updating student profile:', err.message, 'Errors:', err.errors);
     return next(new ErrorResponse(`Failed to update student: ${err.message}`, 400));
@@ -440,8 +471,10 @@ export const updateStudent = asyncHandler(async (req, res, next) => {
           bioData.parentInfo = ensureCompleteParentInfo(bioData.parentInfo);
         }
         studentData.bio = bioData;
-        // Merge bio fields into main object
-        Object.assign(studentData, bioData);
+        // Merge bio fields into main object - exclude bio's own id/studentId/timestamps
+        // so they do NOT overwrite the student's primary key (id).
+        const { id: _bioId, studentId: _bioStudentId, createdAt: _bioCAt, updatedAt: _bioUAt, ...bioFields } = bioData;
+        Object.assign(studentData, bioFields);
       }
     }
   } catch (err) {
@@ -474,38 +507,6 @@ export const deleteStudent = asyncHandler(async (req, res, next) => {
 
   res.status(200).json({
     success: true,
-    data: {}
-  });
-});
-
-// @desc      Change student password (by superadmin)
-// @route     PUT /api/v1/students/:id/change-password
-// @access    Private (admin/superadmin)
-export const changePassword = asyncHandler(async (req, res, next) => {
-  const { password } = req.body;
-
-  // Validate password
-  if (!password) {
-    return next(new ErrorResponse('Please provide a password', 400));
-  }
-
-  if (password.length < 6) {
-    return next(new ErrorResponse('Password must be at least 6 characters', 400));
-  }
-
-  const student = await Student.findByPk(req.params.id);
-
-  if (!student) {
-    return next(new ErrorResponse(`Student not found with id of ${req.params.id}`, 404));
-  }
-
-  // Set the new password - the beforeUpdate hook will automatically hash it
-  student.password = password;
-  await student.save();
-
-  res.status(200).json({
-    success: true,
-    message: 'Password changed successfully',
     data: {}
   });
 });
@@ -576,6 +577,29 @@ export const updateStudentStatus = asyncHandler(async (req, res, next) => {
   res.status(200).json({
     success: true,
     data: student
+  });
+});
+
+// @desc      Change student password
+// @route     PUT /api/v1/students/:id/change-password
+// @access    Private/Admin
+export const changePassword = asyncHandler(async (req, res, next) => {
+  const student = await Student.findByPk(req.params.id);
+
+  if (!student) {
+    return next(new ErrorResponse(`Student not found with id of ${req.params.id}`, 404));
+  }
+
+  if (!req.body.password) {
+    return next(new ErrorResponse('Please provide a new password', 400));
+  }
+
+  student.password = req.body.password;
+  await student.save();
+
+  res.status(200).json({
+    success: true,
+    message: 'Password changed successfully'
   });
 });
 

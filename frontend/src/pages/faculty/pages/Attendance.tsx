@@ -158,6 +158,8 @@ export default function Attendance() {
 
   useEffect(() => {
     if (!selectedDate) return;
+    // Both faculty and department-admin use the same personal timetable endpoint
+    // This ensures they only see their OWN assigned slots, not all department slots
     fetch(`/api/v1/attendance/faculty/timetable/${selectedDate}`, { headers: { 'Authorization': `Bearer ${authToken}` } })
       .then(r => r.json())
       .then(data => { 
