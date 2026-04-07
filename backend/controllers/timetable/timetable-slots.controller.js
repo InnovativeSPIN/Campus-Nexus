@@ -8,7 +8,82 @@ const {
   TimetableMasterSlots,
   Subject,
   Faculty,
+  SubjectClassMapping,
+  FacultySubjectAssignment,
+  Class: ClassModel,
 } = models;
+
+/**
+ * Helper: resolve req.user.role to a plain lowercase string.
+ * req.user.role is set as a plain string by auth middleware (e.g. 'faculty', 'department-admin'),
+ * NOT as an object - so req.user.role.name is always undefined.
+ */
+const getUserRole = (req) => {
+  const role = req.user?.role;
+  if (!role) return '';
+  if (typeof role === 'string') return role.trim().toLowerCase();
+  return (role.role_name || role.name || '').trim().toLowerCase();
+};
+
+/**
+ * Helper: verify the requesting user has write access to the given timetable master.
+ *   - superadmin → always allowed
+ *   - department-admin → must be in same department
+ *   - faculty → must be in same department AND be the timetable_incharge for this master
+ *
+ * Returns an ErrorResponse if access is denied, or null if allowed.
+ */
+const checkWriteAccess = async (req, master) => {
+  const userRole = getUserRole(req);
+  const userDepartmentId = req.user?.department_id;
+  const facultyId = req.user?.faculty_id;
+
+  if (userRole === 'department-admin') {
+    if (!userDepartmentId || !master.department_id) {
+      return new ErrorResponse('User or timetable department ID not found', 400);
+    }
+    if (Number(master.department_id) !== Number(userDepartmentId)) {
+      return new ErrorResponse('You do not have permission to manage slots for this timetable', 403);
+    }
+    return null; // allowed
+  }
+
+  if (userRole === 'faculty') {
+    if (!userDepartmentId || !facultyId) {
+      return new ErrorResponse('Faculty ID or department ID not found', 400);
+    }
+    // Must be same department
+    if (Number(master.department_id) !== Number(userDepartmentId)) {
+      return new ErrorResponse('You do not have permission to manage slots for a different department', 403);
+    }
+    // Must be the timetable_incharge for this specific timetable
+    if (Number(master.timetable_incharge_id) !== Number(facultyId)) {
+      return new ErrorResponse('Only the assigned Timetable Incharge can manage slots for this timetable', 403);
+    }
+    return null; // allowed
+  }
+
+  // superadmin and other privileged roles — no restriction
+  return null;
+};
+
+/**
+ * Helper: check read access (dept-level only, no incharge check needed for viewing)
+ */
+const checkReadAccess = (req, master) => {
+  const userRole = getUserRole(req);
+  const userDepartmentId = req.user?.department_id;
+
+  if (userRole === 'department-admin' || userRole === 'faculty') {
+    if (!userDepartmentId || !master.department_id) {
+      return new ErrorResponse('User or timetable department ID not found', 400);
+    }
+    if (Number(master.department_id) !== Number(userDepartmentId)) {
+      return new ErrorResponse('You do not have permission to view slots for this timetable', 403);
+    }
+  }
+  return null;
+};
 
 /**
  * Helper function to normalize time format
@@ -17,7 +92,6 @@ const {
 const normalizeTimeFormat = (time) => {
   if (!time) return null;
   
-  // Check if it's already in HH:MM:SS format or HH:MM format
   const timeRegex = /^([0-1]?[0-9]|2[0-3]):([0-5][0-9])(?::([0-5][0-9]))?$/;
   const match = time.match(timeRegex);
   
@@ -35,7 +109,7 @@ const normalizeTimeFormat = (time) => {
 /**
  * @desc    Add/Create a timetable slot
  * @route   POST /api/timetable-master/:masterId/slots
- * @access  Private - Department Admin or Timetable Incharge
+ * @access  Private - Department Admin or Timetable Incharge (faculty)
  */
 export const createSlot = asyncHandler(async (req, res, next) => {
   const { masterId } = req.params;
@@ -65,22 +139,12 @@ export const createSlot = asyncHandler(async (req, res, next) => {
     return next(new ErrorResponse(`Timetable master not found with id ${masterId}`, 404));
   }
 
-  // Check department access for non-superadmin users
-  const userRole = req.user?.role?.name;
-  const userDepartmentId = req.user?.department_id;
-
-  if (userRole === 'department-admin' || userRole === 'timetable-incharge') {
-    if (!userDepartmentId || !master.department_id) {
-      return next(new ErrorResponse('User or timetable department ID not found', 400));
-    }
-    // Validate user can only create slots for their own department's timetable
-    if (Number(master.department_id) !== Number(userDepartmentId)) {
-      return next(new ErrorResponse('You do not have permission to add slots for this timetable', 403));
-    }
-  }
+  // Check write access (dept + incharge validation)
+  const accessError = await checkWriteAccess(req, master);
+  if (accessError) return next(accessError);
 
   // Break periods (period_slot_id 3, 5, 8) should only be used for breaks
-  if ([3, 5, 8].includes(period_slot_id) && session_type !== 'break') {
+  if ([3, 5, 8].includes(Number(period_slot_id)) && session_type !== 'break') {
     return next(
       new ErrorResponse(
         'Period IDs 3, 5, 8 are reserved for breaks and must use session_type="break"',
@@ -89,7 +153,7 @@ export const createSlot = asyncHandler(async (req, res, next) => {
     );
   }
 
-  // Check for duplicate slot (unique constraint: master_id, day, period_slot_id, lab_group)
+  // Check for duplicate slot
   const existingSlot = await TimetableMasterSlots.findOne({
     where: {
       master_id: masterId,
@@ -103,27 +167,8 @@ export const createSlot = asyncHandler(async (req, res, next) => {
     return next(new ErrorResponse('A slot already exists for this day, period, and lab group', 409));
   }
 
-  // Break periods (period_slot_id 3, 5, 8) must use session_type='break'
-  if ([3, 5, 8].includes(period_slot_id) && session_type !== 'break') {
-    return next(
-      new ErrorResponse(
-        'Period IDs 3, 5, 8 are reserved for breaks and must use session_type="break"',
-        400
-      )
-    );
-  }
-
   try {
-    console.log('[SLOT CREATE] Payload:', {
-      masterId,
-      day,
-      period_slot_id,
-      subject_id,
-      faculty_id,
-      session_type,
-      start_time,
-      end_time,
-    });
+    console.log('[SLOT CREATE] Payload:', { masterId, day, period_slot_id, subject_id, faculty_id, session_type, start_time, end_time });
 
     const slot = await TimetableMasterSlots.create({
       master_id: masterId,
@@ -161,13 +206,10 @@ export const createSlot = asyncHandler(async (req, res, next) => {
     if (error.message.includes('Invalid time format')) {
       return next(new ErrorResponse(error.message, 400));
     }
-    
-    // Handle Sequelize validation errors
     if (error.name === 'SequelizeValidationError') {
       const messages = error.errors.map(e => `${e.path}: ${e.message}`).join(', ');
       return next(new ErrorResponse(`Validation error: ${messages}`, 400));
     }
-    
     throw error;
   }
 });
@@ -175,7 +217,7 @@ export const createSlot = asyncHandler(async (req, res, next) => {
 /**
  * @desc    Get all slots for a timetable master
  * @route   GET /api/timetable-master/:masterId/slots
- * @access  Private
+ * @access  Private - Any authenticated user in same department
  */
 export const getSlots = asyncHandler(async (req, res, next) => {
   const { masterId } = req.params;
@@ -187,19 +229,9 @@ export const getSlots = asyncHandler(async (req, res, next) => {
     return next(new ErrorResponse(`Timetable master not found with id ${masterId}`, 404));
   }
 
-  // Check department access for non-superadmin users
-  const userRole = req.user?.role?.name;
-  const userDepartmentId = req.user?.department_id;
-
-  if (userRole === 'department-admin' || userRole === 'timetable-incharge') {
-    if (!userDepartmentId || !master.department_id) {
-      return next(new ErrorResponse('User or timetable department ID not found', 400));
-    }
-    // Validate user can only view slots from their own department's timetable
-    if (Number(master.department_id) !== Number(userDepartmentId)) {
-      return next(new ErrorResponse('You do not have permission to view slots for this timetable', 403));
-    }
-  }
+  // Check read access (dept-level only)
+  const accessError = checkReadAccess(req, master);
+  if (accessError) return next(accessError);
 
   const where = { master_id: masterId };
   if (day) {
@@ -224,8 +256,8 @@ export const getSlots = asyncHandler(async (req, res, next) => {
 
 /**
  * @desc    Update a timetable slot
- * @route   PATCH /api/timetable-master/slots/:slotId
- * @access  Private - Department Admin or Timetable Incharge
+ * @route   PATCH /api/timetable-master/:masterId/slots/:slotId
+ * @access  Private - Department Admin or Timetable Incharge (faculty)
  */
 export const updateSlot = asyncHandler(async (req, res, next) => {
   const { slotId } = req.params;
@@ -235,25 +267,15 @@ export const updateSlot = asyncHandler(async (req, res, next) => {
     return next(new ErrorResponse(`Slot not found with id ${slotId}`, 404));
   }
 
-  // Get the parent timetable master to check department access
+  // Get the parent timetable master to check department + incharge access
   const master = await TimetableMaster.findByPk(slot.master_id);
   if (!master) {
     return next(new ErrorResponse('Parent timetable master not found', 404));
   }
 
-  // Check department access for non-superadmin users
-  const userRole = req.user?.role?.name;
-  const userDepartmentId = req.user?.department_id;
-
-  if (userRole === 'department-admin' || userRole === 'timetable-incharge') {
-    if (!userDepartmentId || !master.department_id) {
-      return next(new ErrorResponse('User or timetable department ID not found', 400));
-    }
-    // Validate user can only update slots in their own department's timetable
-    if (Number(master.department_id) !== Number(userDepartmentId)) {
-      return next(new ErrorResponse('You do not have permission to update slots for this timetable', 403));
-    }
-  }
+  // Check write access
+  const accessError = await checkWriteAccess(req, master);
+  if (accessError) return next(accessError);
 
   const updateFields = {};
   const allowed = ['subject_id', 'faculty_id', 'session_type', 'is_lab_session', 'lab_pair_slot_id', 'lab_group', 'room', 'notes', 'start_time', 'end_time'];
@@ -261,7 +283,6 @@ export const updateSlot = asyncHandler(async (req, res, next) => {
   try {
     allowed.forEach((field) => {
       if (req.body[field] !== undefined) {
-        // Normalize time format for time fields
         if ((field === 'start_time' || field === 'end_time') && req.body[field]) {
           updateFields[field] = normalizeTimeFormat(req.body[field]);
         } else {
@@ -294,8 +315,8 @@ export const updateSlot = asyncHandler(async (req, res, next) => {
 
 /**
  * @desc    Delete a timetable slot
- * @route   DELETE /api/timetable-master/slots/:slotId
- * @access  Private - Department Admin or Timetable Incharge
+ * @route   DELETE /api/timetable-master/:masterId/slots/:slotId
+ * @access  Private - Department Admin or Timetable Incharge (faculty)
  */
 export const deleteSlot = asyncHandler(async (req, res, next) => {
   const { slotId } = req.params;
@@ -305,25 +326,14 @@ export const deleteSlot = asyncHandler(async (req, res, next) => {
     return next(new ErrorResponse(`Slot not found with id ${slotId}`, 404));
   }
 
-  // Get the parent timetable master to check department access
   const master = await TimetableMaster.findByPk(slot.master_id);
   if (!master) {
     return next(new ErrorResponse('Parent timetable master not found', 404));
   }
 
-  // Check department access for non-superadmin users
-  const userRole = req.user?.role?.name;
-  const userDepartmentId = req.user?.department_id;
-
-  if (userRole === 'department-admin' || userRole === 'timetable-incharge') {
-    if (!userDepartmentId || !master.department_id) {
-      return next(new ErrorResponse('User or timetable department ID not found', 400));
-    }
-    // Validate user can only delete slots from their own department's timetable
-    if (Number(master.department_id) !== Number(userDepartmentId)) {
-      return next(new ErrorResponse('You do not have permission to delete slots for this timetable', 403));
-    }
-  }
+  // Check write access
+  const accessError = await checkWriteAccess(req, master);
+  if (accessError) return next(accessError);
 
   await slot.destroy();
 
@@ -336,7 +346,7 @@ export const deleteSlot = asyncHandler(async (req, res, next) => {
 /**
  * @desc    Bulk create/update slots for a timetable
  * @route   POST /api/timetable-master/:masterId/slots/bulk
- * @access  Private - Department Admin only
+ * @access  Private - Department Admin or Timetable Incharge (faculty)
  */
 export const bulkCreateSlots = asyncHandler(async (req, res, next) => {
   const { masterId } = req.params;
@@ -351,19 +361,9 @@ export const bulkCreateSlots = asyncHandler(async (req, res, next) => {
     return next(new ErrorResponse(`Timetable master not found with id ${masterId}`, 404));
   }
 
-  // Check department access for non-superadmin users
-  const userRole = req.user?.role?.name;
-  const userDepartmentId = req.user?.department_id;
-
-  if (userRole === 'department-admin' || userRole === 'timetable-incharge') {
-    if (!userDepartmentId || !master.department_id) {
-      return next(new ErrorResponse('User or timetable department ID not found', 400));
-    }
-    // Validate user can only create slots for their own department's timetable
-    if (Number(master.department_id) !== Number(userDepartmentId)) {
-      return next(new ErrorResponse('You do not have permission to create slots for this timetable', 403));
-    }
-  }
+  // Check write access
+  const accessError = await checkWriteAccess(req, master);
+  if (accessError) return next(accessError);
 
   // Delete existing slots for this master
   await TimetableMasterSlots.destroy({
@@ -384,4 +384,89 @@ export const bulkCreateSlots = asyncHandler(async (req, res, next) => {
     count: createdSlots.length,
     data: createdSlots,
   });
+});
+
+/**
+ * @desc    Get subjects for a specific timetable (via class mapping)
+ * @route   GET /api/timetable-master/:masterId/slots/subjects
+ * @access  Private - dept-admin or faculty in same department
+ */
+export const getSubjectsForTimetable = asyncHandler(async (req, res, next) => {
+  const { masterId } = req.params;
+
+  const master = await TimetableMaster.findByPk(masterId, {
+    attributes: ['id', 'class_id', 'department_id'],
+    include: [{ model: ClassModel, as: 'class', attributes: ['id', 'name'] }],
+  });
+  if (!master) return next(new ErrorResponse(`Timetable master not found: ${masterId}`, 404));
+
+  // Dept check
+  const accessError = checkReadAccess(req, master);
+  if (accessError) return next(accessError);
+
+  // Fetch subjects via SubjectClassMapping for this class
+  const mappings = await SubjectClassMapping.findAll({
+    where: { class_id: master.class_id, department_id: master.department_id },
+    include: [{
+      model: Subject,
+      as: 'subject',
+      attributes: ['id', 'subject_name', 'subject_code'],
+    }],
+  });
+
+  const subjects = mappings
+    .map(m => m.subject)
+    .filter(s => s && s.id)
+    .reduce((acc, s) => {
+      if (!acc.find(x => x.id === s.id)) {
+        acc.push({ id: s.id, name: s.subject_name, code: s.subject_code });
+      }
+      return acc;
+    }, []);
+
+  res.status(200).json({ success: true, count: subjects.length, data: subjects });
+});
+
+/**
+ * @desc    Get faculty for a specific timetable (allocated to that class)
+ * @route   GET /api/timetable-master/:masterId/slots/faculty
+ * @access  Private - dept-admin or faculty in same department
+ */
+export const getFacultyForTimetable = asyncHandler(async (req, res, next) => {
+  const { masterId } = req.params;
+
+  const master = await TimetableMaster.findByPk(masterId, {
+    attributes: ['id', 'class_id', 'department_id'],
+  });
+  if (!master) return next(new ErrorResponse(`Timetable master not found: ${masterId}`, 404));
+
+  const accessError = checkReadAccess(req, master);
+  if (accessError) return next(accessError);
+
+  // Fetch faculty allocated to this class via FacultySubjectAssignment
+  const assignments = await FacultySubjectAssignment.findAll({
+    where: { class_id: master.class_id, status: 'active' },
+    include: [{
+      model: Faculty,
+      as: 'faculty',
+      attributes: ['faculty_id', 'Name', 'email', 'faculty_college_code'],
+    }],
+  });
+
+  const facultyList = assignments
+    .map(a => a.faculty)
+    .filter(f => f && f.faculty_id)
+    .reduce((acc, f) => {
+      if (!acc.find(x => x.faculty_id === f.faculty_id)) {
+        acc.push({
+          faculty_id: f.faculty_id,
+          Name: f.Name,
+          email: f.email,
+          college_code: f.faculty_college_code,
+        });
+      }
+      return acc;
+    }, []);
+
+  res.status(200).json({ success: true, count: facultyList.length, data: facultyList });
 });

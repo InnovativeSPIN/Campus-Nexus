@@ -10,6 +10,7 @@ import ChangePassword from "./pages/ChangePassword";
 import PlacementCoordinator from "./pages/PlacementCoordinator";
 import TimetableView from "./pages/TimetableView";
 import TimetableManagement from "./pages/TimetableManagement";
+import FacultyTimetableSlotsManagement from "./pages/FacultyTimetableSlotsManagement";
 
 import Attendance from "./pages/Attendance";
 import Academics from "./pages/Academics";
@@ -48,6 +49,7 @@ const FacultyRoutes = () => (
               <Route path="change-password" element={<ChangePassword />} />
               <Route path="timetable" element={<TimetableView />} />
               <Route path="timetable-management" element={<TimetableManagement />} />
+              <Route path="timetable-management/:masterId/slots" element={<FacultyTimetableSlotsManagement />} />
 
               <Route path="placement" element={<PlacementCoordinator />} />
               <Route path="attendance" element={<Attendance />} />

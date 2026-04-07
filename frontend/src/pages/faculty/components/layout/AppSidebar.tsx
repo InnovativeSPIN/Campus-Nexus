@@ -267,7 +267,7 @@ export function AppSidebar({
             </motion.li>
           )}
 
-          {/* Conditional: Timetable Management - shows only if faculty is timetable incharge */}
+          {/* Conditional: Timetable Management - shows ONLY if faculty is timetable_incharge */}
           {isTimetableIncharge && (
             <>
               <motion.li

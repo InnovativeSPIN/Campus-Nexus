@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/pages/faculty/compon
 import { Calendar, Clock, Users, AlertCircle, Loader2, ShieldAlert } from "lucide-react";
 import { toast } from "@/pages/faculty/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 interface Timetable {
   id: number;
@@ -23,9 +24,13 @@ interface Timetable {
 interface TimetableRoles {
   isClassCoordinator: boolean;
   isTimetableIncharge: boolean;
+  isAnyCoordinator: boolean;
+  departmentId: number | null;
+  assignedTimetableIds: number[];
 }
 
 export default function TimetableManagement() {
+  const navigate = useNavigate();
   const [timetables, setTimetables] = useState<Timetable[]>([]);
   const [loading, setLoading] = useState(true);
   const [accessDenied, setAccessDenied] = useState(false);
@@ -46,8 +51,8 @@ export default function TimetableManagement() {
         const data = await response.json();
         setTimetableRoles(data.data);
         
-        // If user has either role, fetch timetables
-        if (data.data?.isClassCoordinator || data.data?.isTimetableIncharge) {
+        // If user is assigned as any coordinator role, fetch their timetables
+        if (data.data?.isAnyCoordinator) {
           await fetchTimetables();
         } else {
           setAccessDenied(true);
@@ -109,12 +114,13 @@ export default function TimetableManagement() {
         <div className="min-h-96 bg-gradient-to-br from-slate-50 to-slate-100 rounded-lg border border-slate-200 p-12 flex items-center justify-center">
           <div className="text-center max-w-md">
             <ShieldAlert className="w-16 h-16 text-red-500 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-slate-900 mb-2">Access Denied</h2>
+            <h2 className="text-2xl font-bold text-slate-900 mb-2">Access Restricted</h2>
             <p className="text-slate-600 mb-4">
-              You are not assigned as a Timetable Incharge or Class Coordinator. 
+              You are not assigned as a Timetable Coordinator for any year in your department.
             </p>
             <p className="text-slate-500 text-sm">
-              Please contact your Department Admin to get assigned to a timetable role.
+              Each academic year has a dedicated coordinator (Class Coordinator, Asst. Coordinator, or Timetable Incharge)
+              assigned by the Department Admin. Please contact your Department Admin to get assigned.
             </p>
           </div>
         </div>
@@ -140,14 +146,13 @@ export default function TimetableManagement() {
             <div className="flex gap-3">
               <AlertCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-blue-900 font-medium">Your Coordinator Status</p>
+                <p className="text-blue-900 font-medium">Your Timetable Coordinator Status</p>
                 <div className="text-blue-700 text-sm mt-2 space-y-1">
-                  <p>✓ Class Coordinator: {timetableRoles?.isClassCoordinator ? "Yes" : "No"}</p>
-                  <p>✓ Timetable Incharge: {timetableRoles?.isTimetableIncharge ? "Yes" : "No"}</p>
+                  <p>✓ Timetable Incharge: <span className="font-semibold text-blue-900">Assigned</span></p>
                 </div>
                 <p className="text-blue-700 text-sm mt-3">
-                  You can view timetables and apply alterations when faculty request leave. 
-                  Department admins create and activate timetables.
+                  You are the Timetable Incharge for your department. You can view the timetables assigned to you below.
+                  Department admins create and manage timetables.
                 </p>
               </div>
             </div>
@@ -209,7 +214,11 @@ export default function TimetableManagement() {
                     </div>
 
                     <div className="pt-3 flex gap-2">
-                      <Button className="flex-1" size="sm">
+                      <Button
+                        className="flex-1"
+                        size="sm"
+                        onClick={() => navigate(`/faculty/timetable-management/${timetable.id}/slots`)}
+                      >
                         View Slots
                       </Button>
                       {timetable.status === "active" && (

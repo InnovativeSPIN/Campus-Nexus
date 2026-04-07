@@ -149,25 +149,38 @@ export const getTimetableMasters = asyncHandler(async (req, res, next) => {
 
   const where = {};
 
-  // For department-admin users, restrict to their own department
-  const userRole = req.user?.role?.name;
+  // IMPORTANT: req.user.role is a plain string (e.g. 'faculty', 'department-admin')
+  // NOT an object - so never use req.user.role.name
+  const userRole = typeof req.user?.role === 'string'
+    ? req.user.role
+    : (req.user?.role?.role_name || req.user?.role?.name || '');
   const userDepartmentId = req.user?.department_id;
-  
+  const facultyId = req.user?.faculty_id;
+
   console.log('[TIMETABLE-MASTER] getTimetableMasters called by user:', {
     userId: req.user?.id,
     role: userRole,
     userDepartmentId,
+    facultyId,
     queryDepartmentId: req.query.department_id,
   });
 
-  // If user is department-admin or timetable-incharge, they can only see their own department's timetables
-  if (userRole === 'department-admin' || userRole === 'timetable-incharge') {
+  if (userRole === 'department-admin') {
+    // Department admins see ALL timetables in their own department
     if (!userDepartmentId) {
       return next(new ErrorResponse('User department ID not found', 400));
     }
-    // Always restrict to user's department, ignore any department_id from query
     where.department_id = userDepartmentId;
-    console.log('[TIMETABLE-MASTER] Restricting to user department:', userDepartmentId);
+    console.log('[TIMETABLE-MASTER] dept-admin: restricting to dept:', userDepartmentId);
+  } else if (userRole === 'faculty') {
+    // Regular faculty can ONLY see timetables from their OWN department
+    // AND ONLY the ones where they are assigned as timetable_incharge
+    if (!userDepartmentId || !facultyId) {
+      return next(new ErrorResponse('User department ID or faculty ID not found', 400));
+    }
+    where.department_id = userDepartmentId;
+    where.timetable_incharge_id = facultyId;
+    console.log('[TIMETABLE-MASTER] faculty timetable-incharge: dept', userDepartmentId, 'faculty', facultyId);
   } else if (req.query.department_id) {
     // For superadmin, allow filtering by department_id if provided
     where.department_id = req.query.department_id;
@@ -252,10 +265,13 @@ export const getTimetableMaster = asyncHandler(async (req, res, next) => {
   }
 
   // Check department access for non-superadmin users
-  const userRole = req.user?.role?.name;
+  // IMPORTANT: req.user.role is a plain string, not an object
+  const userRole = typeof req.user?.role === 'string'
+    ? req.user.role
+    : (req.user?.role?.role_name || req.user?.role?.name || '');
   const userDepartmentId = req.user?.department_id;
   
-  if (userRole === 'department-admin' || userRole === 'timetable-incharge') {
+  if (userRole === 'department-admin' || userRole === 'faculty') {
     if (timetable.department_id && userDepartmentId && Number(timetable.department_id) !== Number(userDepartmentId)) {
       return next(new ErrorResponse('You do not have permission to access this timetable', 403));
     }

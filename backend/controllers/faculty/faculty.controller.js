@@ -907,33 +907,56 @@ export const getMyClassIncharge = asyncHandler(async (req, res, next) => {
 // @access    Private/Faculty
 export const getMyTimetableRoles = asyncHandler(async (req, res, next) => {
   const facultyId = req.user.faculty_id;
+  const departmentId = req.user.department_id;
 
   if (!facultyId) {
     return next(new ErrorResponse('Faculty ID not found', 400));
   }
 
-  const activeStatus = 'active';
+  // Only check active timetables where this faculty is the timetable_incharge
+  // within their own department — this is the gate for Timetable Management access
+  const inchargeTimetables = await TimetableMaster.findAll({
+    where: {
+      status: 'active',
+      department_id: departmentId,
+      timetable_incharge_id: facultyId,
+    },
+    attributes: ['id', 'department_id', 'class_id', 'academic_year', 'semester',
+                 'class_coordinator_id', 'asst_coordinator_id', 'timetable_incharge_id'],
+    include: [
+      { model: ClassModel, as: 'class', attributes: ['id', 'name', 'semester'] },
+    ],
+    raw: false,
+  });
 
-  const [isClassCoordinator, isTimetableIncharge] = await Promise.all([
-    TimetableMaster.count({
-      where: {
-        class_coordinator_id: facultyId,
-        status: activeStatus,
-      },
-    }),
-    TimetableMaster.count({
-      where: {
-        timetable_incharge_id: facultyId,
-        status: activeStatus,
-      },
-    }),
-  ]);
+  const isTimetableIncharge = inchargeTimetables.length > 0;
+
+  // Also check class coordinator / asst coordinator assignments (informational only)
+  const classCoordCount = await TimetableMaster.count({
+    where: {
+      status: 'active',
+      department_id: departmentId,
+      [Op.or]: [
+        { class_coordinator_id: facultyId },
+        { asst_coordinator_id: facultyId },
+      ],
+    },
+  });
+  const isClassCoordinator = classCoordCount > 0;
+
+  // Only timetable incharge gets access to the Management page
+  const isAnyCoordinator = isTimetableIncharge;
+
+  const assignedTimetableIds = inchargeTimetables.map(t => t.id);
 
   res.status(200).json({
     success: true,
     data: {
-      isClassCoordinator: isClassCoordinator > 0,
-      isTimetableIncharge: isTimetableIncharge > 0,
+      isClassCoordinator,
+      isTimetableIncharge,
+      isAnyCoordinator,
+      departmentId: departmentId || null,
+      assignedTimetableIds,
     },
   });
 });
