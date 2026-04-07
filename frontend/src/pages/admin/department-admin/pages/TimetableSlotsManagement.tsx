@@ -39,6 +39,7 @@ interface TimetableSlot {
   faculty_id: number | null;
   session_type: string;
   is_lab_session: boolean;
+  lab_pair_slot_id: number | null;
   lab_group: string | null;
   room: string | null;
   notes: string | null;
@@ -104,6 +105,7 @@ export default function TimetableSlotsManagement() {
     faculty_id: "",
     session_type: "theory",
     is_lab_session: false,
+    lab_pair_slot_id: "",
     lab_group: "",
     room: "",
     notes: "",
@@ -446,6 +448,7 @@ export default function TimetableSlotsManagement() {
       faculty_id: "",
       session_type: "theory",
       is_lab_session: false,
+      lab_pair_slot_id: "",
       lab_group: "",
       room: "",
       notes: "",
@@ -487,6 +490,7 @@ export default function TimetableSlotsManagement() {
       faculty_id: resolvedFacultyId,
       session_type: slot.session_type,
       is_lab_session: slot.is_lab_session,
+      lab_pair_slot_id: slot.lab_pair_slot_id?.toString() || "",
       lab_group: slot.lab_group || "",
       room: slot.room || "",
       notes: slot.notes || "",
