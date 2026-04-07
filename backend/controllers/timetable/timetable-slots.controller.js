@@ -11,6 +11,28 @@ const {
 } = models;
 
 /**
+ * Helper function to normalize time format
+ * Converts "HH:MM" to "HH:MM:SS" and validates format
+ */
+const normalizeTimeFormat = (time) => {
+  if (!time) return null;
+  
+  // Check if it's already in HH:MM:SS format or HH:MM format
+  const timeRegex = /^([0-1]?[0-9]|2[0-3]):([0-5][0-9])(?::([0-5][0-9]))?$/;
+  const match = time.match(timeRegex);
+  
+  if (!match) {
+    throw new Error(`Invalid time format: ${time}. Expected HH:MM or HH:MM:SS`);
+  }
+  
+  const hours = match[1];
+  const minutes = match[2];
+  const seconds = match[3] || '00';
+  
+  return `${hours.padStart(2, '0')}:${minutes}:${seconds}`;
+};
+
+/**
  * @desc    Add/Create a timetable slot
  * @route   POST /api/timetable-master/:masterId/slots
  * @access  Private - Department Admin or Timetable Incharge
@@ -28,6 +50,8 @@ export const createSlot = asyncHandler(async (req, res, next) => {
     lab_group,
     room,
     notes,
+    start_time,
+    end_time,
   } = req.body;
 
   // Validate required fields
@@ -79,32 +103,73 @@ export const createSlot = asyncHandler(async (req, res, next) => {
     return next(new ErrorResponse('A slot already exists for this day, period, and lab group', 409));
   }
 
-  const slot = await TimetableMasterSlots.create({
-    master_id: masterId,
-    day,
-    period_slot_id,
-    subject_id: subject_id || null,
-    faculty_id: faculty_id || null,
-    session_type: session_type || 'theory',
-    is_lab_session: is_lab_session || false,
-    lab_pair_slot_id: lab_pair_slot_id || null,
-    lab_group: lab_group || null,
-    room: room || null,
-    notes: notes || null,
-  });
+  // Break periods (period_slot_id 3, 5, 8) must use session_type='break'
+  if ([3, 5, 8].includes(period_slot_id) && session_type !== 'break') {
+    return next(
+      new ErrorResponse(
+        'Period IDs 3, 5, 8 are reserved for breaks and must use session_type="break"',
+        400
+      )
+    );
+  }
 
-  const result = await TimetableMasterSlots.findByPk(slot.id, {
-    include: [
-      { model: Subject, as: 'subject' },
-      { model: Faculty, as: 'faculty' },
-    ],
-  });
+  try {
+    console.log('[SLOT CREATE] Payload:', {
+      masterId,
+      day,
+      period_slot_id,
+      subject_id,
+      faculty_id,
+      session_type,
+      start_time,
+      end_time,
+    });
 
-  res.status(201).json({
-    success: true,
-    message: 'Slot created',
-    data: result,
-  });
+    const slot = await TimetableMasterSlots.create({
+      master_id: masterId,
+      day,
+      period_slot_id,
+      subject_id: subject_id || null,
+      faculty_id: faculty_id || null,
+      session_type: session_type || 'theory',
+      is_lab_session: is_lab_session || false,
+      lab_pair_slot_id: lab_pair_slot_id || null,
+      lab_group: lab_group || null,
+      room: room || null,
+      notes: notes || null,
+      start_time: start_time ? normalizeTimeFormat(start_time) : null,
+      end_time: end_time ? normalizeTimeFormat(end_time) : null,
+    });
+
+    console.log('[SLOT CREATE] Slot created successfully:', slot.id);
+
+    const result = await TimetableMasterSlots.findByPk(slot.id, {
+      include: [
+        { model: Subject, as: 'subject' },
+        { model: Faculty, as: 'faculty' },
+      ],
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Slot created',
+      data: result,
+    });
+  } catch (error) {
+    console.error('[SLOT CREATE] Error:', error.name, error.message);
+    
+    if (error.message.includes('Invalid time format')) {
+      return next(new ErrorResponse(error.message, 400));
+    }
+    
+    // Handle Sequelize validation errors
+    if (error.name === 'SequelizeValidationError') {
+      const messages = error.errors.map(e => `${e.path}: ${e.message}`).join(', ');
+      return next(new ErrorResponse(`Validation error: ${messages}`, 400));
+    }
+    
+    throw error;
+  }
 });
 
 /**
@@ -191,28 +256,40 @@ export const updateSlot = asyncHandler(async (req, res, next) => {
   }
 
   const updateFields = {};
-  const allowed = ['subject_id', 'faculty_id', 'session_type', 'is_lab_session', 'lab_pair_slot_id', 'lab_group', 'room', 'notes'];
+  const allowed = ['subject_id', 'faculty_id', 'session_type', 'is_lab_session', 'lab_pair_slot_id', 'lab_group', 'room', 'notes', 'start_time', 'end_time'];
 
-  allowed.forEach((field) => {
-    if (req.body[field] !== undefined) {
-      updateFields[field] = req.body[field];
+  try {
+    allowed.forEach((field) => {
+      if (req.body[field] !== undefined) {
+        // Normalize time format for time fields
+        if ((field === 'start_time' || field === 'end_time') && req.body[field]) {
+          updateFields[field] = normalizeTimeFormat(req.body[field]);
+        } else {
+          updateFields[field] = req.body[field];
+        }
+      }
+    });
+
+    await slot.update(updateFields);
+
+    const result = await TimetableMasterSlots.findByPk(slotId, {
+      include: [
+        { model: Subject, as: 'subject' },
+        { model: Faculty, as: 'faculty' },
+      ],
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Slot updated',
+      data: result,
+    });
+  } catch (error) {
+    if (error.message.includes('Invalid time format')) {
+      return next(new ErrorResponse(error.message, 400));
     }
-  });
-
-  await slot.update(updateFields);
-
-  const result = await TimetableMasterSlots.findByPk(slotId, {
-    include: [
-      { model: Subject, as: 'subject' },
-      { model: Faculty, as: 'faculty' },
-    ],
-  });
-
-  res.status(200).json({
-    success: true,
-    message: 'Slot updated',
-    data: result,
-  });
+    throw error;
+  }
 });
 
 /**
