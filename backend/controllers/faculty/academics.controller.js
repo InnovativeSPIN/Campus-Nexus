@@ -6,10 +6,10 @@ import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
 
-const { 
-  FacultySubjectAssignment, 
-  Subject, 
-  Department, 
+const {
+  FacultySubjectAssignment,
+  Subject,
+  Department,
   Class: ClassModel,
   Faculty,
   CourseLessonPlan,
@@ -28,13 +28,8 @@ export const getMyAssignedSubjects = asyncHandler(async (req, res, next) => {
 
   // For department-admin, we'll filter via the include where clause below.
   // For faculty, filter by their faculty_id
-  let where;
-  if (userRole === 'department-admin' && departmentId) {
-    // Will filter via Subject include where clause
-    where = {};
-  } else {
-    where = { faculty_id: facultyId };
-  }
+  // Always filter by faculty_id to show only assigned subjects for the logged-in user
+  const where = { faculty_id: facultyId, status: 'active' };
 
   if (academic_year) where.academic_year = academic_year;
   if (semester) where.semester = semester;
@@ -47,12 +42,12 @@ export const getMyAssignedSubjects = asyncHandler(async (req, res, next) => {
         model: Subject,
         as: 'subject',
         attributes: [
-          'id', 
-          'subject_name', 
-          'subject_code', 
-          'credits', 
-          'type', 
-          'is_elective', 
+          'id',
+          'subject_name',
+          'subject_code',
+          'credits',
+          'type',
+          'is_elective',
           'is_laboratory',
           'hours_per_week',
           'lab_hours_per_week',
@@ -71,12 +66,19 @@ export const getMyAssignedSubjects = asyncHandler(async (req, res, next) => {
           }
         ],
         // For department-admin, filter by department (required: true forces inner join)
-        ...(userRole === 'department-admin' && departmentId ? { where: { department_id: departmentId }, required: true } : { required: false })
+        required: true
       },
       {
         model: ClassModel,
         as: 'class',
         attributes: ['id', 'name', 'capacity', 'section', 'semester', 'batch'],
+        include: [
+          {
+            model: Department,
+            as: 'department',
+            attributes: ['id', 'short_name', 'full_name']
+          }
+        ],
         required: false
       }
     ],
@@ -87,7 +89,7 @@ export const getMyAssignedSubjects = asyncHandler(async (req, res, next) => {
   const transformedAssignments = assignments.map(assignment => {
     const data = assignment.toJSON();
     const subject = data.subject || {};
-    
+
     return {
       id: data.id,
       assignment_id: data.id,
@@ -124,10 +126,10 @@ export const getMyAssignedSubjects = asyncHandler(async (req, res, next) => {
 
   // Group subjects by academic_year, semester, and department for the credits view
   const groupedBySemester = {};
-  
+
   transformedAssignments.forEach(assignment => {
     const { academic_year, semester, subject } = assignment;
-    const department = subject.department?.short_name || 'Unknown';
+    const department = subject.department?.short_name || assignment.class?.department?.short_name || 'Unknown';
     const year = subject.year || Math.ceil(semester / 2);
     const key = `${department}-${year}-${semester}`;
 
@@ -176,13 +178,8 @@ export const getMyAssignedClasses = asyncHandler(async (req, res, next) => {
 
   // For department-admin, we'll filter via the include where clause below.
   // For faculty, filter by their faculty_id
-  let where;
-  if (userRole === 'department-admin' && departmentId) {
-    // Will filter via Subject include where clause
-    where = { status: 'active' };
-  } else {
-    where = { faculty_id: facultyId, status: 'active' };
-  }
+  // Always filter by faculty_id to show only assigned classes for the logged-in user
+  const where = { faculty_id: facultyId, status: 'active' };
   if (academic_year) where.academic_year = academic_year;
 
   const assignments = await FacultySubjectAssignment.findAll({
@@ -192,9 +189,9 @@ export const getMyAssignedClasses = asyncHandler(async (req, res, next) => {
         model: Subject,
         as: 'subject',
         attributes: [
-          'id', 
-          'subject_name', 
-          'subject_code', 
+          'id',
+          'subject_name',
+          'subject_code',
           'semester',
           'academic_year',
           'year',
@@ -207,13 +204,19 @@ export const getMyAssignedClasses = asyncHandler(async (req, res, next) => {
             attributes: ['id', 'short_name', 'full_name']
           }
         ],
-        // For department-admin, filter by department (required: true forces inner join)
-        ...(userRole === 'department-admin' && departmentId ? { where: { department_id: departmentId }, required: true } : { required: false })
+        required: true
       },
       {
         model: ClassModel,
         as: 'class',
-        attributes: ['id', 'name', 'section', 'semester', 'batch', 'capacity']
+        attributes: ['id', 'name', 'section', 'semester', 'batch', 'capacity'],
+        include: [
+          {
+            model: Department,
+            as: 'department',
+            attributes: ['id', 'short_name', 'full_name']
+          }
+        ]
       }
     ],
     order: [['academic_year', 'DESC'], ['semester', 'ASC']]
@@ -224,7 +227,11 @@ export const getMyAssignedClasses = asyncHandler(async (req, res, next) => {
     const data = assignment.toJSON();
     const subject = data.subject || {};
     const classInfo = data.class || {};
-    const department = subject.department || {};
+    const subDept = subject.department || {};
+    const classDept = classInfo.department || {};
+
+    // Prefer assignment-level semester, then subject semester, then class semester
+    const semesterValue = data.semester || subject.semester || classInfo.semester || 'N/A';
 
     return {
       id: data.id.toString(),
@@ -232,8 +239,8 @@ export const getMyAssignedClasses = asyncHandler(async (req, res, next) => {
       faculty_id: data.faculty_id,
       subject_id: subject.id,
       class_id: data.class_id,
-      program: `${department.short_name || department.full_name || 'Unknown'}`,
-      semester: `${subject.semester}`,
+      program: `${subDept.short_name || subDept.full_name || classDept.short_name || classDept.full_name || 'Unknown'}`,
+      semester: `${semesterValue}`,
       section: classInfo.section || 'N/A',
       subject: subject.subject_name,
       subjectCode: subject.subject_code,
@@ -307,28 +314,24 @@ export const getCourseLessonPlans = asyncHandler(async (req, res, next) => {
       }
     }
 
-    // Build approval status filter:
-    // - Faculty viewing their own: show both pending and approved
-    // - Faculty viewing as dept-admin: show only approved 
-    // - Students viewing: show only approved
+    // Show all statuses to the faculty who owns the plan, and to admins.
+    // Students and other viewers see only approved.
     const isOwnPlan = req.user.faculty_id === facultyId || req.user.id === facultyId;
+    const isAdmin = ['department-admin', 'superadmin', 'admin'].includes(userRole);
     let approvalStatusWhere = {};
-    
-    if ((userRole === 'faculty' && isOwnPlan) || includePending === 'true') {
-      // Faculty sees own pending + approved plans (and NULL for backward compatibility)
-      approvalStatusWhere = { [Op.in]: ['pending', 'approved', null] };
+
+    if (isOwnPlan || isAdmin || includePending === 'true') {
+      approvalStatusWhere = { [Op.in]: ['pending', 'approved', 'rejected', 'revision_requested', null] };
     } else {
-      // Others see only approved plans
-      approvalStatusWhere = { [Op.in]: ['approved', null] };  // Include NULL for backward compatibility
+      approvalStatusWhere = { [Op.in]: ['approved', null] };
     }
 
     const plans = await CourseLessonPlan.findAll({
       where: {
         faculty_id: facultyId,
-        subject_id: subjectIdNum,
         class_id: classIdNum,
-        academic_year: academicYear || defaultYear,
-        semester: semester ? parseInt(semester, 10) : 4,
+        // Do NOT filter by subject_id or semester — the stored IDs may differ from the assignment IDs.
+        // Query all plans for this faculty+class regardless of how the subject was recorded.
         approval_status: approvalStatusWhere
       },
       include: [
@@ -549,7 +552,7 @@ export const createCourseLessonPlanBulk = asyncHandler(async (req, res, next) =>
     try {
       const { Faculty } = models;
       const departmentId = req.user.department_id;
-      
+
       const departmentAdmins = await Faculty.findAll({
         where: {
           role_id: 7, // Department admin role
@@ -561,7 +564,7 @@ export const createCourseLessonPlanBulk = asyncHandler(async (req, res, next) =>
       });
 
       const deptAdminIds = departmentAdmins.map(admin => admin.faculty_id);
-      
+
       if (deptAdminIds.length > 0 && models.CourseLessonPlanNotification) {
         const notifications = deptAdminIds.map(adminId => ({
           course_lesson_plan_id: createdPlans[0]?.id,
@@ -625,7 +628,7 @@ export const getPendingCourseLessonPlans = asyncHandler(async (req, res, next) =
 
   try {
     console.log('[getPendingCourseLessonPlans] Fetching topics:', { facultyId, subjectIdNum, classIdNum });
-    
+
     // Get all uncompleted topics for this subject/class, ordered by sno
     const pendingTopics = await CourseLessonPlan.findAll({
       where: {
@@ -676,10 +679,8 @@ export const getCourseLessonPlanProgress = asyncHandler(async (req, res, next) =
     const progress = await CourseLessonPlan.findAll({
       where: {
         faculty_id: parseInt(facultyId),
-        subject_id: parseInt(subjectId),
         class_id: parseInt(classId),
-        academic_year: academicYear || defaultYear,
-        semester: semester ? parseInt(semester) : 4,
+        // Do NOT filter by subject_id or semester — stored IDs may differ from assignment IDs.
       },
       attributes: [
         'id',
@@ -745,7 +746,7 @@ export const uploadCourseFile = asyncHandler(async (req, res, next) => {
   try {
     const subjectIdNum = parseInt(subjectId, 10);
     const classIdNum = parseInt(classId, 10);
-    
+
     // Use provided academic_year and semester or fallback to current defaults
     const currentYear = new Date().getFullYear();
     const defaultAcademicYear = `${currentYear}-${currentYear + 1}`;
@@ -823,9 +824,9 @@ export const uploadCourseFile = asyncHandler(async (req, res, next) => {
       where: {
         subject_id: assignment.subject_id
       },
-      include: [{ 
-        model: Faculty, 
-        as: 'faculty', 
+      include: [{
+        model: Faculty,
+        as: 'faculty',
         required: true,
         where: { role_id: [7] } // 7 is typically department admin
       }],
@@ -988,7 +989,7 @@ export const uploadCoursePlan = asyncHandler(async (req, res, next) => {
       });
 
       const deptAdminIds = departmentAdmins.map(admin => admin.faculty_id);
-      
+
       if (deptAdminIds.length > 0) {
         const notifications = deptAdminIds.map(adminId => ({
           course_file_id: coursePlan.id,

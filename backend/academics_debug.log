@@ -1,0 +1,28 @@
+[2026-04-07T01:22:18.714Z] getCourseLessonPlans: {"subjectId":"40","classId":"23","facultyId":406,"academicYear":"2024-2028","semester":"4","userRole":"faculty"}
+[2026-04-07T01:22:19.655Z] getCourseLessonPlanProgress: {"subjectId":"40","classId":"23","facultyId":"406","academicYear":"2024-2028","semester":"4"}
+[2026-04-07T01:22:19.873Z] getCourseLessonPlanProgress Result: 0 topics found
+[2026-04-07T01:22:21.665Z] getCourseLessonPlans: {"subjectId":"29","classId":"21","facultyId":406,"academicYear":"2023-2027","semester":"6","userRole":"faculty"}
+[2026-04-07T01:22:22.609Z] getCourseLessonPlanProgress: {"subjectId":"29","classId":"21","facultyId":"406","academicYear":"2023-2027","semester":"6"}
+[2026-04-07T01:22:22.841Z] getCourseLessonPlanProgress Result: 0 topics found
+[2026-04-07T01:22:27.242Z] getCourseLessonPlans: {"subjectId":"24","classId":"21","facultyId":406,"academicYear":"2023-2027","semester":"6","userRole":"faculty"}
+[2026-04-07T01:22:28.145Z] getCourseLessonPlanProgress: {"subjectId":"24","classId":"21","facultyId":"406","academicYear":"2023-2027","semester":"6"}
+[2026-04-07T01:22:28.363Z] getCourseLessonPlanProgress Result: 0 topics found
+[2026-04-07T01:22:29.364Z] getCourseLessonPlans: {"subjectId":"13","classId":"21","facultyId":406,"academicYear":"2023-2027","semester":"6","userRole":"faculty"}
+[2026-04-07T01:22:30.287Z] getCourseLessonPlanProgress: {"subjectId":"13","classId":"21","facultyId":"406","academicYear":"2023-2027","semester":"6"}
+[2026-04-07T01:22:30.528Z] getCourseLessonPlanProgress Result: 0 topics found
+[2026-04-07T01:22:30.746Z] getCourseLessonPlans: {"subjectId":"40","classId":"23","facultyId":406,"academicYear":"2024-2028","semester":"4","userRole":"faculty"}
+[2026-04-07T01:22:31.685Z] getCourseLessonPlanProgress: {"subjectId":"40","classId":"23","facultyId":"406","academicYear":"2024-2028","semester":"4"}
+[2026-04-07T01:22:31.919Z] getCourseLessonPlanProgress Result: 0 topics found
+[2026-04-07T01:22:32.303Z] getCourseLessonPlans: {"subjectId":"29","classId":"21","facultyId":406,"academicYear":"2023-2027","semester":"6","userRole":"faculty"}
+[2026-04-07T01:22:33.248Z] getCourseLessonPlanProgress: {"subjectId":"29","classId":"21","facultyId":"406","academicYear":"2023-2027","semester":"6"}
+[2026-04-07T01:22:33.474Z] getCourseLessonPlanProgress Result: 0 topics found
+[2026-04-07T01:23:15.647Z] getCourseLessonPlanProgress: {"subjectId":"40","classId":"23","facultyId":"406","academicYear":"2024-2028","semester":"4"}
+[2026-04-07T01:23:15.886Z] getCourseLessonPlanProgress Result: 0 topics found
+[2026-04-07T01:23:21.309Z] getCourseLessonPlanProgress: {"subjectId":"29","classId":"21","facultyId":"406","academicYear":"2023-2027","semester":"6"}
+[2026-04-07T01:23:21.534Z] getCourseLessonPlanProgress Result: 0 topics found
+[2026-04-07T01:24:44.466Z] getCourseLessonPlans: {"subjectId":"40","classId":"23","facultyId":406,"academicYear":"2024-2028","semester":"4","userRole":"faculty"}
+[2026-04-07T01:24:45.606Z] getCourseLessonPlanProgress: {"subjectId":"40","classId":"23","facultyId":"406","academicYear":"2024-2028","semester":"4"}
+[2026-04-07T01:24:45.834Z] getCourseLessonPlanProgress Result: 0 topics found
+[2026-04-07T01:24:55.249Z] getCourseLessonPlans: {"subjectId":"29","classId":"21","facultyId":406,"academicYear":"2023-2027","semester":"6","userRole":"faculty"}
+[2026-04-07T01:24:56.833Z] getCourseLessonPlanProgress: {"subjectId":"29","classId":"21","facultyId":"406","academicYear":"2023-2027","semester":"6"}
+[2026-04-07T01:24:57.066Z] getCourseLessonPlanProgress Result: 0 topics found

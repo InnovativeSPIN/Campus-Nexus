@@ -450,7 +450,8 @@ export default function Attendance() {  const { authToken, user } = useAuth();
 
   useEffect(() => {
     if (!selectedDate) return;
-    fetch(`/api/v1/attendance/department-admin/classes/${selectedDate}`, { headers: { 'Authorization': `Bearer ${authToken}` } })
+    // Use the same faculty timetable endpoint so department-admin only sees their OWN assigned slots
+    fetch(`/api/v1/attendance/faculty/timetable/${selectedDate}`, { headers: { 'Authorization': `Bearer ${authToken}` } })
       .then(r => r.json())
       .then(data => { 
         if (data.success && data.data) { 

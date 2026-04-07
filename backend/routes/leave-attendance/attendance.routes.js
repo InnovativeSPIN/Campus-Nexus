@@ -37,8 +37,10 @@ router.route('/faculty')
   .post(authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin'), markFacultyAttendance);
 router.get('/faculty/:facultyId', authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin', 'faculty'), getFacultyAttendance);
 
-// Timetable-based slot routes (NEW)
-router.get('/faculty/timetable/:date', authorize('faculty'), getFacultyTimetableSlots);
+// Timetable-based slot routes
+// department-admin faculty see only their OWN slots (same as regular faculty)
+router.get('/faculty/timetable/:date', authorize('faculty', 'department-admin'), getFacultyTimetableSlots);
+// Keep the dept-wide overview route for admin-only use cases
 router.get('/department-admin/classes/:date', authorize('department-admin'), getDepartmentAdminClassSlots);
 
 // Main routes

@@ -1,4 +1,4 @@
-﻿import { MainLayout } from "@/pages/faculty/components/layout/MainLayout";
+import { MainLayout } from "@/pages/faculty/components/layout/MainLayout";
 import { motion } from "framer-motion";
 import { Button } from "@/pages/faculty/components/ui/button";
 import {

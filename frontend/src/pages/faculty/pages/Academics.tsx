@@ -230,7 +230,7 @@ export default function Academics() {
   };
 
   const [selectedClassId, setSelectedClassId] = useState<string>("");
-  
+
   // Initialize selectedClassId when classes data is loaded
   useEffect(() => {
     if (fetchedClassesHandled.length > 0 && !selectedClassId) {
@@ -297,10 +297,10 @@ export default function Academics() {
       // Ensure semester is a number, not a string
       const semesterParam = parseInt(String(selectedClass.semester || 1), 10);
       const academicYearParam = getDefaultAcademicYear();
-      
+
       // Faculty can see their own pending + approved plans
       const url = `/api/v1/faculty/academics/course-plans?subjectId=${selectedClass.subject_id}&classId=${selectedClass.class_id}&facultyId=${selectedClass.faculty_id}&academicYear=${encodeURIComponent(academicYearParam)}&semester=${semesterParam}&includePending=true`;
-      
+
       console.log('📚 Loading course plans with:', {
         subjectId: selectedClass.subject_id,
         classId: selectedClass.class_id,
@@ -310,7 +310,7 @@ export default function Academics() {
         includePending: true,
         url
       });
-      
+
       const response = await apiFetch(url);
 
       console.log('📚 Course plans response:', response);
@@ -319,10 +319,8 @@ export default function Academics() {
         console.log('✅ Found', response.data.length, 'course plans');
         setCoursePlans(response.data);
 
-        // Sync with Syllabus Topics (for highlights/ticks)
-        // But only show APPROVED topics in the main syllabus display
+        // Show ALL topics from course_lesson_plans regardless of approval status
         const syllabusTopics = response.data
-          .filter((plan: CourseLessonPlan) => plan.approval_status === 'approved')
           .map((plan: CourseLessonPlan) => ({
             id: `${plan.id}`,
             name: plan.topic,
@@ -334,9 +332,9 @@ export default function Academics() {
             periods_taken: plan.periods_taken || 0,
             periods_required: plan.periods_required || 1
           }));
-        
+
         setTopicsData(prev => ({ ...prev, [selectedClassId]: syllabusTopics }));
-        
+
         // Initialize expanded units state - expand all units by default
         const uniqueUnits = [...new Set(syllabusTopics.map((t: any) => t.unit_label))];
         const newExpandedUnits: { [key: string]: boolean } = {};
@@ -821,8 +819,8 @@ export default function Academics() {
           </div>
           <div className="flex items-center gap-2">
             <div className="sm:hidden text-right mr-2">
-               <p className="text-[10px] font-bold text-primary">{formatDate(currentTime)}</p>
-               <p className="text-[10px] text-muted-foreground">{formatTime(currentTime)}</p>
+              <p className="text-[10px] font-bold text-primary">{formatDate(currentTime)}</p>
+              <p className="text-[10px] text-muted-foreground">{formatTime(currentTime)}</p>
             </div>
             <IntegratedNotificationBell />
           </div>
@@ -855,7 +853,7 @@ export default function Academics() {
                   <SelectItem key={cls.id} value={cls.id}>
                     <div className="flex items-center gap-2">
                       <GraduationCap className="w-4 h-4 text-secondary" />
-                      <span>{cls.program} - Sem {cls.semester} - Sec {cls.section}</span>
+                      <span>{cls.program} - Sem {cls.semester} - Sec {cls.section} : <span className="font-bold text-primary">{cls.subject}</span></span>
                       <Badge variant="outline" className="ml-2">{cls.subjectCode}</Badge>
                     </div>
                   </SelectItem>
@@ -874,7 +872,7 @@ export default function Academics() {
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Semester / Section</p>
-              <p className="font-semibold text-foreground">Sem {selectedClass.semester} - Sec {selectedClass.section}</p>
+              <p className="font-semibold text-foreground">Sem {selectedClass.semester} - Sec {selectedClass.section} : {selectedClass.subject}</p>
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Subject Code</p>
@@ -1141,7 +1139,7 @@ export default function Academics() {
                 </Badge>
               )}
             </div>
-            
+
             {/* Show pending topics alert if any */}
             {coursePlans && coursePlans.some(p => p.approval_status === 'pending') && (
               <motion.div
@@ -1760,7 +1758,7 @@ export default function Academics() {
                 <span className="text-sm font-medium text-foreground">Overall Completion</span>
                 <span className="text-sm text-muted-foreground">{planProgress.totalPeriodsTaught}/{planProgress.totalPeriodsPlanned} periods</span>
               </div>
-              <Progress 
+              <Progress
                 value={planProgress.totalPeriodsPlanned > 0 ? (planProgress.totalPeriodsTaught / planProgress.totalPeriodsPlanned) * 100 : 0}
                 className="h-2"
               />
@@ -2428,5 +2426,6 @@ export default function Academics() {
     </MainLayout>
   );
 }
+
 
 
