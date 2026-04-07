@@ -95,6 +95,7 @@ export default function SuperAdminSubjectManagement() {
     name: '',
     description: '',
     department_id: '',
+    semester: 1,
     credits: 4,
     type: 'Theory',
     subject_category: 'academic', // 'academic', 'library', 'sports', 'placement'
@@ -154,6 +155,7 @@ export default function SuperAdminSubjectManagement() {
       name: '',
       description: '',
       department_id: '',
+      semester: 1,
       credits: 4,
       type: 'Theory',
       subject_category: 'academic',
@@ -171,6 +173,7 @@ export default function SuperAdminSubjectManagement() {
       name: subject.name,
       description: subject.description || '',
       department_id: subject.department_id ? subject.department_id.toString() : '',
+      semester: subject.semester || 1,
       credits: subject.credits,
       type: subject.type,
       subject_category: subject.code === 'LIB' || subject.name?.includes('Library') ? 'library' : 
@@ -211,7 +214,8 @@ export default function SuperAdminSubjectManagement() {
         name: formData.name,
         description: formData.description || null,
         department_id: formData.available_to_all_departments ? null : (formData.department_id ? parseInt(formData.department_id) : null),
-        credits: isSpecialSubject ? 0 : parseInt(formData.credits.toString()),
+        semester: formData.semester ? parseInt(formData.semester.toString()) : 1,
+        credits: isSpecialSubject ? 0 : parseFloat(formData.credits.toString()),
         type: formData.type,
         subject_category: formData.subject_category,
         is_elective: formData.is_elective,
@@ -325,8 +329,10 @@ export default function SuperAdminSubjectManagement() {
         // Convert string values to appropriate types
         if (header === 'department_id') {
           row[header] = value ? parseInt(value) : null;
+        } else if (header === 'semester') {
+          row[header] = value ? parseInt(value) : null;
         } else if (header === 'credits') {
-          row[header] = value ? parseInt(value) : 0;
+          row[header] = value ? parseFloat(value) : 0;
         } else if (header === 'is_elective' || header === 'is_laboratory') {
           row[header] = value?.toLowerCase() === 'true' || value === '1';
         } else if (header === 'department') {
@@ -366,6 +372,11 @@ export default function SuperAdminSubjectManagement() {
       const processedSubjects = parsedSubjects.map((subj, index) => {
         const processed = { ...subj };
         const errors: string[] = [];
+        
+        // Set default semester if not provided
+        if (!processed.semester) {
+          processed.semester = 1;
+        }
         
         // If department name is provided, resolve it to ID
         if (processed.department_name) {
@@ -462,16 +473,16 @@ export default function SuperAdminSubjectManagement() {
   };
 
   const downloadTemplate = () => {
-    const template = `code,name,department,credits,type,is_elective,is_laboratory,status
-CS101,Programming Fundamentals,Computer Science,4,Theory,false,false,active
-CS102,Data Structures,Computer Science,4,Theory,false,false,active
-CS201,Database Management,Computer Science,4,Practical,false,true,active
-IT102,Web Development,Information Technology,3,Practical,false,true,active
-CS301,Theory of Computation,Computer Science,4,Theory,false,false,active
-CS305,Design Patterns,Computer Science,4,Practical,true,false,active
-LIB,Library Services,Computer Science,0,Seminar,false,false,active
-SPT,Sports Activities,Computer Science,0,Seminar,false,false,active
-PLC,Placement Drive,Computer Science,0,Seminar,false,false,active`;
+    const template = `code,name,department,semester,credits,type,is_elective,is_laboratory,status
+CS101,Programming Fundamentals,Computer Science,1,4,Theory,false,false,active
+CS102,Data Structures,Computer Science,2,4,Theory,false,false,active
+CS201,Database Management,Computer Science,3,4,Practical,false,true,active
+IT102,Web Development,Information Technology,2,3,Practical,false,true,active
+CS301,Theory of Computation,Computer Science,5,4,Theory,false,false,active
+CS305,Design Patterns,Computer Science,6,4,Practical,true,false,active
+LIB,Library Services,Computer Science,,0,Seminar,false,false,active
+SPT,Sports Activities,Computer Science,,0,Seminar,false,false,active
+PLC,Placement Drive,Computer Science,,0,Seminar,false,false,active`;
 
     const blob = new Blob([template], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
@@ -712,21 +723,47 @@ PLC,Placement Drive,Computer Science,0,Seminar,false,false,active`;
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Credits (1-10) *</label>
-                  <Input
-                    type="number"
-                    value={String(formData.credits || '')}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      setFormData({ 
-                        ...formData, 
-                        credits: value === '' ? 0 : parseInt(value) || 0
-                      });
-                    }}
-                    min="1"
-                    max="10"
-                    placeholder="e.g., 4"
-                  />
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Semester</label>
+                  <Select 
+                    value={formData.semester.toString()} 
+                    onValueChange={(value) => setFormData({ ...formData, semester: parseInt(value) })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Semester" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[1, 2, 3, 4, 5, 6, 7, 8].map(sem => (
+                        <SelectItem key={sem} value={sem.toString()}>
+                          Semester {sem}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Credits *</label>
+                  <Select 
+                    value={formData.credits.toString()} 
+                    onValueChange={(value) => setFormData({ ...formData, credits: parseFloat(value) })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Credits" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="0">0</SelectItem>
+                      <SelectItem value="1.5">1.5</SelectItem>
+                      <SelectItem value="2">2</SelectItem>
+                      <SelectItem value="3">3</SelectItem>
+                      <SelectItem value="4">4</SelectItem>
+                      <SelectItem value="5">5</SelectItem>
+                      <SelectItem value="6">6</SelectItem>
+                      <SelectItem value="7">7</SelectItem>
+                      <SelectItem value="8">8</SelectItem>
+                      <SelectItem value="9">9</SelectItem>
+                      <SelectItem value="10">10</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div>
