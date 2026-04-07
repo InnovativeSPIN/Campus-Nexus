@@ -720,6 +720,7 @@ export default function Academics() {
     const header = lines[0].split(',').map(h => h.trim().toLowerCase());
     const topicIdx = header.indexOf('topic');
     const unitLabelIdx = header.indexOf('unit_label');
+    const snoIdx = header.indexOf('sno');
     if (topicIdx === -1 || unitLabelIdx === -1) throw new Error('CSV must include unit_label and topic columns');
     
     const unitsMap: Record<string, any> = {};
@@ -728,6 +729,7 @@ export default function Academics() {
       const label = row[unitLabelIdx];
       if (!unitsMap[label]) unitsMap[label] = { unit_label: label, topics: [] };
       unitsMap[label].topics.push({
+        sno: snoIdx >= 0 ? parseInt(row[snoIdx] || '', 10) || i : i,
         topic: row[topicIdx] || '',
         co_number: row[header.indexOf('co_number')] || '',
         btl: row[header.indexOf('btl')] || '',
@@ -745,19 +747,20 @@ export default function Academics() {
     setIsUploading(true);
     try {
       const allTopics: any[] = [];
-      let sno = 1;
+      let autoSno = 1;  // Auto-incremented sno for topics without explicit sno
       let cumulativePeriods = 0;
       coursePlanUnits.forEach((unit, uIdx) => {
         unit.topics.forEach((topic: any) => {
           cumulativePeriods += Number(topic.periods_required);
           allTopics.push({
-            sno,
+            // Use sno from CSV if available, otherwise auto-increment
+            sno: topic.sno || autoSno,
             unit_number: uIdx + 1,
             unit_label: unit.unit_label,
             ...topic,
             cumulative_periods: cumulativePeriods
           });
-          sno++;
+          autoSno++;  // Always increment for next topic
         });
       });
 

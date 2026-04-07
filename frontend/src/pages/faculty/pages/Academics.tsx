@@ -492,6 +492,7 @@ export default function Academics() {
       const unitLabel = lookups.unit_label >= 0 ? row[lookups.unit_label] || '' : `Unit ${row[lookups.unit_number] || '1'}`;
       const unitKey = unitLabel || `unit-${row[lookups.unit_number] || '1'}`;
       const topicRow = {
+        sno: lookups.sno >= 0 ? parseInt(row[lookups.sno] || '', 10) || (i) : (i),
         tentative_date: normalizeDateString(lookups.tentative_date >= 0 ? row[lookups.tentative_date] || '' : ''),
         topic: row[lookups.topic] || '',
         co_number: lookups.co_number >= 0 ? row[lookups.co_number] || '' : '',

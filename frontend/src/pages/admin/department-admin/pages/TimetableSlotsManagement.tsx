@@ -39,6 +39,7 @@ interface TimetableSlot {
   faculty_id: number | null;
   session_type: string;
   is_lab_session: boolean;
+  lab_pair_slot_id: number | null;
   lab_group: string | null;
   room: string | null;
   notes: string | null;
@@ -104,6 +105,7 @@ export default function TimetableSlotsManagement() {
     faculty_id: "",
     session_type: "theory",
     is_lab_session: false,
+    lab_pair_slot_id: "",
     lab_group: "",
     room: "",
     notes: "",
@@ -230,6 +232,30 @@ export default function TimetableSlotsManagement() {
     try {
       setLoading(true);
 
+      // Convert time format from HH:MM to HH:MM:SS
+      const convertTimeFormat = (time: string) => {
+        if (!time || time.trim() === "") return null;
+        if (!time.includes(":")) return null;
+        return time + ":00";
+      };
+
+      const payload = {
+        day: formData.day,
+        period_slot_id: parseInt(formData.period_slot_id),
+        subject_id: formData.subject_id && formData.subject_id !== "none" ? parseInt(formData.subject_id) : null,
+        faculty_id: formData.faculty_id ? parseInt(formData.faculty_id) : null,
+        session_type: formData.session_type,
+        is_lab_session: formData.is_lab_session || false,
+        lab_pair_slot_id: formData.lab_pair_slot_id ? parseInt(formData.lab_pair_slot_id) : null,
+        lab_group: formData.lab_group || null,
+        room: formData.room || null,
+        notes: formData.notes || null,
+        start_time: convertTimeFormat(formData.start_time),
+        end_time: convertTimeFormat(formData.end_time),
+      };
+
+      console.log("[SLOT CREATE] Payload:", payload);
+
       const response = await fetch(
         `/api/v1/timetable-master/${masterId}/slots`,
         {
@@ -238,14 +264,11 @@ export default function TimetableSlotsManagement() {
             "Content-Type": "application/json",
             Authorization: `Bearer ${authToken}`,
           },
-          body: JSON.stringify({
-            ...formData,
-            period_slot_id: parseInt(formData.period_slot_id),
-            subject_id: formData.subject_id && formData.subject_id !== "none" ? parseInt(formData.subject_id) : null,
-            faculty_id: formData.faculty_id ? parseInt(formData.faculty_id) : null,
-          }),
+          body: JSON.stringify(payload),
         }
       );
+
+      console.log("[SLOT CREATE] Response status:", response.status);
 
       if (response.ok) {
         const newSlot = await response.json();
@@ -275,10 +298,19 @@ export default function TimetableSlotsManagement() {
           description: "Slot created successfully",
         });
       } else {
-        throw new Error("Failed to create slot");
+        let errorMessage = `Failed to create slot: ${response.statusText}`;
+        try {
+          const errorData = await response.json();
+          console.log("[SLOT CREATE] Error response:", errorData);
+          errorMessage = errorData.message || errorMessage;
+        } catch (e) {
+          const text = await response.text();
+          console.log("[SLOT CREATE] Error text:", text);
+        }
+        throw new Error(errorMessage);
       }
     } catch (error) {
-      console.error("Error creating slot:", error);
+      console.error("[SLOT CREATE] Error:", error);
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to create slot",
@@ -295,6 +327,12 @@ export default function TimetableSlotsManagement() {
     try {
       setLoading(true);
 
+      // Convert time format from HH:MM to HH:MM:SS
+      const convertTimeFormat = (time: string) => {
+        if (!time) return null;
+        return time.includes(":") ? time + ":00" : null;
+      };
+
       const response = await fetch(
         `/api/v1/timetable-master/${masterId}/slots/${editingSlot.id}`,
         {
@@ -309,8 +347,13 @@ export default function TimetableSlotsManagement() {
             subject_id: formData.subject_id && formData.subject_id !== "none" ? parseInt(formData.subject_id) : null,
             faculty_id: formData.faculty_id ? parseInt(formData.faculty_id) : null,
             session_type: formData.session_type,
+            is_lab_session: formData.is_lab_session || false,
+            lab_pair_slot_id: formData.lab_pair_slot_id ? parseInt(formData.lab_pair_slot_id) : null,
+            lab_group: formData.lab_group || null,
             room: formData.room || null,
             notes: formData.notes || null,
+            start_time: convertTimeFormat(formData.start_time),
+            end_time: convertTimeFormat(formData.end_time),
           }),
         }
       );
@@ -346,13 +389,15 @@ export default function TimetableSlotsManagement() {
           description: "Slot updated successfully",
         });
       } else {
-        throw new Error("Failed to update slot");
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.message || `Failed to update slot: ${response.statusText}`;
+        throw new Error(errorMessage);
       }
     } catch (error) {
       console.error("Error updating slot:", error);
       toast({
         title: "Error",
-        description: "Failed to update slot",
+        description: error instanceof Error ? error.message : "Failed to update slot",
         variant: "destructive",
       });
     } finally {
@@ -403,6 +448,7 @@ export default function TimetableSlotsManagement() {
       faculty_id: "",
       session_type: "theory",
       is_lab_session: false,
+      lab_pair_slot_id: "",
       lab_group: "",
       room: "",
       notes: "",
@@ -444,6 +490,7 @@ export default function TimetableSlotsManagement() {
       faculty_id: resolvedFacultyId,
       session_type: slot.session_type,
       is_lab_session: slot.is_lab_session,
+      lab_pair_slot_id: slot.lab_pair_slot_id?.toString() || "",
       lab_group: slot.lab_group || "",
       room: slot.room || "",
       notes: slot.notes || "",
@@ -909,7 +956,19 @@ export default function TimetableSlotsManagement() {
 
                 <div>
                   <Label>Period *</Label>
-                  <Select value={formData.period_slot_id} onValueChange={(v) => setFormData({ ...formData, period_slot_id: v })}>
+                  <Select 
+                    value={formData.period_slot_id} 
+                    onValueChange={(v) => {
+                      // Auto-set session_type to 'break' if selecting a break period (3, 5, 8)
+                      const breakPeriodIds = [3, 5, 8];
+                      const isBreakPeriod = breakPeriodIds.includes(parseInt(v));
+                      setFormData({
+                        ...formData,
+                        period_slot_id: v,
+                        session_type: isBreakPeriod ? 'break' : formData.session_type,
+                      });
+                    }}
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -986,25 +1045,39 @@ export default function TimetableSlotsManagement() {
                   <Label>Session Type</Label>
                   <Select
                     value={formData.session_type}
-                    onValueChange={(v) =>
+                    onValueChange={(v) => {
+                      const breakPeriodIds = [3, 5, 8];
+                      const isBreakPeriod = breakPeriodIds.includes(parseInt(formData.period_slot_id));
+                      
+                      // If a break period is selected and user tries to select non-break type, force to break
+                      const finalSessionType = isBreakPeriod && v !== 'break' ? 'break' : v;
+                      
                       setFormData({
                         ...formData,
-                        session_type: v,
+                        session_type: finalSessionType,
                         // When marking a slot as a break, clear faculty/subject since they are not required
-                        subject_id: v === "break" ? "none" : formData.subject_id,
-                        faculty_id: v === "break" ? "" : formData.faculty_id,
-                      })
-                    }
+                        subject_id: finalSessionType === "break" ? "none" : formData.subject_id,
+                        faculty_id: finalSessionType === "break" ? "" : formData.faculty_id,
+                      });
+                    }}
                   >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {sessionTypes.map((type) => (
-                        <SelectItem key={type} value={type}>
-                          {type.charAt(0).toUpperCase() + type.slice(1)}
-                        </SelectItem>
-                      ))}
+                      {sessionTypes.map((type) => {
+                        const breakPeriodIds = [3, 5, 8];
+                        const isBreakPeriod = breakPeriodIds.includes(parseInt(formData.period_slot_id));
+                        // If a break period is selected, only show 'break' option
+                        if (isBreakPeriod && type !== 'break') {
+                          return null;
+                        }
+                        return (
+                          <SelectItem key={type} value={type}>
+                            {type.charAt(0).toUpperCase() + type.slice(1)}
+                          </SelectItem>
+                        );
+                      })}
                     </SelectContent>
                   </Select>
                 </div>

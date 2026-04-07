@@ -32,7 +32,7 @@ const TimetableMasterSlots = (sequelize) => {
       comment: 'FK -> faculty_profiles.faculty_id',
     },
     session_type: {
-      type: DataTypes.ENUM('theory', 'lab', 'tutorial', 'activity', 'project', 'free'),
+      type: DataTypes.ENUM('theory', 'lab', 'tutorial', 'activity', 'project', 'free', 'break'),
       defaultValue: 'theory',
     },
     is_lab_session: {
@@ -59,6 +59,16 @@ const TimetableMasterSlots = (sequelize) => {
       type: DataTypes.STRING(255),
       allowNull: true,
       comment: 'Short label e.g. YOGA, DM, APP LAB',
+    },
+    start_time: {
+      type: DataTypes.TIME,
+      allowNull: true,
+      comment: 'Custom start time for this slot (overrides period_slot start_time)',
+    },
+    end_time: {
+      type: DataTypes.TIME,
+      allowNull: true,
+      comment: 'Custom end time for this slot (overrides period_slot end_time)',
     },
   }, {
     tableName: 'timetable_master_slots',

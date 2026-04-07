@@ -24,9 +24,6 @@
     /* Node / Tooling Types */
     "types": ["node"],
 
-    /* Deprecations */
-    "ignoreDeprecations": "6.0",
-
     /* Path Aliases */
     "baseUrl": ".",
     "paths": {
