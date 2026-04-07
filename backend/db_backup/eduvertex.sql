@@ -997,7 +997,7 @@ CREATE TABLE IF NOT EXISTS `faculy_edu_qualification` (
   `percentage` varchar(20) DEFAULT NULL,
   `society_name` varchar(255) NOT NULL,
   `status` enum('Active','Inactive') DEFAULT 'Active',
-  PRIMARY KEY (`membership_id`),
+	  PRIMARY KEY (`membership_id`),
   KEY `idx_faculty_id` (`faculty_id`),
   CONSTRAINT `faculy_edu_qualification_ibfk_1` FOREIGN KEY (`faculty_id`) REFERENCES `faculty_profiles` (`faculty_id`) ON DELETE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=238 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
