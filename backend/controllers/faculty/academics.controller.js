@@ -468,7 +468,8 @@ export const createCourseLessonPlan = asyncHandler(async (req, res, next) => {
  * Query: ?subjectId=X&classId=Y&facultyId=Z
  */
 export const createCourseLessonPlanBulk = asyncHandler(async (req, res, next) => {
-  const facultyId = req.user.faculty_id || req.user.id;
+  // FIX: always parseInt — req.user.faculty_id may arrive as a string
+  const facultyId = parseInt(req.user.faculty_id || req.user.id, 10);
   const { subjectId, classId, academicYear, academic_year, semester, topics } = req.body;
 
   // Support both camelCase and snake_case for academic_year
@@ -483,6 +484,11 @@ export const createCourseLessonPlanBulk = asyncHandler(async (req, res, next) =>
     topicsCount: topics?.length
   });
 
+  // FIX: validate facultyId first
+  if (!facultyId || isNaN(facultyId) || facultyId <= 0) {
+    return next(new ErrorResponse('Faculty information not found for this user', 400));
+  }
+
   if (!subjectId || !classId || !topics || !Array.isArray(topics) || topics.length === 0) {
     return next(new ErrorResponse('Please provide subjectId, classId, and topics array (non-empty)', 400));
   }
@@ -490,106 +496,136 @@ export const createCourseLessonPlanBulk = asyncHandler(async (req, res, next) =>
   const subjectIdNum = parseInt(subjectId, 10);
   const classIdNum = parseInt(classId, 10);
 
-  if (isNaN(subjectIdNum) || isNaN(classIdNum)) {
-    return next(new ErrorResponse('Invalid subjectId or classId', 400));
+  if (isNaN(subjectIdNum) || subjectIdNum <= 0 || isNaN(classIdNum) || classIdNum <= 0) {
+    return next(new ErrorResponse('Invalid subjectId or classId — must be positive numeric IDs', 400));
   }
 
   try {
     const currentYear = new Date().getFullYear();
     const defaultYear = `${currentYear}-${currentYear + 1}`;
     const academicYearVal = academicYearValue || defaultYear;
-    const semesterVal = semester || 1;
+    const semesterVal = parseInt(semester, 10) || 1;
 
     // Generate unique batch ID for this upload
     const uploadBatchId = `${facultyId}_${subjectIdNum}_${classIdNum}_${Date.now()}`;
 
-    console.log('[createCourseLessonPlanBulk] Deleting existing plans...');
-    // Remove existing plans for this subject/class/semester combination
-    await CourseLessonPlan.destroy({
+    console.log('[createCourseLessonPlanBulk] Deleting ALL existing plans for faculty+subject+class...');
+    // FIX: Delete ALL records for this faculty+subject+class WITHOUT filtering by academic_year
+    // or semester. This prevents unique-key SequelizeUniqueConstraintError caused by
+    // academic_year format mismatches between old saved records (e.g. "2025-2026") and
+    // new submissions (e.g. "2024-25") — the old destroy would find 0 rows to delete,
+    // then bulkCreate would hit the unique index and crash with a 500.
+    const deletedCount = await CourseLessonPlan.destroy({
       where: {
         faculty_id: facultyId,
         subject_id: subjectIdNum,
         class_id: classIdNum,
-        academic_year: academicYearVal,
-        semester: semesterVal,
       },
     });
+    console.log('[createCourseLessonPlanBulk] Deleted', deletedCount, 'previous plan rows');
 
-    console.log('[createCourseLessonPlanBulk] Creating new plans...');
-    // Map topics to database records
-    const plansToCreate = topics.map((topic) => ({
+    console.log('[createCourseLessonPlanBulk] Creating', topics.length, 'new plan rows...');
+
+    // Helpers to enforce actual DB column lengths
+    const trunc = (str, len) => (str ? String(str).slice(0, len) : '');
+    const truncNull = (str, len) => (str ? String(str).slice(0, len) : null);
+
+    // Map topics to DB records.
+    // FIX: enforce NOT NULL columns (co_number, btl, unit_label, unit_number, created_by)
+    //      and truncate strings to actual DB VARCHAR limits to prevent ER_DATA_TOO_LONG.
+    const buildRecord = (topic, idx) => ({
       faculty_id: facultyId,
       subject_id: subjectIdNum,
       class_id: classIdNum,
-      academic_year: academicYearVal,
+      academic_year: trunc(academicYearVal, 9),  // DB: VARCHAR(9) NOT NULL
       semester: semesterVal,
-      sno: topic.sno || 1,
-      unit_number: topic.unit_number || 1,
-      unit_label: topic.unit_label || '',
-      topic: topic.topic,
-      co_number: topic.co_number || null,
-      btl: topic.btl || null,
-      delivery_mode: topic.delivery_mode || null,
-      reference_book: topic.reference_book || null,
-      periods_required: topic.periods_required || 1,
+      sno: Math.min(topic.sno || idx + 1, 255),  // DB: TINYINT(3) UNSIGNED — max 255
+      unit_number: topic.unit_number || 1,        // DB: TINYINT(1) NOT NULL
+      unit_label: trunc(topic.unit_label, 20),    // DB: VARCHAR(20) NOT NULL
+      topic: topic.topic || '(Untitled topic)',   // DB: TEXT NOT NULL
+      co_number: trunc(topic.co_number, 20),      // DB: VARCHAR(20) NOT NULL
+      btl: trunc(topic.btl, 20),                  // DB: VARCHAR(20) NOT NULL
+      delivery_mode: truncNull(topic.delivery_mode, 100),   // DB: VARCHAR(100) NULL
+      reference_book: truncNull(topic.reference_book, 255), // DB: VARCHAR(255) NULL
+      periods_required: Math.min(parseInt(topic.periods_required, 10) || 1, 127), // TINYINT(2)
       periods_taken: 0,
       cumulative_periods: topic.cumulative_periods || 0,
       is_completed: false,
       tentative_date: topic.tentative_date || null,
-      approval_status: 'pending',  // Set to pending - needs department admin approval
+      created_by: facultyId,                     // DB: INT NOT NULL
+      // Optional columns — added by migrations 005 / add-approval-fields
+      approval_status: 'pending',
       approved_by: null,
       approved_date: null,
       approval_remarks: null,
       batch_submission_date: new Date(),
       upload_batch_id: uploadBatchId,
-      created_by: facultyId,
-    }));
+    });
 
-    const createdPlans = await CourseLessonPlan.bulkCreate(plansToCreate);
-    console.log('[createCourseLessonPlanBulk] Successfully created', createdPlans.length, 'topics with batch:', uploadBatchId);
+    const plansToCreate = topics.map(buildRecord);
 
-    // Send notification to department admins for approval
+    // FIX: If the DB hasn't had the approval/batch migrations run yet, bulkCreate will throw
+    // "Unknown column 'approval_status' in 'field list'". We catch that specific error and
+    // retry using only the core columns that exist in all table versions.
+    let createdPlans;
     try {
-      const { Faculty } = models;
+      createdPlans = await CourseLessonPlan.bulkCreate(plansToCreate);
+    } catch (bulkErr) {
+      const isUnknownColumn =
+        bulkErr.original?.code === 'ER_BAD_FIELD_ERROR' ||
+        (bulkErr.message && bulkErr.message.includes('Unknown column'));
+
+      if (isUnknownColumn) {
+        console.warn(
+          '[createCourseLessonPlanBulk] Optional column missing in DB — retrying with core columns only.',
+          'Run migrations/007-ensure-course-plan-columns.sql to fix.',
+          '\nOriginal error:', bulkErr.message
+        );
+        const corePlans = topics.map((topic, idx) => {
+          const { approval_status, approved_by, approved_date, approval_remarks,
+                  batch_submission_date, upload_batch_id, ...core } = buildRecord(topic, idx);
+          return core;
+        });
+        createdPlans = await CourseLessonPlan.bulkCreate(corePlans, { ignoreDuplicates: true });
+      } else {
+        throw bulkErr; // re-throw to the outer catch for proper 500 handling
+      }
+    }
+
+    console.log('[createCourseLessonPlanBulk] Successfully created', createdPlans.length, 'topics. Batch:', uploadBatchId);
+
+    // Send notification to department admins for approval (non-critical — errors are swallowed)
+    try {
       const departmentId = req.user.department_id;
+      if (departmentId) {
+        const departmentAdmins = await Faculty.findAll({
+          where: { role_id: 7, department_id: departmentId },
+          attributes: ['faculty_id'],
+          raw: true
+        });
 
-      const departmentAdmins = await Faculty.findAll({
-        where: {
-          role_id: 7, // Department admin role
-          department_id: departmentId,
-          is_active: true
-        },
-        attributes: ['faculty_id'],
-        raw: true
-      });
+        const deptAdminIds = departmentAdmins.map(admin => admin.faculty_id);
 
-      const deptAdminIds = departmentAdmins.map(admin => admin.faculty_id);
+        if (deptAdminIds.length > 0 && models.CourseLessonPlanNotification) {
+          const notifications = deptAdminIds.map(adminId => ({
+            course_lesson_plan_id: createdPlans[0]?.id,
+            faculty_id: createdPlans[0]?.faculty_id,
+            subject_id: subjectIdNum,
+            class_id: classIdNum,
+            recipient_type: 'department-admin',
+            recipient_id: adminId,
+            notification_type: 'approval_request',
+            is_read: false,
+            created_at: new Date()
+          }));
 
-      if (deptAdminIds.length > 0 && models.CourseLessonPlanNotification) {
-        const notifications = deptAdminIds.map(adminId => ({
-          course_lesson_plan_id: createdPlans[0]?.id,
-          faculty_id: createdPlans[0]?.faculty_id,
-          subject_id: subjectIdNum,
-          class_id: classIdNum,
-          recipient_type: 'department-admin',
-          recipient_id: adminId,
-          notification_type: 'approval_request',
-          is_read: false,
-          created_at: new Date()
-        }));
-
-        // Don't fail if notification fails
-        try {
           await models.CourseLessonPlanNotification.bulkCreate(notifications).catch(err => {
             console.warn('[createCourseLessonPlanBulk] Notification creation failed (non-fatal):', err.message);
           });
-        } catch (notifErr) {
-          console.warn('[createCourseLessonPlanBulk] Notification error (ignored):', notifErr.message);
         }
       }
     } catch (notificationError) {
-      console.warn('[createCourseLessonPlanBulk] Notification error (non-critical):', notificationError.message);
-      // Don't fail the main request
+      console.warn('[createCourseLessonPlanBulk] Notification error (non-critical, request will still succeed):', notificationError.message);
     }
 
     res.status(201).json({
@@ -599,8 +635,15 @@ export const createCourseLessonPlanBulk = asyncHandler(async (req, res, next) =>
       data: createdPlans,
     });
   } catch (error) {
-    console.error('[createCourseLessonPlanBulk] Error:', error);
-    return next(new ErrorResponse(`Error creating lesson plans: ${error.message}`, 500));
+    // Log rich diagnostics so the actual DB error is visible in server logs
+    console.error('[createCourseLessonPlanBulk] Fatal error:', {
+      message: error.message,
+      sql: error.sql || '(no sql)',
+      originalCode: error.original?.code || '(no code)',
+      originalMessage: error.original?.message || '(no original)',
+      stack: error.stack?.split('\n').slice(0, 5).join('\n'),
+    });
+    return next(new ErrorResponse(`Error creating lesson plans: ${error.original?.message || error.message}`, 500));
   }
 });
 

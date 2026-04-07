@@ -761,11 +761,29 @@ export default function Academics() {
         });
       });
 
+      // Derive a proper numeric subjectId (the API requires a numeric DB id, not a name)
+      const subjectId = parseInt((selectedClass as any).subject_id, 10);
+      const classId = parseInt((selectedClass as any).class_id || (selectedClass as any).id, 10);
+
+      if (!subjectId || isNaN(subjectId) || !classId || isNaN(classId)) {
+        alert('Cannot save: selected class has no valid subject/class ID. Please refresh and try again.');
+        setIsUploading(false);
+        return;
+      }
+
+      // Use the real academic year from the class batch field if available,
+      // otherwise fall back to the current academic year derived from the calendar.
+      const batchYear = (selectedClass as any).batch as string | undefined;
+      const currentYear = new Date().getFullYear();
+      const academicYear = batchYear && batchYear.includes('-')
+        ? batchYear
+        : `${currentYear}-${currentYear + 1}`;
+
       const payload = {
-        subjectId: (selectedClass as any).subject_id || (selectedClass as any).subject,
-        classId: (selectedClass as any).class_id || (selectedClass as any).id,
-        academic_year: "2024-25", // Hardcoded for demo/simplicity
-        semester: Number(selectedClass.semester),
+        subjectId,
+        classId,
+        academic_year: academicYear,
+        semester: Number(selectedClass.semester) || 1,
         topics: allTopics
       };
 
@@ -775,11 +793,13 @@ export default function Academics() {
       });
       if (res.success) {
         setIsFileSent(true);
-        alert('Course plan saved successfully!');
+        alert(`Course plan saved successfully! (${res.count ?? allTopics.length} topics)`);
+      } else {
+        throw new Error(res.message || res.error || 'Server returned an error');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Save failed', error);
-      alert('Failed to save course plan');
+      alert(`Failed to save course plan: ${error?.message || 'Unknown error'}`);
     } finally {
       setIsUploading(false);
     }
