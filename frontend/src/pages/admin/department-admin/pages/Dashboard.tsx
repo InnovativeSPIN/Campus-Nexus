@@ -10,7 +10,7 @@ import { useLeaveNotification } from "@/hooks/useLeaveNotification";
 import { AnnouncementNotificationModal } from "@/components/common/AnnouncementNotificationModal";
 import { LeaveRequestPopup } from "@/components/common/LeaveRequestPopup";
 import { motion } from "framer-motion";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Users,
   Calendar,
@@ -18,47 +18,77 @@ import {
   GraduationCap,
   Bell
 } from "lucide-react";
-
-// Mock data
-const currentClass = {
-  subject: "Data Structures & Algorithms",
-  time: "10:30 AM - 11:30 AM",
-  room: "Classroom 5",
-  section: "CSE- II Year",
-  studentsCount: 62,
-  type: "Lab",
-  totalPeriods: 4,
-  duration: "60 mins",
-};
-
-const nextClass = {
-  subject: "Object Oriented Programming",
-  time: "12:00 PM - 1:00 PM",
-  room: "Classroom 7",
-  section: "CSE",
-  studentsCount: 58,
-  type: "Theory",
-  totalPeriods: 5,
-  duration: "50 mins",
-};
-
-const pendingTasks = [
-  { id: "1", title: "Annual Day staff commity list Announced", dueDate: "Today", priority: "high" as const, type: "Faculty Circular" as const },
-];
-
-const leaveBalance = [
-  { type: "Casual Leave", icon: Calendar, total: 12, used: 4, remaining: 8 },
-];
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Dashboard() {
   const { announcement, showNotification, setShowNotification } = useAnnouncementNotification();
   const { pendingLeaves, showLeavePopup, setShowLeavePopup } = useLeaveNotification();
+  const { authToken, user } = useAuth();
+  
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [todaySlots, setTodaySlots] = useState<any[]>([]);
+  const [stats, setStats] = useState({ students: 0, faculty: 0, pending: 0, attendance: 0, syllabusProgress: 0, onLeave: 0, projects: 0 });
+  const [slotStudents, setSlotStudents] = useState<any>({});
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
+
+  // Fetch today's slots and statistics
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        const today = new Date().toISOString().split("T")[0];
+        
+        // Fetch today's timetable
+        const slotsResponse = await fetch(
+          `/api/v1/attendance/faculty/timetable/${today}`,
+          { headers: { Authorization: `Bearer ${authToken}` } }
+        );
+        const slotsData = await slotsResponse.json();
+        
+        if (slotsData.success && slotsData.data) {
+          setTodaySlots(slotsData.data.slots || []);
+          setSlotStudents(slotsData.data.studentsByClass || {});
+        }
+
+        // Fetch department statistics
+        const statsResponse = await fetch(
+          `/api/v1/department/statistics`,
+          { headers: { Authorization: `Bearer ${authToken}` } }
+        ).catch(() => null);
+
+        if (statsResponse?.ok) {
+          const statsData = await statsResponse.json();
+          if (statsData.success && statsData.data) {
+            setStats(prev => ({
+              ...prev,
+              students: statsData.data.totalStudents || 0,
+              faculty: statsData.data.totalFaculty || 0,
+              pending: statsData.data.pendingApprovals || 0,
+              attendance: statsData.data.averageAttendance || 85,
+              syllabusProgress: statsData.data.syllabusProgress || 92,
+              onLeave: statsData.data.facultyOnLeave || 0,
+              projects: statsData.data.activeProjects || 0,
+            }));
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching dashboard data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (authToken) {
+      fetchDashboardData();
+      const interval = setInterval(fetchDashboardData, 60000); // Refresh every minute
+      return () => clearInterval(interval);
+    }
+  }, [authToken]);
 
   const formatDate = (date: Date) => {
     return date.toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
@@ -67,6 +97,77 @@ export default function Dashboard() {
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   };
+
+  // Compute current and next class from today's slots
+  const { currentClass, nextClass, pendingTasks } = useMemo(() => {
+    const now = new Date();
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+
+    const current = todaySlots.find((slot: any) => {
+      const [sHour, sMin] = slot.startTime?.split(':').map(Number) || [0, 0];
+      const [eHour, eMin] = slot.endTime?.split(':').map(Number) || [23, 59];
+      return (sHour < currentHour || (sHour === currentHour && sMin <= currentMinute)) &&
+             (eHour > currentHour || (eHour === currentHour && eMin > currentMinute));
+    });
+
+    const next = todaySlots.find((slot: any) => {
+      const [sHour, sMin] = slot.startTime?.split(':').map(Number) || [0, 0];
+      return (sHour > currentHour || (sHour === currentHour && sMin > currentMinute));
+    });
+
+    const currentClassData = current ? {
+      subject: current.subjectName || "Class",
+      time: `${current.startTime} - ${current.endTime}`,
+      room: current.room || "TBD",
+      section: current.className || "CLASS",
+      studentsCount: (slotStudents[current.classSectionId]?.length || 0),
+      type: current.session_type === 'lab' ? "Lab" : "Theory",
+      totalPeriods: 1,
+      duration: "50 mins",
+    } : null;
+
+    const nextClassData = next ? {
+      subject: next.subjectName || "Class",
+      time: `${next.startTime} - ${next.endTime}`,
+      room: next.room || "TBD",
+      section: next.className || "CLASS",
+      studentsCount: (slotStudents[next.classSectionId]?.length || 0),
+      type: next.session_type === 'lab' ? "Lab" : "Theory",
+      totalPeriods: 1,
+      duration: "50 mins",
+    } : null;
+
+    const tasks = [];
+    tasks.push({ id: "1", title: "Mark today's attendance", dueDate: "Today", priority: "high" as const, type: "Faculty Circular" as const });
+    if (pendingLeaves.length > 0) {
+      tasks.push({ id: "2", title: `${pendingLeaves.length} pending leave approvals`, dueDate: "Today", priority: "high" as const, type: "Faculty Circular" as const });
+    }
+
+    return {
+      currentClass: currentClassData || {
+        subject: "No class scheduled",
+        time: "N/A",
+        room: "N/A",
+        section: "N/A",
+        studentsCount: 0,
+        type: "Theory",
+        totalPeriods: 0,
+        duration: "N/A",
+      },
+      nextClass: nextClassData || {
+        subject: "No upcoming class",
+        time: "N/A",
+        room: "N/A",
+        section: "N/A",
+        studentsCount: 0,
+        type: "Theory",
+        totalPeriods: 0,
+        duration: "N/A",
+      },
+      pendingTasks: tasks.length > 0 ? tasks : [{ id: "1", title: "All tasks completed", dueDate: "Today", priority: "low" as const, type: "Faculty Circular" as const }],
+    };
+  }, [todaySlots, slotStudents, pendingLeaves]);
 
   return (
     <MainLayout>
@@ -122,10 +223,10 @@ export default function Dashboard() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <StatCard title="Total Students" value="450" subtitle="In department" icon={Users} variant="secondary" delay={0.1} />
-        <StatCard title="Total Faculty" value="24" subtitle="Active researchers" icon={GraduationCap} variant="success" delay={0.2} />
-        <StatCard title="Pending Queries" value="12" subtitle="Student requests" icon={Bell} variant="warning" delay={0.3} />
-        <StatCard title="Academic Progress" value="78%" subtitle="Syllabus coverage" icon={Clock} variant="primary" delay={0.4} />
+        <StatCard title="Total Students" value={stats.students.toString()} subtitle="In department" icon={Users} variant="secondary" delay={0.1} />
+        <StatCard title="Total Faculty" value={stats.faculty.toString()} subtitle="Active staff" icon={GraduationCap} variant="success" delay={0.2} />
+        <StatCard title="Pending Approvals" value={stats.pending.toString()} subtitle="Awaiting review" icon={Bell} variant="warning" delay={0.3} />
+        <StatCard title="Avg. Attendance" value={`${stats.attendance}%`} subtitle="Department wide" icon={Clock} variant="primary" delay={0.4} />
       </div>
 
       {/* Main Content Section */}
@@ -145,19 +246,19 @@ export default function Dashboard() {
             <h3 className="section-title mb-4">Departmental Status</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="p-4 rounded-2xl bg-secondary/5 border border-secondary/10 text-center">
-                <p className="text-2xl font-black text-secondary">85%</p>
+                <p className="text-2xl font-black text-secondary">{stats.attendance}%</p>
                 <p className="text-[10px] font-bold text-muted-foreground uppercase text-center mt-2">Attendance</p>
               </div>
               <div className="p-4 rounded-2xl bg-success/5 border border-success/10 text-center">
-                <p className="text-2xl font-black text-success">92%</p>
+                <p className="text-2xl font-black text-success">{stats.syllabusProgress}%</p>
                 <p className="text-[10px] font-bold text-muted-foreground uppercase mt-2">Syllabus</p>
               </div>
               <div className="p-4 rounded-2xl bg-warning/5 border border-warning/10 text-center">
-                <p className="text-2xl font-black text-warning">08</p>
+                <p className="text-2xl font-black text-warning">{stats.onLeave.toString().padStart(2, '0')}</p>
                 <p className="text-[10px] font-bold text-muted-foreground uppercase mt-2">On Leave</p>
               </div>
               <div className="p-4 rounded-2xl bg-info/5 border border-info/10 text-center">
-                <p className="text-2xl font-black text-info">15</p>
+                <p className="text-2xl font-black text-info">{stats.projects.toString().padStart(2, '0')}</p>
                 <p className="text-[10px] font-bold text-muted-foreground uppercase mt-2">Projects</p>
               </div>
             </div>
@@ -166,7 +267,7 @@ export default function Dashboard() {
 
         <div className="flex flex-col gap-6">
           <PendingTasksList tasks={pendingTasks} />
-          <LeaveSnapshot leaves={leaveBalance} />
+          <LeaveSnapshot leaves={[]} />
         </div>
       </div>
     </MainLayout>

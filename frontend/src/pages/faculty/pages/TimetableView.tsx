@@ -98,8 +98,19 @@ const FacultyIndividualTimetable: React.FC = () => {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to fetch timetable');
+        let errorMessage = `Error ${response.status}: ${response.statusText}`;
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorData.error || errorMessage;
+        } catch (parseError) {
+          // If response is not JSON, use status text
+          console.warn('[FACULTY TIMETABLE] Response is not valid JSON:', parseError);
+          const text = await response.text();
+          if (text) {
+            errorMessage = text.substring(0, 200); // First 200 chars of text
+          }
+        }
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
