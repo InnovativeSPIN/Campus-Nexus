@@ -8,7 +8,14 @@ const { Class, Department } = models;
 // @route     GET /api/v1/admin/classes
 // @access    Private/Admin
 export const getAllClasses = asyncHandler(async (req, res, next) => {
+  const { department_id } = req.query;
+  let where = {};
+  if (department_id) {
+    where.department_id = department_id;
+  }
+
   const classes = await Class.findAll({
+    where,
     include: [
       {
         model: Department,
