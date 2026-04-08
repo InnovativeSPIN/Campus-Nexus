@@ -81,6 +81,12 @@ const TimetableMaster = (sequelize) => {
       type: DataTypes.INTEGER,
       allowNull: false,
       comment: 'FK -> faculty_profiles.faculty_id (department-admin)'
+    },
+    break_period_ids: {
+      type: DataTypes.JSON,
+      allowNull: true,
+      defaultValue: [3, 5, 8],
+      comment: 'Array of period_slot_ids that are configured as breaks for this timetable (e.g., [3, 5, 8])'
     }
   }, {
     tableName: 'timetable_master',

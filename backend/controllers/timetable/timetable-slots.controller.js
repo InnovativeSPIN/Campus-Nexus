@@ -470,3 +470,80 @@ export const getFacultyForTimetable = asyncHandler(async (req, res, next) => {
 
   res.status(200).json({ success: true, count: facultyList.length, data: facultyList });
 });
+
+/**
+ * @desc    Get break period configuration for a timetable
+ * @route   GET /api/timetable-master/:masterId/break-config
+ * @access  Private - Any authenticated user in same department
+ */
+export const getBreakConfiguration = asyncHandler(async (req, res, next) => {
+  const { masterId } = req.params;
+
+  const master = await TimetableMaster.findByPk(masterId, {
+    attributes: ['id', 'break_period_ids', 'department_id'],
+  });
+  if (!master) {
+    return next(new ErrorResponse(`Timetable master not found with id ${masterId}`, 404));
+  }
+
+  // Check read access
+  const accessError = checkReadAccess(req, master);
+  if (accessError) return next(accessError);
+
+  const breakIds = master.break_period_ids || [3, 5, 8];
+  console.log(`[GET BREAK CONFIG] Timetable ${masterId} - break_period_ids from DB:`, master.break_period_ids, 'Returning:', breakIds);
+
+  res.status(200).json({
+    success: true,
+    data: {
+      masterId: master.id,
+      breakPeriodIds: breakIds,
+    },
+  });
+});
+
+/**
+ * @desc    Save break period configuration for a timetable
+ * @route   POST /api/timetable-master/:masterId/break-config
+ * @access  Private - Department Admin or Timetable Incharge (faculty)
+ */
+export const saveBreakConfiguration = asyncHandler(async (req, res, next) => {
+  const { masterId } = req.params;
+  const { breakPeriodIds } = req.body;
+
+  console.log(`[SAVE BREAK CONFIG] Received breakPeriodIds:`, breakPeriodIds, 'Type:', typeof breakPeriodIds, 'isArray:', Array.isArray(breakPeriodIds));
+
+  if (!Array.isArray(breakPeriodIds)) {
+    return next(new ErrorResponse('breakPeriodIds must be an array', 400));
+  }
+
+  const master = await TimetableMaster.findByPk(masterId);
+  if (!master) {
+    return next(new ErrorResponse(`Timetable master not found with id ${masterId}`, 404));
+  }
+
+  // Check write access
+  const accessError = await checkWriteAccess(req, master);
+  if (accessError) return next(accessError);
+
+  // Update the break_period_ids field
+  await master.update({
+    break_period_ids: breakPeriodIds,
+  });
+
+  // Fetch fresh to confirm
+  const updated = await TimetableMaster.findByPk(masterId, {
+    attributes: ['id', 'break_period_ids']
+  });
+  console.log(`[SAVE BREAK CONFIG] After update - break_period_ids from DB:`, updated.break_period_ids, 'Type:', typeof updated.break_period_ids);
+
+  res.status(200).json({
+    success: true,
+    message: 'Break configuration saved successfully',
+    data: {
+      masterId: master.id,
+      breakPeriodIds: updated.break_period_ids,
+    },
+  });
+});
+

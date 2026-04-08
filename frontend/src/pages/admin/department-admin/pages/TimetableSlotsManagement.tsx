@@ -132,6 +132,9 @@ export default function TimetableSlotsManagement() {
       if (response.ok) {
         const data = await response.json();
         setSlots(data.data || []);
+        // NOTE: Do NOT detect break periods from slots here
+        // The break configuration is fetched separately from the backend
+        // Slots may have old break entries that don't match current config
       }
     } catch (error) {
       console.error("Error fetching slots:", error);
@@ -236,6 +239,83 @@ export default function TimetableSlotsManagement() {
     }
   }, [masterId, authToken]);
 
+  // Function to refetch break configuration (callable from save handler)
+  const refetchBreakConfig = async () => {
+    if (!masterId || !authToken) return;
+    
+    try {
+      const res = await fetch(
+        `/api/v1/timetable-master/${masterId}/break-config`,
+        { headers: { Authorization: `Bearer ${authToken}` } }
+      );
+      
+      if (res.ok) {
+        const data = await res.json();
+        const breakIds = data.data?.breakPeriodIds || [3, 5, 8];
+        console.log('[BREAK CONFIG] Refetched from backend:', breakIds);
+        setBreakPeriodIds(breakIds);
+        localStorage.setItem(`timetable_${masterId}_breaks`, JSON.stringify(breakIds));
+      }
+    } catch (error) {
+      console.error('[BREAK CONFIG] Error refetching:', error);
+    }
+  };
+
+  // Load break periods from backend (with localStorage fallback)
+  useEffect(() => {
+    if (masterId && authToken) {
+      const fetchBreakConfig = async () => {
+        try {
+          // Try to fetch from backend first
+          const res = await fetch(
+            `/api/v1/timetable-master/${masterId}/break-config`,
+            { headers: { Authorization: `Bearer ${authToken}` } }
+          );
+          
+          if (res.ok) {
+            const data = await res.json();
+            const breakIds = data.data?.breakPeriodIds || [3, 5, 8];
+            console.log('[BREAK CONFIG] Loaded from backend:', breakIds);
+            setBreakPeriodIds(breakIds);
+            // Cache to localStorage
+            localStorage.setItem(`timetable_${masterId}_breaks`, JSON.stringify(breakIds));
+          } else {
+            // Fall back to localStorage
+            const stored = localStorage.getItem(`timetable_${masterId}_breaks`);
+            if (stored) {
+              try {
+                const breakIds = JSON.parse(stored);
+                console.log('[BREAK CONFIG] Loaded from localStorage (backend unavailable):', breakIds);
+                setBreakPeriodIds(breakIds);
+              } catch (e) {
+                console.error('[BREAK CONFIG] Failed to parse localStorage:', e);
+                setBreakPeriodIds([3, 5, 8]);
+              }
+            } else {
+              console.log('[BREAK CONFIG] No break config found, using defaults');
+              setBreakPeriodIds([3, 5, 8]);
+            }
+          }
+        } catch (error) {
+          console.error('[BREAK CONFIG] Error fetching from backend, falling back to localStorage:', error);
+          const stored = localStorage.getItem(`timetable_${masterId}_breaks`);
+          if (stored) {
+            try {
+              const breakIds = JSON.parse(stored);
+              console.log('[BREAK CONFIG] Using localStorage fallback:', breakIds);
+              setBreakPeriodIds(breakIds);
+            } catch (e) {
+              console.error('[BREAK CONFIG] Failed to parse localStorage:', e);
+              setBreakPeriodIds([3, 5, 8]);
+            }
+          }
+        }
+      };
+      
+      fetchBreakConfig();
+    }
+  }, [masterId, authToken]);
+
   const handleAddSlot = async () => {
     try {
       setLoading(true);
@@ -262,7 +342,18 @@ export default function TimetableSlotsManagement() {
         end_time: convertTimeFormat(formData.end_time),
       };
 
-      console.log("[SLOT CREATE] Payload:", payload);
+      // If this period is marked as a break, override with break values
+      const periodId = parseInt(formData.period_slot_id);
+      if (isPeriodBreak(periodId)) {
+        payload.subject_id = null;
+        payload.faculty_id = null;
+        payload.session_type = 'break';
+        payload.room = null;
+        payload.is_lab_session = false;
+        console.log('[SLOT CREATE] Period', periodId, 'is configured as BREAK - overriding payload');
+      }
+
+      console.log("[SLOT CREATE] Payload:", payload, "Is Break:", isPeriodBreak(periodId));
 
       const response = await fetch(
         `/api/v1/timetable-master/${masterId}/slots`,
@@ -341,6 +432,36 @@ export default function TimetableSlotsManagement() {
         return time.includes(":") ? time + ":00" : null;
       };
 
+      const periodId = parseInt(formData.period_slot_id);
+      const isBreakPeriod = isPeriodBreak(periodId);
+
+      const updatePayload: any = {
+        day: formData.day,
+        period_slot_id: periodId,
+        subject_id: formData.subject_id && formData.subject_id !== "none" ? parseInt(formData.subject_id) : null,
+        faculty_id: formData.faculty_id ? parseInt(formData.faculty_id) : null,
+        session_type: formData.session_type,
+        is_lab_session: formData.is_lab_session || false,
+        lab_pair_slot_id: formData.lab_pair_slot_id ? parseInt(formData.lab_pair_slot_id) : null,
+        lab_group: formData.lab_group || null,
+        room: formData.room || null,
+        notes: formData.notes || null,
+        start_time: convertTimeFormat(formData.start_time),
+        end_time: convertTimeFormat(formData.end_time),
+      };
+
+      // If this period is marked as a break, override with break values
+      if (isBreakPeriod) {
+        updatePayload.subject_id = null;
+        updatePayload.faculty_id = null;
+        updatePayload.session_type = 'break';
+        updatePayload.room = null;
+        updatePayload.is_lab_session = false;
+        console.log('[SLOT UPDATE] Period', periodId, 'is configured as BREAK - overriding payload');
+      }
+
+      console.log("[SLOT UPDATE] Payload:", updatePayload, "Is Break:", isBreakPeriod);
+
       const response = await fetch(
         `/api/v1/timetable-master/${masterId}/slots/${editingSlot.id}`,
         {
@@ -349,20 +470,7 @@ export default function TimetableSlotsManagement() {
             "Content-Type": "application/json",
             Authorization: `Bearer ${authToken}`,
           },
-          body: JSON.stringify({
-            day: formData.day,
-            period_slot_id: parseInt(formData.period_slot_id),
-            subject_id: formData.subject_id && formData.subject_id !== "none" ? parseInt(formData.subject_id) : null,
-            faculty_id: formData.faculty_id ? parseInt(formData.faculty_id) : null,
-            session_type: formData.session_type,
-            is_lab_session: formData.is_lab_session || false,
-            lab_pair_slot_id: formData.lab_pair_slot_id ? parseInt(formData.lab_pair_slot_id) : null,
-            lab_group: formData.lab_group || null,
-            room: formData.room || null,
-            notes: formData.notes || null,
-            start_time: convertTimeFormat(formData.start_time),
-            end_time: convertTimeFormat(formData.end_time),
-          }),
+          body: JSON.stringify(updatePayload),
         }
       );
 
@@ -1218,11 +1326,14 @@ export default function TimetableSlotsManagement() {
                       return (
                         <div
                           key={`${day}-${period.id}`}
-                          className="flex items-center justify-between p-3 border rounded-lg bg-muted/30"
+                          className={cn(
+                            "flex items-center justify-between p-3 border rounded-lg",
+                            isPeriodBreak(period.id) ? "bg-purple-50 border-purple-200" : "bg-muted/30"
+                          )}
                         >
                           <div className="flex-1">
                             <p className="font-semibold text-sm">
-                              {period.label} ({displayTime})
+                              {isPeriodBreak(period.id) ? `🔴 ${period.label} (Break)` : `${period.label} (${displayTime})`}
                             </p>
                             {slot ? (
                               <div className="mt-1 space-y-1">
@@ -1246,7 +1357,9 @@ export default function TimetableSlotsManagement() {
                                 </p>
                               </div>
                             ) : (
-                              <p className="text-sm text-muted-foreground">Not scheduled</p>
+                              <p className="text-sm text-muted-foreground">
+                                {isPeriodBreak(period.id) ? "Break period configured" : "Not scheduled"}
+                              </p>
                             )}
                           </div>
                           {slot && (
@@ -1354,12 +1467,49 @@ export default function TimetableSlotsManagement() {
               </Button>
               <Button
                 className="bg-purple-600 hover:bg-purple-700"
-                onClick={() => {
-                  setIsBreakConfigOpen(false);
-                  toast({
-                    title: "✅ Break Configuration Updated",
-                    description: `${periods.filter(p => isPeriodBreak(p.id)).length} periods marked as breaks`,
-                  });
+                onClick={async () => {
+                  try {
+                    // Save break configuration to backend
+                    const res = await fetch(
+                      `/api/v1/timetable-master/${masterId}/break-config`,
+                      {
+                        method: 'POST',
+                        headers: {
+                          'Authorization': `Bearer ${authToken}`,
+                          'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ breakPeriodIds }),
+                      }
+                    );
+
+                    if (res.ok) {
+                      const data = await res.json();
+                      console.log('[BREAK CONFIG] Saved to backend:', data);
+                      
+                      // Also save to localStorage as cache
+                      localStorage.setItem(`timetable_${masterId}_breaks`, JSON.stringify(breakPeriodIds));
+                      console.log('[BREAK CONFIG] Cached to localStorage:', `timetable_${masterId}_breaks`, breakPeriodIds);
+                      
+                      // Refetch to ensure data is synced
+                      await refetchBreakConfig();
+                      
+                      setIsBreakConfigOpen(false);
+                      toast({
+                        title: "✅ Break Configuration Saved",
+                        description: `${periods.filter(p => isPeriodBreak(p.id)).length} periods marked as breaks for this timetable`,
+                      });
+                    } else {
+                      const error = await res.json();
+                      throw new Error(error.message || 'Failed to save break configuration');
+                    }
+                  } catch (error) {
+                    console.error('[BREAK CONFIG] Error saving:', error);
+                    toast({
+                      title: "❌ Error",
+                      description: error instanceof Error ? error.message : 'Failed to save break configuration',
+                      variant: "destructive",
+                    });
+                  }
                 }}
               >
                 Save Configuration

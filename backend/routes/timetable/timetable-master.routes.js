@@ -9,6 +9,10 @@ import {
   deactivateTimetableMaster,
   deleteTimetableMaster,
 } from '../../controllers/timetable/timetable-master.controller.js';
+import {
+  getBreakConfiguration,
+  saveBreakConfiguration,
+} from '../../controllers/timetable/timetable-slots.controller.js';
 
 const router = express.Router();
 
@@ -40,5 +44,9 @@ router.patch('/:id/deactivate', authorize('department-admin', 'timetable-incharg
 
 // Delete timetable master (only draft)
 router.delete('/:id', authorize('department-admin', 'timetable-incharge'), deleteTimetableMaster);
+
+// Break configuration endpoints
+router.get('/:masterId/break-config', getBreakConfiguration);
+router.post('/:masterId/break-config', authorize('department-admin', 'faculty'), saveBreakConfiguration);
 
 export default router;
