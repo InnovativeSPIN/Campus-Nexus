@@ -64,26 +64,19 @@ interface Faculty {
 
 const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
-// Periods with break/lunch detection
-const periods = [
-  { id: 1, label: "I", time: "09:30 AM - 10:20 AM", isBreak: false },
-  { id: 2, label: "II", time: "10:20 AM - 11:10 AM", isBreak: false },
-  { id: 3, label: "Break", time: "11:10 AM - 11:30 AM", isBreak: true },
-  { id: 4, label: "III", time: "11:30 AM - 12:25 PM", isBreak: false },
-  { id: 5, label: "Lunch", time: "12:25 PM - 01:10 PM", isBreak: true },
-  { id: 6, label: "IV", time: "01:10 PM - 02:00 PM", isBreak: false },
-  { id: 7, label: "V", time: "02:00 PM - 02:50 PM", isBreak: false },
-  { id: 8, label: "Break", time: "02:50 PM - 03:10 PM", isBreak: true },
-  { id: 9, label: "VI", time: "03:10 PM - 04:00 PM", isBreak: false },
-  { id: 10, label: "VII", time: "04:00 PM - 04:45 PM", isBreak: false },
+// Default periods - will be made dynamic later
+const DEFAULT_PERIODS = [
+  { id: 1, label: "I", time: "09:30 AM - 10:20 AM" },
+  { id: 2, label: "II", time: "10:20 AM - 11:10 AM" },
+  { id: 3, label: "Break", time: "11:10 AM - 11:30 AM" },
+  { id: 4, label: "III", time: "11:30 AM - 12:25 PM" },
+  { id: 5, label: "Lunch", time: "12:25 PM - 01:10 PM" },
+  { id: 6, label: "IV", time: "01:10 PM - 02:00 PM" },
+  { id: 7, label: "V", time: "02:00 PM - 02:50 PM" },
+  { id: 8, label: "Break", time: "02:50 PM - 03:10 PM" },
+  { id: 9, label: "VI", time: "03:10 PM - 04:00 PM" },
+  { id: 10, label: "VII", time: "04:00 PM - 04:45 PM" },
 ];
-
-// Break timings configuration - can be easily updated
-const breakTimings = {
-  morningBreak: { startPeriod: 3, label: "Break", time: "11:10 AM - 11:30 AM" },
-  lunch: { startPeriod: 5, label: "Lunch", time: "12:25 PM - 01:10 PM" },
-  afternoonBreak: { startPeriod: 8, label: "Break", time: "02:50 PM - 03:10 PM" },
-};
 
 const sessionTypes = ["theory", "lab", "tutorial", "activity", "project", "break", "free"];
 
@@ -96,6 +89,9 @@ export default function TimetableSlotsManagement() {
   const [loading, setLoading] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingSlot, setEditingSlot] = useState<TimetableSlot | null>(null);
+  const [isBreakConfigOpen, setIsBreakConfigOpen] = useState(false);
+  const [periods, setPeriods] = useState<typeof DEFAULT_PERIODS>([...DEFAULT_PERIODS]);
+  const [breakPeriodIds, setBreakPeriodIds] = useState<number[]>([3, 5, 8]); // Default break periods
   const { authToken } = useAuth();
 
   const [formData, setFormData] = useState({
@@ -112,6 +108,18 @@ export default function TimetableSlotsManagement() {
     start_time: "",
     end_time: "",
   });
+
+  // Toggle a period as break or teaching
+  const togglePeriodAsBreak = (periodId: number) => {
+    setBreakPeriodIds(prev => 
+      prev.includes(periodId)
+        ? prev.filter(id => id !== periodId)
+        : [...prev, periodId]
+    );
+  };
+
+  // Get period status (break or teaching)
+  const isPeriodBreak = (periodId: number) => breakPeriodIds.includes(periodId);
 
   // Fetch slots
   const fetchSlots = async () => {
@@ -483,12 +491,18 @@ export default function TimetableSlotsManagement() {
     const resolvedFacultyId =
       slot.faculty_id?.toString() || slot.faculty?.faculty_id?.toString() || "";
 
+    // Auto-set session_type to "break" if this period is configured as a break
+    let sessionType = slot.session_type;
+    if (isPeriodBreak(slot.period_slot_id)) {
+      sessionType = "break";
+    }
+
     setFormData({
       day: slot.day,
       period_slot_id: slot.period_slot_id.toString(),
       subject_id: resolvedSubjectId,
       faculty_id: resolvedFacultyId,
-      session_type: slot.session_type,
+      session_type: sessionType,
       is_lab_session: slot.is_lab_session,
       lab_pair_slot_id: slot.lab_pair_slot_id?.toString() || "",
       lab_group: slot.lab_group || "",
@@ -543,8 +557,9 @@ export default function TimetableSlotsManagement() {
           ]);
         } else {
           // Empty slot - pre-fill with day/period, leave subject/faculty blank
-          // Auto-detect breaks and lunches
-          const sessionType = period.isBreak ? "break" : "theory";
+          // Auto-detect breaks based on breakPeriodIds
+          const isBreak = isPeriodBreak(period.id);
+          const sessionType = isBreak ? "break" : "theory";
           
           dataToExport.push([
             day,
@@ -553,13 +568,18 @@ export default function TimetableSlotsManagement() {
             "", // Faculty Code - leave blank for user to fill
             sessionType, // "break" for breaks/lunch, "theory" for regular periods
             "", // Room
-            period.isBreak ? `${period.label} (${period.time})` : "", // Pre-fill break info in notes
+            isBreak ? `${period.label} (${period.time})` : "", // Pre-fill break info in notes
           ]);
         }
       });
     });
 
     // Add information section at the top
+    const breakPeriodsInfo = periods
+      .filter(p => isPeriodBreak(p.id))
+      .map(p => `# - Period ${p.id}: ${p.label} (${p.time})`)
+      .join('\n');
+
     const instructionLines = [
       "# ============================================================",
       `# TIMETABLE TEMPLATE FOR: ${timetableName || 'Unknown Class'}`,
@@ -578,9 +598,7 @@ export default function TimetableSlotsManagement() {
       "# 7. Notes: Any additional notes about the slot",
       "#",
       "# BREAK TIMINGS (Do not assign subjects to these):",
-      `# - Period ${breakTimings.morningBreak.startPeriod}: ${breakTimings.morningBreak.label} (${breakTimings.morningBreak.time})`,
-      `# - Period ${breakTimings.lunch.startPeriod}: ${breakTimings.lunch.label} (${breakTimings.lunch.time})`,
-      `# - Period ${breakTimings.afternoonBreak.startPeriod}: ${breakTimings.afternoonBreak.label} (${breakTimings.afternoonBreak.time})`,
+      ...breakPeriodsInfo.split('\n').filter(l => l.trim()),
       "#",
       `# SUBJECTS AVAILABLE FOR ${timetableName || 'THIS CLASS'} (${subjects.length} subject${subjects.length !== 1 ? 's' : ''}):`,
       ...subjects.map(s => `# - ${s.code.padEnd(12)} : ${s.name}`),
@@ -594,8 +612,8 @@ export default function TimetableSlotsManagement() {
     ];
     
     // Add footer with period counts
-    const teachingPeriodCount = periods.filter(p => !p.isBreak).length;
-    const breakPeriodCount = periods.filter(p => p.isBreak).length;
+    const teachingPeriodCount = periods.filter(p => !isPeriodBreak(p.id)).length;
+    const breakPeriodCount = periods.filter(p => isPeriodBreak(p.id)).length;
     instructionLines.push(
       `# Teaching Periods: ${teachingPeriodCount} | Break/Lunch: ${breakPeriodCount} | Total: ${periods.length}`,
       `# Total Slots: ${dataToExport.length} (${days.length} days × ${periods.length} periods)`,
@@ -604,8 +622,8 @@ export default function TimetableSlotsManagement() {
     );
     
     // Debug: Log what's being exported
-    const teachingPeriods = periods.filter(p => !p.isBreak);
-    const breakPeriods = periods.filter(p => p.isBreak);
+    const teachingPeriods = periods.filter(p => !isPeriodBreak(p.id));
+    const breakPeriods = periods.filter(p => isPeriodBreak(p.id));
     console.log("[DOWNLOAD TEMPLATE]", {
       masterId,
       timetableName,
@@ -923,6 +941,14 @@ export default function TimetableSlotsManagement() {
         </div>
 
         <div className="flex gap-2 w-fit">
+          <Button 
+            onClick={() => setIsBreakConfigOpen(true)}
+            className="bg-purple-600 hover:bg-purple-700"
+          >
+            <AlertCircle className="w-4 h-4 mr-2" />
+            Configure Breaks
+          </Button>
+
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button className="bg-blue-600 hover:bg-blue-700">
@@ -937,6 +963,17 @@ export default function TimetableSlotsManagement() {
               </DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
+              {/* Break Period Banner */}
+              {isPeriodBreak(parseInt(formData.period_slot_id)) && (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex gap-3">
+                  <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-amber-900">This is a Break Period</p>
+                    <p className="text-xs text-amber-800">Subject and Faculty will be automatically cleared. Only the break duration will be saved.</p>
+                  </div>
+                </div>
+              )}
+              
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>Day *</Label>
@@ -959,9 +996,9 @@ export default function TimetableSlotsManagement() {
                   <Select 
                     value={formData.period_slot_id} 
                     onValueChange={(v) => {
-                      // Auto-set session_type to 'break' if selecting a break period (3, 5, 8)
-                      const breakPeriodIds = [3, 5, 8];
-                      const isBreakPeriod = breakPeriodIds.includes(parseInt(v));
+                      // Auto-set session_type to 'break' if selecting a break period
+                      const periodId = parseInt(v);
+                      const isBreakPeriod = isPeriodBreak(periodId);
                       setFormData({
                         ...formData,
                         period_slot_id: v,
@@ -975,7 +1012,7 @@ export default function TimetableSlotsManagement() {
                     <SelectContent>
                       {periods.map((p) => (
                         <SelectItem key={p.id} value={p.id.toString()}>
-                          {p.label}
+                          {isPeriodBreak(p.id) ? `🔴 ${p.label} (Break)` : p.label}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -1046,8 +1083,8 @@ export default function TimetableSlotsManagement() {
                   <Select
                     value={formData.session_type}
                     onValueChange={(v) => {
-                      const breakPeriodIds = [3, 5, 8];
-                      const isBreakPeriod = breakPeriodIds.includes(parseInt(formData.period_slot_id));
+                      const periodId = parseInt(formData.period_slot_id);
+                      const isBreakPeriod = isPeriodBreak(periodId);
                       
                       // If a break period is selected and user tries to select non-break type, force to break
                       const finalSessionType = isBreakPeriod && v !== 'break' ? 'break' : v;
@@ -1066,8 +1103,8 @@ export default function TimetableSlotsManagement() {
                     </SelectTrigger>
                     <SelectContent>
                       {sessionTypes.map((type) => {
-                        const breakPeriodIds = [3, 5, 8];
-                        const isBreakPeriod = breakPeriodIds.includes(parseInt(formData.period_slot_id));
+                        const periodId = parseInt(formData.period_slot_id);
+                        const isBreakPeriod = isPeriodBreak(periodId);
                         // If a break period is selected, only show 'break' option
                         if (isBreakPeriod && type !== 'break') {
                           return null;
@@ -1241,6 +1278,96 @@ export default function TimetableSlotsManagement() {
           })
         )}
       </motion.div>
+
+      {/* Break Configuration Dialog */}
+      <Dialog open={isBreakConfigOpen} onOpenChange={setIsBreakConfigOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Configure Break & Lunch Periods</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-6">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <p className="text-sm text-blue-800">
+                Mark which periods should be treated as breaks or lunch periods. Students will see these as non-teaching time slots.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <h3 className="font-semibold text-md">Available Periods</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-96 overflow-y-auto">
+                {periods.map((period) => (
+                  <Card
+                    key={period.id}
+                    className={cn(
+                      "p-3 cursor-pointer transition-all border-2",
+                      isPeriodBreak(period.id)
+                        ? "border-purple-500 bg-purple-50"
+                        : "border-gray-200 hover:border-purple-300"
+                    )}
+                    onClick={() => togglePeriodAsBreak(period.id)}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <p className="font-medium">Period {period.id}: {period.label}</p>
+                        <p className="text-sm text-muted-foreground">{period.time}</p>
+                      </div>
+                      <div
+                        className={cn(
+                          "w-6 h-6 border-2 rounded flex items-center justify-center transition-all",
+                          isPeriodBreak(period.id)
+                            ? "border-purple-500 bg-purple-500"
+                            : "border-gray-300"
+                        )}
+                      >
+                        {isPeriodBreak(period.id) && (
+                          <span className="text-white text-sm">✓</span>
+                        )}
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      {isPeriodBreak(period.id) ? "Marked as BREAK" : "Teaching period"}
+                    </p>
+                  </Card>
+                ))}
+              </div>
+            </div>
+
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+              <h4 className="font-semibold text-sm text-amber-900 mb-2">📌 Summary</h4>
+              <p className="text-sm text-amber-800">
+                <strong>Teaching Periods:</strong> {periods.filter(p => !isPeriodBreak(p.id)).length} periods
+              </p>
+              <p className="text-sm text-amber-800">
+                <strong>Break/Lunch Periods:</strong> {periods.filter(p => isPeriodBreak(p.id)).length} periods
+              </p>
+              <p className="text-sm text-amber-800 mt-2">
+                <strong>Total Periods:</strong> {periods.length} periods × {days.length} days = {periods.length * days.length} slots
+              </p>
+            </div>
+
+            <div className="flex gap-2 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => setIsBreakConfigOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="bg-purple-600 hover:bg-purple-700"
+                onClick={() => {
+                  setIsBreakConfigOpen(false);
+                  toast({
+                    title: "✅ Break Configuration Updated",
+                    description: `${periods.filter(p => isPeriodBreak(p.id)).length} periods marked as breaks`,
+                  });
+                }}
+              >
+                Save Configuration
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </MainLayout>
   );
 }
