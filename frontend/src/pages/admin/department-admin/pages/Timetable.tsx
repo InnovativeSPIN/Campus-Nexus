@@ -445,7 +445,13 @@ export default function Timetable() {
   // Fetch Class List
   const fetchClassList = async () => {
     try {
-      const response = await fetch("/api/v1/classes", {
+      const departmentId = user?.department_id || user?.departmentId;
+      let url = "/api/v1/classes";
+      if (departmentId) {
+        url += `?department_id=${departmentId}`;
+      }
+      
+      const response = await fetch(url, {
         headers: {
           Authorization: token ? `Bearer ${token}` : "",
           "Content-Type": "application/json",
