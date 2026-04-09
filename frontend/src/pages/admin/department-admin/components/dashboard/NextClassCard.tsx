@@ -12,6 +12,7 @@ interface ClassInfo {
   type?: string;
   totalPeriods?: number;
   duration?: string;
+  isUpcomingOnly?: boolean;
 }
 
 interface NextClassCardProps {
@@ -57,7 +58,7 @@ export function NextClassCard({ currentClass, nextClass, onClassClick }: NextCla
               </div>
               <div className="flex items-center gap-2">
                 <BookOpen className="w-4 h-4 text-primary" />
-                <span>{currentClass.section} · {currentClass.studentsCount} students</span>
+                <span>{currentClass.section} â€¢ {currentClass.studentsCount} students</span>
               </div>
             </div>
             <Button
@@ -104,7 +105,7 @@ export function NextClassCard({ currentClass, nextClass, onClassClick }: NextCla
               </div>
               <div className="flex items-center gap-2">
                 <BookOpen className="w-4 h-4 text-secondary" />
-                <span>{nextClass.section} · {nextClass.studentsCount} students</span>
+                <span>{nextClass.section} â€¢ {nextClass.studentsCount} students</span>
               </div>
             </div>
           </div>

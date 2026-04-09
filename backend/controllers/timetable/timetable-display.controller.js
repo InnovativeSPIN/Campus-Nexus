@@ -29,7 +29,7 @@ export const getClassTimetable = asyncHandler(async (req, res, next) => {
 
     // If academicYear/semester not provided, get current active timetable
     let where = { class_id: classId };
-    
+
     if (academicYear) where.academic_year = academicYear;
     if (semester) where.semester = semester;
 
@@ -259,9 +259,9 @@ export const getFacultyTimetable = asyncHandler(async (req, res, next) => {
 export const getMyTimetable = asyncHandler(async (req, res, next) => {
   try {
     console.log('[TimetableDisplay] getMyTimetable called for user:', req.user);
-    
+
     const facultyId = req.user.faculty_id || req.user.id;
-    
+
     if (!facultyId) {
       return res.status(400).json({
         success: false,
@@ -296,15 +296,15 @@ export const getMyTimetable = asyncHandler(async (req, res, next) => {
       where: masterWhere,
       attributes: ['id', 'class_id', 'academic_year', 'semester', 'semester_type', 'batch', 'room_no', 'effective_from'],
       include: [
-        { 
-          model: ClassModel, 
-          as: 'class', 
+        {
+          model: ClassModel,
+          as: 'class',
           attributes: ['id', 'name', 'semester', 'batch'],
           required: false
         },
-        { 
-          model: Department, 
-          as: 'department', 
+        {
+          model: Department,
+          as: 'department',
           attributes: ['id', 'full_name', 'short_name'],
           required: false
         },
@@ -315,15 +315,15 @@ export const getMyTimetable = asyncHandler(async (req, res, next) => {
           where: { faculty_id: facultyId },
           required: false,
           include: [
-            { 
-              model: Subject, 
-              as: 'subject', 
+            {
+              model: Subject,
+              as: 'subject',
               attributes: ['id', 'subject_name', 'subject_code'],
               required: false
             },
-            { 
-              model: PeriodSlot, 
-              as: 'period', 
+            {
+              model: PeriodSlot,
+              as: 'period',
               attributes: ['id', 'period_label', 'start_time', 'end_time'],
               required: false
             },

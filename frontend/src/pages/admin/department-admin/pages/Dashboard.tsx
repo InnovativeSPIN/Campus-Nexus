@@ -24,7 +24,7 @@ export default function Dashboard() {
   const { announcement, showNotification, setShowNotification } = useAnnouncementNotification();
   const { pendingLeaves, showLeavePopup, setShowLeavePopup } = useLeaveNotification();
   const { authToken, user } = useAuth();
-  
+
   const [currentTime, setCurrentTime] = useState(new Date());
   const [todaySlots, setTodaySlots] = useState<any[]>([]);
   const [stats, setStats] = useState({ students: 0, faculty: 0, pending: 0, attendance: 0, syllabusProgress: 0, onLeave: 0, projects: 0 });
@@ -42,14 +42,14 @@ export default function Dashboard() {
       try {
         setLoading(true);
         const today = new Date().toISOString().split("T")[0];
-        
+
         // Fetch today's timetable
         const slotsResponse = await fetch(
           `/api/v1/attendance/faculty/timetable/${today}`,
           { headers: { Authorization: `Bearer ${authToken}` } }
         );
         const slotsData = await slotsResponse.json();
-        
+
         if (slotsData.success && slotsData.data) {
           setTodaySlots(slotsData.data.slots || []);
           setSlotStudents(slotsData.data.studentsByClass || {});
@@ -61,13 +61,41 @@ export default function Dashboard() {
           { headers: { Authorization: `Bearer ${authToken}` } }
         ).catch(() => null);
 
+        // Fetch and map students and faculty explicitly by department ID as requested
+        let studentCount: number | null = null;
+        let facultyCount: number | null = null;
+        try {
+          const deptId = (user as any)?.department_id || (user as any)?.departmentId || (user as any)?.department?.id;
+          if (deptId) {
+            const [stuRes, facRes] = await Promise.all([
+              fetch(`/api/v1/students/department/${deptId}`, { headers: { Authorization: `Bearer ${authToken}` } }).catch(() => null),
+              fetch(`/api/v1/faculty?department=${deptId}&limit=0`, { headers: { Authorization: `Bearer ${authToken}` } }).catch(() => null)
+            ]);
+
+            if (stuRes?.ok) {
+              const stuData = await stuRes.json();
+              if (stuData.success && Array.isArray(stuData.data)) {
+                studentCount = stuData.data.length;
+              }
+            }
+            if (facRes?.ok) {
+              const facData = await facRes.json();
+              if (facData.success && Array.isArray(facData.data)) {
+                facultyCount = facData.data.length;
+              }
+            }
+          }
+        } catch (error) {
+          console.error("Error mapping student/faculty counts:", error);
+        }
+
         if (statsResponse?.ok) {
           const statsData = await statsResponse.json();
           if (statsData.success && statsData.data) {
             setStats(prev => ({
               ...prev,
-              students: statsData.data.totalStudents || 0,
-              faculty: statsData.data.totalFaculty || 0,
+              students: studentCount !== null ? studentCount : (statsData.data.totalStudents || 0),
+              faculty: facultyCount !== null ? facultyCount : (statsData.data.totalFaculty || 0),
               pending: statsData.data.pendingApprovals || 0,
               attendance: statsData.data.averageAttendance || 85,
               syllabusProgress: statsData.data.syllabusProgress || 92,
@@ -75,6 +103,12 @@ export default function Dashboard() {
               projects: statsData.data.activeProjects || 0,
             }));
           }
+        } else if (studentCount !== null || facultyCount !== null) {
+          setStats(prev => ({
+            ...prev,
+            students: studentCount !== null ? studentCount : prev.students,
+            faculty: facultyCount !== null ? facultyCount : prev.faculty,
+          }));
         }
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
@@ -104,17 +138,34 @@ export default function Dashboard() {
     const currentHour = now.getHours();
     const currentMinute = now.getMinutes();
 
-    const current = todaySlots.find((slot: any) => {
-      const [sHour, sMin] = slot.startTime?.split(':').map(Number) || [0, 0];
-      const [eHour, eMin] = slot.endTime?.split(':').map(Number) || [23, 59];
-      return (sHour < currentHour || (sHour === currentHour && sMin <= currentMinute)) &&
-             (eHour > currentHour || (eHour === currentHour && eMin > currentMinute));
+    // Sort today's slots chronologically
+    const sortedSlots = [...todaySlots].sort((a, b) => {
+      const [aH, aM] = a.startTime?.split(':').map(Number) || [0, 0];
+      const [bH, bM] = b.startTime?.split(':').map(Number) || [0, 0];
+      return aH - bH || aM - bM;
     });
 
-    const next = todaySlots.find((slot: any) => {
-      const [sHour, sMin] = slot.startTime?.split(':').map(Number) || [0, 0];
-      return (sHour > currentHour || (sHour === currentHour && sMin > currentMinute));
+    // Find live and upcoming classes for the rest of the day
+    const liveAndUpcomingSlots = sortedSlots.filter((slot: any) => {
+      const [eHour, eMin] = slot.endTime?.split(':').map(Number) || [23, 59];
+      // Keep if the class hasn't finished yet
+      return (eHour > currentHour || (eHour === currentHour && eMin > currentMinute));
     });
+
+    let current = null;
+    let next = null;
+    let isCurrentUpcomingOnly = false;
+
+    if (liveAndUpcomingSlots.length > 0) {
+      current = liveAndUpcomingSlots[0];
+      const [sHour, sMin] = current.startTime?.split(':').map(Number) || [0, 0];
+      // Check if it's strictly in the future (not started yet)
+      isCurrentUpcomingOnly = (sHour > currentHour || (sHour === currentHour && sMin > currentMinute));
+    }
+
+    if (liveAndUpcomingSlots.length > 1) {
+      next = liveAndUpcomingSlots[1];
+    }
 
     const currentClassData = current ? {
       subject: current.subjectName || "Class",
@@ -125,6 +176,7 @@ export default function Dashboard() {
       type: current.session_type === 'lab' ? "Lab" : "Theory",
       totalPeriods: 1,
       duration: "50 mins",
+      isUpcomingOnly: isCurrentUpcomingOnly
     } : null;
 
     const nextClassData = next ? {
@@ -154,6 +206,7 @@ export default function Dashboard() {
         type: "Theory",
         totalPeriods: 0,
         duration: "N/A",
+        isUpcomingOnly: false
       },
       nextClass: nextClassData || {
         subject: "No upcoming class",

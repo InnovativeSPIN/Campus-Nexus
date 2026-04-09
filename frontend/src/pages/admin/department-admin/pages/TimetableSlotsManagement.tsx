@@ -195,7 +195,35 @@ export default function TimetableSlotsManagement() {
           }
         }
 
+        // Also fetch globally-shared subjects (available_to_all_departments)
+        try {
+          const globalSubRes = await fetch(
+            `/api/v1/department-admin/subjects?status=active`,
+            { headers: { Authorization: `Bearer ${authToken}` } }
+          );
+          if (globalSubRes.ok) {
+            const globalData = await globalSubRes.json();
+            const globalSubjects: Subject[] = (globalData.data || [])
+              .filter((s: any) => s.available_to_all_departments)
+              .map((s: any) => ({
+                id: s.id,
+                name: s.name || s.subject_name || "Unknown",
+                code: s.code || s.subject_code || "",
+              }));
+            // Merge, avoiding duplicates
+            globalSubjects.forEach((gs: Subject) => {
+              if (!subjectsData.some(s => s.id === gs.id)) {
+                subjectsData.push(gs);
+              }
+            });
+            console.log("[FETCH DATA] Added global subjects:", globalSubjects.length, "Total:", subjectsData.length);
+          }
+        } catch (e) {
+          console.warn("[FETCH DATA] Could not fetch global subjects:", e);
+        }
+
         setSubjects(subjectsData);
+
 
         // Fetch faculty assigned to this class via faculty_subject_assignment
         let facultiesData: Faculty[] = [];
