@@ -157,7 +157,7 @@ export default function SuperAdminDashboard() {
             <p className="text-muted-foreground mt-1">Real-time overview of the campus ecosystem.</p>
           </div>
           <div className="flex items-center gap-3">
-             <button
+            <button
               onClick={handleRefresh}
               disabled={refreshing}
               className={cn(

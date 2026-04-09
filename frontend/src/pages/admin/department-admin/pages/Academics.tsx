@@ -914,10 +914,7 @@ export default function Academics() {
               <Upload className="w-4 h-4" />
               Course Plan Upload
             </TabsTrigger>
-            <TabsTrigger value="coursefile" className="flex items-center gap-2">
-              <ClipboardList className="w-4 h-4" />
-              Course File
-            </TabsTrigger>
+
             <TabsTrigger value="credits" className="flex items-center gap-2">
               <GraduationCap className="w-4 h-4" />
               Credits

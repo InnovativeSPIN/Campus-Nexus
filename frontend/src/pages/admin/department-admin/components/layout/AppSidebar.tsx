@@ -32,7 +32,6 @@ import { cn } from "@/pages/admin/department-admin/lib/utils";
 const menuItems = [
   { title: "Dashboard", url: "/admin/department-admin/dashboard", icon: LayoutDashboard },
   { title: "Profile", url: "/admin/department-admin/profile", icon: User },
-  { title: "Coordinators", url: "/admin/department-admin/coordinators", icon: Users },
   { title: "Subject Allocation", url: "/admin/department-admin/subject-allocation", icon: BookOpen },
   { title: "Timetable", url: "/admin/department-admin/timetable", icon: Calendar },
   { title: "Timetable Master", url: "/admin/department-admin/timetable-master", icon: CalendarDays },

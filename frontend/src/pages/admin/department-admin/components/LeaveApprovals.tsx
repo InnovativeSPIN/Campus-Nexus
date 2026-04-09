@@ -466,7 +466,7 @@ export function LeaveApprovals() {
                 )}
                 <p>
                   <span className="font-medium">Type:</span> {
-                    activeDialog.type === "student" 
+                    activeDialog.type === "student"
                       ? (activeDialog.leave.leaveSubType || activeDialog.leave.leaveType)
                       : activeDialog.leave.leaveType
                   }
@@ -477,26 +477,26 @@ export function LeaveApprovals() {
                   {new Date(activeDialog.leave.endDate).toLocaleDateString()} (
                   {activeDialog.leave.totalDays} day{activeDialog.leave.totalDays !== 1 ? "s" : ""})
                 </p>
-                 {activeDialog.leave.reason && (
-                   <p>
-                     <span className="font-medium">Reason:</span> {activeDialog.leave.reason}
-                   </p>
-                 )}
-                 {activeDialog.type === "student" && (activeDialog.leave as StudentLeave).attachment && (
-                   <div className="pt-2 border-t mt-2">
-                     <p className="text-xs text-muted-foreground uppercase font-medium mb-1">Attached Document</p>
-                     <a
-                       href={`/uploads/students/${(activeDialog.leave as StudentLeave).attachment}`}
-                       target="_blank"
-                       rel="noopener noreferrer"
-                       className="inline-flex items-center gap-2 text-primary hover:underline bg-primary/5 px-3 py-1.5 rounded border border-primary/20"
-                     >
-                       <FileText className="w-4 h-4" />
-                       View Student Document
-                     </a>
-                   </div>
-                 )}
-               </div>
+                {activeDialog.leave.reason && (
+                  <p>
+                    <span className="font-medium">Reason:</span> {activeDialog.leave.reason}
+                  </p>
+                )}
+                {activeDialog.type === "student" && (activeDialog.leave as StudentLeave).attachment && (
+                  <div className="pt-2 border-t mt-2">
+                    <p className="text-xs text-muted-foreground uppercase font-medium mb-1">Attached Document</p>
+                    <a
+                      href={`/uploads/students/${(activeDialog.leave as StudentLeave).attachment}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 text-primary hover:underline bg-primary/5 px-3 py-1.5 rounded border border-primary/20"
+                    >
+                      <FileText className="w-4 h-4" />
+                      View Student Document
+                    </a>
+                  </div>
+                )}
+              </div>
 
               <div className="space-y-2">
                 <label className="text-sm font-medium">Remarks (Optional)</label>
@@ -527,8 +527,8 @@ export function LeaveApprovals() {
               {submitting
                 ? "Processing..."
                 : activeDialog?.status === "approved"
-                ? "Approve"
-                : "Reject"}
+                  ? "Approve"
+                  : "Reject"}
             </Button>
           </DialogFooter>
         </DialogContent>

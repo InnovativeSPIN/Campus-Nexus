@@ -83,7 +83,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             <div className="flex items-center gap-3">
                <div className="h-2 w-2 rounded-full bg-success animate-pulse" />
                <span className="text-foreground font-semibold">
-                 Howdy, <span className="text-primary">{user.name || 'Admin'}</span>
+                 Welcome, <span className="text-primary">{user.name || 'Admin'}</span>
                </span>
             </div>
             <div className="flex items-center gap-6">

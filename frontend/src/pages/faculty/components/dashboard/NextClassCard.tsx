@@ -1,4 +1,4 @@
-﻿import { motion } from "framer-motion";
+import { motion } from "framer-motion";
 import { Clock, MapPin, BookOpen, ArrowRight, ChevronRight } from "lucide-react";
 import { Button } from "@/pages/faculty/components/ui/button";
 import { useNavigate } from "react-router-dom";
