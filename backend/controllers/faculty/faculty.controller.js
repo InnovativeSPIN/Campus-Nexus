@@ -869,17 +869,12 @@ export const getMyClassIncharge = asyncHandler(async (req, res, next) => {
     });
   }
 
-  // Fetch students by class association
   const assignedClass = incharge.class;
 
-  if (!assignedClass) {
-    return next(new ErrorResponse('Assigned class not found', 404));
-  }
+  let studentWhereClause = { classId: incharge.class_id };
 
   const students = await Student.findAll({
-    where: {
-      classId: incharge.class_id
-    },
+    where: studentWhereClause,
     attributes: ['id', 'studentId', 'firstName', 'lastName', 'email', 'phone', 'status'],
     order: [['studentId', 'ASC']]
   });

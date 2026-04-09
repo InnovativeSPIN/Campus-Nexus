@@ -46,6 +46,54 @@ const ClassModel = (sequelize) => {
   }, {
     tableName: 'classes',
     timestamps: false,
+    hooks: {
+      afterCreate: async (classInstance) => {
+        if (classInstance.status === 'active' && classInstance.department_id && classInstance.semester && classInstance.batch) {
+          try {
+            const StudentModel = sequelize.models.Student;
+            if (StudentModel) {
+              await StudentModel.update(
+                { classId: classInstance.id },
+                {
+                  where: {
+                    departmentId: classInstance.department_id,
+                    semester: classInstance.semester,
+                    batch: classInstance.batch,
+                    classId: null
+                  }
+                }
+              );
+            }
+          } catch (err) {
+            console.error('Error auto-mapping students in Class afterCreate:', err);
+          }
+        }
+      },
+      afterUpdate: async (classInstance) => {
+        if (classInstance.changed('status') || classInstance.changed('department_id') || classInstance.changed('semester') || classInstance.changed('batch')) {
+          if (classInstance.status === 'active' && classInstance.department_id && classInstance.semester && classInstance.batch) {
+            try {
+              const StudentModel = sequelize.models.Student;
+              if (StudentModel) {
+                await StudentModel.update(
+                  { classId: classInstance.id },
+                  {
+                    where: {
+                      departmentId: classInstance.department_id,
+                      semester: classInstance.semester,
+                      batch: classInstance.batch,
+                      classId: null
+                    }
+                  }
+                );
+              }
+            } catch (err) {
+              console.error('Error auto-mapping students in Class afterUpdate:', err);
+            }
+          }
+        }
+      }
+    }
   });
 
   Class.associate = (models) => {

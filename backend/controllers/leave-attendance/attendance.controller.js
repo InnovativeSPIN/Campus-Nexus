@@ -82,6 +82,8 @@ export const getAllAttendance = asyncHandler(async (req, res, next) => {
         {
           model: Student,
           as: 'student',
+          required: true, // INNER JOIN to exclude students who changed classes
+          where: { classId: classId }, 
           attributes: ['id', 'studentId', 'firstName', 'lastName', 'rollNumber']
         }
       ],
@@ -341,7 +343,18 @@ export const markAttendance = asyncHandler(async (req, res, next) => {
     }
   }
 
-  // Upsert each student's attendance record (matching unique key on student/date/period/subject)
+  // 1. Clean up any existing attendance for this specific session first 
+  // to prevent "790 students" ghosts if mapping was changed
+  await StudentAttendance.destroy({
+    where: {
+      attendance_date: attendanceDateStr,
+      period_slot_id: periodSlotId,
+      subject_id: subjectId,
+      class_id: classId
+    }
+  });
+
+  // 2. Upsert each student's attendance record
   const results = [];
   for (const student of students) {
     const studentId = parseInt(student.studentId ?? student.student ?? student.id, 10);
@@ -507,7 +520,13 @@ export const getAttendanceByClass = asyncHandler(async (req, res, next) => {
       {
         model: AttendanceStudent,
         as: 'students',
-        include: [{ model: Student, as: 'student', attributes: ['firstName', 'lastName', 'rollNumber'] }]
+        include: [{ 
+          model: Student, 
+          as: 'student', 
+          required: true,
+          where: { classId: req.params.classId },
+          attributes: ['firstName', 'lastName', 'rollNumber'] 
+        }]
       }
     ],
     order: [['date', 'DESC']]
@@ -870,14 +889,20 @@ export const getFacultyTimetableSlots = asyncHandler(async (req, res, next) => {
     });
 
     // Fetch students for each unique class section
-    for (const classId of Object.keys(classStudents)) {
+    for (const classStrId of Object.keys(classStudents)) {
+      const classId = parseInt(classStrId);
+      if (isNaN(classId)) {
+        classStudents[classStrId] = [];
+        continue;
+      }
+
       const students = await Student.findAll({
-        where: { classId: parseInt(classId) },
+        where: { classId: classId },
         attributes: ['id', 'studentId', 'firstName', 'lastName', 'rollNumber', 'photo'],
         order: [['rollNumber', 'ASC']],
         raw: true,
       });
-      classStudents[classId] = students;
+      classStudents[classStrId] = students;
     }
 
     res.status(200).json({
@@ -972,6 +997,11 @@ export const getDepartmentAdminClassSlots = asyncHandler(async (req, res, next) 
     const uniqueClasses = [...new Set(Object.values(uniqueSlots).map(s => s.classSectionId))];
     
     for (const classId of uniqueClasses) {
+      if (!classId || isNaN(parseInt(classId))) {
+        classStudents[classId] = [];
+        continue;
+      }
+
       const students = await Student.findAll({
         where: { classId: classId },
         attributes: ['id', 'studentId', 'firstName', 'lastName', 'rollNumber', 'photo'],

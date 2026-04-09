@@ -114,11 +114,53 @@ const Student = (sequelize) => {
           const salt = await bcrypt.genSalt(10);
           student.password = await bcrypt.hash(student.password, salt);
         }
+        
+        // Auto-assign classId if missing but demographic data exists
+        if (!student.classId && student.departmentId && student.semester && student.batch) {
+          try {
+            const ClassModel = sequelize.models.Classes;
+            const matchingClass = await ClassModel.findOne({
+              where: {
+                department_id: student.departmentId,
+                semester: student.semester,
+                batch: student.batch,
+                status: 'active'
+              }
+            });
+            if (matchingClass) {
+              student.classId = matchingClass.id;
+            }
+          } catch (err) {
+            console.error('Error auto-mapping classId in Student beforeCreate:', err);
+          }
+        }
       },
       beforeUpdate: async (student) => {
         if (student.changed('password')) {
           const salt = await bcrypt.genSalt(10);
           student.password = await bcrypt.hash(student.password, salt);
+        }
+        
+        // Re-assign classId if demographics changed natively
+        if (student.changed('departmentId') || student.changed('semester') || student.changed('batch')) {
+          try {
+            const ClassModel = sequelize.models.Classes;
+            const matchingClass = await ClassModel.findOne({
+              where: {
+                department_id: student.departmentId,
+                semester: student.semester,
+                batch: student.batch,
+                status: 'active'
+              }
+            });
+            if (matchingClass) {
+              student.classId = matchingClass.id;
+            } else {
+              student.classId = null; // Unmap if no matching active class exists
+            }
+          } catch (err) {
+            console.error('Error auto-mapping classId in Student beforeUpdate:', err);
+          }
         }
       },
     },
