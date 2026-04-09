@@ -193,25 +193,27 @@ const StudentClassTimetable: React.FC = () => {
     );
   }
 
-  // Always show exactly 10 periods (even when some are empty)
-  const TOTAL_PERIODS = 10;
-  const periodById = new Map<number, Period>();
+  // Standard 7-period structure matching the HOD and working AIDS views
+  const standardPeriods: Period[] = [
+    { id: 1, label: 'I', startTime: '09:30 AM', endTime: '10:20 AM' },
+    { id: 2, label: 'II', startTime: '10:20 AM', endTime: '11:10 AM' },
+    { id: 3, label: 'III', startTime: '11:30 AM', endTime: '12:25 PM' },
+    { id: 4, label: 'IV', startTime: '01:10 PM', endTime: '02:00 PM' },
+    { id: 5, label: 'V', startTime: '02:00 PM', endTime: '02:50 PM' },
+    { id: 6, label: 'VI', startTime: '03:15 PM', endTime: '04:00 PM' },
+    { id: 7, label: 'VII', startTime: '04:00 PM', endTime: '04:45 PM' },
+  ];
+
+  const periodById = new Map<number | string, Period>();
   timetable.slots.forEach(s => {
-    if (s.period?.id) {
+    if (s.period) {
       periodById.set(s.period.id, s.period);
+      periodById.set(s.period.label, s.period);
     }
   });
 
-  const allPeriods = Array.from({ length: TOTAL_PERIODS }, (_, idx) => {
-    const id = idx + 1;
-    return (
-      periodById.get(id) || {
-        id,
-        label: `P${id}`,
-        startTime: '',
-        endTime: ''
-      }
-    );
+  const allPeriods = standardPeriods.map(std => {
+    return periodById.get(std.id) || periodById.get(std.label) || std;
   });
 
   const getSessionColor = (sessionType: string) => {

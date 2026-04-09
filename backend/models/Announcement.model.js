@@ -15,14 +15,17 @@ const Announcement = (sequelize) => {
       type: DataTypes.TEXT,
       allowNull: false,
     },
+    // Stored as TEXT/LONGTEXT in DB to avoid ENUM mismatch issues
     type: {
-      type: DataTypes.ENUM('academic', 'leave', 'fee', 'general', 'disciplinary', 'attendance', 'result', 'approval', 'announcement'),
+      type: DataTypes.STRING(50),
       defaultValue: 'general',
     },
+    // Stored as TEXT/STRING — avoids ENUM sync issues with MySQL
     priority: {
-      type: DataTypes.ENUM('low', 'medium', 'high', 'urgent'),
-      defaultValue: 'low',
+      type: DataTypes.STRING(20),
+      defaultValue: 'normal',
     },
+    // JSON array of roles e.g. ["student"], ["faculty"], ["all"]
     targetRole: {
       type: DataTypes.JSON,
       allowNull: false,
@@ -30,6 +33,18 @@ const Announcement = (sequelize) => {
     },
     department: {
       type: DataTypes.STRING(50),
+      allowNull: true,
+    },
+    semester: {
+      type: DataTypes.STRING(20),
+      allowNull: true,
+    },
+    year: {
+      type: DataTypes.STRING(10),
+      allowNull: true,
+    },
+    term: {
+      type: DataTypes.STRING(10),
       allowNull: true,
     },
     attachments: {
@@ -56,10 +71,11 @@ const Announcement = (sequelize) => {
   }, {
     tableName: 'announcements',
     timestamps: true,
+    // Never alter the existing table schema automatically
+    freezeTableName: true,
   });
 
   AnnouncementModel.associate = (models) => {
-    // Define associations here if needed
     AnnouncementModel.belongsTo(models.User, {
       foreignKey: 'createdById',
       as: 'createdBy',

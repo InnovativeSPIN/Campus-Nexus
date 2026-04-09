@@ -97,13 +97,13 @@ export default function Communication() {
         // Normalize targetRole and attachments to ensure they're always arrays
         const normalizedData = data.data.map((announcement: any) => ({
           ...announcement,
-          targetRole: Array.isArray(announcement.targetRole) 
-            ? announcement.targetRole 
-            : (typeof announcement.targetRole === 'string' 
+          targetRole: Array.isArray(announcement.targetRole)
+            ? announcement.targetRole
+            : (typeof announcement.targetRole === 'string'
               ? announcement.targetRole.split(',').map((r: string) => r.trim())
               : ['all']),
-          attachments: Array.isArray(announcement.attachments) 
-            ? announcement.attachments 
+          attachments: Array.isArray(announcement.attachments)
+            ? announcement.attachments
             : []
         }));
         setAnnouncements(normalizedData);

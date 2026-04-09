@@ -193,15 +193,22 @@ const FacultyIndividualTimetable: React.FC = () => {
   };
 
   const TimetableGrid: React.FC<{ timetable: Timetable }> = ({ timetable }) => {
-    // Get unique periods sorted by ID
-    const allPeriods = Array.from(
-      new Set(timetable.slots.map(s => s.period?.id).filter(Boolean))
-    ).sort((a, b) => (a || 0) - (b || 0));
+    // Use a fixed set of 7 periods to match the standard college schedule
+    const standardPeriods: Period[] = [
+      { id: 1, label: 'I', startTime: '09:30:00', endTime: '10:20:00' },
+      { id: 2, label: 'II', startTime: '10:20:00', endTime: '11:10:00' },
+      { id: 3, label: 'III', startTime: '11:30:00', endTime: '12:25:00' },
+      { id: 4, label: 'IV', startTime: '13:10:00', endTime: '14:00:00' },
+      { id: 5, label: 'V', startTime: '14:00:00', endTime: '14:50:00' },
+      { id: 6, label: 'VI', startTime: '15:15:00', endTime: '16:00:00' },
+      { id: 7, label: 'VII', startTime: '16:00:00', endTime: '16:45:00' },
+    ];
 
-    // Get period details
-    const periodDetails = allPeriods
-      .map(id => timetable.slots.find(s => s.period?.id === id)?.period)
-      .filter(Boolean) as Period[];
+    // Map labels and times from actual data if available, otherwise use defaults
+    const periodDetails = standardPeriods.map(std => {
+      const actualSlot = timetable.slots.find(s => s.period?.id === std.id || s.period?.label === std.label);
+      return actualSlot?.period || std;
+    });
 
     return (
       <div className="overflow-x-auto border rounded-lg border-gray-200">

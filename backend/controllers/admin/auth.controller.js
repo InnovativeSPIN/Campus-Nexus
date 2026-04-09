@@ -224,114 +224,136 @@ export const login = asyncHandler(async (req, res, next) => {
   let user = null;
   let userType = null; // 'admin', 'faculty', or 'student'
 
-  // 1. Check for faculty in faculty_profiles table FIRST (priority)
-  // If the request is NOT explicitly requesting an admin login (requestedRole
-  // containing 'admin'), exclude department-admins (role_id === 7) from this
-  // faculty lookup. This prevents department-admin credentials from being
-  // used to login via the faculty module.
   const requestedRole = (req.body && req.body.requestedRole) ? req.body.requestedRole.toString().toLowerCase() : null;
-  const includeDeptAdmins = requestedRole && requestedRole.includes('admin');
+  
+  // Categorize the requested role to determine which tables to search
+  const isStudentRequest = requestedRole === 'student';
+  const isFacultyRequest = ['faculty', 'principal', 'vice-principal', 'dean'].includes(requestedRole);
+  const isAdminRequest = requestedRole && (requestedRole.includes('admin') || requestedRole === 'super-admin');
+  
+  // Fallback for cases where no role is specified (backward compatibility)
+  const isUnknownRequest = !requestedRole;
 
-  const facultyWhere = { email };
-  if (!includeDeptAdmins) {
-    // exclude department-admins when not explicitly requested
-    facultyWhere.role_id = { [Op.ne]: 7 };
-  }
-
-  user = await Faculty.findOne({
-    where: facultyWhere,
-    attributes: { include: ['password', 'role_id'] },
-    include: [{
-      model: models.Department,
-      as: 'department',
-      attributes: ['short_name', 'full_name'],
-      required: false  // Use LEFT JOIN
-    }]
-  });
-
-  if (user) {
-    const isMatch = await user.matchPassword(password);
-    if (isMatch && user.status === 'active') {
-      userType = 'faculty';
-      return sendTokenResponse(user, 200, res);
+  // 1. Check for faculty - Priority for faculty roles and department-admin (HOD)
+  // Non-HOD admin requests (superadmin, etc.) should skip this and use the User table lookup.
+  if (isUnknownRequest || isFacultyRequest || requestedRole === 'department-admin') {
+    const facultyWhere = {
+      [Op.or]: [
+        { email },
+        { faculty_college_code: email }
+      ]
+    };
+    
+    if (requestedRole === 'department-admin') {
+      // Strict role check for HOD login
+      facultyWhere.role_id = 7;
+    } else if (isFacultyRequest) {
+      // Strict role check for Faculty login (exclude HODs)
+      facultyWhere.role_id = { [Op.ne]: 7 };
     }
-    // If password doesn't match or inactive, fall through to check other tables
-    user = null;
+
+    user = await Faculty.findOne({
+      where: facultyWhere,
+      attributes: { include: ['password', 'role_id'] },
+      include: [{
+        model: models.Department,
+        as: 'department',
+        attributes: ['short_name', 'full_name'],
+        required: false  // Use LEFT JOIN
+      }]
+    });
+
+    if (user) {
+      const isMatch = await user.matchPassword(password);
+      if (isMatch && user.status === 'active') {
+        userType = 'faculty';
+        return sendTokenResponse(user, 200, res);
+      }
+      // If found but password fails, we don't return yet in case they exist in other tables
+      // (though for role-based login we probably should if we are strict)
+      user = null;
+    }
   }
 
   // 2. Check for student in student_profile table (email, studentId, or rollNumber)
-  user = await Student.findOne({
-    where: {
-      [Op.or]: [
-        { email },
-        { studentId: email },
-        { rollNumber: email }
-      ]
-    },
-    attributes: { exclude: ['userId'] },
-    include: [{
-      model: models.Department,
-      as: 'department',
-      attributes: ['short_name', 'full_name'],
-      required: false  // Use LEFT JOIN
-    }]
-  });
+  if (isUnknownRequest || isStudentRequest) {
+    user = await Student.findOne({
+      where: {
+        [Op.or]: [
+          { email },
+          { studentId: email },
+          { rollNumber: email }
+        ]
+      },
+      attributes: { exclude: ['userId'] },
+      include: [{
+        model: models.Department,
+        as: 'department',
+        attributes: ['short_name', 'full_name'],
+        required: false  // Use LEFT JOIN
+      }]
+    });
 
-  if (user) {
-    const isMatch = await user.matchPassword(password);
-    if (isMatch && user.status === 'active') {
-      userType = 'student';
-      return sendTokenResponse(user, 200, res);
+    if (user) {
+      const isMatch = await user.matchPassword(password);
+      if (isMatch && user.status === 'active') {
+        userType = 'student';
+        return sendTokenResponse(user, 200, res);
+      }
+      user = null;
     }
-    // If password doesn't match or inactive, fall through to check admin
-    user = null;
   }
 
-  // 3. Check for admin user in users table (lowest priority)
-  user = await User.findOne({
-    where: { email },
-    attributes: { include: ['password'] },
-    include: [{ model: Role, as: 'role' }]
-  });
+  // 3. Check for admin user in users table
+  if (isUnknownRequest || isAdminRequest) {
+    user = await User.findOne({
+      where: { email },
+      attributes: { include: ['password'] },
+      include: [{ model: Role, as: 'role' }]
+    });
 
-  if (user) {
-    if (!user.isActive) {
-      return next(new ErrorResponse('Your account has been deactivated', 401));
-    }
+    if (user) {
+      if (!user.isActive) {
+        return next(new ErrorResponse('Your account has been deactivated', 401));
+      }
 
-    // If this user is a department admin (role_id 7), validate using faculty_profiles
-    if (user.role && user.role.role_id === 7) {
-      const deptAdminFaculty = await Faculty.findOne({
-        where: { email },
-        attributes: { include: ['password'] },
-        include: [{
-          model: models.Department,
-          as: 'department',
-          attributes: ['short_name', 'full_name'],
-          required: false  // Use LEFT JOIN
-        }]
-      });
+      // If this user is a department admin (role_id 7), validate using faculty_profiles
+      if (user.role && user.role.role_id === 7) {
+        const deptAdminFaculty = await Faculty.findOne({
+          where: { 
+            [Op.or]: [{ email }, { faculty_college_code: email }],
+            role_id: 7 // Ensure we only match if they are truly an HOD in faculty_profiles
+          },
+          attributes: { include: ['password'] },
+          include: [{
+            model: models.Department,
+            as: 'department',
+            attributes: ['short_name', 'full_name'],
+            required: false  // Use LEFT JOIN
+          }]
+        });
 
-      if (!deptAdminFaculty) {
+        if (!deptAdminFaculty) {
+          return next(new ErrorResponse('Invalid credentials', 401));
+        }
+
+        const isFacultyMatch = await deptAdminFaculty.matchPassword(password);
+        if (isFacultyMatch && deptAdminFaculty.status === 'active') {
+          return sendTokenResponse(deptAdminFaculty, 200, res);
+        }
+
         return next(new ErrorResponse('Invalid credentials', 401));
       }
 
-      const isFacultyMatch = await deptAdminFaculty.matchPassword(password);
-      if (isFacultyMatch && deptAdminFaculty.status === 'active') {
-        return sendTokenResponse(deptAdminFaculty, 200, res);
+      const isMatch = await user.matchPassword(password);
+      if (isMatch) {
+        userType = 'admin';
+        return sendTokenResponse(user, 200, res);
       }
-
-      return next(new ErrorResponse('Invalid credentials', 401));
-    }
-
-    const isMatch = await user.matchPassword(password);
-    if (isMatch) {
-      userType = 'admin';
-      return sendTokenResponse(user, 200, res);
     }
   }
 
-  // If no user found or password doesn't match in any table
+  // If no user found or password doesn't match in any allowed table
   return next(new ErrorResponse('Invalid credentials', 401));
 });
 

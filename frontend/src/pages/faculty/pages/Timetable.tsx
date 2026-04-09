@@ -18,13 +18,13 @@ const hours = [1, 2, 3, 4, 5, 6, 7];
 
 const formatHourForDisplay = (hour: number): string => {
   const timeMap: { [key: number]: string } = {
-    1: "9:00 – 10:00 AM",
-    2: "10:00 – 11:00 AM",
-    3: "11:00 AM – 12:00 PM",
-    4: "12:00 – 1:00 PM",
-    5: "2:00 – 3:00 PM",
-    6: "3:00 – 4:00 PM",
-    7: "4:00 – 5:00 PM",
+    1: "9:30 AM - 10:20 AM",
+    2: "10:20 AM - 11:10 AM",
+    3: "11:30 AM - 12:25 PM",
+    4: "1:10 PM - 2:00 PM",
+    5: "2:00 PM - 2:50 PM",
+    6: "3:15 PM - 4:00 PM",
+    7: "4:00 PM - 4:45 PM",
   };
   return timeMap[hour] || `Hour ${hour}`;
 };

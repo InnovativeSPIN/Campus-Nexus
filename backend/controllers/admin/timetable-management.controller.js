@@ -440,13 +440,46 @@ export const getPeriodConfig = asyncHandler(async (req, res, next) => {
   try {
     const { department_id } = req.params;
 
-    const periods = await PeriodConfig.findAll({
+    let periods = await PeriodConfig.findAll({
       where: {
         department_id: department_id === 'global' ? null : parseInt(department_id),
         status: 'active'
       },
       order: [['period_number', 'ASC']]
     });
+
+    // Fallback to global if no periods found for specific department
+    if (periods.length === 0 && department_id !== 'global') {
+      periods = await PeriodConfig.findAll({
+        where: {
+          department_id: null,
+          status: 'active'
+        },
+        order: [['period_number', 'ASC']]
+      });
+    }
+
+    // Default 7 periods if still empty
+    if (periods.length === 0) {
+      const defaultTimes = {
+        1: ["09:30 AM", "10:20 AM"],
+        2: ["10:20 AM", "11:10 AM"],
+        3: ["11:30 AM", "12:25 PM"],
+        4: ["01:10 PM", "02:00 PM"],
+        5: ["02:00 PM", "02:50 PM"],
+        6: ["03:15 PM", "04:00 PM"],
+        7: ["04:00 PM", "04:45 PM"]
+      };
+
+      periods = [1, 2, 3, 4, 5, 6, 7].map(num => ({
+        id: num,
+        period_number: num,
+        period_label: num === 1 ? 'I' : num === 2 ? 'II' : num === 3 ? 'III' : num === 4 ? 'IV' : num === 5 ? 'V' : num === 6 ? 'VI' : 'VII',
+        start_time: defaultTimes[num][0],
+        end_time: defaultTimes[num][1],
+        status: 'active'
+      }));
+    }
 
     res.status(200).json({
       success: true,
