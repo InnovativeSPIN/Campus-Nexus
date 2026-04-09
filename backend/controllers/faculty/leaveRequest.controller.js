@@ -11,9 +11,10 @@ const {
   FacultyLeaveSchedule,
   TimetableMaster,
   Class: ClassModel,
-  TimetableSlot,
+  TimetableMasterSlots,
   Subject,
   PeriodSlot,
+  FacultySubjectAssignment,
 } = models;
 
 /**
@@ -422,30 +423,11 @@ export const getPeriodsForDateRange = asyncHandler(async (req, res, next) => {
     const start = new Date(startDate);
     const end = new Date(endDate);
 
-    // Get active timetable
-    const activeTimetable = await TimetableMaster.findOne({
-      where: {
-        department_id: departmentId,
-        status: 'active',
-      },
-      attributes: ['id', 'class_id', 'academic_year', 'semester'],
-    });
-
-    if (!activeTimetable) {
-      return res.status(200).json({
-        success: true,
-        data: [],
-        message: 'No active timetable found',
-      });
-    }
-
     // Generate all dates in range
     const dates = [];
     const current = new Date(start);
     while (current <= end) {
-      const dayOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][
-        current.getDay()
-      ];
+      const dayOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][current.getDay()];
       dates.push({
         date: new Date(current),
         dateString: current.toISOString().split('T')[0],
@@ -454,11 +436,37 @@ export const getPeriodsForDateRange = asyncHandler(async (req, res, next) => {
       current.setDate(current.getDate() + 1);
     }
 
-    // Query all slots for faculty in this range
-    const periods = await TimetableSlot.findAll({
+    const daysInRange = [...new Set(dates.map(d => d.dayOfWeek))];
+
+    // Find all active timetables for this department
+    const activeTimetables = await TimetableMaster.findAll({
       where: {
-        timetable_id: activeTimetable.id,
+        department_id: departmentId,
+        status: 'active',
+      },
+      include: [
+        { model: ClassModel, as: 'class', attributes: ['id', 'name', 'semester'] },
+      ],
+      attributes: ['id', 'class_id', 'academic_year', 'semester'],
+    });
+
+    if (activeTimetables.length === 0) {
+      return res.status(200).json({
+        success: true,
+        data: [],
+        message: 'No active timetable found for your department',
+      });
+    }
+
+    // Query all TimetableMasterSlots for this faculty in any active timetable
+    const masterIds = activeTimetables.map(t => t.id);
+
+    const slots = await TimetableMasterSlots.findAll({
+      where: {
         faculty_id: facultyId,
+        day: { [Op.in]: daysInRange },
+        master_id: { [Op.in]: masterIds },
+        session_type: { [Op.notIn]: ['break', 'free'] },
       },
       include: [
         {
@@ -467,70 +475,95 @@ export const getPeriodsForDateRange = asyncHandler(async (req, res, next) => {
           attributes: ['id', 'subject_code', 'subject_name'],
         },
         {
-          model: ClassModel,
-          as: 'class',
-          attributes: ['id', 'class_name', 'semester'],
+          model: PeriodSlot,
+          as: 'period',
+          attributes: ['id', 'period_label', 'start_time', 'end_time', 'period_number'],
+        },
+        {
+          model: TimetableMaster,
+          as: 'master',
+          attributes: ['id', 'class_id', 'academic_year', 'semester', 'room_no'],
+          include: [
+            { model: ClassModel, as: 'class', attributes: ['id', 'name', 'semester'] },
+          ],
         },
       ],
-      attributes: [
-        'id',
-        'timetable_id',
-        'day',
-        'period_number',
-        'start_time',
-        'end_time',
-        'subject_id',
-        'faculty_id',
-        'class_id',
-        'room',
-        'type',
-      ],
-      raw: false,
+      attributes: ['id', 'master_id', 'day', 'period_slot_id', 'subject_id', 'faculty_id', 'session_type', 'room', 'start_time', 'end_time', 'notes'],
     });
 
-    // Filter periods to only those in the date range by day of week
-    const daysInRange = [...new Set(dates.map((d) => d.dayOfWeek))];
-    const filteredPeriods = periods.filter((p) => daysInRange.includes(p.day));
+    // Fetch all active subjects for this department and semester
+    const subjects = await Subject.findAll({
+      where: {
+        department_id: departmentId,
+        status: 'active',
+        ...(activeTimetables[0] ? { semester: activeTimetables[0].semester } : {}),
+      },
+      attributes: ['id', 'subject_code', 'subject_name'],
+    });
 
-    // Enrich with actual dates
+    // Fetch all active faculty in the department
+    const departmentColleagues = await Faculty.findAll({
+      where: {
+        department_id: departmentId,
+        status: 'active',
+        faculty_id: { [Op.ne]: facultyId }, // Exclude current faculty
+      },
+      attributes: ['faculty_id', 'Name', 'designation'],
+    });
+
+    // Expand each slot to every matching date in the range
     const enrichedPeriods = [];
-    for (const period of filteredPeriods) {
-      for (const dateInfo of dates) {
-        if (dateInfo.dayOfWeek === period.day) {
-          enrichedPeriods.push({
-            id: period.id,
-            date: dateInfo.dateString,
-            day: period.day,
-            period_number: period.period_number,
-            start_time: period.start_time,
-            end_time: period.end_time,
-            type: period.type,
-            room: period.room,
-            subject: period.subject
-              ? {
-                  id: period.subject.id,
-                  code: period.subject.subject_code,
-                  name: period.subject.subject_name,
-                }
-              : null,
-            class: period.class
-              ? {
-                  id: period.class.id,
-                  name: period.class.class_name,
-                  semester: period.class.semester,
-                }
-              : null,
-            academic_year: activeTimetable.academic_year,
-            semester: activeTimetable.semester,
-          });
-        }
+    for (const slot of slots) {
+      const matchingDates = dates.filter(d => d.dayOfWeek === slot.day);
+      const master = slot.master;
+
+      for (const dateInfo of matchingDates) {
+        enrichedPeriods.push({
+          id: slot.id,
+          master_id: slot.master_id,
+          date: dateInfo.dateString,
+          day: slot.day,
+          period_number: slot.period?.period_number || slot.period_slot_id,
+          period_label: slot.period?.period_label || `Slot ${slot.period_slot_id}`,
+          period_slot_id: slot.period_slot_id,
+          start_time: slot.start_time || slot.period?.start_time,
+          end_time: slot.end_time || slot.period?.end_time,
+          type: slot.session_type,
+          room: slot.room || master?.room_no || null,
+          notes: slot.notes || null,
+          subject: slot.subject ? {
+            id: slot.subject.id,
+            code: slot.subject.subject_code,
+            name: slot.subject.subject_name,
+          } : null,
+          subject_id: slot.subject_id,
+          class: master?.class ? {
+            id: master.class.id,
+            name: master.class.name,
+            semester: master.class.semester,
+          } : null,
+          class_id: master?.class_id || null,
+          academic_year: master?.academic_year || null,
+          semester: master?.semester || master?.class?.semester || null,
+        });
       }
     }
+
+    // Sort by date then period
+    enrichedPeriods.sort((a, b) => {
+      const dateCompare = a.date.localeCompare(b.date);
+      if (dateCompare !== 0) return dateCompare;
+      return (a.period_slot_id || 0) - (b.period_slot_id || 0);
+    });
 
     res.status(200).json({
       success: true,
       count: enrichedPeriods.length,
-      data: enrichedPeriods,
+      data: {
+        periods: enrichedPeriods,
+        availableSubjects: subjects,
+        departmentColleagues: departmentColleagues,
+      },
     });
   } catch (error) {
     console.error('[getPeriodsForDateRange] Error:', error.message);
@@ -561,34 +594,38 @@ export const getAlternativeFacultyForPeriods = asyncHandler(async (req, res, nex
       if (!class_id || !subject_id) continue;
 
       // Find faculty who teach this subject in this class
-      const alternativeFaculty = await FacultySubjectAssignment.findAll({
+      const subjectExperts = await FacultySubjectAssignment.findAll({
         where: {
           class_id,
           subject_id,
           status: 'active',
-          faculty_id: { [Op.ne]: facultyId }, // Exclude current faculty
+          faculty_id: { [Op.ne]: facultyId },
           ...(semester ? { semester } : {}),
           ...(academic_year ? { academic_year } : {}),
         },
-        include: [
-          {
-            model: Faculty,
-            as: 'faculty',
-            attributes: ['faculty_id', 'Name', 'email', 'phone_number', 'designation', 'department_id'],
-            required: true,
-            where: {
-              status: 'active',
-            },
-          },
-        ],
-        attributes: ['faculty_id'],
-        raw: false,
+        include: [{
+          model: Faculty,
+          as: 'faculty',
+          attributes: ['faculty_id', 'Name', 'email', 'phone_number', 'designation', 'department_id'],
+          where: { status: 'active' },
+        }],
       });
 
-      // Get unique faculty
+      // Find all department faculty to use as general fallback
+      const departmentFaculty = await Faculty.findAll({
+        where: {
+          department_id: departmentId,
+          status: 'active',
+          faculty_id: { [Op.ne]: facultyId },
+        },
+        attributes: ['faculty_id', 'Name', 'email', 'phone_number', 'designation', 'department_id'],
+      });
+
       const uniqueFaculty = [];
       const seenIds = new Set();
-      for (const record of alternativeFaculty) {
+
+      // Add subject experts first
+      for (const record of subjectExperts) {
         if (!seenIds.has(record.faculty.faculty_id)) {
           seenIds.add(record.faculty.faculty_id);
           uniqueFaculty.push({
@@ -598,6 +635,23 @@ export const getAlternativeFacultyForPeriods = asyncHandler(async (req, res, nex
             phone_number: record.faculty.phone_number,
             designation: record.faculty.designation,
             department_id: record.faculty.department_id,
+            isExpert: true, // Mark as expert
+          });
+        }
+      }
+
+      // Add remaining department faculty
+      for (const faculty of departmentFaculty) {
+        if (!seenIds.has(faculty.faculty_id)) {
+          seenIds.add(faculty.faculty_id);
+          uniqueFaculty.push({
+            faculty_id: faculty.faculty_id,
+            name: faculty.Name,
+            email: faculty.email,
+            phone_number: faculty.phone_number,
+            designation: faculty.designation,
+            department_id: faculty.department_id,
+            isExpert: false,
           });
         }
       }

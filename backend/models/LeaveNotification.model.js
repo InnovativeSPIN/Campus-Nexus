@@ -3,7 +3,7 @@ import { DataTypes } from 'sequelize';
 const LeaveNotification = (sequelize) => {
   const LeaveNotificationModel = sequelize.define('LeaveNotification', {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-    leave_request_id: { type: DataTypes.INTEGER, allowNull: false },
+    leave_request_id: { type: DataTypes.INTEGER, allowNull: true, defaultValue: 0 },
     recipient_type: {
       type: DataTypes.ENUM('faculty', 'department-admin', 'executiveadmin'),
       allowNull: false,

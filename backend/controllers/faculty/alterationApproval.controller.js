@@ -63,51 +63,68 @@ export const acceptAlteration = asyncHandler(async (req, res, next) => {
       }
     );
 
-    // STEP 2: Get the class and timetable incharge
+    // STEP 2: Notify Timetable Incharge
     const timetableMaster = await TimetableMaster.findOne({
       where: {
+        department_id: departmentId,
         status: 'active',
       },
       attributes: ['id', 'timetable_incharge_id', 'class_id'],
     });
 
-    if (!timetableMaster || !timetableMaster.timetable_incharge_id) {
-      console.warn('[acceptAlteration] No active timetable incharge found');
-      // Continue anyway, admin will handle
-    } else {
-      // STEP 3: Notify Timetable Incharge
-      const substituteFaculty = await Faculty.findByPk(facultyId, {
-        attributes: ['Name'],
-      });
+    const substituteFaculty = await Faculty.findByPk(facultyId, {
+      attributes: ['Name'],
+    });
 
-      const applicantFaculty = await Faculty.findByPk(leave.applicantId, {
-        attributes: ['Name'],
-      });
+    const applicantFaculty = await Faculty.findByPk(leave.applicantId, {
+      attributes: ['Name'],
+    });
 
-      const startStr = new Date(leave.startDate).toLocaleDateString('en-IN', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-      });
+    const startStr = new Date(leave.startDate).toLocaleDateString('en-IN', {
+      day: '2-digit', month: 'short', year: 'numeric',
+    });
 
-      const endStr = new Date(leave.endDate).toLocaleDateString('en-IN', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-      });
+    const endStr = new Date(leave.endDate).toLocaleDateString('en-IN', {
+      day: '2-digit', month: 'short', year: 'numeric',
+    });
 
+    const notificationData = {
+      recipientType: 'faculty',
+      departmentId,
+      senderId: facultyId,
+      senderName: substituteFaculty.Name,
+      leaveId: leaveId,
+      facultyName: substituteFaculty.Name,
+      type: 'alteration_accepted',
+      title: `Timetable Alteration Ready to Apply`,
+      message: `${substituteFaculty.Name} has accepted the alteration request from ${applicantFaculty.Name} (${leave.leaveType} leave, ${startStr} to ${endStr}).`,
+      isRead: false,
+    };
+
+    // Notify Timetable Incharge
+    if (timetableMaster && timetableMaster.timetable_incharge_id) {
       await LeaveNotification.create({
+        ...notificationData,
         recipientId: timetableMaster.timetable_incharge_id,
-        recipientType: 'faculty',
-        departmentId,
-        senderId: facultyId,
-        senderName: substituteFaculty.Name,
-        leaveId: leaveId,
-        facultyName: substituteFaculty.Name,
-        type: 'alteration_accepted',
-        title: `Timetable Alteration Ready to Apply`,
-        message: `${substituteFaculty.Name} has accepted the alteration request from ${applicantFaculty.Name} (${leave.leaveType} leave, ${startStr} to ${endStr}). Please review and apply the alteration to the timetable.`,
-        isRead: false,
+        message: notificationData.message + ' Please review and apply the alteration to the timetable.',
+      });
+    }
+
+    // STEP 3: Notify Department Admin(s)
+    const deptAdmins = await Faculty.findAll({
+      where: {
+        department_id: departmentId,
+        role_id: 7, // Dept Admin
+        status: 'active',
+      },
+      attributes: ['faculty_id'],
+    });
+
+    for (const admin of deptAdmins) {
+      await LeaveNotification.create({
+        ...notificationData,
+        recipientId: admin.faculty_id,
+        message: notificationData.message + ' The substitute faculty has confirmed their availability.',
       });
     }
 

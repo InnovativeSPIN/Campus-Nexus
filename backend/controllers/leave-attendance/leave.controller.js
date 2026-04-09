@@ -770,10 +770,11 @@ export const getLeaveNotifications = asyncHandler(async (req, res, next) => {
 
     if (req.user.role === 'faculty') {
       where.recipient_type = 'faculty';
-      where.recipient_id = req.user.id;
+      // Alteration notifications use faculty_id as recipient; fall back to id for leave notifications
+      where.recipient_id = req.user.faculty_id || req.user.id;
     } else if (req.user.role === 'department-admin') {
-      where.recipient_type = 'department-admin';
-      where.recipient_id = req.user.id;
+      where.recipient_type = 'faculty'; // dept-admin stored as 'faculty' type in alteration notifications
+      where.recipient_id = req.user.faculty_id || req.user.id;
     } else if (['executiveadmin', 'superadmin', 'super-admin', 'academicadmin'].includes(req.user.role)) {
       where.recipient_type = 'executiveadmin';
     } else {
@@ -787,7 +788,16 @@ export const getLeaveNotifications = asyncHandler(async (req, res, next) => {
       raw: true,
     });
 
-    res.status(200).json({ success: true, count: notifications.length, data: notifications });
+    // Transform ALL snake_case DB fields to camelCase for frontend
+    const formatted = notifications.map(n => ({
+      ...n,
+      type: n.notification_type,
+      createdAt: n.sent_at,
+      leaveId: n.leave_request_id,
+      isRead: !!n.is_read,  // Critical: map is_read -> isRead so bell shows action buttons
+    }));
+
+    res.status(200).json({ success: true, count: formatted.length, data: formatted });
   } catch (error) {
     console.error('[LeaveNotifications] Error:', error.message);
     return next(new ErrorResponse(`Error fetching notifications: ${error.message}`, 500));
@@ -803,10 +813,11 @@ export const getLeaveNotificationCount = asyncHandler(async (req, res, next) => 
 
     if (req.user.role === 'faculty') {
       where.recipient_type = 'faculty';
-      where.recipient_id = req.user.id;
+      // Alteration notifications use faculty_id as recipient; fall back to id for leave notifications
+      where.recipient_id = req.user.faculty_id || req.user.id;
     } else if (req.user.role === 'department-admin') {
-      where.recipient_type = 'department-admin';
-      where.recipient_id = req.user.id;
+      where.recipient_type = 'faculty'; // dept-admin stored as 'faculty' type in alteration notifications
+      where.recipient_id = req.user.faculty_id || req.user.id;
     } else if (['executiveadmin', 'superadmin', 'super-admin', 'academicadmin'].includes(req.user.role)) {
       where.recipient_type = 'executiveadmin';
     } else {
@@ -845,11 +856,12 @@ export const markAllLeaveNotificationsRead = asyncHandler(async (req, res, next)
 
     if (req.user.role === 'faculty') {
       where.recipient_type = 'faculty';
-      where.recipient_id = req.user.id;
+      // Alteration notifications use faculty_id as recipient; fall back to id for leave notifications
+      where.recipient_id = req.user.faculty_id || req.user.id;
     } else if (req.user.role === 'department-admin') {
-      where.recipient_type = 'department-admin';
-      where.recipient_id = req.user.id;
-    } else if (['executiveadmin', 'superadmin'].includes(req.user.role)) {
+      where.recipient_type = 'faculty'; // dept-admin stored as 'faculty' type in alteration notifications
+      where.recipient_id = req.user.faculty_id || req.user.id;
+    } else if (['executiveadmin', 'superadmin', 'super-admin', 'academicadmin'].includes(req.user.role)) {
       where.recipient_type = 'executiveadmin';
     }
 

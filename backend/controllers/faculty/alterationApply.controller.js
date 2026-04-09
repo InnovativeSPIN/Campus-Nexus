@@ -37,23 +37,25 @@ export const applyTimetableAlterations = asyncHandler(async (req, res, next) => 
       ));
     }
 
-    // Get affected periods
-    if (!leave.affected_periods || !Array.isArray(leave.affected_periods)) {
-      return next(new ErrorResponse('No affected periods specified in leave request', 400));
-    }
+    // Use body periods if provided (allows incharge to tweak substitute faculty/subject per period)
+    const periodsToApply = req.body.affected_periods || leave.affected_periods;
 
     // STEP 1: Create TimetableOverlay rows (one per affected period)
     const overlayCreated = [];
-    for (const period of leave.affected_periods) {
+    for (const period of periodsToApply) {
       try {
+        // Use either the tweaked substitute/subject from period, or default to the leave request's values
+        const finalSubstituteId = period.requested_substitute_faculty_id || leave.substitute_faculty_id;
+        const finalSubjectId = period.subject_id; // Usually same, but could be parameterised if needed
+
         const overlay = await TimetableOverlay.create({
           master_id: period.master_id,
           overlay_date: new Date(period.date),
           period_slot_id: period.period_slot_id,
           original_faculty_id: leave.applicantId,
-          substitute_faculty_id: leave.substitute_faculty_id,
+          substitute_faculty_id: finalSubstituteId,
           original_subject_id: period.subject_id,
-          substitute_subject_id: period.subject_id,
+          substitute_subject_id: finalSubjectId,
           leave_request_id: leaveId,
           reason: `Leave: ${leave.leaveType} - ${leave.reason}`,
           created_by: facultyId,

@@ -18,7 +18,8 @@ const errorHandler = (err, req, res, next) => {
   }
 
   if (err.name === 'SequelizeForeignKeyConstraintError') {
-    const message = 'Invalid reference value';
+    const detail = err.parent ? err.parent.sqlMessage : err.message;
+    const message = `Invalid reference value: ${detail}`;
     error = new ErrorResponse(message, 400);
   }
 
