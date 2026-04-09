@@ -80,18 +80,41 @@ export function LeaveNotificationBell() {
         } catch { }
     };
 
-    const handleReassignmentResponse = async (notifId: number, leaveId: number, status: "accepted" | "rejected") => {
+    const handleReassignmentResponse = async (notifId: number, leaveId: number, status: "accepted" | "rejected", notifTitle?: string) => {
         try {
             setActionLoading(notifId);
             const token = localStorage.getItem("authToken");
-            const res = await fetch(`/api/v1/leave/${leaveId}/reassignment-response`, {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-                },
-                body: JSON.stringify({ status }),
-            });
+
+            // Detect if this is an alteration-plan notification (Period Alteration Request)
+            // In that case, leaveId is the FacultySubstitutes record ID
+            const isAlterationPlan = notifTitle?.includes("Period Alteration Request");
+
+            let res: Response;
+            if (isAlterationPlan && leaveId) {
+                const action = status === "accepted" ? "accept" : "reject";
+                res = await fetch(`/api/v1/faculty/alteration-plan/${leaveId}/${action}`, {
+                    method: "PATCH",
+                    headers: {
+                        "Content-Type": "application/json",
+                        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                    },
+                    body: JSON.stringify({ rejection_reason: "Declined via notification" }),
+                });
+            } else if (leaveId) {
+                res = await fetch(`/api/v1/leave/${leaveId}/reassignment-response`, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                    },
+                    body: JSON.stringify({ status }),
+                });
+            } else {
+                // No valid leaveId — skip silently
+                setActionLoading(null);
+                return;
+            }
+
             const data = await res.json();
             if (data.success) {
                 // Mark current notification as read
@@ -272,14 +295,14 @@ export function LeaveNotificationBell() {
                                                     {notif.type === "reassignment_requested" && !notif.isRead && (
                                                         <div className="flex gap-2 mt-3" onClick={(e) => e.stopPropagation()}>
                                                             <button
-                                                                onClick={() => handleReassignmentResponse(notif.id, notif.leaveId, "accepted")}
+                                                                onClick={() => handleReassignmentResponse(notif.id, notif.leaveId, "accepted", notif.title)}
                                                                 disabled={actionLoading === notif.id}
                                                                 className="px-3 py-1 bg-success text-white text-[10px] font-bold rounded-lg hover:bg-success/90 transition-colors"
                                                             >
                                                                 {actionLoading === notif.id ? "..." : "Accept"}
                                                             </button>
                                                             <button
-                                                                onClick={() => handleReassignmentResponse(notif.id, notif.leaveId, "rejected")}
+                                                                onClick={() => handleReassignmentResponse(notif.id, notif.leaveId, "rejected", notif.title)}
                                                                 disabled={actionLoading === notif.id}
                                                                 className="px-3 py-1 bg-destructive text-white text-[10px] font-bold rounded-lg hover:bg-destructive/90 transition-colors"
                                                             >

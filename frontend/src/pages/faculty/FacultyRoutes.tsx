@@ -28,7 +28,7 @@ import NotificationCenter from './pages/NotificationCenter';
 import { InternalMarksEntry } from './pages/InternalMarksEntry';
 import ClassInchargeView from './pages/ClassInchargeView';
 import LeaveManagement from "./pages/LeaveManagement";
-import SubstituteApprovalPanel from "./pages/SubstituteApprovalPanel";
+import AlterationApproval from "./pages/AlterationApproval";
 
 import './faculty.css';
 
@@ -55,7 +55,7 @@ const FacultyRoutes = () => (
               <Route path="attendance" element={<Attendance />} />
               <Route path="academics" element={<Academics />} />
               <Route path="leave-management" element={<LeaveManagement />} />
-              <Route path="alteration-approval" element={<SubstituteApprovalPanel />} />
+              <Route path="alteration-approval" element={<AlterationApproval />} />
 
               <Route path="assessments" element={<Assessments />} />
               <Route path="communication" element={<Communication />} />

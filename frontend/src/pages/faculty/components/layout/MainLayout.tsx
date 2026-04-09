@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Calendar, Clock, Menu, X } from "lucide-react";
 import { cn } from "@/pages/faculty/lib/utils";
 import { IntegratedNotificationBell } from "@/components/common/IntegratedNotificationBell";
+import { AlterationRequestPopup } from "./AlterationRequestPopup";
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -67,7 +68,7 @@ export function MainLayout({ children, hideHeader = false }: MainLayoutProps) {
           </div>
           <span className="font-serif font-bold text-lg">NSCET Faculty</span>
         </div>
-        <button 
+        <button
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           className="p-2 hover:bg-white/10 rounded-lg transition-colors"
           aria-label="Toggle Menu"
@@ -76,19 +77,19 @@ export function MainLayout({ children, hideHeader = false }: MainLayoutProps) {
         </button>
       </div>
 
-      <AppSidebar 
-        collapsed={collapsed} 
+      <AppSidebar
+        collapsed={collapsed}
         setCollapsed={setCollapsed}
         isMobileMenuOpen={isMobileMenuOpen}
         setIsMobileMenuOpen={setIsMobileMenuOpen}
       />
 
-      <motion.div 
+      <motion.div
         initial={false}
-        animate={{ 
-          marginLeft: typeof window !== 'undefined' && window.innerWidth >= 1024 
-            ? (collapsed ? 80 : 280) 
-            : 0 
+        animate={{
+          marginLeft: typeof window !== 'undefined' && window.innerWidth >= 1024
+            ? (collapsed ? 80 : 280)
+            : 0
         }}
         transition={{ duration: 0.3, ease: "easeInOut" }}
         className="flex-1 min-h-screen relative flex flex-col w-full"
@@ -139,6 +140,7 @@ export function MainLayout({ children, hideHeader = false }: MainLayoutProps) {
           />
         )}
       </AnimatePresence>
+      <AlterationRequestPopup />
     </div>
   );
 }

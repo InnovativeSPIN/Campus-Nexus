@@ -31,7 +31,7 @@ interface LeaveRequest {
   applicant?: Faculty;
 }
 
-export default function SubstituteApprovalPanel() {
+export default function SubstituteApprovalPanel({ isNested = false }: { isNested?: boolean }) {
   const [pendingRequests, setPendingRequests] = useState<LeaveRequest[]>([]);
   const [loading, setLoading] = useState(false);
   const [actingOnId, setActingOnId] = useState<number | null>(null);
@@ -101,17 +101,16 @@ export default function SubstituteApprovalPanel() {
         toast.error(result.error || "Failed to accept request");
       }
     } catch (error) {
-      console.error("Error accepting request:", error);
-      toast.error("Failed to accept request");
+      console.error("Error:", error);
+      toast.error("Something went wrong");
     } finally {
       setActingOnId(null);
     }
   };
 
   const handleReject = async (leaveId: number) => {
-    const reason = rejectionReason[leaveId];
-    if (!reason || reason.trim().length === 0) {
-      toast.error("Please provide a rejection reason");
+    if (!rejectionReason[leaveId]) {
+      toast.error("Please provide a reason for rejection");
       return;
     }
 
@@ -127,21 +126,20 @@ export default function SubstituteApprovalPanel() {
             "Content-Type": "application/json",
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
-          body: JSON.stringify({ rejection_reason: reason }),
+          body: JSON.stringify({ rejection_reason: rejectionReason[leaveId] }),
         }
       );
 
       const result = await response.json();
       if (result.success) {
-        toast.success("Request rejected successfully");
-        setRejectionReason({ ...rejectionReason, [leaveId]: "" });
+        toast.success("Request rejected");
         fetchPendingRequests();
       } else {
         toast.error(result.error || "Failed to reject request");
       }
     } catch (error) {
-      console.error("Error rejecting request:", error);
-      toast.error("Failed to reject request");
+      console.error("Error:", error);
+      toast.error("Something went wrong");
     } finally {
       setActingOnId(null);
     }
@@ -149,9 +147,7 @@ export default function SubstituteApprovalPanel() {
 
   const formatDate = (dateString: string) =>
     new Date(dateString).toLocaleDateString("en-IN", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
+      year: "numeric", month: "short", day: "numeric"
     });
 
   const formatTime = (dateString: string) =>
@@ -160,23 +156,21 @@ export default function SubstituteApprovalPanel() {
       minute: "2-digit",
     });
 
-  return (
-    <MainLayout hideHeader={true}>
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="mb-8"
-      >
-        <div className="flex items-start justify-between mb-6">
+  const content = (
+    <motion.div
+      initial={!isNested ? { opacity: 0, x: -20 } : false}
+      animate={!isNested ? { opacity: 1, x: 0 } : false}
+      className={cn("mb-8", isNested && "mb-0")}
+    >
+      {!isNested && (
+        <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold font-serif">Alteration Requests</h1>
-            <p className="text-muted-foreground">
-              Review and respond to leave alteration requests from colleagues
-            </p>
+            <h1 className="text-3xl font-bold font-serif mb-2">Substitution Requests</h1>
+            <p className="text-muted-foreground">Manage alteration requests from your colleagues</p>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
+          <Button 
+            variant="outline" 
+            size="sm" 
             onClick={fetchPendingRequests}
             disabled={loading}
           >
@@ -184,6 +178,7 @@ export default function SubstituteApprovalPanel() {
             Refresh
           </Button>
         </div>
+      )}
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-1">
@@ -409,7 +404,9 @@ export default function SubstituteApprovalPanel() {
             )}
           </TabsContent>
         </Tabs>
-      </motion.div>
-    </MainLayout>
+    </motion.div>
   );
+
+  if (isNested) return content;
+  return <MainLayout hideHeader={true}>{content}</MainLayout>;
 }

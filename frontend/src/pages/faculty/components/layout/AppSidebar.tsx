@@ -395,45 +395,47 @@ export function AppSidebar({
             </NavLink>
           </motion.li>
 
-          {/* Conditional: Alteration Approval - shows only if faculty has substitute requests */}
-          <motion.li
-            key="alteration-approval"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.60 }}
-          >
-            <NavLink
-              to="/faculty/alteration-approval"
-              onClick={() => setIsMobileMenuOpen(false)}
-              className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group",
-                location.pathname.startsWith("/faculty/alteration-approval")
-                  ? "bg-sidebar-accent text-white"
-                  : "text-white/70 hover:bg-sidebar-accent/50 hover:text-white"
-              )}
+          {/* Conditional: Alteration Approval - shows only if faculty is timetable_incharge */}
+          {isTimetableIncharge && (
+            <motion.li
+              key="alteration-approval"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.60 }}
             >
-              <CheckCircle2
+              <NavLink
+                to="/faculty/alteration-approval"
+                onClick={() => setIsMobileMenuOpen(false)}
                 className={cn(
-                  "w-5 h-5 flex-shrink-0 transition-colors",
+                  "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group",
                   location.pathname.startsWith("/faculty/alteration-approval")
-                    ? "text-secondary"
-                    : "text-white/70 group-hover:text-secondary"
+                    ? "bg-sidebar-accent text-white"
+                    : "text-white/70 hover:bg-sidebar-accent/50 hover:text-white"
                 )}
-              />
-              <AnimatePresence>
-                {!collapsed && (
-                  <motion.span
-                    initial={{ opacity: 0, width: 0 }}
-                    animate={{ opacity: 1, width: "auto" }}
-                    exit={{ opacity: 0, width: 0 }}
-                    className="font-medium text-sm whitespace-nowrap overflow-hidden"
-                  >
-                    Approve Alterations
-                  </motion.span>
-                )}
-              </AnimatePresence>
-            </NavLink>
-          </motion.li>
+              >
+                <CheckCircle2
+                  className={cn(
+                    "w-5 h-5 flex-shrink-0 transition-colors",
+                    location.pathname.startsWith("/faculty/alteration-approval")
+                      ? "text-secondary"
+                      : "text-white/70 group-hover:text-secondary"
+                  )}
+                />
+                <AnimatePresence>
+                  {!collapsed && (
+                    <motion.span
+                      initial={{ opacity: 0, width: 0 }}
+                      animate={{ opacity: 1, width: "auto" }}
+                      exit={{ opacity: 0, width: 0 }}
+                      className="font-medium text-sm whitespace-nowrap overflow-hidden"
+                    >
+                      Approve Alterations
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+              </NavLink>
+            </motion.li>
+          )}
 
 
         </ul>
