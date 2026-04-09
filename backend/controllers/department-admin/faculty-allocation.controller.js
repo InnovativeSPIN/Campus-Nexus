@@ -238,11 +238,11 @@ export const getFacultyAllocations = asyncHandler(async (req, res, next) => {
           required: false,  // Allow allocations without faculty (outer join)
           attributes: ['faculty_id', 'Name', 'email', 'designation', 'department_id', 'faculty_college_code'],
           include: [
-            { 
-              model: Department, 
-              as: 'department', 
+            {
+              model: Department,
+              as: 'department',
               required: false,
-              attributes: ['id', 'short_name', 'full_name'] 
+              attributes: ['id', 'short_name', 'full_name']
             }
           ]
         },
@@ -273,7 +273,7 @@ export const getFacultyAllocations = asyncHandler(async (req, res, next) => {
 
     console.log('[GET ALLOCATIONS] Found allocations:', mappedAllocations.length);
     console.log('[GET ALLOCATIONS] Sample allocation with faculty:', JSON.stringify(mappedAllocations.slice(0, 2), null, 2));
-    
+
     // Debug - check if faculty field is present for each allocation
     mappedAllocations.forEach((alloc, idx) => {
       if (idx < 2) {
@@ -298,7 +298,8 @@ export const getFacultyAllocations = asyncHandler(async (req, res, next) => {
 export const getAllocationDetails = asyncHandler(async (req, res, next) => {
   const allocation = await FacultySubjectAssignment.findByPk(req.params.id, {
     include: [
-      { model: Faculty, as: 'faculty', required: false, attributes: ['faculty_id', 'Name', 'email', 'designation', 'department_id', 'faculty_college_code'],
+      {
+        model: Faculty, as: 'faculty', required: false, attributes: ['faculty_id', 'Name', 'email', 'designation', 'department_id', 'faculty_college_code'],
         include: [{ model: Department, as: 'department', required: false, attributes: ['id', 'short_name', 'full_name'] }]
       },
       { model: Subject, as: 'subject', required: true, attributes: ['id', 'subject_code', 'subject_name', 'semester', 'sem_type', 'type', 'credits'] },
@@ -603,7 +604,8 @@ export const getFacultyAllocationsBySemester = asyncHandler(async (req, res, nex
       subject_id: { [models.sequelize.Op.in]: subjectIds }
     },
     include: [
-      { model: Faculty, as: 'faculty', required: false, attributes: ['faculty_id', 'Name', 'email', 'designation', 'department_id', 'faculty_college_code'],
+      {
+        model: Faculty, as: 'faculty', required: false, attributes: ['faculty_id', 'Name', 'email', 'designation', 'department_id', 'faculty_college_code'],
         include: [{ model: Department, as: 'department', required: false, attributes: ['id', 'short_name', 'full_name'] }]
       },
       { model: Subject, as: 'subject', required: true, attributes: ['id', 'subject_code', 'subject_name', 'type', 'sem_type'] },
@@ -637,7 +639,7 @@ export const getTimetableAllocations = asyncHandler(async (req, res, next) => {
     }
 
     const { TimetableSimple } = models;
-    
+
     // Build query where clause
     const where = {};
     if (academic_year) where.academicYear = academic_year;
@@ -645,7 +647,7 @@ export const getTimetableAllocations = asyncHandler(async (req, res, next) => {
 
     // Try to get by department ID first, if that fails, try without filter
     let allocations = [];
-    
+
     try {
       // Get department to find its name/code
       const department = await Department.findByPk(departmentId, {
@@ -751,7 +753,7 @@ export const updateTimetableAllocation = asyncHandler(async (req, res, next) => 
     // Verify department access (allocation.department is a string like "AIDS", us department ID)
     // For now, skip the check since TimetableSimple doesn't have department_id
     // Just update the fields
-    
+
     // Update fields
     if (facultyName) allocation.facultyName = facultyName;
     if (subject) allocation.subject = subject;

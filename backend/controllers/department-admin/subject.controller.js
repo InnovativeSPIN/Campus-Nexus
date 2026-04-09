@@ -21,7 +21,7 @@ export const getDepartmentSubjects = asyncHandler(async (req, res, next) => {
       { available_to_all_departments: true }
     ]
   };
-  
+
   if (semester) where.semester = semester;
   if (status) where.status = status;
 
@@ -35,7 +35,7 @@ export const getDepartmentSubjects = asyncHandler(async (req, res, next) => {
       model: Faculty,
       as: 'assignedFaculty',
       attributes: ['faculty_id', 'Name', 'email', 'designation'],
-      through: { 
+      through: {
         // Include the assignment ID so the frontend can use it for reassign/unassign actions
         attributes: ['id', 'academic_year', 'status', 'assigned_at', 'semester', 'total_hours', 'no_of_periods'],
         where: {
@@ -94,7 +94,7 @@ export const getSubjectDetails = asyncHandler(async (req, res, next) => {
         model: Faculty,
         as: 'assignedFaculty',
         attributes: ['faculty_id', 'Name', 'email', 'designation', 'department_id'],
-        through: { 
+        through: {
           attributes: ['academic_year', 'status', 'assigned_at', 'semester', 'total_hours', 'no_of_periods']
         }
       }
@@ -124,7 +124,7 @@ export const getSubjectDetails = asyncHandler(async (req, res, next) => {
 // @access  Private (Department Admin)
 export const createSubject = asyncHandler(async (req, res, next) => {
   const departmentId = req.user.department_id;
-  
+
   // Map frontend field names to database field names
   const { name, code, ...restData } = req.body;
   const subjectData = {
@@ -136,9 +136,9 @@ export const createSubject = asyncHandler(async (req, res, next) => {
 
   // Check if subject code already exists in department
   const existingSubject = await Subject.findOne({
-    where: { 
+    where: {
       subject_code: code,
-      department_id: departmentId 
+      department_id: departmentId
     }
   });
 
@@ -198,7 +198,7 @@ export const updateSubject = asyncHandler(async (req, res, next) => {
   // Check if subject code is being changed and if it conflicts
   if (code && code !== subject.subject_code) {
     const existingSubject = await Subject.findOne({
-      where: { 
+      where: {
         subject_code: code,
         department_id: departmentId,
         id: { [models.Sequelize.Op.ne]: id } // Exclude current subject
@@ -261,7 +261,7 @@ export const deleteSubject = asyncHandler(async (req, res, next) => {
 
   // Check if subject has any active assignments
   const activeAssignments = await FacultySubjectAssignment.count({
-    where: { 
+    where: {
       subject_id: id,
       status: 'active'
     }
@@ -299,9 +299,9 @@ export const assignFacultyToSubject = asyncHandler(async (req, res, next) => {
 
   // Verify faculty exists and belongs to department
   const faculty = await Faculty.findOne({
-    where: { 
+    where: {
       faculty_id,
-      department_id: departmentId 
+      department_id: departmentId
     }
   });
 
@@ -386,9 +386,9 @@ export const removeFacultyAssignment = asyncHandler(async (req, res, next) => {
 
   // Find and remove the assignment
   const assignment = await FacultySubjectAssignment.findOne({
-    where: { 
+    where: {
       id: assignment_id,
-      subject_id: id 
+      subject_id: id
     },
     include: [
       {
@@ -435,11 +435,11 @@ export const getAvailableFaculty = asyncHandler(async (req, res, next) => {
     excludeIds = assignments.map(a => a.faculty_id);
   }
 
-  const where = { 
+  const where = {
     department_id: departmentId,
     status: 'active'
   };
-  
+
   if (excludeIds.length > 0) {
     where.faculty_id = { [models.Sequelize.Op.notIn]: excludeIds };
   }
