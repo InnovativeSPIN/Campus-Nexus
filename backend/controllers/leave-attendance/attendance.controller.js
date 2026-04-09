@@ -305,7 +305,7 @@ export const markAttendance = asyncHandler(async (req, res, next) => {
           const newPeriodsTaken = currentLesson.periods_taken + periodsCovered;
           updateData.periods_taken = newPeriodsTaken;
           updateData.completed_date = new Date();
-          
+
           // Set is_completed if total periods >= periods_required
           if (newPeriodsTaken >= currentLesson.periods_required) {
             updateData.is_completed = true;
@@ -837,9 +837,9 @@ export const getFacultyTimetableSlots = asyncHandler(async (req, res, next) => {
           ]
         },
         { model: Subject, as: 'subject', attributes: ['id', 'subject_code', 'subject_name'] },
-        { 
-          model: PeriodSlot, 
-          as: 'period', 
+        {
+          model: PeriodSlot,
+          as: 'period',
           attributes: ['id', 'period_label', 'start_time', 'end_time', 'slot_type'],
           where: { slot_type: 'teaching' },
           required: true
@@ -851,13 +851,13 @@ export const getFacultyTimetableSlots = asyncHandler(async (req, res, next) => {
     // Format response removing duplicates
     const uniqueSlots = {};
     const classStudents = {};
-    
+
     timetableSlots.forEach(slot => {
       // Use slot.id as the unique key so each timetable slot row is distinct
       const key = slot.id;
       if (!uniqueSlots[key] && slot.master && slot.master.class && slot.period) {
         const classId = slot.master.class_id;
-        
+
         uniqueSlots[key] = {
           slotId: slot.id,
           masterSlotId: slot.id,
@@ -995,7 +995,7 @@ export const getDepartmentAdminClassSlots = asyncHandler(async (req, res, next) 
     // Fetch students for each unique class section
     const classStudents = {};
     const uniqueClasses = [...new Set(Object.values(uniqueSlots).map(s => s.classSectionId))];
-    
+
     for (const classId of uniqueClasses) {
       if (!classId || isNaN(parseInt(classId))) {
         classStudents[classId] = [];

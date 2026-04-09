@@ -163,24 +163,24 @@ export const createSubject = asyncHandler(async (req, res, next) => {
     let existingSubject;
     if (available_to_all_departments) {
       // For all-departments subjects, check if code + name already exists with same flag
-      existingSubject = await Subject.findOne({ 
-        where: { 
+      existingSubject = await Subject.findOne({
+        where: {
           subject_code: code,
           subject_name: name,
           available_to_all_departments: true
-        } 
+        }
       });
       if (existingSubject) {
         return next(new ErrorResponse(`Subject "${code} - ${name}" (all departments) already exists`, 400));
       }
     } else {
       // For department-specific subjects, check code + name + department combo
-      existingSubject = await Subject.findOne({ 
-        where: { 
+      existingSubject = await Subject.findOne({
+        where: {
           subject_code: code,
           subject_name: name,
           department_id: deptId
-        } 
+        }
       });
       if (existingSubject) {
         return next(new ErrorResponse(`Subject "${code} - ${name}" already exists in this department`, 400));
@@ -230,7 +230,7 @@ export const createSubject = asyncHandler(async (req, res, next) => {
     // Format response
     const formatted = createdSubject.toJSON();
     console.log('✅ Subject created successfully:', code);
-    
+
     res.status(201).json({
       success: true,
       data: {
@@ -300,13 +300,13 @@ export const updateSubject = asyncHandler(async (req, res, next) => {
   if ((code && code !== subject.subject_code) || (name && name !== subject.subject_name)) {
     const checkCode = code || subject.subject_code;
     const checkName = name || subject.subject_name;
-    const existingSubject = await Subject.findOne({ 
-      where: { 
+    const existingSubject = await Subject.findOne({
+      where: {
         subject_code: checkCode,
         subject_name: checkName,
         department_id: subject.department_id,
         id: { [Op.ne]: req.params.id } // Exclude current subject
-      } 
+      }
     });
     if (existingSubject) {
       return next(new ErrorResponse(`Subject "${checkCode} - ${checkName}" already exists in this department`, 400));
@@ -499,12 +499,12 @@ export const bulkUploadSubjects = asyncHandler(async (req, res, next) => {
         }
 
         // Check if code + name + department already exists
-        const existingSubject = await Subject.findOne({ 
-          where: { 
+        const existingSubject = await Subject.findOne({
+          where: {
             subject_code: code,
             subject_name: name,
             department_id: parseInt(department_id)
-          } 
+          }
         });
         if (existingSubject) {
           throw new Error(`Subject "${code} - ${name}" already exists in this department`);

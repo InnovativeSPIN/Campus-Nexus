@@ -407,7 +407,7 @@ export const updateStudent = asyncHandler(async (req, res, next) => {
         return next(new ErrorResponse(`Student ID '${profileData.studentId}' is already in use by another student`, 400));
       }
     }
-    
+
     // Explicitly check for email duplication before updating
     if (profileData.email && profileData.email !== student.email) {
       const existingEmail = await Student.findOne({ where: { email: profileData.email } });

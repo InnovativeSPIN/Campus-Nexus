@@ -512,10 +512,10 @@ export const updateFacultyProfile = asyncHandler(async (req, res, next) => {
 
   // Only allow updating specific fields
   const allowedFields = [
-    'email', 
-    'phone', 
-    'phone_number', 
-    'linkedin_url', 
+    'email',
+    'phone',
+    'phone_number',
+    'linkedin_url',
     'phd_status',
     'thesis_title',
     'register_no',
@@ -556,23 +556,23 @@ export const updateFacultyProfile = asyncHandler(async (req, res, next) => {
 
   // Map frontend field names to database/model field names
   const facultyUpdateFields = {};
-  
+
   // Basic Info
   if (fieldsToUpdate.email) facultyUpdateFields.email = fieldsToUpdate.email;
   if (fieldsToUpdate.phone || fieldsToUpdate.phone_number) {
     facultyUpdateFields.phone_number = fieldsToUpdate.phone || fieldsToUpdate.phone_number;
   }
   if (fieldsToUpdate.linkedin_url) facultyUpdateFields.linkedin_url = fieldsToUpdate.linkedin_url;
-  
+
   // PhD status
   if (fieldsToUpdate.phd_status) facultyUpdateFields.phd_status = fieldsToUpdate.phd_status;
-  
+
   // Addresses
   if (fieldsToUpdate.address || fieldsToUpdate.curr_address) {
     facultyUpdateFields.curr_address = fieldsToUpdate.address || fieldsToUpdate.curr_address;
   }
   if (fieldsToUpdate.perm_address) facultyUpdateFields.perm_address = fieldsToUpdate.perm_address;
-  
+
   // IDs - Store as strings (can handle large numbers and special formats)
   if (fieldsToUpdate.aicteId || fieldsToUpdate.AICTE_ID) {
     const aicteVal = fieldsToUpdate.aicteId || fieldsToUpdate.AICTE_ID;
@@ -588,7 +588,7 @@ export const updateFacultyProfile = asyncHandler(async (req, res, next) => {
   if (fieldsToUpdate.panNumber || fieldsToUpdate.pan_number) {
     facultyUpdateFields.pan_number = fieldsToUpdate.panNumber || fieldsToUpdate.pan_number;
   }
-  
+
   // Dates
   if (fieldsToUpdate.dob || fieldsToUpdate.dateOfBirth || fieldsToUpdate.date_of_birth) {
     facultyUpdateFields.date_of_birth = fieldsToUpdate.dob || fieldsToUpdate.dateOfBirth || fieldsToUpdate.date_of_birth;
@@ -596,7 +596,7 @@ export const updateFacultyProfile = asyncHandler(async (req, res, next) => {
   if (fieldsToUpdate.joiningDate || fieldsToUpdate.dateOfJoining || fieldsToUpdate.date_of_joining) {
     facultyUpdateFields.date_of_joining = fieldsToUpdate.joiningDate || fieldsToUpdate.dateOfJoining || fieldsToUpdate.date_of_joining;
   }
-  
+
   // Other
   if (fieldsToUpdate.bloodGroup || fieldsToUpdate.blood_group) {
     facultyUpdateFields.blood_group = fieldsToUpdate.bloodGroup || fieldsToUpdate.blood_group;
@@ -917,7 +917,7 @@ export const getMyTimetableRoles = asyncHandler(async (req, res, next) => {
       timetable_incharge_id: facultyId,
     },
     attributes: ['id', 'department_id', 'class_id', 'academic_year', 'semester',
-                 'class_coordinator_id', 'asst_coordinator_id', 'timetable_incharge_id'],
+      'class_coordinator_id', 'asst_coordinator_id', 'timetable_incharge_id'],
     include: [
       { model: ClassModel, as: 'class', attributes: ['id', 'name', 'semester'] },
     ],

@@ -31,7 +31,8 @@ export const getDepartments = asyncHandler(async (req, res, next) => {
         success: true,
         count: departmentsWithInfo.length,
         data: departmentsWithInfo
-    });});
+    });
+});
 
 // @desc      Get single department
 // @route     GET /api/v1/departments/:id
