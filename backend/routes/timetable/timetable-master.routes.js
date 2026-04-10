@@ -12,7 +12,6 @@ import {
 import {
   getBreakConfiguration,
   saveBreakConfiguration,
-  getPeriodSlots,
 } from '../../controllers/timetable/timetable-slots.controller.js';
 
 const router = express.Router();
@@ -49,8 +48,5 @@ router.delete('/:id', authorize('department-admin', 'timetable-incharge'), delet
 // Break configuration endpoints
 router.get('/:masterId/break-config', getBreakConfiguration);
 router.post('/:masterId/break-config', authorize('department-admin', 'faculty'), saveBreakConfiguration);
-
-// Get period slots with times
-router.get('/:masterId/period-slots', getPeriodSlots);
 
 export default router;
