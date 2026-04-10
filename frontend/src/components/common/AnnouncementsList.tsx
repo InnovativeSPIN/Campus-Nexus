@@ -175,7 +175,6 @@ export function AnnouncementsList() {
                                 className="bg-card border border-border rounded-xl p-4 hover:border-primary/50 hover:shadow-md transition-all cursor-pointer group"
                             >
                                 <div className="flex items-start gap-4">
-<<<<<<< Updated upstream
                                     {/* Icon */}
                                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
                                         ann.creatorRole === "superadmin" || ann.creatorRole === "super-admin"
@@ -185,13 +184,6 @@ export function AnnouncementsList() {
                                             : "bg-muted text-muted-foreground"
                                     }`}>
                                         <Megaphone className="w-5 h-5" />
-=======
-                                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${announcement.creatorRole === 'superadmin'
-                                            ? 'bg-primary/10 text-primary'
-                                            : 'bg-secondary/10 text-secondary'
-                                        }`}>
-                                        <Bell className="w-5 h-5" />
->>>>>>> Stashed changes
                                     </div>
 
                                     <div className="flex-1 min-w-0">

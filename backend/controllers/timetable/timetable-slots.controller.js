@@ -143,11 +143,24 @@ export const createSlot = asyncHandler(async (req, res, next) => {
   const accessError = await checkWriteAccess(req, master);
   if (accessError) return next(accessError);
 
-  // Break periods (period_slot_id 3, 5, 8) should only be used for breaks
-  if ([3, 5, 8].includes(Number(period_slot_id)) && session_type !== 'break') {
+  // Get configured break periods from timetable
+  let breakPeriodIds = [];
+  if (master.break_period_ids) {
+    try {
+      breakPeriodIds = typeof master.break_period_ids === 'string' 
+        ? JSON.parse(master.break_period_ids) 
+        : master.break_period_ids;
+    } catch (err) {
+      console.error('[SLOT CREATE] Failed to parse break_period_ids:', master.break_period_ids, err);
+      breakPeriodIds = [];
+    }
+  }
+
+  // If period is configured as a break, it must use session_type='break'
+  if (breakPeriodIds.includes(Number(period_slot_id)) && session_type !== 'break') {
     return next(
       new ErrorResponse(
-        'Period IDs 3, 5, 8 are reserved for breaks and must use session_type="break"',
+        `Period IDs ${breakPeriodIds.join(', ')} are configured as breaks and must use session_type="break"`,
         400
       )
     );
@@ -365,25 +378,46 @@ export const bulkCreateSlots = asyncHandler(async (req, res, next) => {
   const accessError = await checkWriteAccess(req, master);
   if (accessError) return next(accessError);
 
-  // Delete existing slots for this master
-  await TimetableMasterSlots.destroy({
-    where: { master_id: masterId },
-  });
+  try {
+    // Validate and normalize time formats for all slots
+    const normalizedSlots = slots.map((slot) => {
+      const normalized = { ...slot };
+      
+      if (normalized.start_time) {
+        normalized.start_time = normalizeTimeFormat(normalized.start_time);
+      }
+      if (normalized.end_time) {
+        normalized.end_time = normalizeTimeFormat(normalized.end_time);
+      }
+      
+      return normalized;
+    });
 
-  // Create new slots
-  const createdSlots = await TimetableMasterSlots.bulkCreate(
-    slots.map((slot) => ({
-      ...slot,
-      master_id: masterId,
-    }))
-  );
+    // Delete existing slots for this master
+    await TimetableMasterSlots.destroy({
+      where: { master_id: masterId },
+    });
 
-  res.status(201).json({
-    success: true,
-    message: `${createdSlots.length} slots created`,
-    count: createdSlots.length,
-    data: createdSlots,
-  });
+    // Create new slots
+    const createdSlots = await TimetableMasterSlots.bulkCreate(
+      normalizedSlots.map((slot) => ({
+        ...slot,
+        master_id: masterId,
+      }))
+    );
+
+    res.status(201).json({
+      success: true,
+      message: `${createdSlots.length} slots created`,
+      count: createdSlots.length,
+      data: createdSlots,
+    });
+  } catch (error) {
+    if (error.message.includes('Invalid time format')) {
+      return next(new ErrorResponse(error.message, 400));
+    }
+    throw error;
+  }
 });
 
 /**
@@ -490,8 +524,23 @@ export const getBreakConfiguration = asyncHandler(async (req, res, next) => {
   const accessError = checkReadAccess(req, master);
   if (accessError) return next(accessError);
 
-  const breakIds = master.break_period_ids || [3, 5, 8];
-  console.log(`[GET BREAK CONFIG] Timetable ${masterId} - break_period_ids from DB:`, master.break_period_ids, 'Returning:', breakIds);
+  // Parse break_period_ids if it's a string (MySQL stores JSON as string sometimes)
+  let breakIds = [];
+  if (master.break_period_ids) {
+    try {
+      // If it's a string, parse it; if already an array, use it as-is
+      if (typeof master.break_period_ids === 'string') {
+        breakIds = JSON.parse(master.break_period_ids);
+      } else if (Array.isArray(master.break_period_ids)) {
+        breakIds = master.break_period_ids;
+      }
+    } catch (err) {
+      console.error(`[GET BREAK CONFIG] Failed to parse break_period_ids:`, master.break_period_ids, err);
+      breakIds = []; // Use empty array if parsing fails
+    }
+  }
+
+  console.log(`[GET BREAK CONFIG] Timetable ${masterId} - break_period_ids from DB:`, master.break_period_ids, 'Parsed as:', breakIds);
 
   res.status(200).json({
     success: true,
@@ -537,13 +586,92 @@ export const saveBreakConfiguration = asyncHandler(async (req, res, next) => {
   });
   console.log(`[SAVE BREAK CONFIG] After update - break_period_ids from DB:`, updated.break_period_ids, 'Type:', typeof updated.break_period_ids);
 
+  // Parse break_period_ids if needed (MySQL stores JSON as string)
+  let savedBreakIds = breakPeriodIds;
+  if (updated.break_period_ids) {
+    try {
+      if (typeof updated.break_period_ids === 'string') {
+        savedBreakIds = JSON.parse(updated.break_period_ids);
+      } else if (Array.isArray(updated.break_period_ids)) {
+        savedBreakIds = updated.break_period_ids;
+      }
+    } catch (err) {
+      console.error(`[SAVE BREAK CONFIG] Failed to parse saved break_period_ids:`, updated.break_period_ids);
+      savedBreakIds = breakPeriodIds; // Fallback to what we sent
+    }
+  }
+  console.log(`[SAVE BREAK CONFIG] Returning break config:`, savedBreakIds);
+
   res.status(200).json({
     success: true,
     message: 'Break configuration saved successfully',
     data: {
       masterId: master.id,
-      breakPeriodIds: updated.break_period_ids,
+      breakPeriodIds: savedBreakIds,
     },
+  });
+});
+
+/**
+ * @desc    Get all period slots with their times for a timetable
+ * @route   GET /api/timetable-master/:masterId/period-slots
+ * @access  Private - Any authenticated user in same department
+ * Fetch dynamic period times from slots to display in UI instead of hardcoded times
+ */
+export const getPeriodSlots = asyncHandler(async (req, res, next) => {
+  const { masterId } = req.params;
+
+  const master = await TimetableMaster.findByPk(masterId, {
+    attributes: ['id', 'department_id'],
+  });
+  if (!master) {
+    return next(new ErrorResponse(`Timetable master not found with id ${masterId}`, 404));
+  }
+
+  // Check read access
+  const accessError = checkReadAccess(req, master);
+  if (accessError) return next(accessError);
+
+  // Fetch all slots for Monday to get unique periods with their times
+  const mondaySlots = await TimetableMasterSlots.findAll({
+    where: {
+      master_id: masterId,
+      day: 'Monday',
+    },
+    attributes: ['period_slot_id', 'start_time', 'end_time'],
+    order: [['period_slot_id', 'ASC']],
+  });
+
+  // Convert to period format with times
+  const periods = mondaySlots.map((slot) => {
+    let timeRange = "";
+    
+    if (slot.start_time && slot.end_time) {
+      // Format times like "09:30 - 10:20"
+      const formatTime = (time) => {
+        if (!time) return "";
+        if (typeof time === 'string') {
+          // If it's already a string like "09:30:00"
+          const parts = time.split(':');
+          return `${parts[0]}:${parts[1]}`;
+        }
+        return time;
+      };
+      timeRange = `${formatTime(slot.start_time)} - ${formatTime(slot.end_time)}`;
+    }
+
+    return {
+      id: slot.period_slot_id,
+      time: timeRange,
+    };
+  });
+
+  console.log('[GET PERIOD SLOTS] Timetable', masterId, 'Period slots:', periods);
+
+  res.status(200).json({
+    success: true,
+    count: periods.length,
+    data: periods,
   });
 });
 

@@ -107,6 +107,19 @@ export default function FacultyTimetableSlotsManagement() {
   const [slots, setSlots] = useState<TimetableSlot[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [faculties, setFaculties] = useState<Faculty[]>([]);
+  const [breakPeriodIds, setBreakPeriodIds] = useState<number[]>([]);
+  const [periodsList, setPeriodsList] = useState([
+    { id: 1, label: "I",      time: "09:30 AM - 10:20 AM", isBreak: false },
+    { id: 2, label: "II",     time: "10:20 AM - 11:10 AM", isBreak: false },
+    { id: 3, label: "Break",  time: "11:10 AM - 11:30 AM", isBreak: true  },
+    { id: 4, label: "III",    time: "11:30 AM - 12:25 PM", isBreak: false },
+    { id: 5, label: "Lunch",  time: "12:25 PM - 01:10 PM", isBreak: true  },
+    { id: 6, label: "IV",     time: "01:10 PM - 02:00 PM", isBreak: false },
+    { id: 7, label: "V",      time: "02:00 PM - 02:50 PM", isBreak: false },
+    { id: 8, label: "Break",  time: "02:50 PM - 03:10 PM", isBreak: true  },
+    { id: 9, label: "VI",     time: "03:10 PM - 04:00 PM", isBreak: false },
+    { id: 10, label: "VII",   time: "04:00 PM - 04:45 PM", isBreak: false },
+  ]);
   const [timetableName, setTimetableName] = useState<string>("");
   const [timetableInfo, setTimetableInfo] = useState<{ academic_year?: string; semester?: number; batch?: string; status?: string } | null>(null);
   const [loading, setLoading] = useState(false);
@@ -197,7 +210,25 @@ export default function FacultyTimetableSlotsManagement() {
           console.warn("[SLOTS PAGE] Could not load faculty:", facRes.status);
         }
 
-        // 4. Slots
+        // 4. Break configuration for this timetable
+        const breakRes = await fetch(`/api/v1/timetable-master/${masterId}/break-config`, {
+          headers: { Authorization: `Bearer ${authToken}` },
+        });
+        if (breakRes.ok) {
+          const breakData = await breakRes.json();
+          let breakIds = breakData.data?.breakPeriodIds || [];
+          if (!Array.isArray(breakIds)) {
+            console.warn('[BREAK CONFIG] Invalid breakIds format from faculty view:', breakIds);
+            breakIds = [];
+          }
+          setBreakPeriodIds(breakIds);
+          console.log('[BREAK CONFIG] Faculty view loaded:', breakIds);
+        } else {
+          console.warn('[BREAK CONFIG] Could not load break config, using empty array');
+          setBreakPeriodIds([]);
+        }
+
+        // 5. Slots
         await fetchSlots();
       } catch (err) {
         console.error("Error loading page data:", err);
@@ -210,6 +241,52 @@ export default function FacultyTimetableSlotsManagement() {
     fetchAll();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [masterId, authToken]);
+
+  // Load period slots with their times from backend
+  useEffect(() => {
+    if (masterId && authToken) {
+      const fetchPeriodSlots = async () => {
+        try {
+          const res = await fetch(
+            `/api/v1/timetable-master/${masterId}/period-slots`,
+            { headers: { Authorization: `Bearer ${authToken}` } }
+          );
+          
+          if (res.ok) {
+            const data = await res.json();
+            const periodData = data.data || [];
+            console.log('[PERIOD SLOTS] Faculty view loaded from backend:', periodData);
+            
+            // Build periods array with label and time from database
+            const updatedPeriods = periodData.map((p: any) => {
+              let label = `${p.id}`;
+              // Check if it's a break period to add label
+              if (breakPeriodIds.includes(p.id)) {
+                if (p.id === 3) label = "Break";
+                else if (p.id === 5) label = "Lunch";
+                else if (p.id === 8) label = "Break";
+              }
+              return {
+                id: p.id,
+                label,
+                time: p.time || "",
+                isBreak: breakPeriodIds.includes(p.id),
+              };
+            });
+            
+            setPeriodsList(updatedPeriods);
+          } else {
+            console.log('[PERIOD SLOTS] Failed to fetch, using defaults');
+          }
+        } catch (error) {
+          console.error('[PERIOD SLOTS] Error fetching:', error);
+          console.log('[PERIOD SLOTS] Using default periods');
+        }
+      };
+      
+      fetchPeriodSlots();
+    }
+  }, [masterId, authToken, breakPeriodIds]);
 
   // ── Helpers ──────────────────────────────────────────────────────────────────
   const resetForm = () => {
@@ -636,13 +713,13 @@ export default function FacultyTimetableSlotsManagement() {
                     <Select
                       value={formData.period_slot_id}
                       onValueChange={v => {
-                        const isBreak = [3, 5, 8].includes(parseInt(v));
+                        const isBreak = breakPeriodIds.includes(parseInt(v));
                         setFormData({ ...formData, period_slot_id: v, session_type: isBreak ? "break" : formData.session_type });
                       }}
                     >
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        {periods.map(p => (
+                        {periodsList.map(p => (
                           <SelectItem key={p.id} value={p.id.toString()}>
                             {p.label} — {p.time}
                           </SelectItem>
@@ -708,7 +785,7 @@ export default function FacultyTimetableSlotsManagement() {
                     <Select
                       value={formData.session_type}
                       onValueChange={v => {
-                        const isBreak = [3, 5, 8].includes(parseInt(formData.period_slot_id));
+                        const isBreak = breakPeriodIds.includes(parseInt(formData.period_slot_id));
                         const final = isBreak && v !== "break" ? "break" : v;
                         setFormData({
                           ...formData,
@@ -721,7 +798,7 @@ export default function FacultyTimetableSlotsManagement() {
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
                         {sessionTypes.map(t => {
-                          const isBreak = [3, 5, 8].includes(parseInt(formData.period_slot_id));
+                          const isBreak = breakPeriodIds.includes(parseInt(formData.period_slot_id));
                           if (isBreak && t !== "break") return null;
                           return <SelectItem key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</SelectItem>;
                         })}
@@ -814,7 +891,7 @@ export default function FacultyTimetableSlotsManagement() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">
-                    {periods.map(period => {
+                    {periodsList.map(period => {
                       const slot = daySlots.find(s => s.period_slot_id === period.id);
                       const displayTime =
                         slot?.start_time && slot?.end_time

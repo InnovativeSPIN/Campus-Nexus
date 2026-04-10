@@ -341,7 +341,7 @@ export default function FacultyLeaveManagement() {
   const getRecordForPeriod = (p: Period): PlanRecord | undefined =>
     planRecords.find(
       r =>
-        (r._periodInfo?.startDate === p.date || r.start_date?.substring(0, 10) === p.date) &&
+        (r.start_date?.substring(0, 10) === p.date) &&
         String(r._periodInfo?.period_slot_id) === String(p.period_slot_id)
     );
 
@@ -481,10 +481,10 @@ export default function FacultyLeaveManagement() {
   // ─── Computed ───────────────────────────────────────────────────────────────
 
   const getRec = (p: Period) => getRecordForPeriod(p);
-  const submittedCount = periods.filter(p => !!getRec(p)?.leave_id).length;
-  const confirmedCount = periods.filter(p => !getRec(p)?.leave_id && getRec(p)?.status === "approved").length;
-  const pendingCount = periods.filter(p => !getRec(p)?.leave_id && getRec(p)?.status === "pending").length;
-  const rejectedCount = periods.filter(p => !getRec(p)?.leave_id && getRec(p)?.status === "rejected").length;
+  const submittedCount = periods.filter(p => !!getRec(p)?.id).length;
+  const confirmedCount = periods.filter(p => !getRec(p)?.id && getRec(p)?.status === "approved").length;
+  const pendingCount = periods.filter(p => !getRec(p)?.id && getRec(p)?.status === "pending").length;
+  const rejectedCount = periods.filter(p => !getRec(p)?.id && getRec(p)?.status === "rejected").length;
   const unassignedCount = periods.filter(p => !getRec(p)).length;
   
   const activePeriods = periods.length - submittedCount;
@@ -954,7 +954,7 @@ function PeriodCard({
   onCancel: () => void;
   isSending: boolean;
 }) {
-  const isSubmitted = !!record?.leave_id;
+  const isSubmitted = !!record?.id;
   const isApproved = !isSubmitted && record?.status === "approved";
   const isPending = !isSubmitted && record?.status === "pending";
   const isRejected = !isSubmitted && record?.status === "rejected";

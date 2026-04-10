@@ -1,8 +1,4 @@
-<<<<<<< Updated upstream
 import { useState, useEffect } from "react";
-=======
-import { useState } from "react";
->>>>>>> Stashed changes
 import { MainLayout } from "@/pages/faculty/components/layout/MainLayout";
 import { motion } from "framer-motion";
 import { Button } from "@/pages/faculty/components/ui/button";
@@ -54,56 +50,8 @@ interface Query {
   reply?: string;
 }
 
-<<<<<<< Updated upstream
 // ─── Mock student queries (replace with API when backend is ready) ──────────
 const MOCK_QUERIES: Query[] = [
-=======
-const notices: Notice[] = [
-  {
-    id: "1",
-    title: "Holiday",
-    content: "College closed",
-    author: "Admin",
-    date: "2026-02-01",
-    priority: "high",
-    category: "General",
-
-    // ✅ REQUIRED (temporary / default values)
-    semester: "",
-    term: "odd",
-    department: "",
-    year: "",
-  },
-  {
-    id: "2",
-    title: "Faculty Development Program",
-    content: "A 5-day FDP on 'AI in Education' will be conducted from January 25-29, 2024. All interested faculty members are requested to register.",
-    author: "Principal",
-    date: "2024-01-17",
-    priority: "normal",
-    category: "Training",
-    semester: "",
-    term: "odd",
-    department: "",
-    year: "",
-  },
-  {
-    id: "3",
-    title: "Updated Leave Policy",
-    content: "Please note the revised leave policy effective from February 1, 2024. Check the HR portal for detailed guidelines.",
-    author: "HR Department",
-    date: "2024-01-15",
-    priority: "low",
-    category: "Policy",
-    semester: "",
-    term: "odd",
-    department: "",
-    year: "",
-  },
-];
-
-const queries: Query[] = [
->>>>>>> Stashed changes
   {
     id: "1",
     student: "Aditya Kumar",
@@ -134,65 +82,10 @@ const queries: Query[] = [
   },
 ];
 
-<<<<<<< Updated upstream
 // ─── Utility ────────────────────────────────────────────────────────────────
 function getAuthToken(): string {
   return localStorage.getItem("authToken") ?? "";
 }
-=======
-const priorityStyles = {
-  high: "bg-destructive/10 text-destructive border-destructive/30",
-  normal: "bg-secondary/10 text-secondary border-secondary/30",
-  low: "bg-muted text-muted-foreground border-border",
-};
-
-export default function Communication() {
-  const [selectedQuery, setSelectedQuery] = useState<Query | null>(null);
-  const [replyText, setReplyText] = useState("");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [showAnnouncementForm, setShowAnnouncementForm] = useState(false);
-  const [newAnnouncement, setNewAnnouncement] = useState({
-    title: "",
-    category: "General",
-    content: "",
-    priority: "normal" as "high" | "normal" | "low",
-    attachment: null as File | null,
-    semester: "",
-    term: "",
-    department: "",
-    year: "",
-
-  });
-
-  const handlePostAnnouncement = () => {
-    if (!newAnnouncement.title || !newAnnouncement.content) return;
-
-    // handle notice 
-    const notice: Notice = {
-      id: Date.now().toString(),
-      title: newAnnouncement.title,
-      content: newAnnouncement.content,
-      author: "Me",
-      date: new Date().toISOString().split("T")[0],
-      priority: newAnnouncement.priority,
-      category: newAnnouncement.category,
-
-      // ✅ ADDED
-      semester: newAnnouncement.semester,
-      term: newAnnouncement.term as "even" | "odd",
-      department: newAnnouncement.department,
-      year: newAnnouncement.year,
-    };
-    if (
-      !newAnnouncement.semester ||
-      !newAnnouncement.term ||
-      !newAnnouncement.department ||
-      !newAnnouncement.year
-    ) {
-      alert("Please select Semester, Term, Department and Year");
-      return;
-    }
->>>>>>> Stashed changes
 
 const PRIORITY_STYLES: Record<string, string> = {
   urgent: "bg-destructive/10 text-destructive border-destructive/30",
@@ -249,28 +142,6 @@ export default function FacultyCommunication() {
     } finally {
       setNoticesLoading(false);
     }
-<<<<<<< Updated upstream
-=======
-
-    // Add to notices (mock)
-    notices.unshift(notice); // Modifying the imported array directly for demo, ideally use state
-
-    setShowAnnouncementForm(false);
-    setNewAnnouncement({
-      title: "",
-      category: "General",
-      content: "",
-      priority: "normal",
-      attachment: null,
-
-      // ✅ REQUIRED
-      semester: "",
-      term: "",
-      department: "",
-      year: "",
-    });
-
->>>>>>> Stashed changes
   };
 
   useEffect(() => { fetchNotices(); }, []);
@@ -393,64 +264,6 @@ export default function FacultyCommunication() {
               <option value="all">Everyone</option>
             </select>
           </div>
-<<<<<<< Updated upstream
-=======
-          {/* ✅ Class Selection */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-            <select
-              className="h-10 rounded-md border border-input px-3 text-sm"
-              value={newAnnouncement.semester}
-              onChange={(e) =>
-                setNewAnnouncement({ ...newAnnouncement, semester: e.target.value })
-              }
-            >
-              <option value="">Semester</option>
-              {[1, 2, 3, 4, 5, 6, 7, 8].map((s) => (
-                <option key={s} value={String(s)}>Sem {s}</option>
-              ))}
-            </select>
-
-            <select
-              className="h-10 rounded-md border border-input px-3 text-sm"
-              value={newAnnouncement.term}
-              onChange={(e) =>
-                setNewAnnouncement({ ...newAnnouncement, term: e.target.value })
-              }
-            >
-              <option value="">Even / Odd</option>
-              <option value="even">Even</option>
-              <option value="odd">Odd</option>
-            </select>
-
-            <select
-              className="h-10 rounded-md border border-input px-3 text-sm"
-              value={newAnnouncement.department}
-              onChange={(e) =>
-                setNewAnnouncement({ ...newAnnouncement, department: e.target.value })
-              }
-            >
-              <option value="">Department</option>
-              <option value="CSE">CSE</option>
-              <option value="ECE">ECE</option>
-              <option value="EEE">EEE</option>
-              <option value="MECH">MECH</option>
-            </select>
-
-            <select
-              className="h-10 rounded-md border border-input px-3 text-sm"
-              value={newAnnouncement.year}
-              onChange={(e) =>
-                setNewAnnouncement({ ...newAnnouncement, year: e.target.value })
-              }
-            >
-              <option value="">Year</option>
-              <option value="I">I</option>
-              <option value="II">II</option>
-              <option value="III">III</option>
-              <option value="IV">IV</option>
-            </select>
-          </div>
->>>>>>> Stashed changes
 
           {/* Row 2: title + category */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
