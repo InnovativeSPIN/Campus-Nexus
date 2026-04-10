@@ -19,7 +19,6 @@ function buildInclude() {
 // ─────────────────────────────────────────────────────────────────────────────
 export const getAnnouncements = asyncHandler(async (req, res) => {
     const { Announcement, User } = models;
-<<<<<<< Updated upstream
     const { role = '', departmentCode = '' } = req.user;
 
     const superRoles = ['superadmin', 'super-admin', 'executiveadmin', 'academicadmin'];
@@ -55,83 +54,6 @@ export const getAnnouncements = asyncHandler(async (req, res) => {
              ORDER BY a.createdAt DESC`,
             { type: sequelize.QueryTypes.SELECT }
         );
-=======
-    try {
-        const { role, departmentCode, departmentId } = req.user;
-
-        let where = { isActive: true };
-
-        // If not superadmin, filter by role and department
-        const superRoles = ['superadmin', 'super-admin', 'executiveadmin', 'academicadmin'];
-
-        // Departments excluded from department-specific announcements (only see global)
-        const excludedDepartments = [8, 9, 11];
-
-        if (!superRoles.includes(role)) {
-            // Build role check: targetRole contains 'all' OR targetRole contains user's role
-            const roleConditions = [
-                Sequelize.where(
-                    Sequelize.fn('JSON_CONTAINS', Sequelize.col('targetRole'), JSON.stringify('all')),
-                    1
-                ),
-                Sequelize.where(
-                    Sequelize.fn('JSON_CONTAINS', Sequelize.col('targetRole'), JSON.stringify(role)),
-                    1
-                )
-            ];
-
-            // Check if user is in an excluded department
-            const isExcludedDepartment = excludedDepartments.includes(Number(departmentId));
-
-            // Build department check
-            let departmentConditions;
-            if (isExcludedDepartment) {
-                // Excluded departments only see global announcements
-                departmentConditions = { department: null };
-            } else {
-                // Other departments see global + their own department announcements
-                departmentConditions = {
-                    [Op.or]: [
-                        { department: null },
-                        { department: departmentCode }
-                    ]
-                };
-            }
-
-            // Combine: (role condition) AND (department condition)
-            if (departmentCode) {
-                where[Op.and] = [
-                    { [Op.or]: roleConditions },
-                    departmentConditions
-                ];
-            } else {
-                // If no department code, just check role conditions
-                where[Op.or] = roleConditions;
-            }
-        }
-
-        const announcements = await Announcement.findAll({
-            where,
-            include: [{
-                model: User,
-                as: 'createdBy',
-                attributes: ['name', 'avatar']
-            }],
-            order: [['createdAt', 'DESC']]
-        });
-
-        return res.status(200).json({
-            success: true,
-            count: announcements.length,
-            data: announcements
-        });
-    } catch (error) {
-        console.error('[GET ANNOUNCEMENTS] Error:', error);
-        return res.status(500).json({
-            success: false,
-            error: error.message || 'Failed to fetch announcements'
-        });
->>>>>>> Stashed changes
     }
 
     // Normalise: parse JSON fields that may come back as strings from raw query
@@ -147,7 +69,6 @@ export const getAnnouncements = asyncHandler(async (req, res) => {
     return res.status(200).json({ success: true, count: data.length, data });
 });
 
-<<<<<<< Updated upstream
 // ─────────────────────────────────────────────────────────────────────────────
 // GET /api/v1/announcements/admin
 // Department-admins and faculty: global + their department's announcements.
@@ -181,34 +102,6 @@ export const getAdminAnnouncements = asyncHandler(async (req, res) => {
                 LEFT JOIN users u ON a.createdById = u.id
                 ORDER BY a.createdAt DESC`;
         bind = [];
-=======
-// @desc      Get all announcements (Admin view)
-// @route     GET /api/v1/announcements/admin
-// @access    Private/Admin
-export const getAdminAnnouncements = asyncHandler(async (req, res, next) => {
-    const { Announcement, User } = models;
-    try {
-        const announcements = await Announcement.findAll({
-            include: [{
-                model: User,
-                as: 'createdBy',
-                attributes: ['name', 'avatar']
-            }],
-            order: [['createdAt', 'DESC']]
-        });
-
-        return res.status(200).json({
-            success: true,
-            count: announcements.length,
-            data: announcements
-        });
-    } catch (error) {
-        console.error('[GET ADMIN ANNOUNCEMENTS] Error:', error);
-        return res.status(500).json({
-            success: false,
-            error: error.message || 'Failed to fetch announcements'
-        });
->>>>>>> Stashed changes
     }
 
     const rows = await sequelize.query(sql, {
@@ -227,13 +120,8 @@ export const getAdminAnnouncements = asyncHandler(async (req, res, next) => {
 
     return res.status(200).json({ success: true, count: data.length, data });
 });
-
-// ─────────────────────────────────────────────────────────────────────────────
-// GET /api/v1/announcements/:id
-// ─────────────────────────────────────────────────────────────────────────────
 export const getAnnouncement = asyncHandler(async (req, res, next) => {
     const { Announcement, User } = models;
-<<<<<<< Updated upstream
 
     const announcement = await Announcement.findByPk(req.params.id, {
         include: buildInclude()
@@ -241,34 +129,6 @@ export const getAnnouncement = asyncHandler(async (req, res, next) => {
 
     if (!announcement) {
         return next(new ErrorResponse(`Announcement not found with id of ${req.params.id}`, 404));
-=======
-    try {
-        const announcement = await Announcement.findByPk(req.params.id, {
-            include: [{
-                model: User,
-                as: 'createdBy',
-                attributes: ['name', 'avatar']
-            }]
-        });
-
-        if (!announcement) {
-            return res.status(404).json({
-                success: false,
-                error: `Announcement not found with id of ${req.params.id}`
-            });
-        }
-
-        return res.status(200).json({
-            success: true,
-            data: announcement
-        });
-    } catch (error) {
-        console.error('[GET ANNOUNCEMENT] Error:', error);
-        return res.status(500).json({
-            success: false,
-            error: error.message || 'Failed to fetch announcement'
-        });
->>>>>>> Stashed changes
     }
 
     return res.status(200).json({ success: true, data: announcement });
