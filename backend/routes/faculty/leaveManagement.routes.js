@@ -5,6 +5,7 @@ import {
   getMyLeaveApplications,
   getLeaveRequestDetails,
   withdrawLeaveRequest,
+  deleteLeaveApplication,
   getPendingAlterationRequests,
   getPendingAlterationsForIncharge,
   getSlotDetails,
@@ -28,6 +29,7 @@ import {
   approveLeaveExecutiveAdmin,
   rejectLeaveExecutiveAdmin,
   getLeaveRejectionReasons,
+  departmentAdminLeaveApproval
 } from '../../controllers/faculty/executiveApproval.controller.js';
 import {
   requestPeriodAlteration,
@@ -38,6 +40,7 @@ import {
   rejectPeriodAlteration,
   cancelPeriodAlteration,
   submitLeaveWithPlan,
+  abortDraft,
 } from '../../controllers/faculty/alterationPlan.controller.js';
 
 const router = express.Router();
@@ -72,6 +75,9 @@ router.get('/leave-request/:id', getLeaveRequestDetails);
 // Withdraw pending leave request
 router.delete('/leave-request/:id/withdraw', authorize('faculty', 'department-admin'), withdrawLeaveRequest);
 
+// Permanently delete a leave record (Cleanup old data)
+router.delete('/leave-request/:id', authorize('faculty', 'department-admin'), deleteLeaveApplication);
+
 // Get rejection reasons for a leave request
 router.get('/leave-request/:leaveId/rejection-reasons', authorize('faculty', 'department-admin'), getLeaveRejectionReasons);
 
@@ -80,7 +86,10 @@ router.get('/leave-request/:leaveId/rejection-reasons', authorize('faculty', 'de
 // Request substitute for a single period (starts the planning phase)
 router.post('/alteration-plan/request-period', authorize('faculty', 'department-admin'), requestPeriodAlteration);
 
-// Get my current alteration plan for a date range
+// Abort all unsubmitted drafts
+router.delete('/alteration-plan/abort-draft', authorize('faculty', 'department-admin'), abortDraft);
+
+// Get my alteration plan
 router.get('/alteration-plan/my-plan', authorize('faculty', 'department-admin'), getMyAlterationPlan);
 
 // Get pending period requests for the logged-in faculty (as substitute)
@@ -143,5 +152,8 @@ router.patch('/leave-approval/:leaveId/approve', authorize('executiveadmin', 'su
 
 // Executive admin rejects leave
 router.patch('/leave-approval/:leaveId/reject', authorize('executiveadmin', 'superadmin'), rejectLeaveExecutiveAdmin);
+
+// Department admin approves/rejects leave directly
+router.patch('/leave-approval/department/:leaveId/:action', authorize('faculty', 'department-admin'), departmentAdminLeaveApproval);
 
 export default router;

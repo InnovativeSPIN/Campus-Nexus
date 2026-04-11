@@ -287,3 +287,91 @@ export const getLeaveRejectionReasons = asyncHandler(async (req, res, next) => {
     return next(new ErrorResponse(`Error fetching rejection reasons: ${error.message}`, 500));
   }
 });
+
+/**
+ * @desc    Department admin approves/rejects a leave from notification bell
+ * @route   PATCH /api/v1/faculty/leave-approval/department/:leaveId/:action
+ * @access  Private (Department Admin)
+ */
+export const departmentAdminLeaveApproval = asyncHandler(async (req, res, next) => {
+  const { leaveId, action } = req.params;
+  const facultyId = req.user.faculty_id;
+  
+  if (!['faculty', 'department-admin'].includes(req.user.role)) {
+    return next(new ErrorResponse('Not authorized', 403));
+  }
+
+  try {
+    const leave = await Leave.findByPk(leaveId);
+    if (!leave) {
+      return next(new ErrorResponse('Leave request not found', 404));
+    }
+    
+    // Check if the current user is a dept admin for this leave's department
+    const isDeptAdmin = await Faculty.findOne({
+      where: {
+        faculty_id: facultyId,
+        department_id: leave.departmentId,
+        role_id: 7, // HOD
+        status: 'active'
+      }
+    });
+
+    if (!isDeptAdmin && !['executiveadmin', 'superadmin', 'super-admin'].includes(req.user.role)) {
+      return next(new ErrorResponse('You are not a department admin for this department', 403));
+    }
+
+    const applicant = await Faculty.findByPk(leave.applicantId, { attributes: ['Name'] });
+    const approver = await Faculty.findByPk(facultyId, { attributes: ['Name'] });
+
+    if (action === 'approve' || action === 'accept' || action === 'approved') {
+      leave.admin_approval_status = 'approved';
+      leave.admin_approval_date = new Date();
+      leave.overall_status = 'hod_approved';
+      
+      await leave.save();
+
+      // Notify the applicant
+      await LeaveNotification.create({
+        recipientId: leave.applicantId,
+        recipientType: 'faculty',
+        departmentId: leave.departmentId,
+        senderId: facultyId,
+        senderName: approver.Name,
+        leaveId: leaveId,
+        type: 'leave_approved',
+        title: `HOD Approved - ${leave.leaveType}`,
+        message: `Your ${leave.leaveType} leave request has been approved by the Department Admin.`,
+        isRead: false,
+      });
+
+      return res.status(200).json({ success: true, message: 'Leave approved by department admin.' });
+    } else if (action === 'reject' || action === 'rejected') {
+      leave.admin_approval_status = 'rejected';
+      leave.overall_status = 'rejected';
+      leave.admin_approval_date = new Date();
+      await leave.save();
+
+      // Notify the applicant
+      await LeaveNotification.create({
+        recipientId: leave.applicantId,
+        recipientType: 'faculty',
+        departmentId: leave.departmentId,
+        senderId: facultyId,
+        senderName: approver.Name,
+        leaveId: leaveId,
+        type: 'leave_rejected',
+        title: `HOD Rejected - ${leave.leaveType}`,
+        message: `Your ${leave.leaveType} leave request has been rejected by the Department Admin.`,
+        isRead: false,
+      });
+
+      return res.status(200).json({ success: true, message: 'Leave rejected by department admin.' });
+    } else {
+      return next(new ErrorResponse('Invalid action', 400));
+    }
+  } catch (error) {
+    console.error('[departmentAdminLeaveApproval] Error:', error.message);
+    return next(new ErrorResponse(`Error processing department admin approval: ${error.message}`, 500));
+  }
+});

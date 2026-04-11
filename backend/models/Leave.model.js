@@ -117,6 +117,7 @@ const Leave = (sequelize) => {
         'substitute_pending', 
         'substitute_approved', 
         'substitute_rejected',
+        'hod_approved',
         'timetable_pending',
         'timetable_approved',
         'executive_pending',

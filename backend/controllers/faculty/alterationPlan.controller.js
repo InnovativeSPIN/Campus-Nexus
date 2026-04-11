@@ -211,9 +211,12 @@ export const getMyAlterationPlan = asyncHandler(async (req, res, next) => {
 
   const where = {
     faculty_id: facultyId,
-    // Intentionally removed leave_id: null so the frontend can display 
-    // "locked" states for periods that are already tied to a formal leave application 
   };
+
+  // If no date range is specified, we only want the "active drafts" (unsubmitted plan)
+  if (!startDate || !endDate) {
+    where.leave_id = null;
+  }
 
   if (startDate && endDate) {
     const startObj = new Date(startDate);
@@ -544,6 +547,7 @@ export const submitLeaveWithPlan = asyncHandler(async (req, res, next) => {
       substitute_faculty_id: planRecords[0].substitute_faculty_id, // primary substitute
       overall_status: 'substitute_approved', // already approved in planning phase
       substitute_approval_status: 'approved',
+      admin_approval_status: 'pending', // Pending Department Admin Approval
       substitute_approval_date: new Date(),
     });
   } catch (err) {
@@ -562,16 +566,62 @@ export const submitLeaveWithPlan = asyncHandler(async (req, res, next) => {
   const startStr = start.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
   const endStr = end.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 
+  // 1. Info Notification
   await notifyAdminAndIncharge(
     departmentId, facultyId, applicant.Name,
     `Leave Application Submitted — ${applicant.Name}`,
     `${applicant.Name} has formally submitted a ${leaveType} leave from ${startStr} to ${endStr} (${totalDays} day${totalDays > 1 ? 's' : ''}). All ${planRecords.length} class period${planRecords.length > 1 ? 's' : ''} have confirmed substitutes.`,
     leave.id,
+    'leave_submitted'
   );
+
+  // 2. Actionable Notification for Department Admins
+  try {
+    const deptAdmins = await Faculty.findAll({
+      where: { department_id: departmentId, role_id: 7, status: 'active' },
+      attributes: ['faculty_id'],
+    });
+
+    for (const admin of deptAdmins) {
+      if (!admin.faculty_id) continue;
+      await LeaveNotification.create({
+        recipient_id: admin.faculty_id,
+        recipient_type: 'faculty',
+        departmentId: departmentId,
+        senderId: facultyId,
+        senderName: applicant.Name,
+        leave_request_id: leave.id,
+        notification_type: 'leave_approval_requested',
+        title: `Action Required: Leave Approval`,
+        message: `${applicant.Name} has requested you to approve their ${leaveType} leave from ${startStr} to ${endStr}.`,
+        is_read: false,
+      });
+    }
+  } catch (err) {
+    console.error('Failed to send actionable notification to Dept Admin:', err.message);
+  }
 
   res.status(201).json({
     success: true,
     message: 'Leave request submitted successfully. Department admin has been notified.',
     data: { leaveId: leave.id, totalDays, periods: planRecords.length },
   });
+});
+
+/**
+ * @desc    Clear all unsubmitted alteration records for the current faculty
+ * @route   DELETE /api/v1/faculty/alteration-plan/abort-draft
+ * @access  Private (Faculty)
+ */
+export const abortDraft = asyncHandler(async (req, res, next) => {
+  const facultyId = req.user.faculty_id;
+
+  await FacultySubstitutes.destroy({
+    where: {
+      faculty_id: facultyId,
+      leave_id: null
+    }
+  });
+
+  res.status(200).json({ success: true, message: 'Draft cleared' });
 });

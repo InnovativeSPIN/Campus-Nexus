@@ -314,6 +314,45 @@ export const withdrawLeaveRequest = asyncHandler(async (req, res, next) => {
 });
 
 /**
+ * @desc    Permanently delete a leave application record
+ * @route   DELETE /api/v1/faculty/leave-request/:id
+ * @access  Private (Faculty)
+ */
+export const deleteLeaveApplication = asyncHandler(async (req, res, next) => {
+  const { id } = req.params;
+  const facultyId = req.user.faculty_id;
+
+  try {
+    const leave = await Leave.findByPk(id);
+
+    if (!leave) {
+      return next(new ErrorResponse('Leave request not found', 404));
+    }
+
+    // Only the requestor can delete their own application
+    if (leave.applicantId !== facultyId && !['superadmin'].includes(req.user.role)) {
+      return next(new ErrorResponse('Not authorized to delete this record', 403));
+    }
+
+    // Delete associated substitution records first
+    await FacultySubstitutes.destroy({
+      where: { leave_id: id }
+    });
+
+    // Delete the leave record
+    await leave.destroy();
+
+    res.status(200).json({
+      success: true,
+      message: 'Leave record permanently deleted',
+    });
+  } catch (error) {
+    console.error('[deleteLeaveApplication] Error:', error.message);
+    return next(new ErrorResponse(`Error deleting leave record: ${error.message}`, 500));
+  }
+});
+
+/**
  * @desc    Get pending leave requests waiting for substitute approval
  * @route   GET /api/v1/faculty/alteration/pending/:facultyId
  * @access  Private (Faculty)

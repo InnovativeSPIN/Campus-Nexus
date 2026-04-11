@@ -30,9 +30,9 @@ export const applyTimetableAlterations = asyncHandler(async (req, res, next) => 
     }
 
     // Verify leave is ready for alteration
-    if (leave.overall_status !== 'substitute_approved') {
+    if (leave.overall_status !== 'hod_approved') {
       return next(new ErrorResponse(
-        'Leave must be approved by substitute before applying alteration',
+        'Leave must be approved by department admin before applying alteration',
         400
       ));
     }
@@ -237,8 +237,8 @@ export const getTimetableApplyQueue = asyncHandler(async (req, res, next) => {
 
     const queue = await Leave.findAll({
       where: {
-        overall_status: 'substitute_approved',
-        substitute_approval_status: 'approved',
+        overall_status: 'hod_approved',
+        admin_approval_status: 'approved',
         [Op.or]: [
           { timetable_incharge_approval_status: null },
           { timetable_incharge_approval_status: 'pending' },

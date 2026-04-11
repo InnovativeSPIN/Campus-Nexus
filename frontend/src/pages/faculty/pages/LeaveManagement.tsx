@@ -91,6 +91,7 @@ interface LeaveRequest {
   substitute_approval_status?: string;
   timetable_incharge_approval_status?: string;
   executive_admin_approval_status?: string;
+  admin_approval_status?: string;
   substitute_rejection_reason?: string;
   createdAt: string;
   substituteFaculty?: { name?: string; Name?: string };
@@ -101,15 +102,16 @@ interface LeaveRequest {
 
 const statusConfig: Record<string, { label: string; icon: any; color: string; bg: string }> = {
   pending: { label: "Pending", icon: Clock, color: "text-warning", bg: "bg-warning/10" },
-  substitute_pending: { label: "Pending Substitute", icon: Clock, color: "text-warning", bg: "bg-warning/10" },
-  substitute_approved: { label: "Substitute Approved", icon: CheckCircle2, color: "text-info", bg: "bg-info/10" },
+  substitute_pending: { label: "Waiting for Substitutes", icon: Clock, color: "text-warning", bg: "bg-warning/10" },
+  substitute_approved: { label: "Pending HOD Approval", icon: Clock, color: "text-info", bg: "bg-info/10" },
   substitute_rejected: { label: "Substitute Rejected", icon: XCircle, color: "text-destructive", bg: "bg-destructive/10" },
-  timetable_pending: { label: "Pending Timetable", icon: Clock, color: "text-warning", bg: "bg-warning/10" },
+  hod_approved: { label: "Pending Timetable Action", icon: Clock, color: "text-info", bg: "bg-info/10" },
+  timetable_pending: { label: "In Timetable Queue", icon: Clock, color: "text-warning", bg: "bg-warning/10" },
   timetable_approved: { label: "Timetable Applied", icon: CheckCircle2, color: "text-success", bg: "bg-success/10" },
-  executive_pending: { label: "Pending Executive", icon: Clock, color: "text-warning", bg: "bg-warning/10" },
-  approved: { label: "Approved", icon: CheckCircle2, color: "text-success", bg: "bg-success/10" },
-  rejected: { label: "Rejected", icon: XCircle, color: "text-destructive", bg: "bg-destructive/10" },
-  cancelled: { label: "Cancelled", icon: AlertCircle, color: "text-muted-foreground", bg: "bg-muted/10" },
+  executive_pending: { label: "Pending Final Approval", icon: Clock, color: "text-warning", bg: "bg-warning/10" },
+  approved: { label: "Leave Approved", icon: CheckCircle2, color: "text-success", bg: "bg-success/10" },
+  rejected: { label: "Leave Rejected", icon: XCircle, color: "text-destructive", bg: "bg-destructive/10" },
+  cancelled: { label: "Leave Cancelled", icon: AlertCircle, color: "text-muted-foreground", bg: "bg-muted/10" },
 };
 
 const leaveTypes = ["Medical", "Casual", "Earned", "On-Duty", "Personal", "Maternity", "Comp-Off"];
@@ -150,7 +152,10 @@ export default function FacultyLeaveManagement() {
   const [currentTime, setCurrentTime] = useState(new Date());
 
   // ── Alteration Plan
-  const [planDates, setPlanDates] = useState({ startDate: "", endDate: "" });
+  const [planDates, setPlanDates] = useState({ 
+    startDate: "", 
+    endDate: "" 
+  });
   const [fetchingPeriods, setFetchingPeriods] = useState(false);
   const [periods, setPeriods] = useState<Period[]>([]);
   const [availableSubjects, setAvailableSubjects] = useState<AvailableSubject[]>([]);
@@ -193,13 +198,17 @@ export default function FacultyLeaveManagement() {
     const autoHydrateActivePlan = async () => {
       try {
         const r = await api("/api/v1/faculty/alteration-plan/my-plan");
-        if (r.success && r.data && r.data.length > 0) {
+        // Only count records that haven't been submitted into a formal leave yet
+        const unsubmittedRecords = (r.data || []).filter((rec: any) => !rec.leave_id);
+
+        if (r.success && unsubmittedRecords.length > 0) {
           // Find the boundary dates of the active plan
-          const dates = r.data.map((rec: any) => new Date(rec.start_date).getTime());
+          const dates = unsubmittedRecords.map((rec: any) => new Date(rec.start_date).getTime());
           const minDate = new Date(Math.min(...dates)).toISOString().split("T")[0];
           const maxDate = new Date(Math.max(...dates)).toISOString().split("T")[0];
           
           setPlanDates({ startDate: minDate, endDate: maxDate });
+          
           // Automatically fetch periods for these dates
           fetchPeriods(minDate, maxDate, false);
         }
@@ -425,11 +434,21 @@ export default function FacultyLeaveManagement() {
     setSending(s => ({ ...s, [recKey]: false }));
   };
 
-  const cancelRequest = async (record: PlanRecord) => {
-    if (!confirm("Cancel this substitute request?")) return;
-    const r = await api(`/api/v1/faculty/alteration-plan/${record.id}/cancel`, { method: "DELETE" });
-    if (r.success) { toast.success("Request cancelled"); fetchPlanRecords(); }
-    else toast.error(r.error || "Failed to cancel");
+  const abortDraft = async () => {
+    if (!confirm("This will clear all unsubmitted substitution requests and reset your current plan. Continue?")) return;
+    try {
+      const r = await api("/api/v1/faculty/alteration-plan/abort-draft", { method: "DELETE" });
+      if (r.success) {
+        toast.success("Draft plan cleared");
+        setPlanDates({ startDate: "", endDate: "" });
+        setPeriods([]);
+        setPlanRecords([]);
+      } else {
+        toast.error(r.error || "Failed to clear draft");
+      }
+    } catch (e) {
+      toast.error("Failed to clear draft");
+    }
   };
 
   const submitLeave = async () => {
@@ -478,13 +497,24 @@ export default function FacultyLeaveManagement() {
     else toast.error(r.error || "Failed to withdraw");
   };
 
+  const deleteLeave = async (id: number) => {
+    if (!confirm("Permanently delete this leave record? This cannot be undone.")) return;
+    const r = await api(`/api/v1/faculty/leave-request/${id}`, { method: "DELETE" });
+    if (r.success) {
+      toast.success("Leave record deleted");
+      fetchMyLeaves();
+    } else {
+      toast.error(r.error || "Failed to delete");
+    }
+  };
+
   // ─── Computed ───────────────────────────────────────────────────────────────
 
   const getRec = (p: Period) => getRecordForPeriod(p);
-  const submittedCount = periods.filter(p => !!getRec(p)?.id).length;
-  const confirmedCount = periods.filter(p => !getRec(p)?.id && getRec(p)?.status === "approved").length;
-  const pendingCount = periods.filter(p => !getRec(p)?.id && getRec(p)?.status === "pending").length;
-  const rejectedCount = periods.filter(p => !getRec(p)?.id && getRec(p)?.status === "rejected").length;
+  const submittedCount = periods.filter(p => !!getRec(p)?.leave_id).length;
+  const confirmedCount = periods.filter(p => getRec(p)?.status === "approved" && !getRec(p)?.leave_id).length;
+  const pendingCount = periods.filter(p => getRec(p)?.status === "pending" && !getRec(p)?.leave_id).length;
+  const rejectedCount = periods.filter(p => getRec(p)?.status === "rejected" && !getRec(p)?.leave_id).length;
   const unassignedCount = periods.filter(p => !getRec(p)).length;
   
   const activePeriods = periods.length - submittedCount;
@@ -582,12 +612,18 @@ export default function FacultyLeaveManagement() {
                 <div className="space-y-1 flex-1 min-w-[140px]">
                   <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Start Date</Label>
                   <Input type="date" value={planDates.startDate}
-                    onChange={e => { setPlanDates(d => ({ ...d, startDate: e.target.value })); setPeriods([]); setPlanRecords([]); }} />
+                    onChange={e => { 
+                      setPlanDates(d => ({ ...d, startDate: e.target.value })); 
+                      setPeriods([]); setPlanRecords([]); 
+                    }} />
                 </div>
                 <div className="space-y-1 flex-1 min-w-[140px]">
                   <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">End Date</Label>
                   <Input type="date" value={planDates.endDate}
-                    onChange={e => { setPlanDates(d => ({ ...d, endDate: e.target.value })); setPeriods([]); setPlanRecords([]); }} />
+                    onChange={e => { 
+                      setPlanDates(d => ({ ...d, endDate: e.target.value })); 
+                      setPeriods([]); setPlanRecords([]); 
+                    }} />
                 </div>
                 <div className="flex items-end gap-2">
                   <Button onClick={() => fetchPeriods()} disabled={!planDates.startDate || !planDates.endDate || fetchingPeriods} className="gap-2 h-10">
@@ -595,9 +631,14 @@ export default function FacultyLeaveManagement() {
                     {fetchingPeriods ? "Fetching..." : "Find Classes"}
                   </Button>
                   {periods.length > 0 && (
-                    <Button variant="outline" size="icon" className="h-10 w-10" onClick={() => fetchPlanRecords()} title="Refresh status">
-                      <RefreshCw className={cn("w-4 h-4", loadingPlan && "animate-spin")} />
-                    </Button>
+                    <div className="flex gap-2">
+                       <Button variant="outline" size="icon" className="h-10 w-10 text-destructive border-destructive/20 hover:bg-destructive/5" onClick={abortDraft} title="Clear Draft">
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                      <Button variant="outline" size="icon" className="h-10 w-10" onClick={() => fetchPlanRecords()} title="Refresh status">
+                        <RefreshCw className={cn("w-4 h-4", loadingPlan && "animate-spin")} />
+                      </Button>
+                    </div>
                   )}
                 </div>
               </div>
@@ -780,6 +821,15 @@ export default function FacultyLeaveManagement() {
 
           {/* ══════════════════ TAB 3: MY APPLICATIONS ══════════════════ */}
           <TabsContent value="applications" className="space-y-4">
+            <div className="flex items-center justify-between px-1">
+              <h2 className="text-base font-semibold flex items-center gap-2">
+                <FileText className="w-4 h-4 text-primary" /> My Applications
+              </h2>
+              <Button variant="outline" size="sm" onClick={fetchMyLeaves} disabled={loadingLeaves} className="h-8">
+                <RefreshCw className={cn("w-3.5 h-3.5 mr-1.5", loadingLeaves && "animate-spin")} /> Refresh status
+              </Button>
+            </div>
+            
             {loadingLeaves ? (
               <div className="text-center py-16 text-muted-foreground">
                 <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-primary" />
@@ -794,7 +844,7 @@ export default function FacultyLeaveManagement() {
               </div>
             ) : (
               myLeaves.map(leave => (
-                <LeaveCard key={leave.id} leave={leave} onWithdraw={withdrawLeave} formatDate={fmtDate} />
+                <LeaveCard key={leave.id} leave={leave} onWithdraw={withdrawLeave} onDelete={deleteLeave} formatDate={fmtDate} />
               ))
             )}
           </TabsContent>
@@ -954,7 +1004,7 @@ function PeriodCard({
   onCancel: () => void;
   isSending: boolean;
 }) {
-  const isSubmitted = !!record?.id;
+  const isSubmitted = !!record?.leave_id;
   const isApproved = !isSubmitted && record?.status === "approved";
   const isPending = !isSubmitted && record?.status === "pending";
   const isRejected = !isSubmitted && record?.status === "rejected";
@@ -1018,7 +1068,7 @@ function PeriodCard({
           <div className="flex items-center gap-2">
             <Lock className="w-4 h-4 text-primary shrink-0" />
             <span className="text-sm font-medium text-primary">
-              Classes are substituted (Leave Applied)
+              Classes are substituted
             </span>
           </div>
           <span className="text-[10px] text-muted-foreground text-right">
@@ -1033,12 +1083,12 @@ function PeriodCard({
           <div className="flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 text-success shrink-0" />
             <span className="text-sm font-medium text-success">
-              {record?.substitute_faculty?.Name} confirmed
+              Classes are substituted
             </span>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-[10px] text-muted-foreground hidden md:inline">
-              {record?._periodInfo?.subject_name || record?._periodInfo?.custom_subject_name || ""}
+              Covered by {record?.substitute_faculty?.Name}
             </span>
             <Button variant="ghost" size="sm" onClick={onCancel}
               className="h-7 text-[11px] text-destructive hover:text-destructive hover:bg-destructive/10 px-2">
@@ -1221,10 +1271,11 @@ function SubjectAndFacultyRow({
 // ─── Leave Card ────────────────────────────────────────────────────────────────
 
 function LeaveCard({
-  leave, onWithdraw, formatDate,
+  leave, onWithdraw, onDelete, formatDate,
 }: {
   leave: LeaveRequest;
   onWithdraw: (id: number) => void;
+  onDelete: (id: number) => void;
   formatDate: (d: string) => string;
 }) {
   const config = statusConfig[leave.overall_status] || statusConfig.pending;
@@ -1266,6 +1317,7 @@ function LeaveCard({
       <div className="flex items-center gap-1.5 flex-wrap">
         {[
           { label: "Substitutes", status: leave.substitute_approval_status },
+          { label: "HOD", status: leave.admin_approval_status },
           { label: "Timetable", status: leave.timetable_incharge_approval_status },
           ...(leave.totalDays > 2 ? [{ label: "Executive", status: leave.executive_admin_approval_status }] : []),
         ].map((step, i) => (
@@ -1320,6 +1372,18 @@ function LeaveCard({
           Rejection: {leave.substitute_rejection_reason}
         </div>
       )}
+
+      {/* Action buttons */}
+      <div className="mt-5 pt-4 border-t border-dashed border-border flex justify-end gap-2">
+        {["pending", "substitute_pending"].includes(leave.overall_status) && (
+          <Button variant="outline" size="sm" onClick={() => onWithdraw(leave.id)} className="h-8 text-destructive border-destructive/20 hover:bg-destructive/10">
+            Withdraw
+          </Button>
+        )}
+        <Button variant="ghost" size="sm" onClick={() => onDelete(leave.id)} className="h-8 text-muted-foreground hover:text-destructive hover:bg-destructive/5">
+          <Trash2 className="w-3.5 h-3.5 mr-1.5" /> Delete
+        </Button>
+      </div>
     </motion.div>
   );
 }
