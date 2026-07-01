@@ -12,12 +12,6 @@ const StudentInternalMark = (sequelize) => {
         assessmentScore: { type: DataTypes.DECIMAL(5, 2), defaultValue: 0.00 },
         totalScore: { type: DataTypes.DECIMAL(5, 2), defaultValue: 0.00 },
         remarks: { type: DataTypes.STRING(255), allowNull: true },
-        internal100: { type: DataTypes.DECIMAL(5, 2), defaultValue: 0.00 },
-        assignment1: { type: DataTypes.DECIMAL(5, 2), defaultValue: 0.00 },
-        assignment2: { type: DataTypes.DECIMAL(5, 2), defaultValue: 0.00 },
-        workingHours: { type: DataTypes.INTEGER, defaultValue: 60 },
-        presentHours: { type: DataTypes.INTEGER, defaultValue: 0 },
-        attendancePercentage: { type: DataTypes.DECIMAL(5, 2), defaultValue: 0.00 },
         status: {
             type: DataTypes.ENUM('draft', 'submitted', 'verified', 'published', 'rejected'),
             defaultValue: 'draft',
@@ -43,25 +37,21 @@ const StudentInternalMark = (sequelize) => {
             allowNull: true,
             field: 'verified_at'
         },
-        publishedBy: {
-            type: DataTypes.INTEGER,
-            allowNull: true,
-            field: 'published_by'
-        },
         publishedAt: {
             type: DataTypes.DATE,
             allowNull: true,
             field: 'published_at'
         },
-        rejectionReason: {
+        examCellRemarks: {
             type: DataTypes.TEXT,
             allowNull: true,
-            field: 'rejection_reason'
+            field: 'exam_cell_remarks'
         },
-        classId: {
+        workHours: {
             type: DataTypes.INTEGER,
             allowNull: true,
-            field: 'classId'
+            defaultValue: 60,
+            field: 'workHours'
         }
     }, {
         tableName: 'student_internal_marks',
@@ -71,7 +61,6 @@ const StudentInternalMark = (sequelize) => {
     StudentInternalMarkModel.associate = (models) => {
         StudentInternalMarkModel.belongsTo(models.Student, { foreignKey: 'studentId', as: 'student' });
         StudentInternalMarkModel.belongsTo(models.Subject, { foreignKey: 'subjectId', as: 'subject' });
-        StudentInternalMarkModel.belongsTo(models.Class, { foreignKey: 'classId', as: 'class' });
         StudentInternalMarkModel.belongsTo(models.Faculty, { foreignKey: 'submitted_by', as: 'submittedByFaculty', targetKey: 'faculty_id' });
     };
 

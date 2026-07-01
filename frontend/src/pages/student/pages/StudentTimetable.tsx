@@ -349,8 +349,8 @@ const StudentClassTimetable: React.FC = () => {
               <thead>
                 <tr className="bg-blue-50 border-b border-blue-200">
                   <th className="px-3 py-2 text-left font-semibold text-blue-900 min-w-16">Day</th>
-                  {allPeriods.map(period => (
-                    <th key={period.id} className="px-3 py-2 text-center font-semibold text-blue-900 min-w-28">
+                  {allPeriods.map((period, periodIdx) => (
+                    <th key={`period-${periodIdx}`} className="px-3 py-2 text-center font-semibold text-blue-900 min-w-28">
                       <div className="font-bold text-sm">{period.label}</div>
                       <div className="text-xs text-gray-600 font-normal">
                         {period.startTime.substring(0, 5)}-{period.endTime.substring(0, 5)}
@@ -363,13 +363,13 @@ const StudentClassTimetable: React.FC = () => {
                 {DAYS.map(day => (
                   <tr key={day} className="border-b border-gray-200 hover:bg-gray-50">
                     <td className="px-3 py-2 font-semibold text-gray-900 bg-gray-50">{day}</td>
-                    {allPeriods.map(period => {
+                    {allPeriods.map((period, periodIdx) => {
                       const slot = timetable.slots.find(
                         s => s.day === day && s.period?.id === period.id
                       );
 
                       return (
-                        <td key={`${day}-${period.id}`} className="px-2 py-2 border-l border-gray-200">
+                        <td key={`${day}-${periodIdx}`} className="px-2 py-2 border-l border-gray-200">
                           {slot ? (
                             <div className={`space-y-1 p-2 rounded text-sm ${getSessionColor(slot.sessionType)}`}>
                               {slot.sessionType === 'break' ? (
@@ -414,13 +414,13 @@ const StudentClassTimetable: React.FC = () => {
               <div key={day} className="border rounded-lg border-gray-200">
                 <div className="px-3 py-2 bg-blue-50 text-sm font-semibold text-blue-900">{day}</div>
                 <div className="px-3 py-2 space-y-2">
-                  {allPeriods.map(period => {
+                  {allPeriods.map((period, periodIdx) => {
                     const slot = timetable.slots.find(
                       s => s.day === day && s.period?.id === period.id
                     );
 
                     return (
-                      <div key={`${day}-${period.id}`} className="flex flex-col gap-1">
+                      <div key={`${day}-${periodIdx}`} className="flex flex-col gap-1">
                         <div className="flex items-center justify-between text-xs text-gray-600">
                           <div className="font-medium">{period.label}</div>
                           <div>{period.startTime.substring(0, 5)}-{period.endTime.substring(0, 5)}</div>
