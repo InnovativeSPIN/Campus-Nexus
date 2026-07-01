@@ -74,6 +74,13 @@ const navItemsByRole: Record<string, NavItem[]> = {
     { label: 'Reports', path: '/admin/academic/reports', icon: <FileText className="h-5 w-5" /> },
     { label: 'Security', path: '/admin/change-password', icon: <ShieldCheck className="h-5 w-5" /> },
   ],
+  "exam_cell_admin": [
+    { label: 'Dashboard', path: '/admin/exam-cell', icon: <LayoutDashboard className="h-5 w-5" /> },
+    { label: 'Submissions', path: '/admin/exam-cell/submissions', icon: <FileText className="h-5 w-5" /> },
+    { label: 'Results', path: '/admin/exam-cell/results', icon: <GraduationCap className="h-5 w-5" /> },
+    { label: 'Notifications', path: '/admin/exam-cell/notifications', icon: <Bell className="h-5 w-5" /> },
+    { label: 'Security', path: '/admin/change-password', icon: <ShieldCheck className="h-5 w-5" /> },
+  ],
   faculty: [
     { label: 'Dashboard', path: '/faculty', icon: <LayoutDashboard className="h-5 w-5" /> },
     { label: 'My Students', path: '/faculty/students', icon: <GraduationCap className="h-5 w-5" /> },
@@ -139,7 +146,11 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   };
 
   // Determine user info display
-  const userRoleDisplay = user.role === 'executive' ? 'Principal & CEO' : (user.role.charAt(0).toUpperCase() + user.role.slice(1));
+  const userRoleDisplay = user.role === 'executive' 
+    ? 'Principal & CEO' 
+    : user.role === 'exam_cell_admin' 
+      ? 'Exam Cell Admin' 
+      : (user.role.charAt(0).toUpperCase() + user.role.slice(1));
 
   return (
     <div className="min-h-screen flex w-full bg-background">

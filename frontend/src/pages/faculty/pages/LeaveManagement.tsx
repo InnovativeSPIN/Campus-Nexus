@@ -45,6 +45,7 @@ interface PlanRecord {
   reason: string;
   substitute_faculty?: { faculty_id: number; Name: string; designation?: string };
   _periodInfo?: PeriodInfo;
+  leave_id?: number;
 }
 
 interface PeriodInfo {
@@ -432,6 +433,21 @@ export default function FacultyLeaveManagement() {
       toast.error(r.error || "Failed to reassign");
     }
     setSending(s => ({ ...s, [recKey]: false }));
+  };
+
+  const cancelRequest = async (record: PlanRecord) => {
+    if (!confirm("Are you sure you want to cancel this substitution request?")) return;
+    try {
+      const r = await api(`/api/v1/faculty/alteration-plan/${record.id}/cancel`, { method: "DELETE" });
+      if (r.success) {
+        toast.success("Request cancelled");
+        await fetchPlanRecords();
+      } else {
+        toast.error(r.error || "Failed to cancel request");
+      }
+    } catch (e) {
+      toast.error("Failed to cancel request");
+    }
   };
 
   const abortDraft = async () => {

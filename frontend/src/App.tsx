@@ -38,6 +38,7 @@ import AcademicDepartments from './pages/admin/academic/Departments';
 import AcademicReports from './pages/admin/academic/Reports';
 import AcademicAnnouncements from './pages/admin/academic/Announcements';
 import AcademicAnnouncementDetail from './pages/admin/academic/AnnouncementDetail';
+import ExamCellRoutes from './pages/admin/exam-cell/ExamCellRoutes';
 // authentications   
 import Login from './pages/auth/Login';
 import AdminLogin from './pages/auth/AdminLogin';
@@ -154,6 +155,9 @@ const AppRoutes = () => (
 
         {/* Department Admin Routes */}
         <Route path="/admin/department-admin/*" element={<DepartmentAdminRoutes />} />
+
+        {/* Exam Cell Admin Routes */}
+        <Route path="/admin/exam-cell/*" element={<ExamCellRoutes />} />
 
         {/* Student Routes */}
         <Route path="/student/*" element={<StudentRoutes />} />
