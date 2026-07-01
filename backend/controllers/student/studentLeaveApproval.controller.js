@@ -462,7 +462,12 @@ export const withdrawLeave = asyncHandler(async (req, res, next) => {
 });
 
 export const checkIfClassIncharge = async (facultyId, classId) => {
-    const { TimetableMaster } = models;
+    const { TimetableMaster, ClassIncharge } = models;
+    const incharge = await ClassIncharge.findOne({
+        where: { faculty_id: facultyId, class_id: classId, status: 'active' }
+    });
+    if (incharge) return true;
+
     const timetable = await TimetableMaster.findOne({
         where: { class_coordinator_id: facultyId, class_id: classId }
     });

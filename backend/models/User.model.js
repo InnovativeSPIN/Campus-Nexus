@@ -27,7 +27,7 @@ const User = (sequelize) => {
       allowNull: false,
       references: {
         model: 'roles',
-        key: 'id'
+        key: 'role_id'
       }
     },
     phone: {

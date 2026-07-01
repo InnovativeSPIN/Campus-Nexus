@@ -68,6 +68,7 @@ const FacultySubjectAssignment = (sequelize) => {
       {
         // Prevent duplicate assignments: same faculty cannot teach same subject in same class/year
         // But allow: one faculty to teach multiple subjects, and multiple faculties to teach same subject
+        name: 'uq_fac_sub_class_year',
         unique: true,
         fields: ['faculty_id', 'subject_id', 'class_id', 'academic_year']
       },

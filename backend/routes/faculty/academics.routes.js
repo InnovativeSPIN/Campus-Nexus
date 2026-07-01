@@ -20,6 +20,13 @@ import {
   getTodaySchedule
 } from '../../controllers/faculty/academics.controller.js';
 
+import {
+  getAssessmentStudents,
+  saveAssessmentMarks,
+  submitAssessmentMarks,
+  getFacultySubmissions
+} from '../../controllers/faculty/assessment.controller.js';
+
 const router = express.Router();
 
 // All routes require authentication and faculty role
@@ -77,5 +84,11 @@ router.get('/course-files/:id/download', downloadCourseFile);
 
 // Record syllabus coverage tracking
 router.post('/coverage-tracking', recordCoverageTracking);
+
+// ==================== INTERNAL ASSESSMENT ROUTES ====================
+router.get('/assessment/students', getAssessmentStudents);
+router.post('/assessment/marks/save', saveAssessmentMarks);
+router.post('/assessment/marks/submit', submitAssessmentMarks);
+router.get('/assessment/submissions', getFacultySubmissions);
 
 export default router;

@@ -219,27 +219,8 @@ export const protect = asyncHandler(async (req, res, next) => {
 
 // Grant access to specific roles
 export const authorize = (...roles) => {
-  console.log(`[AUTHORIZE-FACTORY] authorize() called with roles:`, roles);
-  console.log(`[AUTHORIZE-FACTORY] roles type:`, typeof roles, 'length:', roles.length);
-  console.log(`[AUTHORIZE-FACTORY] Stack trace:`, new Error().stack.split('\n').slice(1, 4).join('\n'));
-
   return (req, res, next) => {
-    console.log(`\n[AUTHORIZE-MIDDLEWARE] Processing request`);
-    console.log(`[AUTHORIZE-MIDDLEWARE] START - Checking access for roles: ${roles.join(', ')}`);
-    console.log(`[AUTHORIZE-MIDDLEWARE] Roles array length: ${roles.length}`);
-    console.log(`[AUTHORIZE-MIDDLEWARE] Roles array:`, roles);
-    // Helpful runtime trace: which URL + which route path matched
-    try {
-      console.log(`[AUTHORIZE-MIDDLEWARE] url:`, req.originalUrl || req.url);
-      console.log(`[AUTHORIZE-MIDDLEWARE] route:`, req.route?.path || '(no req.route.path)');
-      console.log(`[AUTHORIZE-MIDDLEWARE] matched route params:`, Object.keys(req.params));
-    } catch { }
-    console.log(`[AUTHORIZE-MIDDLEWARE] req.user exists:`, !!req.user);
-    console.log(`[AUTHORIZE-MIDDLEWARE] req.user.role:`, req.user?.role);
-    console.log(`[AUTHORIZE-MIDDLEWARE] req.user keys:`, req.user ? Object.keys(req.user).slice(0, 10) : 'N/A');
-
     if (!req.user || !req.user.role) {
-      console.error(`[AUTHORIZE-MIDDLEWARE FAIL] No user or role - user:`, !!req.user, 'role:', req.user?.role);
       return next(new ErrorResponse('Not authorized to access this route', 401));
     }
 
@@ -256,18 +237,12 @@ export const authorize = (...roles) => {
     const userRole = userRoleRaw.trim().toLowerCase().replace(/-/g, '');
     const normalizedUserRole = userRole;
 
-    console.log(`[AUTHORIZE-MIDDLEWARE] User role raw: "${userRoleRaw}" -> normalized: "${normalizedUserRole}"`);
-
     // Normalize allowed roles similarly
     const normalizedRoles = roles.map(role => {
       return role.trim().toLowerCase().replace(/-/g, '');
     });
 
-    console.log(`[AUTHORIZE-MIDDLEWARE] Normalized allowed roles from args:`, normalizedRoles);
-    console.log(`[AUTHORIZE-MIDDLEWARE] Role match:`, normalizedRoles.includes(normalizedUserRole));
-
     if (!normalizedRoles.includes(normalizedUserRole)) {
-      console.error(`[AUTHORIZE-MIDDLEWARE FAIL] Role "${normalizedUserRole}" not in allowed roles: ${normalizedRoles.join(', ')}`);
       return next(
         new ErrorResponse(
           `User role ${req.user.role} is not authorized to access this route`,

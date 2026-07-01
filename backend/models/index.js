@@ -59,6 +59,8 @@ import CourseLessonPlan from './CourseLessonPlan.model.js';
 import PeriodTopicLog from './PeriodTopicLog.model.js';
 import CourseFile from './CourseFile.model.js';
 import CourseFileNotification from './CourseFileNotification.model.js';
+import ExamCellSubmission from './ExamCellSubmission.model.js';
+import ExamCellNotification from './ExamCellNotification.model.js';
 
 // Initialize models
 const models = {
@@ -119,6 +121,8 @@ const models = {
   PeriodTopicLog: PeriodTopicLog(sequelize),
   CourseFile: CourseFile(sequelize),
   CourseFileNotification: CourseFileNotification(sequelize),
+  ExamCellSubmission: ExamCellSubmission(sequelize),
+  ExamCellNotification: ExamCellNotification(sequelize),
 };
 
 // Define associations

@@ -42,7 +42,7 @@ export const getMyInternalMarks = asyncHandler(async (req, res, next) => {
     const studentId = getStudentDbId(req.user, next);
     if (!studentId) return;
 
-    const where = { studentId };
+    const where = { studentId, status: 'published' };
     if (req.query.semester) where.semester = parseInt(req.query.semester);
     if (req.query.internalNumber) where.internalNumber = parseInt(req.query.internalNumber);
     if (req.query.academicYear) where.academicYear = req.query.academicYear;

@@ -28,7 +28,7 @@ const AttendanceStudent = (sequelize) => {
       allowNull: false,
     },
     period_session_number: {
-      type: DataTypes.TINYINT,
+      type: DataTypes.INTEGER,
       allowNull: false,
     },
     attendance_status: {

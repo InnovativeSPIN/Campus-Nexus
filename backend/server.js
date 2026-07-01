@@ -63,6 +63,7 @@ import studentSyllabusRoutes from './routes/student/studentSyllabus.routes.js';
 import portfolioNotificationRoutes from './routes/student/portfolioNotification.routes.js';
 import notificationRoutes from './routes/notification.routes.js';
 import approvalHistoryRoutes from './routes/approvalHistory.routes.js';
+import examCellRoutes from './routes/exam-cell/examCell.routes.js';
 
 // Load env vars
 dotenv.config();
@@ -89,8 +90,9 @@ connectDB().then(() => {
     startServer();
   }
 }).catch(err => {
-  console.error('Database connection failed:', err);
-  process.exit(1);
+  console.error('Database connection failed:'.red.bold, err.message);
+  console.warn('⚠️  Starting server in DEGRADED MODE (no database). API endpoints that require DB will fail at request time.'.yellow.bold);
+  startServer();
 });
 
 const startServer = () => {
@@ -283,6 +285,7 @@ const startServer = () => {
   app.use('/api/v1/student', studentSyllabusRoutes);
   app.use('/api/v1/notifications', notificationRoutes);
   app.use('/api/v1/approval-history', approvalHistoryRoutes);
+  app.use('/api/v1/exam-cell', examCellRoutes);
 
   // Dashboard stats - real counts from DB
   app.get('/api/v1/dashboard/stats', async (req, res) => {

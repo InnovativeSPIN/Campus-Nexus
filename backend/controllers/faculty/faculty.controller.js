@@ -924,7 +924,10 @@ export const getMyTimetableRoles = asyncHandler(async (req, res, next) => {
     raw: false,
   });
 
-  const isTimetableIncharge = inchargeTimetables.length > 0;
+  const isTimetableIncharge = inchargeTimetables.length > 0 || 
+    req.user.is_timetable_incharge === 1 || 
+    req.user.is_timetable_incharge === true || 
+    req.user.is_timetable_incharge === '1';
 
   // Also check class coordinator / asst coordinator assignments (informational only)
   const classCoordCount = await TimetableMaster.count({

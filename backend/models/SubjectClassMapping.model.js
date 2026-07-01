@@ -48,6 +48,7 @@ const SubjectClassMapping = (sequelize) => {
     updatedAt: false,
     indexes: [
       {
+        name: 'uq_sub_class_map',
         unique: true,
         fields: ['subject_id', 'class_id', 'semester', 'academic_year']
       },

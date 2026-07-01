@@ -32,7 +32,7 @@ const StudentAttendance = (sequelize) => {
       allowNull: false,
     },
     period_slot_id: {
-      type: DataTypes.TINYINT.UNSIGNED,
+      type: DataTypes.INTEGER,
       allowNull: false,
     },
     period_number: {
@@ -101,6 +101,7 @@ const StudentAttendance = (sequelize) => {
     timestamps: false,
     indexes: [
       {
+        name: 'uq_std_attendance',
         unique: true,
         fields: ['student_id', 'attendance_date', 'period_slot_id', 'subject_id'],
       },
