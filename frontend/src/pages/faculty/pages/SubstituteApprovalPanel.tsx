@@ -46,9 +46,9 @@ export default function SubstituteApprovalPanel({ isNested = false }: { isNested
     try {
       setLoading(true);
       const token = localStorage.getItem("authToken");
-      const user = localStorage.getItem("user");
+      const user = localStorage.getItem("campus_nexus_user");
       const userData = user ? JSON.parse(user) : null;
-      const facultyId = userData?.faculty_id;
+      const facultyId = userData?.id || userData?.faculty_id;
 
       if (!facultyId) {
         toast.error("Faculty ID not found");
