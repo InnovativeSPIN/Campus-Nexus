@@ -81,8 +81,10 @@ const FacultyIndividualTimetable: React.FC = () => {
   const [selectedClassIndex, setSelectedClassIndex] = useState<string>("0");
 
   useEffect(() => {
-    fetchTimetable();
-  }, []);
+    if (authToken) {
+      fetchTimetable();
+    }
+  }, [authToken]);
 
   const fetchTimetable = async () => {
     try {
@@ -145,33 +147,37 @@ const FacultyIndividualTimetable: React.FC = () => {
 
   if (error) {
     return (
-      <div className="p-6 max-w-6xl mx-auto">
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-        <div className="mt-4">
-          <button
-            onClick={fetchTimetable}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-          >
-            Retry
-          </button>
+      <MainLayout>
+        <div className="p-6 max-w-6xl mx-auto">
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+          <div className="mt-4">
+            <button
+              onClick={fetchTimetable}
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              Retry
+            </button>
+          </div>
         </div>
-      </div>
+      </MainLayout>
     );
   }
 
   if (!timetableData || (timetableData.timetables && timetableData.timetables.length === 0)) {
     return (
-      <div className="p-6 max-w-6xl mx-auto">
-        <Alert className="bg-slate-50 border-slate-200">
-          <AlertCircle className="h-4 w-4 text-slate-500" />
-          <AlertDescription className="text-slate-600">
-            No timetable found. You are not assigned to any classes yet.
-          </AlertDescription>
-        </Alert>
-      </div>
+      <MainLayout>
+        <div className="p-6 max-w-6xl mx-auto">
+          <Alert className="bg-slate-50 border-slate-200">
+            <AlertCircle className="h-4 w-4 text-slate-500" />
+            <AlertDescription className="text-slate-600">
+              No timetable found. You are not assigned to any classes yet.
+            </AlertDescription>
+          </Alert>
+        </div>
+      </MainLayout>
     );
   }
 
@@ -299,24 +305,24 @@ const FacultyIndividualTimetable: React.FC = () => {
         {timetableData.timetables.length > 0 ? (
           <div className="space-y-6">
             <div className="flex items-center gap-4 bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-                <div className="flex items-center gap-2 text-gray-700 font-semibold">
-                    <User className="w-5 h-5 text-blue-600" />
-                    <span>Select Class:</span>
-                </div>
-                <div className="w-full max-w-md">
-                    <Select value={selectedClassIndex} onValueChange={setSelectedClassIndex}>
-                        <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Choose a class..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {timetableData.timetables.map((tt, index) => (
-                                <SelectItem key={tt.id} value={`${index}`}>
-                                    {tt.class.name} (Sem {tt.semester}) - {tt.academicYear}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
+              <div className="flex items-center gap-2 text-gray-700 font-semibold">
+                <User className="w-5 h-5 text-blue-600" />
+                <span>Select Class:</span>
+              </div>
+              <div className="w-full max-w-md">
+                <Select value={selectedClassIndex} onValueChange={setSelectedClassIndex}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Choose a class..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {timetableData.timetables.map((tt, index) => (
+                      <SelectItem key={tt.id} value={`${index}`}>
+                        {tt.class.name} (Sem {tt.semester}) - {tt.academicYear}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             {(() => {

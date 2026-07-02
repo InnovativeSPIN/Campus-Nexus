@@ -67,8 +67,10 @@ const StudentClassTimetable: React.FC = () => {
   const timetableRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fetchTimetable();
-  }, []);
+    if (authToken) {
+      fetchTimetable();
+    }
+  }, [authToken]);
 
   const fetchTimetable = async () => {
     try {

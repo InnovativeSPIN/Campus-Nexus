@@ -75,7 +75,7 @@ export function AppSidebar({
       try {
         const token = localStorage.getItem('authToken');
         if (!token) return; // Skip if token not available yet
-        
+
         const res = await fetch('/api/v1/faculty/me/timetable-roles', {
           headers: { Authorization: `Bearer ${token}` },
           signal: controller.signal,
@@ -164,14 +164,14 @@ export function AppSidebar({
           </AnimatePresence>
           {collapsed && (
             <div className="w-12 h-12 rounded-full bg-sidebar-accent flex items-center justify-center text-white shrink-0">
-               <span className="font-bold">N</span>
+              <span className="font-bold">N</span>
             </div>
           )}
         </div>
 
         {/* Mobile Close Button */}
         {isMobileMenuOpen && (
-          <button 
+          <button
             onClick={() => setIsMobileMenuOpen(false)}
             className="lg:hidden p-2 text-white/70 hover:text-white transition-colors"
           >
