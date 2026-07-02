@@ -70,7 +70,7 @@ export default function InchargeAlterationQueue({ isNested = false }: { isNested
     try {
       setLoading(true);
       const token = localStorage.getItem("authToken");
-      const response = await fetch("/api/v1/faculty/leave-management/alteration/apply-queue", {
+      const response = await fetch("/api/v1/faculty/alteration/apply-queue", {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       const result = await response.json();
@@ -109,7 +109,7 @@ export default function InchargeAlterationQueue({ isNested = false }: { isNested
         affected_periods: editedPeriods[leaveId] || queue.find(l => l.id === leaveId)?.affected_periods
       };
 
-      const response = await fetch(`/api/v1/faculty/leave-management/alteration/${leaveId}/apply`, {
+      const response = await fetch(`/api/v1/faculty/alteration/${leaveId}/apply`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

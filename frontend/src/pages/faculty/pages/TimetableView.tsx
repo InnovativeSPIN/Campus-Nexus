@@ -216,8 +216,8 @@ const FacultyIndividualTimetable: React.FC = () => {
           <thead>
             <tr className="bg-blue-50 border-b-2 border-blue-200">
               <th className="px-4 py-3 text-left text-sm font-semibold text-blue-900 min-w-24">Day</th>
-              {periodDetails.map(period => (
-                <th key={period.id} className="px-4 py-3 text-center text-sm font-semibold text-blue-900 min-w-32">
+              {periodDetails.map((period, periodIdx) => (
+                <th key={`period-${periodIdx}`} className="px-4 py-3 text-center text-sm font-semibold text-blue-900 min-w-32">
                   <div className="font-bold">{period.label}</div>
                   <div className="text-xs text-gray-600 font-normal">
                     {period.startTime.substring(0, 5)} - {period.endTime.substring(0, 5)}
@@ -232,14 +232,14 @@ const FacultyIndividualTimetable: React.FC = () => {
                 <td className="px-4 py-3 text-sm font-semibold text-gray-900 bg-gray-50">
                   {day}
                 </td>
-                {periodDetails.map(period => {
+                {periodDetails.map((period, periodIdx) => {
                   const slot = timetable.slots.find(
                     s => s.day === day && s.period?.id === period.id
                   );
 
                   return (
                     <td
-                      key={`${day}-${period.id}`}
+                      key={`${day}-${periodIdx}`}
                       className="px-4 py-3 border-l border-gray-200 text-center"
                     >
                       {slot ? (

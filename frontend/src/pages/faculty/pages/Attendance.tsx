@@ -1603,7 +1603,7 @@ export default function Attendance() {
                     </tr>
                   ) : attendanceHistory.map((record, index) => (
                     <motion.tr
-                      key={record.date + record.subject}
+                      key={record.id}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.1 }}

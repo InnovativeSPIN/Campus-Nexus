@@ -344,15 +344,15 @@ const StudentClassTimetable: React.FC = () => {
         </CardHeader>
         <CardContent className="px-3 pb-3">
           {/* Desktop table (md+) */}
-          <div className="hidden md:block overflow-x-auto border rounded-lg border-gray-200">
-            <table className="w-max min-w-full border-collapse text-sm">
+          <div className="hidden md:block border rounded-lg border-gray-200 overflow-hidden">
+            <table className="w-full table-fixed border-collapse text-xs">
               <thead>
                 <tr className="bg-blue-50 border-b border-blue-200">
-                  <th className="px-3 py-2 text-left font-semibold text-blue-900 min-w-16">Day</th>
+                  <th className="px-2 py-1.5 text-center font-semibold text-blue-900 bg-gray-50/50 w-[9%] text-xs">Day</th>
                   {allPeriods.map((period, periodIdx) => (
-                    <th key={`period-${periodIdx}`} className="px-3 py-2 text-center font-semibold text-blue-900 min-w-28">
-                      <div className="font-bold text-sm">{period.label}</div>
-                      <div className="text-xs text-gray-600 font-normal">
+                    <th key={`period-${periodIdx}`} className="px-1 py-1.5 text-center font-semibold text-blue-900 w-[13%] border-l border-blue-100">
+                      <div className="font-bold text-xs">{period.label}</div>
+                      <div className="text-[10px] text-gray-500 font-normal mt-0.5 leading-tight">
                         {period.startTime.substring(0, 5)}-{period.endTime.substring(0, 5)}
                       </div>
                     </th>
@@ -362,42 +362,67 @@ const StudentClassTimetable: React.FC = () => {
               <tbody>
                 {DAYS.map(day => (
                   <tr key={day} className="border-b border-gray-200 hover:bg-gray-50">
-                    <td className="px-3 py-2 font-semibold text-gray-900 bg-gray-50">{day}</td>
+                    <td className="px-2 py-2 font-semibold text-gray-800 bg-gray-50 text-center text-xs border-r border-gray-200 w-[9%] truncate">
+                      {day.substring(0, 3)}
+                    </td>
                     {allPeriods.map((period, periodIdx) => {
                       const slot = timetable.slots.find(
                         s => s.day === day && s.period?.id === period.id
                       );
 
                       return (
-                        <td key={`${day}-${periodIdx}`} className="px-2 py-2 border-l border-gray-200">
+                        <td 
+                          key={`${day}-${periodIdx}`} 
+                          className="p-1 border-l border-gray-200 align-top w-[13%]"
+                          title={slot ? (
+                            slot.sessionType === 'break' 
+                              ? `Break: ${slot.notes || 'No details'}`
+                              : slot.subject 
+                                ? `${slot.subject.name} (${slot.subject.code})\nFaculty: ${slot.faculty?.name || 'N/A'}\nRoom: ${slot.room || 'N/A'}${slot.notes ? `\nNotes: ${slot.notes}` : ''}`
+                                : undefined
+                          ) : undefined}
+                        >
                           {slot ? (
-                            <div className={`space-y-1 p-2 rounded text-sm ${getSessionColor(slot.sessionType)}`}>
+                            <div className={`h-full min-h-[72px] p-1.5 rounded ${getSessionColor(slot.sessionType)} flex flex-col justify-between`}>
                               {slot.sessionType === 'break' ? (
-                                <>
-                                  <div className="font-bold text-sm">{slot.notes || 'Break'}</div>
-                                  <div className="text-xs font-mono bg-white/50 px-1 py-0.5 rounded inline-block">
-                                    BREAK
-                                  </div>
-                                </>
-                              ) : slot.subject ? (
-                                <>
-                                  <div className="font-bold text-sm">{slot.subject.code}</div>
-                                  <div className="text-sm font-semibold leading-tight">{slot.subject.name}</div>
-                                  <div className="text-xs font-mono bg-white/50 px-1 py-0.5 rounded inline-block">
-                                    {slot.sessionType.toUpperCase().substring(0, 3)}
-                                  </div>
-                                  {slot.faculty && (
-                                    <div className="text-xs opacity-75">{slot.faculty.name}</div>
+                                <div className="flex flex-col items-center justify-center h-full">
+                                  <div className="font-bold text-[10px] text-gray-500">BREAK</div>
+                                  {slot.notes && (
+                                    <div className="text-[9px] text-gray-400 truncate max-w-full text-center">
+                                      {slot.notes}
+                                    </div>
                                   )}
-                                  {slot.room && <div className="text-xs opacity-75">Rm:{slot.room}</div>}
-                                  {slot.notes && <div className="text-xs opacity-75 italic">{slot.notes}</div>}
-                                </>
+                                </div>
+                              ) : slot.subject ? (
+                                <div className="flex flex-col justify-between h-full text-left gap-0.5">
+                                  <div>
+                                    <div className="font-bold text-[11px] leading-tight text-gray-900 truncate">
+                                      {slot.subject.code}
+                                    </div>
+                                    <div className="text-[10px] text-gray-800 leading-snug line-clamp-2 mt-0.5" title={slot.subject.name}>
+                                      {slot.subject.name}
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <div className="text-[9px] text-gray-600 truncate mt-0.5 leading-none">
+                                      {slot.faculty ? slot.faculty.name : ''}
+                                    </div>
+                                    <div className="mt-0.5 flex items-center justify-between text-[9px] leading-none opacity-85">
+                                      <span className="font-semibold text-blue-800">
+                                        {slot.room ? `Rm:${slot.room}` : ''}
+                                      </span>
+                                      <span className="font-mono px-0.5 bg-white/60 rounded text-[8px] tracking-tight">
+                                        {slot.sessionType?.toUpperCase().substring(0, 3)}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
                               ) : (
-                                <div className="text-xs text-gray-400">-</div>
+                                <div className="text-[10px] text-gray-300 text-center py-2">-</div>
                               )}
                             </div>
                           ) : (
-                            <div className="text-xs text-gray-300">-</div>
+                            <div className="text-[10px] text-gray-300 text-center py-2">-</div>
                           )}
                         </td>
                       );
