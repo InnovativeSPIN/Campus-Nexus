@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Bell, AlertCircle } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -11,6 +12,49 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+
+const bellVariants = {
+  idle: { scale: 1, rotate: 0 },
+  ringing: {
+    rotate: [0, -10, 10, -10, 10, 0],
+    transition: {
+      duration: 0.6,
+      repeat: Infinity,
+      repeatDelay: 4,
+      ease: "easeInOut"
+    }
+  },
+  hover: {
+    scale: 1.15,
+    rotate: [0, -15, 12, -10, 8, -4, 0],
+    transition: {
+      duration: 0.5,
+      ease: "easeOut"
+    }
+  },
+  tap: {
+    scale: 0.95,
+    rotate: 0
+  }
+};
+
+const badgeVariants = {
+  initial: { scale: 0 },
+  animate: {
+    scale: 1,
+    transition: {
+      type: "spring",
+      stiffness: 500,
+      damping: 15
+    }
+  },
+  hover: {
+    scale: 1.15,
+    transition: {
+      duration: 0.2
+    }
+  }
+};
 
 interface PortfolioNotif {
   id: number;
@@ -103,14 +147,67 @@ export function NotificationBell() {
         <Button
           variant="ghost"
           size="icon"
-          className="relative hover:bg-white/10"
+          className={cn(
+            "relative p-2.5 rounded-xl transition-all duration-300 flex items-center justify-center overflow-visible",
+            unreadCount > 0
+              ? "bg-white/10 border border-white/20 hover:border-white/40 shadow-[0_0_12px_rgba(255,255,255,0.15)]"
+              : "bg-transparent hover:bg-white/10 border border-transparent"
+          )}
           aria-label="Notifications"
         >
-          <Bell className="w-5 h-5 text-white" />
+          {unreadCount > 0 && !isOpen && (
+            <motion.div
+              animate={{
+                boxShadow: [
+                  "0 0 0 0px rgba(255, 255, 255, 0.4)",
+                  "0 0 0 8px rgba(255, 255, 255, 0)"
+                ]
+              }}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+              className="absolute inset-0 rounded-xl pointer-events-none"
+            />
+          )}
+
+          <motion.div
+            variants={bellVariants}
+            animate={unreadCount > 0 && !isOpen ? "ringing" : "idle"}
+            whileHover="hover"
+            whileTap="tap"
+          >
+            <Bell className={cn(
+              "w-5 h-5 transition-colors duration-300 text-white",
+              unreadCount > 0 && "fill-white/10"
+            )} />
+          </motion.div>
+
           {unreadCount > 0 && (
-            <span className="absolute top-0 right-0 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold">
-              {unreadCount > 99 ? '99+' : unreadCount}
-            </span>
+            <motion.div
+              variants={badgeVariants}
+              initial="initial"
+              animate="animate"
+              className="absolute -top-1 -right-1 flex items-center justify-center pointer-events-none"
+            >
+              {/* Pulse effect behind badge */}
+              <motion.div
+                animate={{
+                  scale: [1, 1.8],
+                  opacity: [0.6, 0]
+                }}
+                transition={{
+                  duration: 1.5,
+                  repeat: Infinity,
+                  ease: "easeOut"
+                }}
+                className="absolute bg-red-500 rounded-full w-4 h-4"
+              />
+              <span className="relative w-4 h-4 bg-red-500 text-white text-[9px] rounded-full flex items-center justify-center font-bold border border-white/20">
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </span>
+            </motion.div>
           )}
         </Button>
       </DropdownMenuTrigger>

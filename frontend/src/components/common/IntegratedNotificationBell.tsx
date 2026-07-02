@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Bell, X, Megaphone, Clock, ChevronRight, BookOpen } from "lucide-react";
+import { Bell, X, Megaphone, Clock, ChevronRight, BookOpen, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/pages/admin/department-admin/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -30,17 +30,94 @@ interface CourseLessonPlanApprovalBatch {
 
 type Notification = Announcement | CourseLessonPlanApprovalBatch;
 
+const bellVariants = {
+    idle: { scale: 1, rotate: 0 },
+    ringing: {
+        rotate: [0, -10, 10, -10, 10, 0],
+        transition: {
+            duration: 0.6,
+            repeat: Infinity,
+            repeatDelay: 4,
+            ease: "easeInOut"
+        }
+    },
+    hover: {
+        scale: 1.15,
+        rotate: [0, -15, 12, -10, 8, -4, 0],
+        transition: {
+            duration: 0.5,
+            ease: "easeOut"
+        }
+    },
+    tap: {
+        scale: 0.95,
+        rotate: 0
+    }
+};
+
+const badgeVariants = {
+    initial: { scale: 0 },
+    animate: {
+        scale: 1,
+        transition: {
+            type: "spring",
+            stiffness: 500,
+            damping: 15
+        }
+    },
+    hover: {
+        scale: 1.15,
+        transition: {
+            duration: 0.2
+        }
+    }
+};
+
 interface IntegratedNotificationBellProps {
     // No props needed - uses location context for routing
 }
 
-export function IntegratedNotificationBell({}: IntegratedNotificationBellProps) {
+const CLEARED_NOTIFS_KEY = 'cn_cleared_notification_ids';
+const SEEN_NOTIFS_KEY = 'cn_seen_notification_ids';
+
+function getClearedIds(): Set<string> {
+    try {
+        const raw = localStorage.getItem(CLEARED_NOTIFS_KEY);
+        return new Set(raw ? JSON.parse(raw) : []);
+    } catch {
+        return new Set();
+    }
+}
+
+function persistClearedIds(ids: Set<string>) {
+    try {
+        localStorage.setItem(CLEARED_NOTIFS_KEY, JSON.stringify([...ids]));
+    } catch { /* ignore */ }
+}
+
+function getSeenIds(): Set<string> {
+    try {
+        const raw = sessionStorage.getItem(SEEN_NOTIFS_KEY);
+        return new Set(raw ? JSON.parse(raw) : []);
+    } catch {
+        return new Set();
+    }
+}
+
+function persistSeenIds(ids: Set<string>) {
+    try {
+        sessionStorage.setItem(SEEN_NOTIFS_KEY, JSON.stringify([...ids]));
+    } catch { /* ignore */ }
+}
+
+export function IntegratedNotificationBell({ }: IntegratedNotificationBellProps) {
     const navigate = useNavigate();
     const location = useLocation();
     const [isOpen, setIsOpen] = useState(false);
     const [announcements, setAnnouncements] = useState<Announcement[]>([]);
     const [coursePlanApprovals, setCoursePlanApprovals] = useState<CourseLessonPlanApprovalBatch[]>([]);
     const [loading, setLoading] = useState(true);
+    const [clearedIds, setClearedIds] = useState<Set<string>>(getClearedIds);
     const dropdownRef = useRef<HTMLDivElement>(null);
     const buttonRef = useRef<HTMLButtonElement>(null);
 
@@ -49,7 +126,7 @@ export function IntegratedNotificationBell({}: IntegratedNotificationBellProps) 
             setLoading(true);
             const token = localStorage.getItem('authToken');
             const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
-            
+
             // Fetch announcements
             const announcementRes = await fetch('/api/v1/announcements', { headers });
             const announcementResult = await announcementRes.json().catch(() => ({ success: false, message: 'Invalid server response' }));
@@ -66,9 +143,9 @@ export function IntegratedNotificationBell({}: IntegratedNotificationBellProps) 
                         setCoursePlanApprovals(
                             approvalResult.data
                                 .slice(0, 5)
-                                .map((batch: any) => ({ 
-                                    ...batch, 
-                                    type: 'course_plan_approval_batch' 
+                                .map((batch: any) => ({
+                                    ...batch,
+                                    type: 'course_plan_approval_batch'
                                 }))
                         );
                     }
@@ -86,7 +163,7 @@ export function IntegratedNotificationBell({}: IntegratedNotificationBellProps) 
     // Navigate to announcements list (detail will show in modal on list page)
     const getAnnouncementsListUrl = () => {
         const pathname = location.pathname;
-        
+
         if (pathname.includes('/admin/superadmin')) {
             return `/admin/superadmin/announcements`;
         }
@@ -105,7 +182,7 @@ export function IntegratedNotificationBell({}: IntegratedNotificationBellProps) 
         if (pathname.includes('/student')) {
             return `/student/announcements`;
         }
-        
+
         return `/announcements`;
     };
 
@@ -116,6 +193,21 @@ export function IntegratedNotificationBell({}: IntegratedNotificationBellProps) 
         // Navigate with state to indicate which announcement to open
         navigate(url, { state: { openAnnouncementId: announcement.id } });
     };
+
+    // Mark newly fetched notifications as seen (once per session)
+    useEffect(() => {
+        const seenIds = getSeenIds();
+        let changed = false;
+        announcements.forEach(a => {
+            const key = `ann-${a.id}`;
+            if (!seenIds.has(key)) { seenIds.add(key); changed = true; }
+        });
+        coursePlanApprovals.forEach(b => {
+            const key = `batch-${b.batch_id}`;
+            if (!seenIds.has(key)) { seenIds.add(key); changed = true; }
+        });
+        if (changed) persistSeenIds(seenIds);
+    }, [announcements, coursePlanApprovals]);
 
     useEffect(() => {
         fetchAnnouncements();
@@ -143,27 +235,94 @@ export function IntegratedNotificationBell({}: IntegratedNotificationBellProps) 
         }
     }, [isOpen]);
 
-    const unreadCount = announcements.length + coursePlanApprovals.length;
+    // Filter out cleared notifications
+    const visibleAnnouncements = announcements.filter(a => !clearedIds.has(`ann-${a.id}`));
+    const visibleCoursePlanApprovals = coursePlanApprovals.filter(b => !clearedIds.has(`batch-${b.batch_id}`));
+
+    // For dashboard: only count truly new (not yet seen this session) as badge count
+    const seenIds = getSeenIds();
+    const newAnnCount = visibleAnnouncements.filter(a => !seenIds.has(`ann-${a.id}`) || clearedIds.size === 0).length;
+    const newBatchCount = visibleCoursePlanApprovals.filter(b => !seenIds.has(`batch-${b.batch_id}`) || clearedIds.size === 0).length;
+    const unreadCount = visibleAnnouncements.length + visibleCoursePlanApprovals.length;
+
+    const handleClearAll = () => {
+        const newCleared = new Set(clearedIds);
+        visibleAnnouncements.forEach(a => newCleared.add(`ann-${a.id}`));
+        visibleCoursePlanApprovals.forEach(b => newCleared.add(`batch-${b.batch_id}`));
+        persistClearedIds(newCleared);
+        setClearedIds(newCleared);
+        setIsOpen(false);
+    };
 
     return (
         <div className="relative">
-            <button
+            <motion.button
                 ref={buttonRef}
                 onClick={() => setIsOpen(!isOpen)}
-                className="relative p-2 hover:bg-accent rounded-lg transition-colors duration-200 group"
+                whileHover="hover"
+                whileTap="tap"
+                animate={unreadCount > 0 && !isOpen ? "ringing" : "idle"}
+                className={cn(
+                    "relative p-2.5 rounded-xl transition-all duration-300 flex items-center justify-center overflow-visible",
+                    unreadCount > 0
+                        ? "bg-primary/5 hover:bg-primary/10 border border-primary/25 hover:border-primary/45 shadow-[0_0_12px_rgba(59,130,246,0.15)]"
+                        : "bg-transparent hover:bg-accent border border-transparent hover:border-border/60"
+                )}
                 aria-label="Notifications"
             >
-                <Bell className="w-5 h-5 text-foreground group-hover:text-primary transition-colors" />
+                {/* Glowing ring animation for unread notifications */}
+                {unreadCount > 0 && !isOpen && (
+                    <motion.div
+                        animate={{
+                            boxShadow: [
+                                "0 0 0 0px rgba(59, 130, 246, 0.4)",
+                                "0 0 0 8px rgba(59, 130, 246, 0)"
+                            ]
+                        }}
+                        transition={{
+                            duration: 2,
+                            repeat: Infinity,
+                            ease: "easeInOut"
+                        }}
+                        className="absolute inset-0 rounded-xl pointer-events-none"
+                    />
+                )}
+
+                <motion.div variants={bellVariants}>
+                    <Bell className={cn(
+                        "w-5 h-5 transition-colors duration-300",
+                        unreadCount > 0
+                            ? "text-primary fill-primary/10"
+                            : "text-foreground"
+                    )} />
+                </motion.div>
+
                 {unreadCount > 0 && (
                     <motion.div
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        className="absolute top-1 right-1 bg-destructive text-white text-[10px] font-bold rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center border-2 border-background"
+                        variants={badgeVariants}
+                        initial="initial"
+                        animate="animate"
+                        className="absolute -top-1 -right-1 flex items-center justify-center pointer-events-none"
                     >
-                        {unreadCount > 9 ? "9+" : unreadCount}
+                        {/* Pulse effect behind badge */}
+                        <motion.div
+                            animate={{
+                                scale: [1, 1.8],
+                                opacity: [0.6, 0]
+                            }}
+                            transition={{
+                                duration: 1.5,
+                                repeat: Infinity,
+                                ease: "easeOut"
+                            }}
+                            className="absolute bg-destructive rounded-full w-4 h-4"
+                        />
+                        <div className="relative bg-destructive text-white text-[9px] font-black rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center border-2 border-background shadow-sm">
+                            {unreadCount > 9 ? "9+" : unreadCount}
+                        </div>
                     </motion.div>
                 )}
-            </button>
+            </motion.button>
 
             <AnimatePresence>
                 {isOpen && (
@@ -195,7 +354,7 @@ export function IntegratedNotificationBell({}: IntegratedNotificationBellProps) 
                                 <div className="p-8 text-center">
                                     <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full mx-auto" />
                                 </div>
-                            ) : announcements.length === 0 && coursePlanApprovals.length === 0 ? (
+                            ) : visibleAnnouncements.length === 0 && visibleCoursePlanApprovals.length === 0 ? (
                                 <div className="p-12 text-center">
                                     <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center mx-auto mb-3">
                                         <Bell className="w-6 h-6 text-muted-foreground" />
@@ -206,7 +365,7 @@ export function IntegratedNotificationBell({}: IntegratedNotificationBellProps) 
                             ) : (
                                 <div className="divide-y divide-border/40">
                                     {/* Course Plan Approval Batches */}
-                                    {coursePlanApprovals.map((batch) => (
+                                    {visibleCoursePlanApprovals.map((batch) => (
                                         <div
                                             key={`batch-${batch.batch_id}`}
                                             onClick={() => {
@@ -245,7 +404,7 @@ export function IntegratedNotificationBell({}: IntegratedNotificationBellProps) 
                                     ))}
 
                                     {/* Announcements */}
-                                    {announcements.map((ann) => (
+                                    {visibleAnnouncements.map((ann) => (
                                         <div
                                             key={`ann-${ann.id}`}
                                             onClick={() => handleAnnouncementClick(ann)}
@@ -287,11 +446,11 @@ export function IntegratedNotificationBell({}: IntegratedNotificationBellProps) 
                         </div>
 
                         {/* Footer */}
-                        <div className="p-3 border-t border-border bg-muted/20">
+                        <div className="p-3 border-t border-border bg-muted/20 flex items-center gap-2">
                             <Button
                                 variant="ghost"
                                 size="sm"
-                                className="w-full text-xs font-bold gap-2 text-primary hover:bg-primary/5"
+                                className="flex-1 text-xs font-bold gap-2 text-primary hover:bg-primary/5"
                                 onClick={() => {
                                     setIsOpen(false);
                                     navigate(getAnnouncementsListUrl());
@@ -299,6 +458,18 @@ export function IntegratedNotificationBell({}: IntegratedNotificationBellProps) 
                             >
                                 View all notifications
                             </Button>
+                            {unreadCount > 0 && (
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-xs font-bold gap-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/5 flex-shrink-0"
+                                    onClick={handleClearAll}
+                                    title="Clear all notifications"
+                                >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                    Clear all
+                                </Button>
+                            )}
                         </div>
                     </motion.div>
                 )}
