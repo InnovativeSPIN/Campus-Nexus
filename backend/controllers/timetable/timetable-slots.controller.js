@@ -11,6 +11,7 @@ const {
   SubjectClassMapping,
   FacultySubjectAssignment,
   Class: ClassModel,
+  PeriodSlot,
 } = models;
 
 /**
@@ -632,36 +633,57 @@ export const getPeriodSlots = asyncHandler(async (req, res, next) => {
   const accessError = checkReadAccess(req, master);
   if (accessError) return next(accessError);
 
-  // Fetch all slots for Monday to get unique periods with their times
+  // Fetch all active period slots from PeriodSlot table
+  const allPeriodSlots = await PeriodSlot.findAll({
+    where: { is_active: true },
+    order: [['slot_order', 'ASC']],
+  });
+
+  // Fetch all slots for Monday to check for custom timing overrides
   const mondaySlots = await TimetableMasterSlots.findAll({
     where: {
       master_id: masterId,
       day: 'Monday',
     },
     attributes: ['period_slot_id', 'start_time', 'end_time'],
-    order: [['period_slot_id', 'ASC']],
   });
 
-  // Convert to period format with times
-  const periods = mondaySlots.map((slot) => {
-    let timeRange = "";
-    
+  // Map Monday slots by period_slot_id for quick lookup
+  const mondaySlotMap = new Map();
+  mondaySlots.forEach((slot) => {
     if (slot.start_time && slot.end_time) {
-      // Format times like "09:30 - 10:20"
-      const formatTime = (time) => {
-        if (!time) return "";
-        if (typeof time === 'string') {
-          // If it's already a string like "09:30:00"
-          const parts = time.split(':');
-          return `${parts[0]}:${parts[1]}`;
-        }
-        return time;
-      };
-      timeRange = `${formatTime(slot.start_time)} - ${formatTime(slot.end_time)}`;
+      mondaySlotMap.set(slot.period_slot_id, {
+        start_time: slot.start_time,
+        end_time: slot.end_time,
+      });
+    }
+  });
+
+  const formatTime = (time) => {
+    if (!time) return "";
+    if (typeof time === 'string') {
+      const parts = time.split(':');
+      return `${parts[0]}:${parts[1]}`;
+    }
+    return time;
+  };
+
+  // Convert to period format with times
+  const periods = allPeriodSlots.map((ps) => {
+    let start = ps.start_time;
+    let end = ps.end_time;
+
+    // Check if there is an override on Monday slots
+    const override = mondaySlotMap.get(ps.id);
+    if (override) {
+      start = override.start_time;
+      end = override.end_time;
     }
 
+    const timeRange = `${formatTime(start)} - ${formatTime(end)}`;
+
     return {
-      id: slot.period_slot_id,
+      id: ps.id,
       time: timeRange,
     };
   });
