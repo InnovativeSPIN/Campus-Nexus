@@ -1,4 +1,5 @@
 import express from 'express';
+import { Op } from 'sequelize';
 import { protect } from '../middleware/auth.js';
 import { models } from '../models/index.js';
 import asyncHandler from '../middleware/async.js';
@@ -16,7 +17,7 @@ router.use(protect);
 // @desc    Get all classes (for general use in forms/dropdowns) 
 // @access  Private
 const getClasses = asyncHandler(async (req, res, next) => {
-  const { department_id } = req.query;
+  const { department_id, semester, year, academic_year, batch } = req.query;
 
   let where = {};
   
@@ -25,6 +26,35 @@ const getClasses = asyncHandler(async (req, res, next) => {
     where.department_id = req.user.department_id;
   } else if (department_id) {
     where.department_id = department_id;
+  }
+
+  if (semester) {
+    const semesterNumber = parseInt(semester, 10);
+    if (!Number.isNaN(semesterNumber)) {
+      where.semester = semesterNumber;
+    }
+  } else if (year) {
+    const yearNumber = parseInt(year, 10);
+    if (!Number.isNaN(yearNumber)) {
+      const yearSemesterMap = {
+        1: [1, 2],
+        2: [3, 4],
+        3: [5, 6],
+        4: [7, 8],
+      };
+      const semesters = yearSemesterMap[yearNumber];
+      if (semesters) {
+        where.semester = { [Op.in]: semesters };
+      }
+    }
+  }
+
+  if (academic_year) {
+    where.academic_year = academic_year;
+  }
+
+  if (batch) {
+    where.batch = batch;
   }
 
   const classes = await ClassModel.findAll({

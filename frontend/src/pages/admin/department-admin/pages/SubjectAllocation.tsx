@@ -660,9 +660,9 @@ export default function SubjectAllocation() {
                           <th className="px-5 py-3 text-left font-semibold text-gray-700">Class</th>
                           <th className="px-5 py-3 text-left font-semibold text-gray-700">Semester</th>
                           <th className="px-5 py-3 text-left font-semibold text-gray-700">Academic Year</th>
-                          <th className="px-5 py-3 text-left font-semibold text-gray-700">Type</th>
-                          <th className="px-5 py-3 text-left font-semibold text-gray-700">Status</th>
-                          <th className="px-5 py-3 text-left font-semibold text-gray-700">Actions</th>
+                          <th className="px-5 py-3 text-left font-semibold text-gray-700 hidden lg:table-cell">Type</th>
+                          <th className="px-5 py-3 text-left font-semibold text-gray-700 hidden lg:table-cell">Status</th>
+                          <th className="px-5 py-3 text-left font-semibold text-gray-700 hidden lg:table-cell">Actions</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y">
@@ -858,7 +858,7 @@ export default function SubjectAllocation() {
                   placeholder="Academic year (e.g. 2025-2026)"
                   value={allocFilters.academic_year}
                   onChange={e => setAllocFilters(f => ({ ...f, academic_year: e.target.value }))}
-                  className="border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#790c0c]/20"
+                  className="w-full sm:w-52 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#790c0c]/20"
                 />
                 <button
                   onClick={() => {
@@ -896,11 +896,11 @@ export default function SubjectAllocation() {
                           <th className="px-5 py-3 text-left font-semibold text-gray-700">Subject Name</th>
                           <th className="px-5 py-3 text-left font-semibold text-gray-700">Class</th>
                           <th className="px-5 py-3 text-left font-semibold text-gray-700">Sem</th>
-                          <th className="px-5 py-3 text-left font-semibold text-gray-700">Academic Year</th>
-                          <th className="px-5 py-3 text-left font-semibold text-gray-700">Type</th>
+                          <th className="px-5 py-3 text-left font-semibold text-gray-700 hidden lg:table-cell">Academic Year</th>
+                          <th className="px-5 py-3 text-left font-semibold text-gray-700 hidden lg:table-cell">Type</th>
                           <th className="px-5 py-3 text-left font-semibold text-gray-700">Allocated Faculty</th>
-                          <th className="px-5 py-3 text-left font-semibold text-gray-700">Hrs / Periods</th>
-                          <th className="px-5 py-3 text-left font-semibold text-gray-700">Actions</th>
+                          <th className="px-5 py-3 text-left font-semibold text-gray-700 hidden lg:table-cell">Hrs / Periods</th>
+                          <th className="px-5 py-3 text-left font-semibold text-gray-700 hidden lg:table-cell">Actions</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y">
@@ -930,8 +930,8 @@ export default function SubjectAllocation() {
                               <td className="px-5 py-3 text-gray-700">{subjectName}</td>
                               <td className="px-5 py-3 text-gray-700">{className}</td>
                               <td className="px-5 py-3 text-gray-500">{mapping.semester}</td>
-                              <td className="px-5 py-3 text-gray-500">{mapping.academic_year}</td>
-                              <td className="px-5 py-3">
+                              <td className="px-5 py-3 text-gray-500 hidden lg:table-cell">{mapping.academic_year}</td>
+                              <td className="px-5 py-3 hidden lg:table-cell">
                                 <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
                                   type === 'Core' 
                                     ? 'bg-blue-100 text-blue-700' 
@@ -952,10 +952,10 @@ export default function SubjectAllocation() {
                                   <span className="text-gray-400 italic">Unallocated</span>
                                 )}
                               </td>
-                              <td className="px-5 py-3 text-gray-500">
+                              <td className="px-5 py-3 text-gray-500 hidden lg:table-cell">
                                 {allocation ? `${totalHours}h / ${noOfPeriods}p` : '--'}
                               </td>
-                              <td className="px-5 py-3">
+                              <td className="px-5 py-3 hidden lg:table-cell">
                                 <div className="flex flex-wrap gap-2 items-center">
                                   <button
                                     onClick={() => {
@@ -1024,11 +1024,11 @@ export default function SubjectAllocation() {
           {activeTab === 'allocations' && (
             <>
               {/* Filters */}
-              <div className="bg-white rounded-lg shadow p-4 mb-4 flex flex-wrap gap-3 items-center">
+              <div className="bg-white rounded-lg shadow p-4 mb-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
                 <select
                   value={allocFilters.semester}
                   onChange={e => setAllocFilters(f => ({ ...f, semester: e.target.value }))}
-                  className="border rounded-lg px-3 py-2 text-sm"
+                  className="w-full sm:w-auto border rounded-lg px-3 py-2 text-sm"
                 >
                   <option value="">All Semesters</option>
                   {[1,2,3,4,5,6,7,8].map(s => <option key={s} value={s}>Semester {s}</option>)}
@@ -1038,7 +1038,7 @@ export default function SubjectAllocation() {
                   placeholder="Academic year (e.g. 2025-2026)"
                   value={allocFilters.academic_year}
                   onChange={e => setAllocFilters(f => ({ ...f, academic_year: e.target.value }))}
-                  className="border rounded-lg px-3 py-2 text-sm w-52"
+                  className="w-full sm:w-52 border rounded-lg px-3 py-2 text-sm"
                 />
                 <button
                   onClick={() => setAllocFilters({ semester: '', academic_year: '', class_id: '' })}
@@ -1060,13 +1060,13 @@ export default function SubjectAllocation() {
                         <tr>
                           <th className="px-5 py-3 text-left font-semibold text-gray-700">Subject</th>
                           <th className="px-5 py-3 text-left font-semibold text-gray-700">Faculty</th>
-                          <th className="px-5 py-3 text-left font-semibold text-gray-700">Dept</th>
+                          <th className="px-5 py-3 text-left font-semibold text-gray-700 hidden lg:table-cell">Dept</th>
                           <th className="px-5 py-3 text-left font-semibold text-gray-700">Class</th>
                           <th className="px-5 py-3 text-left font-semibold text-gray-700">Sem</th>
-                          <th className="px-5 py-3 text-left font-semibold text-gray-700">Acad. Year</th>
-                          <th className="px-5 py-3 text-left font-semibold text-gray-700">Hrs / Periods</th>
-                          <th className="px-5 py-3 text-left font-semibold text-gray-700">Status</th>
-                          <th className="px-5 py-3 text-left font-semibold text-gray-700">Actions</th>
+                          <th className="px-5 py-3 text-left font-semibold text-gray-700 hidden lg:table-cell">Acad. Year</th>
+                          <th className="px-5 py-3 text-left font-semibold text-gray-700 hidden lg:table-cell">Hrs / Periods</th>
+                          <th className="px-5 py-3 text-left font-semibold text-gray-700 hidden lg:table-cell">Status</th>
+                          <th className="px-5 py-3 text-left font-semibold text-gray-700 hidden lg:table-cell">Actions</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y">

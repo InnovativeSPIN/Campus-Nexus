@@ -553,14 +553,44 @@ export const getAllocationFaculty = asyncHandler(async (req, res, next) => {
 export const getAllocationClasses = asyncHandler(async (req, res, next) => {
   try {
     const departmentId = req.user?.department_id || req.user?.departmentId;
+    const { semester, year, academic_year, batch } = req.query;
 
-    console.log('[GET CLASSES] departmentId:', departmentId);
+    console.log('[GET CLASSES] departmentId:', departmentId, 'semester:', semester, 'year:', year, 'academic_year:', academic_year, 'batch:', batch);
 
     const where = { status: 'active' };
     if (departmentId) {
       where.department_id = departmentId;
     } else {
       console.warn('[GET CLASSES] No departmentId found on user - returning all active classes');
+    }
+
+    if (semester) {
+      const semesterNumber = parseInt(semester, 10);
+      if (!Number.isNaN(semesterNumber)) {
+        where.semester = semesterNumber;
+      }
+    } else if (year) {
+      const yearNumber = parseInt(year, 10);
+      if (!Number.isNaN(yearNumber)) {
+        const yearSemesterMap = {
+          1: [1, 2],
+          2: [3, 4],
+          3: [5, 6],
+          4: [7, 8],
+        };
+        const semesters = yearSemesterMap[yearNumber];
+        if (semesters) {
+          where.semester = { [Op.in]: semesters };
+        }
+      }
+    }
+
+    if (academic_year) {
+      where.academic_year = academic_year;
+    }
+
+    if (batch) {
+      where.batch = batch;
     }
 
     const classes = await ClassModel.findAll({

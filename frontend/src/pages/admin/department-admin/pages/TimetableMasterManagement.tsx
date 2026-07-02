@@ -529,7 +529,7 @@ export default function TimetableMasterManagement() {
               <DialogTitle>Create New Timetable Master</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <Label>Class *</Label>
                   <Select value={formData.class_id} onValueChange={(v) => setFormData({ ...formData, class_id: v })}>
@@ -621,7 +621,7 @@ export default function TimetableMasterManagement() {
                 </div>
               </div>
 
-              <div className="flex gap-2 pt-4">
+              <div className="flex flex-col sm:flex-row gap-2 pt-4">
                 <Button onClick={handleCreateTimetable} disabled={loading}>
                   Create Timetable
                 </Button>
@@ -677,7 +677,7 @@ export default function TimetableMasterManagement() {
 
               <CardContent className="space-y-4">
                 {/* Coordinator Details */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-3 bg-muted/50 rounded-lg">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 p-3 bg-muted/50 rounded-lg">
                   <div>
                     <p className="text-xs text-muted-foreground">Class Coordinator</p>
                     <p className="text-sm font-medium">{timetable.class_coordinator?.Name || "Not assigned"}</p>
@@ -697,7 +697,7 @@ export default function TimetableMasterManagement() {
                 </div>
 
                 {/* Details */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 text-sm">
                   <div>
                     <p className="text-muted-foreground text-xs">Room</p>
                     <p className="font-medium">{timetable.room_no || "-"}</p>
@@ -719,7 +719,7 @@ export default function TimetableMasterManagement() {
                 </div>
 
                 {/* Actions */}
-                <div className="flex gap-2 pt-2 border-t">
+                <div className="flex flex-wrap gap-2 pt-2 border-t">
                   <Button
                     size="sm"
                     variant="outline"
