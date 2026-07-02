@@ -236,10 +236,21 @@ export const markAttendance = asyncHandler(async (req, res, next) => {
   const markedBy = req.user.faculty_id || req.user.facultyId || req.user.id;
 
   if (!classId || !subjectId || !periodSlotId || !attendanceDate || !students.length) {
+    console.error('[markAttendance] Missing required fields', {
+      classId,
+      subjectId,
+      periodSlotId,
+      attendanceDate,
+      studentCount: students.length,
+      bodyClass: req.body.classId ?? req.body.class,
+      bodySubject: req.body.subjectId ?? req.body.subject,
+      bodyPeriod: req.body.periodSlotId ?? req.body.period,
+    });
     return next(new ErrorResponse('Missing required fields', 400));
   }
 
   if (!TEACHING_PERIODS.includes(periodSlotId)) {
+    console.error('[markAttendance] Non-teaching period attempted', { periodSlotId });
     return next(new ErrorResponse('Cannot mark attendance for a non-teaching period', 400));
   }
 
@@ -258,18 +269,23 @@ export const markAttendance = asyncHandler(async (req, res, next) => {
     return next(new ErrorResponse('academic_year and semester are required for attendance', 400));
   }
 
-  const facultyAssignment = await FacultySubjectAssignment.findOne({
-    where: {
-      faculty_id: facultyId,
-      subject_id: subjectId,
-      class_id: classId,
-      status: 'active',
-    },
-    attributes: ['id'],
-  });
+  const userRole = typeof req.user.role === 'object' ? req.user.role.role_name || req.user.role : req.user.role;
+  const isFacultyUser = String(userRole).toLowerCase() === 'faculty';
 
-  if (!facultyAssignment) {
-    return next(new ErrorResponse('Faculty is not assigned to this subject and class', 403));
+  if (isFacultyUser) {
+    const facultyAssignment = await FacultySubjectAssignment.findOne({
+      where: {
+        faculty_id: facultyId,
+        subject_id: subjectId,
+        class_id: classId,
+        status: 'active',
+      },
+      attributes: ['id'],
+    });
+
+    if (!facultyAssignment) {
+      return next(new ErrorResponse('Faculty is not assigned to this subject and class', 403));
+    }
   }
 
   const sessionType = req.body.sessionType || 'theory';
@@ -358,7 +374,10 @@ export const markAttendance = asyncHandler(async (req, res, next) => {
   const results = [];
   for (const student of students) {
     const studentId = parseInt(student.studentId ?? student.student ?? student.id, 10);
-    if (!studentId) continue;
+    if (!studentId) {
+      console.error('[markAttendance] Skipping invalid student id', { student });
+      continue;
+    }
 
     const status = normalizeAttendanceStatus(student.status);
 
@@ -399,9 +418,21 @@ export const markAttendance = asyncHandler(async (req, res, next) => {
       payload.modified_at = new Date();
     }
 
-    await StudentAttendance.upsert(payload);
-
-    results.push({ studentId, status, created: !existing });
+    try {
+      await StudentAttendance.upsert(payload);
+      results.push({ studentId, status, created: !existing });
+    } catch (err) {
+      console.error('[markAttendance] Failed to upsert student attendance', {
+        studentId,
+        classId,
+        subjectId,
+        periodSlotId,
+        attendanceDate: attendanceDateStr,
+        payload,
+        error: err.message || err,
+      });
+      return next(new ErrorResponse('Failed to save attendance for student records', 500));
+    }
   }
 
   res.status(201).json({

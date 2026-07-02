@@ -178,10 +178,16 @@ export default function Attendance() {  const { authToken, user } = useAuth();
   const downloadAttendanceReport = async (overall = false) => {
     setAttendanceReportLoading(true);
     try {
-      let reportUrl = `/api/v1/attendance?limit=10000`;
       const classFilter = overall ? 'all' : historyClassFilter;
       const subjectFilter = overall ? 'all' : historySubjectFilter;
+      const classFilterLabel = classFilter === 'all'
+        ? 'All classes'
+        : classes.find(c => c.id.toString() === classFilter)?.name || classFilter;
+      const subjectFilterLabel = subjectFilter === 'all'
+        ? 'All subjects'
+        : subjects.find(s => s.id === subjectFilter)?.name || subjectFilter;
 
+      let reportUrl = `/api/v1/attendance?limit=10000`;
       if (classFilter && classFilter !== 'all') reportUrl += `&class=${classFilter}`;
       if (subjectFilter && subjectFilter !== 'all') reportUrl += `&subject=${subjectFilter}`;
       if (historyStartDate && historyEndDate) reportUrl += `&startDate=${historyStartDate}&endDate=${historyEndDate}`;
@@ -224,7 +230,8 @@ export default function Attendance() {  const { authToken, user } = useAuth();
       ];
       const csvContent = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
 
-      const filenameSuffix = overall ? 'overall' : `${classFilter}-${subjectFilter}`;
+      const rawFilenameSuffix = overall ? 'overall' : `${classFilter}-${subjectFilter}`;
+      const filenameSuffix = rawFilenameSuffix.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9_-]/g, '').toLowerCase();
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const downloadUrl = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -245,10 +252,16 @@ export default function Attendance() {  const { authToken, user } = useAuth();
   const downloadAttendanceReportPdf = async (overall = false) => {
     setAttendanceReportLoading(true);
     try {
-      let reportUrl = `/api/v1/attendance?limit=10000`;
       const classFilter = overall ? 'all' : historyClassFilter;
       const subjectFilter = overall ? 'all' : historySubjectFilter;
+      const classFilterLabel = classFilter === 'all'
+        ? 'All classes'
+        : classes.find(c => c.id.toString() === classFilter)?.name || classFilter;
+      const subjectFilterLabel = subjectFilter === 'all'
+        ? 'All subjects'
+        : subjects.find(s => s.id === subjectFilter)?.name || subjectFilter;
 
+      let reportUrl = `/api/v1/attendance?limit=10000`;
       if (classFilter && classFilter !== 'all') reportUrl += `&class=${classFilter}`;
       if (subjectFilter && subjectFilter !== 'all') reportUrl += `&subject=${subjectFilter}`;
       if (historyStartDate && historyEndDate) reportUrl += `&startDate=${historyStartDate}&endDate=${historyEndDate}`;
@@ -331,7 +344,7 @@ export default function Attendance() {  const { authToken, user } = useAuth();
       const subheader = document.createElement('p');
       subheader.style.fontSize = '11px';
       subheader.style.marginBottom = '10px';
-      subheader.innerHTML = `Class filter: <strong>${classFilter === 'all' ? 'All' : classFilter}</strong><br/>Subject filter: <strong>${subjectFilter === 'all' ? 'All' : subjectFilter}</strong><br/>Date range: <strong>${historyStartDate}</strong> - <strong>${historyEndDate}</strong>`;
+      subheader.innerHTML = `Class filter: <strong>${classFilterLabel}</strong><br/>Subject filter: <strong>${subjectFilterLabel}</strong><br/>Date range: <strong>${historyStartDate}</strong> - <strong>${historyEndDate}</strong>`;
       container.appendChild(subheader);
 
       const table = document.createElement('table');
@@ -396,7 +409,7 @@ export default function Attendance() {  const { authToken, user } = useAuth();
         doc.text('Attendance Report', 14, y);
         y += 6;
         doc.setFontSize(10);
-        doc.text(`Class filter: ${historyClassFilter === 'all' ? 'All' : historyClassFilter}`, 14, y);
+        doc.text(`Class filter: ${classFilterLabel}`, 14, y);
         y += 4;
         doc.text(`Date range: ${historyStartDate} to ${historyEndDate}`, 14, y);
         y += 8;
@@ -435,8 +448,9 @@ export default function Attendance() {  const { authToken, user } = useAuth();
           ]);
         });
 
-        const pdfFilenameSuffix = overall ? 'overall' : `${classFilter}-${subjectFilter}`;
-        doc.save(`attendance-report-${pdfFilenameSuffix}-${historyStartDate}-${historyEndDate}.pdf`);
+        const rawFilenameSuffix = overall ? 'overall' : `${historyClassFilter}-${historySubjectFilter}`;
+        const filenameSuffix = rawFilenameSuffix.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9_-]/g, '').toLowerCase();
+        doc.save(`attendance-report-${filenameSuffix}-${historyStartDate}-${historyEndDate}.pdf`);
 
         document.body.removeChild(container);
         document.body.removeChild(script);
@@ -683,7 +697,8 @@ export default function Attendance() {  const { authToken, user } = useAuth();
     }
     
     const studentsArray = Object.keys(attendanceData).map(studentId => ({
-      student: parseInt(studentId),
+      student: parseInt(studentId, 10),
+      studentId: parseInt(studentId, 10),
       status: attendanceData[studentId],
       remarks: topicCovered
     }));
@@ -705,7 +720,7 @@ export default function Attendance() {  const { authToken, user } = useAuth();
           sessionType: slotInfo.sessionType || 'theory',
           isLabSession: Boolean(slotInfo.isLabSession),
           labGroup: slotInfo.labGroup || null,
-          lesson_plan_id: selectedLessonPlanId ? parseInt(selectedLessonPlanId) : null,
+          lesson_plan_id: selectedLessonPlanId ? parseInt(selectedLessonPlanId, 10) : null,
           students: studentsArray,
           // Coverage tracking info
           coverageStatus: coverageCompletionStatus,
@@ -713,8 +728,14 @@ export default function Attendance() {  const { authToken, user } = useAuth();
           deviationReason: coverageCompletionStatus === "deviation" ? deviationReasonForCoverage : null
         })
       });
-      const result = await response.json();
-      if (response.ok && result.success) {
+      const rawResponse = await response.text();
+      let result = null;
+      try {
+        result = JSON.parse(rawResponse);
+      } catch (error) {
+        result = null;
+      }
+      if (response.ok && result?.success) {
         setLocked(true);
         
         // Show appropriate message based on coverage status
@@ -734,10 +755,27 @@ export default function Attendance() {  const { authToken, user } = useAuth();
           setShowAttendanceSummary(true);
         }
       } else {
-        toast.error(result.message || "Failed to save attendance");
+        const message = result?.message || result?.error || rawResponse || "Failed to save attendance";
+        console.error('Attendance save failed', {
+          status: response.status,
+          body: rawResponse,
+          classId: slotInfo.classSectionId,
+          subjectId: slotInfo.subjectId,
+          periodSlotId: slotInfo.periodId,
+          attendanceDate: selectedDate,
+          studentsCount: studentsArray.length,
+          payload: {
+            classId: slotInfo.classSectionId,
+            subjectId: slotInfo.subjectId,
+            periodSlotId: slotInfo.periodId,
+            attendanceDate: selectedDate,
+            students: studentsArray.slice(0, 5)
+          }
+        });
+        toast.error(message);
       }
     } catch (err) {
-      console.error(err);
+      console.error('Network error saving attendance', err);
       toast.error("Network error while saving attendance");
     }
   };

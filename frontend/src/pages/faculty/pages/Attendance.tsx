@@ -731,53 +731,244 @@ export default function Attendance() {
     return Array.from(map.entries()).map(([id, label]) => ({ id, label }));
   }, [attendanceHistory]);
 
-  const downloadHistoryReport = () => {
-    if (attendanceHistory.length === 0) {
-      toast.error("No attendance history available to download");
+  const downloadHistoryReport = async () => {
+    if (!authToken) {
+      toast.error("You are not authenticated");
       return;
     }
 
-    const headers = [
-      "Date",
-      "Class",
-      "Subject",
-      "Present",
-      "OD",
-      "Absent",
-      "Leave",
-      "Total",
-      "Attendance %",
-    ];
+    try {
+      if (!(window as any).jspdf?.jsPDF && !(window as any).jsPDF) {
+        await new Promise<void>((resolve, reject) => {
+          const existingScript = document.querySelector('script[src*="jspdf"]');
+          if (existingScript) {
+            existingScript.addEventListener('load', () => resolve(), { once: true });
+            existingScript.addEventListener('error', () => reject(new Error('Failed to load PDF library')), { once: true });
+            return;
+          }
 
-    const csvRows = attendanceHistory.map((row) => {
-      const attendancePct = row.total > 0 ? (((row.present + row.od) * 100) / row.total).toFixed(2) : "0.00";
-      return [
-        row.date,
-        row.section,
-        row.subject,
-        row.present,
-        row.od,
-        row.absent,
-        row.leave,
-        row.total,
-        attendancePct,
-      ];
-    });
+          const script = document.createElement('script');
+          script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+          script.onload = () => resolve();
+          script.onerror = () => reject(new Error('Failed to load PDF library'));
+          document.body.appendChild(script);
+        });
+      }
 
-    const csv = [headers, ...csvRows]
-      .map((line) => line.map((value) => `"${String(value).replace(/"/g, '""')}"`).join(","))
-      .join("\n");
+      const jsPDF = (window as any).jspdf?.jsPDF || (window as any).jsPDF;
+      if (!jsPDF) {
+        toast.error('PDF generator not available');
+        return;
+      }
 
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `attendance-history-${new Date().toISOString().slice(0, 10)}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    toast.success("Attendance report downloaded");
+      const params = new URLSearchParams();
+      const facultyId = Number(user?.id);
+
+      if (Number.isFinite(facultyId) && facultyId > 0) {
+        params.set('faculty', String(facultyId));
+      }
+
+      if (historyClassFilter !== 'all') {
+        params.set('class', historyClassFilter);
+      }
+
+      if (historyDateFrom) {
+        params.set('startDate', historyDateFrom);
+      }
+
+      if (historyDateTo) {
+        params.set('endDate', historyDateTo);
+      }
+
+      params.set('limit', '10000');
+
+      const response = await fetch(`/api/v1/attendance?${params.toString()}`, {
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || 'Failed to load attendance data');
+      }
+
+      const rows = Array.isArray(result.data) ? result.data : [];
+      if (!rows.length) {
+        toast.error('No attendance data available to download');
+        return;
+      }
+
+      const normalizeStatus = (value: string) => {
+        const status = String(value || '').trim().toLowerCase();
+        if (['present', 'late'].includes(status)) return 'Present';
+        if (['absent', 'unmarked'].includes(status)) return 'Absent';
+        if (['medical_leave', 'duty_leave', 'leave', 'on-leave', 'on leave'].includes(status)) return 'Leave';
+        if (['od', 'on-duty', 'on duty'].includes(status)) return 'OD';
+        return 'Not Marked';
+      };
+
+      const sessions = new Map<string, any>();
+      rows.forEach((row: any) => {
+        const classId = row.class_id || row.classId || row.class?.id;
+        const subjectId = row.subject_id || row.subjectId || row.subject?.id;
+        const date = row.attendance_date || row.date || row.attendanceDate;
+        const key = [date, classId, subjectId, row.period_slot_id || row.periodSlotId || row.period || ''].join('|');
+
+        if (!sessions.has(key)) {
+          sessions.set(key, {
+            date,
+            classId: Number(classId),
+            subjectId: Number(subjectId),
+            subjectName: row.subject?.subject_name || row.subject_name || 'Unknown Subject',
+            className: row.class?.name || row.class_name || 'Unknown Class',
+            classSection: row.class?.section || '',
+            rows: [] as any[],
+          });
+        }
+
+        sessions.get(key).rows.push({
+          studentId: row.student_id || row.studentId || row.student?.id,
+          rollNumber: row.student?.rollNumber || row.student?.studentId || '',
+          studentName: row.student ? `${row.student.firstName || ''} ${row.student.lastName || ''}`.trim() : 'Unknown',
+          status: normalizeStatus(row.status),
+        });
+      });
+
+      const classIds = Array.from(new Set(Array.from(sessions.values()).map((session: any) => session.classId).filter(Boolean)));
+      const studentsByClass = new Map<number, any[]>();
+
+      for (const classId of classIds) {
+        try {
+          const studentResponse = await fetch(`/api/v1/students/class/${classId}`, {
+            headers: { Authorization: `Bearer ${authToken}` },
+          });
+          const studentResult = await studentResponse.json();
+          if (studentResponse.ok && studentResult.success) {
+            studentsByClass.set(classId, Array.isArray(studentResult.data) ? studentResult.data : []);
+          } else {
+            studentsByClass.set(classId, []);
+          }
+        } catch (error) {
+          studentsByClass.set(classId, []);
+        }
+      }
+
+      const doc = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const margin = 14;
+      let y = 12;
+
+      const addHeader = () => {
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(16);
+        doc.text('Nadar Saraswathi College of Engineering & Technology', pageWidth / 2, y, { align: 'center' });
+        y += 6;
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(10);
+        doc.text('Approved by AICTE, New Delhi | Affiliated to Anna University, Chennai', pageWidth / 2, y, { align: 'center' });
+        y += 5;
+        doc.text('Vadapudupatti, Annanji (PO), Theni - 625 531', pageWidth / 2, y, { align: 'center' });
+        y += 8;
+      };
+
+      const addPageBreakIfNeeded = (neededHeight: number) => {
+        if (y + neededHeight > pageHeight - 18) {
+          doc.addPage();
+          y = 16;
+          addHeader();
+        }
+      };
+
+      const drawTableRow = (values: string[], isHeader = false) => {
+        const columnWidths = [28, 110, 30];
+        const rowHeight = 6;
+        let maxHeight = rowHeight;
+
+        values.forEach((value, index) => {
+          const lines = doc.splitTextToSize(String(value), columnWidths[index] - 2);
+          maxHeight = Math.max(maxHeight, lines.length * 3.2 + 2);
+        });
+
+        addPageBreakIfNeeded(maxHeight + 2);
+
+        let x = margin;
+        values.forEach((value, index) => {
+          const width = columnWidths[index];
+          const lines = doc.splitTextToSize(String(value), width - 2);
+          doc.setFont('helvetica', isHeader ? 'bold' : 'normal');
+          doc.setFontSize(isHeader ? 8.5 : 8);
+          doc.rect(x, y, width, maxHeight);
+          doc.text(lines, x + 1.2, y + 2.4);
+          x += width;
+        });
+        y += maxHeight;
+      };
+
+      addHeader();
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(12);
+      doc.text('Student-wise Attendance Report', margin, y);
+      y += 6;
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      const classLabel = historyClassFilter === 'all' ? 'All classes' : historyClassOptions.find((option) => option.id === historyClassFilter)?.label || historyClassFilter;
+      doc.text(`Class: ${classLabel}`, margin, y);
+      y += 4;
+      doc.text(`Date Range: ${historyDateFrom || 'All'} to ${historyDateTo || 'All'}`, margin, y);
+      y += 8;
+
+      const sessionEntries = Array.from(sessions.values()).sort((a: any, b: any) => {
+        const aDate = new Date(a.date).getTime();
+        const bDate = new Date(b.date).getTime();
+        return bDate - aDate;
+      });
+
+      sessionEntries.forEach((session: any, sessionIndex: number) => {
+        if (sessionIndex > 0) {
+          y += 2;
+        }
+
+        addPageBreakIfNeeded(16);
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10);
+        const sectionLabel = `${session.className}${session.classSection ? ` - ${session.classSection}` : ''}`;
+        doc.text(`${session.date} • ${sectionLabel} • ${session.subjectName}`, margin, y);
+        y += 5;
+
+        drawTableRow(['Roll No', 'Student Name', 'Status'], true);
+
+        const classStudents = studentsByClass.get(session.classId) || [];
+        const statusMap = new Map<string, string>();
+        session.rows.forEach((entry: any) => {
+          const key = entry.studentId ? String(entry.studentId) : entry.rollNumber || entry.studentName;
+          statusMap.set(key, entry.status);
+        });
+
+        classStudents.forEach((student: any) => {
+          const studentId = student.id ? String(student.id) : '';
+          const rollNumber = student.rollNumber || student.student_id || '-';
+          const fullName = `${student.firstName || ''} ${student.lastName || ''}`.trim() || 'Unknown';
+          const status = statusMap.get(studentId) || statusMap.get(student.rollNumber || '') || statusMap.get(rollNumber) || 'Not Marked';
+          drawTableRow([String(rollNumber), fullName, status]);
+        });
+
+        if (!classStudents.length) {
+          drawTableRow(['-', 'No students found for this class', 'Not Marked']);
+        }
+
+        y += 2;
+      });
+
+      const fileName = `attendance-history-${new Date().toISOString().slice(0, 10)}.pdf`;
+      doc.save(fileName);
+      toast.success('Student-wise attendance report downloaded as PDF');
+    } catch (error) {
+      console.error('Error generating PDF report', error);
+      toast.error('Failed to generate attendance PDF report');
+    }
   };
 
   return (
@@ -1515,7 +1706,7 @@ export default function Attendance() {
               </h3>
               <Button variant="outline" size="sm" onClick={downloadHistoryReport}>
                 <Download className="w-4 h-4 mr-2" />
-                Download Report
+                Download PDF
               </Button>
             </div>
 
