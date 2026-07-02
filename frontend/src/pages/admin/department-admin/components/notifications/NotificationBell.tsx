@@ -6,6 +6,50 @@ import { NotificationItem } from "@/pages/admin/department-admin/components/noti
 import { NotificationDetailModal } from "@/pages/admin/department-admin/components/notifications/NotificationDetailModal";
 import { Notification } from "@/pages/admin/department-admin/context/NotificationContextType";
 import { Button } from "@/pages/admin/department-admin/components/ui/button";
+import { cn } from "@/lib/utils";
+
+const bellVariants = {
+  idle: { scale: 1, rotate: 0 },
+  ringing: {
+    rotate: [0, -10, 10, -10, 10, 0],
+    transition: {
+      duration: 0.6,
+      repeat: Infinity,
+      repeatDelay: 4,
+      ease: "easeInOut"
+    }
+  },
+  hover: {
+    scale: 1.15,
+    rotate: [0, -15, 12, -10, 8, -4, 0],
+    transition: {
+      duration: 0.5,
+      ease: "easeOut"
+    }
+  },
+  tap: {
+    scale: 0.95,
+    rotate: 0
+  }
+};
+
+const badgeVariants = {
+  initial: { scale: 0 },
+  animate: {
+    scale: 1,
+    transition: {
+      type: "spring",
+      stiffness: 500,
+      damping: 15
+    }
+  },
+  hover: {
+    scale: 1.15,
+    transition: {
+      duration: 0.2
+    }
+  }
+};
 
 export function NotificationBell() {
   const { notifications, unreadCount, markAllAsRead } = useNotification();
@@ -73,23 +117,73 @@ export function NotificationBell() {
   return (
     <>
       <div className="relative">
-        <button
+        <motion.button
           ref={buttonRef}
           onClick={handleBellClick}
-          className="relative p-2 hover:bg-accent rounded-lg transition-colors duration-200"
+          whileHover="hover"
+          whileTap="tap"
+          animate={unreadCount > 0 && !isOpen ? "ringing" : "idle"}
+          className={cn(
+            "relative p-2.5 rounded-xl transition-all duration-300 flex items-center justify-center overflow-visible",
+            unreadCount > 0
+              ? "bg-primary/5 hover:bg-primary/10 border border-primary/25 hover:border-primary/45 shadow-[0_0_12px_rgba(59,130,246,0.15)]"
+              : "bg-transparent hover:bg-accent border border-transparent hover:border-border/60"
+          )}
           aria-label="Notifications"
         >
-          <Bell className="w-5 h-5 text-foreground" />
+          {/* Glowing ring animation for unread notifications */}
+          {unreadCount > 0 && !isOpen && (
+            <motion.div
+              animate={{
+                boxShadow: [
+                  "0 0 0 0px rgba(59, 130, 246, 0.4)",
+                  "0 0 0 8px rgba(59, 130, 246, 0)"
+                ]
+              }}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+              className="absolute inset-0 rounded-xl pointer-events-none"
+            />
+          )}
+
+          <motion.div variants={bellVariants}>
+            <Bell className={cn(
+              "w-5 h-5 transition-colors duration-300",
+              unreadCount > 0 
+                ? "text-primary fill-primary/10" 
+                : "text-foreground"
+            )} />
+          </motion.div>
+
           {unreadCount > 0 && (
             <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              className="absolute top-0 right-0 bg-destructive text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center"
+              variants={badgeVariants}
+              initial="initial"
+              animate="animate"
+              className="absolute -top-1 -right-1 flex items-center justify-center pointer-events-none"
             >
-              {unreadCount > 9 ? "9+" : unreadCount}
+              {/* Pulse effect behind badge */}
+              <motion.div
+                animate={{
+                  scale: [1, 1.8],
+                  opacity: [0.6, 0]
+                }}
+                transition={{
+                  duration: 1.5,
+                  repeat: Infinity,
+                  ease: "easeOut"
+                }}
+                className="absolute bg-destructive rounded-full w-4 h-4"
+              />
+              <div className="relative bg-destructive text-white text-[9px] font-black rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center border-2 border-background shadow-sm">
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </div>
             </motion.div>
           )}
-        </button>
+        </motion.button>
 
         {/* Notification Dropdown */}
         <AnimatePresence>
