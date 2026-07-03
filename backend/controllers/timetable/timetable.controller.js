@@ -119,7 +119,9 @@ export const getTimetableByClass = asyncHandler(async (req, res, next) => {
         tm.academic_year as academicYear,
         COALESCE(f.Name, '') as faculty_name,
         s.session_type as sessionType,
-        s.room
+        s.room,
+        COALESCE(s.start_time, p.start_time) as start_time,
+        COALESCE(s.end_time, p.end_time) as end_time
       FROM timetable_master_slots s
       INNER JOIN timetable_master tm ON s.master_id = tm.id
       INNER JOIN classes c ON tm.class_id = c.id
@@ -645,7 +647,9 @@ export const getFacultyTimetable = asyncHandler(async (req, res, next) => {
         tm.academic_year as academicYear,
         COALESCE(f.Name, '') as faculty_name,
         s.session_type as sessionType,
-        s.room
+        s.room,
+        COALESCE(s.start_time, p.start_time) as start_time,
+        COALESCE(s.end_time, p.end_time) as end_time
       FROM timetable_master_slots s
       INNER JOIN timetable_master tm ON s.master_id = tm.id
       INNER JOIN classes c ON tm.class_id = c.id

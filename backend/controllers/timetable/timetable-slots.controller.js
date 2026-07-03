@@ -559,7 +559,7 @@ export const getBreakConfiguration = asyncHandler(async (req, res, next) => {
  */
 export const saveBreakConfiguration = asyncHandler(async (req, res, next) => {
   const { masterId } = req.params;
-  const { breakPeriodIds } = req.body;
+  const { breakPeriodIds, breakTimings } = req.body;
 
   console.log(`[SAVE BREAK CONFIG] Received breakPeriodIds:`, breakPeriodIds, 'Type:', typeof breakPeriodIds, 'isArray:', Array.isArray(breakPeriodIds));
 
@@ -576,10 +576,93 @@ export const saveBreakConfiguration = asyncHandler(async (req, res, next) => {
   const accessError = await checkWriteAccess(req, master);
   if (accessError) return next(accessError);
 
-  // Update the break_period_ids field
+  // Determine previously configured breaks to find what was removed
+  let oldBreakIds = [];
+  if (master.break_period_ids) {
+    try {
+      if (typeof master.break_period_ids === 'string') {
+        oldBreakIds = JSON.parse(master.break_period_ids);
+      } else if (Array.isArray(master.break_period_ids)) {
+        oldBreakIds = master.break_period_ids;
+      }
+    } catch (err) {
+      console.error('[SAVE BREAK CONFIG] Failed to parse old break_period_ids:', master.break_period_ids, err);
+    }
+  }
+
+  // Update the break_period_ids field on timetable master
   await master.update({
     break_period_ids: breakPeriodIds,
   });
+
+  // Handle removed break periods: delete slots for those periods if they were marked as 'break'
+  const removedBreakIds = oldBreakIds.filter(id => !breakPeriodIds.includes(Number(id)));
+  if (removedBreakIds.length > 0) {
+    console.log('[SAVE BREAK CONFIG] Deleting break slots for removed break period IDs:', removedBreakIds);
+    await TimetableMasterSlots.destroy({
+      where: {
+        master_id: masterId,
+        period_slot_id: { [Op.in]: removedBreakIds },
+        session_type: 'break'
+      }
+    });
+  }
+
+  // Handle saving break timings and syncing to timetable_master_slots
+  if (Array.isArray(breakTimings) && breakTimings.length > 0) {
+    const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    
+    for (const timing of breakTimings) {
+      const periodSlotId = Number(timing.period_slot_id);
+      
+      // Only process timing if this period is actually in the breakPeriodIds list
+      if (!breakPeriodIds.includes(periodSlotId)) continue;
+      
+      const normalizedStart = timing.start_time ? normalizeTimeFormat(timing.start_time) : null;
+      const normalizedEnd = timing.end_time ? normalizeTimeFormat(timing.end_time) : null;
+      const label = periodSlotId === 3 ? 'Break' : periodSlotId === 5 ? 'Lunch' : 'Break';
+      
+      for (const day of days) {
+        // Find existing slot for this day/period
+        const existingSlot = await TimetableMasterSlots.findOne({
+          where: {
+            master_id: masterId,
+            day,
+            period_slot_id: periodSlotId
+          }
+        });
+        
+        if (existingSlot) {
+          // Update it to be a break with the correct times
+          await existingSlot.update({
+            session_type: 'break',
+            start_time: normalizedStart,
+            end_time: normalizedEnd,
+            subject_id: null,
+            faculty_id: null,
+            room: null,
+            is_lab_session: false,
+            notes: timing.notes || label
+          });
+        } else {
+          // Create a new break slot
+          await TimetableMasterSlots.create({
+            master_id: masterId,
+            day,
+            period_slot_id: periodSlotId,
+            session_type: 'break',
+            start_time: normalizedStart,
+            end_time: normalizedEnd,
+            subject_id: null,
+            faculty_id: null,
+            room: null,
+            is_lab_session: false,
+            notes: timing.notes || label
+          });
+        }
+      }
+    }
+  }
 
   // Fetch fresh to confirm
   const updated = await TimetableMaster.findByPk(masterId, {
