@@ -58,6 +58,21 @@ interface TimetableData {
 }
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const STANDARD_PERIODS: Period[] = [
+  { id: 1, label: 'I', startTime: '09:30 AM', endTime: '10:20 AM' },
+  { id: 2, label: 'II', startTime: '10:20 AM', endTime: '11:10 AM' },
+  { id: 3, label: 'III', startTime: '11:30 AM', endTime: '12:25 PM' },
+  { id: 4, label: 'IV', startTime: '01:10 PM', endTime: '02:00 PM' },
+  { id: 5, label: 'V', startTime: '02:00 PM', endTime: '02:50 PM' },
+  { id: 6, label: 'VI', startTime: '03:15 PM', endTime: '04:00 PM' },
+  { id: 7, label: 'VII', startTime: '04:00 PM', endTime: '04:45 PM' },
+];
+
+const BREAK_TIMINGS = [
+  { label: 'Break 1', startTime: '11:10 AM', endTime: '11:30 AM' },
+  { label: 'Lunch', startTime: '12:25 PM', endTime: '01:10 PM' },
+  { label: 'Break 2', startTime: '02:50 PM', endTime: '03:15 PM' },
+];
 
 const StudentClassTimetable: React.FC = () => {
   const { authToken } = useAuth();
@@ -195,27 +210,15 @@ const StudentClassTimetable: React.FC = () => {
     );
   }
 
-  // Standard 7-period structure matching the HOD and working AIDS views
-  const standardPeriods: Period[] = [
-    { id: 1, label: 'I', startTime: '09:30 AM', endTime: '10:20 AM' },
-    { id: 2, label: 'II', startTime: '10:20 AM', endTime: '11:10 AM' },
-    { id: 3, label: 'III', startTime: '11:30 AM', endTime: '12:25 PM' },
-    { id: 4, label: 'IV', startTime: '01:10 PM', endTime: '02:00 PM' },
-    { id: 5, label: 'V', startTime: '02:00 PM', endTime: '02:50 PM' },
-    { id: 6, label: 'VI', startTime: '03:15 PM', endTime: '04:00 PM' },
-    { id: 7, label: 'VII', startTime: '04:00 PM', endTime: '04:45 PM' },
-  ];
-
-  const periodById = new Map<number | string, Period>();
+  const periodByLabel = new Map<string, Period>();
   timetable.slots.forEach(s => {
     if (s.period) {
-      periodById.set(s.period.id, s.period);
-      periodById.set(s.period.label, s.period);
+      periodByLabel.set(s.period.label.trim(), s.period);
     }
   });
 
-  const allPeriods = standardPeriods.map(std => {
-    return periodById.get(std.id) || periodById.get(std.label) || std;
+  const allPeriods = STANDARD_PERIODS.map(std => {
+    return periodByLabel.get(std.label) || std;
   });
 
   const getSessionColor = (sessionType: string) => {
@@ -339,6 +342,25 @@ const StudentClassTimetable: React.FC = () => {
         </CardContent>
       </Card>
 
+      {/* Break Timings */}
+      <Card>
+        <CardHeader className="py-2 px-3">
+          <CardTitle className="text-sm">Break Timings</CardTitle>
+        </CardHeader>
+        <CardContent className="px-3 pb-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+            {BREAK_TIMINGS.map((timing) => (
+              <div key={timing.label} className="rounded-lg border border-amber-200/70 bg-amber-50/70 px-3 py-2 text-xs text-amber-900">
+                <div className="font-semibold">{timing.label}</div>
+                <div className="text-amber-800/80">
+                  {timing.startTime} - {timing.endTime}
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Timetable Grid - Days on Left, Periods on Top */}
       <Card>
         <CardHeader className="py-2 px-3">
@@ -369,7 +391,7 @@ const StudentClassTimetable: React.FC = () => {
                     </td>
                     {allPeriods.map((period, periodIdx) => {
                       const slot = timetable.slots.find(
-                        s => s.day === day && s.period?.id === period.id
+                        s => s.day === day && s.period?.label?.trim() === period.label
                       );
 
                       return (
@@ -443,7 +465,7 @@ const StudentClassTimetable: React.FC = () => {
                 <div className="px-3 py-2 space-y-2">
                   {allPeriods.map((period, periodIdx) => {
                     const slot = timetable.slots.find(
-                      s => s.day === day && s.period?.id === period.id
+                      s => s.day === day && s.period?.label?.trim() === period.label
                     );
 
                     return (
