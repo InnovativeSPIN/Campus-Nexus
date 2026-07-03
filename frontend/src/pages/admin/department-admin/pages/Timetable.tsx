@@ -6,29 +6,107 @@ import { toast } from "@/pages/admin/department-admin/components/ui/sonner";
 import { useAuth } from "@/contexts/AuthContext";
 
 const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-const hours = [1, 2, 3, 4, 5, 6, 7];
 
-const formatHourForDisplay = (hour: number | string): string => {
-  if (hour === 'break1' || hour === 'break2') return 'BREAK';
-  if (hour === 'lunch') return 'LUNCH';
-  const timeMap: { [key: number]: string } = {
-    1: "9:30 AM - 10:20 AM",
-    2: "10:20 AM - 11:10 AM",
-    3: "11:30 AM - 12:25 PM",
-    4: "1:10 PM - 2:00 PM",
-    5: "2:00 PM - 2:50 PM",
-    6: "3:15 PM - 4:00 PM",
-    7: "4:00 PM - 4:45 PM",
-  };
-  return timeMap[hour as number] || `Hour ${hour}`;
+/**
+ * Formats a 24-hour time string (e.g. "14:00" or "14:00:00") into a 12-hour AM/PM format (e.g. "02:00 PM").
+ */
+const formatTimeTo12h = (timeStr: string | null | undefined): string => {
+  if (!timeStr) return "";
+  const trimmed = timeStr.trim();
+  if (trimmed === "") return "";
+  
+  if (trimmed.toLowerCase().includes("am") || trimmed.toLowerCase().includes("pm")) {
+    return trimmed;
+  }
+  
+  const parts = trimmed.split(":");
+  let hours = parseInt(parts[0]);
+  const minutes = parseInt(parts[1]);
+  if (isNaN(hours) || isNaN(minutes)) return trimmed;
+  
+  const ampm = hours >= 12 ? "PM" : "AM";
+  hours = hours % 12;
+  hours = hours ? hours : 12;
+  const minutesStr = minutes.toString().padStart(2, '0');
+  const hoursStr = hours.toString().padStart(2, '0');
+  
+  return `${hoursStr}:${minutesStr} ${ampm}`;
 };
 
-const getHoursArray = (showBreak: boolean = false): (number | string)[] => {
-  if (showBreak) {
-    // Include morning break, lunch break, and afternoon break
-    return [1, 2, 'break1', 3, 'lunch', 4, 5, 'break2', 6, 7];
+/**
+ * Formats a 24-hour time range (e.g. "09:30 - 10:20") into a 12-hour AM/PM format.
+ */
+const formatRangeTo12h = (rangeStr: string | null | undefined): string => {
+  if (!rangeStr) return "";
+  const parts = rangeStr.split(" - ");
+  if (parts.length === 2) {
+    return `${formatTimeTo12h(parts[0])} - ${formatTimeTo12h(parts[1])}`;
   }
-  return hours;
+  return rangeStr;
+};
+
+interface PeriodDisplay {
+  id: number;
+  label: string;
+  time: string;
+  isBreak: boolean;
+}
+
+const getRomanNumeral = (num: number): string => {
+  const romanMap = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"];
+  return romanMap[num - 1] || String(num);
+};
+
+const getDynamicPeriods = (slots: any[]): PeriodDisplay[] => {
+  const periodMap = new Map<number, PeriodDisplay>();
+  
+  slots.forEach((slot: any) => {
+    const h = parseInt(slot.hour || slot.period_slot_id, 10);
+    if (isNaN(h)) return;
+    
+    const start = slot.start_time ? slot.start_time.substring(0, 5) : "";
+    const end = slot.end_time ? slot.end_time.substring(0, 5) : "";
+    const timeStr = start && end ? `${start} - ${end}` : "";
+    
+    const isBreak = slot.sessionType === "break" || slot.session_type === "break";
+    
+    if (!periodMap.has(h)) {
+      periodMap.set(h, {
+        id: h,
+        label: getRomanNumeral(h),
+        time: timeStr,
+        isBreak: isBreak
+      });
+    } else {
+      const existing = periodMap.get(h)!;
+      if (!existing.time && timeStr) {
+        existing.time = timeStr;
+      }
+      if (isBreak) {
+        existing.isBreak = true;
+      }
+    }
+  });
+  
+  return Array.from(periodMap.values()).sort((a, b) => a.id - b.id);
+};
+
+const getDefaultPeriods = (): PeriodDisplay[] => {
+  const defaultTimes = [
+    "09:30 - 10:20",
+    "10:20 - 11:10",
+    "11:30 - 12:25",
+    "13:10 - 14:00",
+    "14:00 - 14:50",
+    "15:15 - 16:00",
+    "16:00 - 16:45"
+  ];
+  return Array.from({ length: 7 }, (_, i) => ({
+    id: i + 1,
+    label: getRomanNumeral(i + 1),
+    time: defaultTimes[i],
+    isBreak: false
+  }));
 };
 
 interface ClassSlot {
@@ -39,6 +117,10 @@ interface ClassSlot {
   year: string | number;
   academicYear: string;
   faculty?: string;
+  sessionType?: string;
+  notes?: string;
+  start_time?: string;
+  end_time?: string;
 }
 
 interface Faculty {
@@ -60,20 +142,22 @@ type TimetableData = {
 
 const TimetableTable = ({ 
   data, 
+  rawSlots = [],
   loading, 
   error, 
   onRefresh,
-  showBreak = false
+  showBreak = true
 }: { 
   data: TimetableData;
+  rawSlots?: any[];
   loading: boolean;
   error: string | null;
   onRefresh: () => void;
   showBreak?: boolean;
 }) => {
-  const displayHours = getHoursArray(showBreak);
+  const displayPeriods = rawSlots.length > 0 ? getDynamicPeriods(rawSlots) : getDefaultPeriods();
   const hasTimetableData = days.some((day) =>
-    displayHours.some((hour) => !(typeof hour === 'string' && (hour.startsWith('break') || hour === 'lunch')) && data[day]?.[hour as number]?.length > 0)
+    displayPeriods.some((period) => data[day]?.[period.id]?.length > 0)
   );
 
   if (loading) {
@@ -116,25 +200,19 @@ const TimetableTable = ({
         <thead>
           <tr className="bg-muted/50">
             <th className="border p-3 text-left font-semibold min-w-[100px]">Day</th>
-            {displayHours.map((hour) => (
+            {displayPeriods.map((period) => (
               <th
-                key={hour}
+                key={period.id}
                 className={`border p-3 text-center font-semibold min-w-[140px] ${
-                  typeof hour === 'string' && hour.startsWith('break') ? 'bg-amber-100/50' : hour === 'lunch' ? 'bg-orange-100/50' : ''
+                  period.isBreak ? 'bg-amber-100/50' : ''
                 }`}
               >
                 <div className="flex flex-col">
-                  {typeof hour === 'string' && hour.startsWith('break') ? (
-                    <span className="font-bold text-amber-700">BREAK</span>
-                  ) : hour === 'lunch' ? (
-                    <span className="font-bold text-orange-700">LUNCH</span>
-                  ) : (
-                    <>
-                      <span>Hour {hour}</span>
-                      <span className="text-xs text-muted-foreground font-normal">
-                        {formatHourForDisplay(hour)}
-                      </span>
-                    </>
+                  <span className="font-semibold text-sm">Period {period.id} ({period.label})</span>
+                  {period.time && (
+                    <span className="text-xs text-muted-foreground font-normal">
+                      {formatRangeTo12h(period.time)}
+                    </span>
                   )}
                 </div>
               </th>
@@ -148,37 +226,31 @@ const TimetableTable = ({
                 {day}
               </td>
 
-              {displayHours.map((hour) => {
-                if (typeof hour === 'string' && hour.startsWith('break')) {
+              {displayPeriods.map((period) => {
+                const slots = (data[day]?.[period.id] || []) as ClassSlot[];
+                const breakSlot = slots.find(s => s.sessionType === 'break');
+                
+                if (breakSlot) {
                   return (
                     <td
-                      key={`${day}-${hour}`}
+                      key={`${day}-${period.id}`}
                       className="border p-2 min-h-[80px] bg-amber-50"
                     >
-                      <div className="h-full flex items-center justify-center">
-                        <span className="font-semibold text-amber-700">BREAK</span>
+                      <div className="h-full flex flex-col items-center justify-center text-center">
+                        <span className="font-semibold text-amber-700 text-xs">🔴 {breakSlot.notes || "BREAK"}</span>
+                        {breakSlot.start_time && breakSlot.end_time && (
+                          <span className="text-[10px] text-amber-600 font-normal">
+                            {formatTimeTo12h(breakSlot.start_time)} - {formatTimeTo12h(breakSlot.end_time)}
+                          </span>
+                        )}
                       </div>
                     </td>
                   );
                 }
                 
-                if (hour === 'lunch') {
-                  return (
-                    <td
-                      key={`${day}-lunch`}
-                      className="border p-2 min-h-[80px] bg-orange-50"
-                    >
-                      <div className="h-full flex items-center justify-center">
-                        <span className="font-semibold text-orange-700">LUNCH</span>
-                      </div>
-                    </td>
-                  );
-                }
-                
-                const slots = (data[day]?.[hour as number] || []) as ClassSlot[];
                 return (
                   <td
-                    key={`${day}-${hour}`}
+                    key={`${day}-${period.id}`}
                     className="border p-2 min-h-[100px]"
                   >
                     {slots.length > 0 ? (
@@ -207,6 +279,11 @@ const TimetableTable = ({
                                 Faculty: {slot.faculty}
                               </div>
                             )}
+                            {slot.start_time && slot.end_time && (
+                              <div className="text-[10px] text-muted-foreground font-semibold mt-1">
+                                ⏰ {formatTimeTo12h(slot.start_time)} - {formatTimeTo12h(slot.end_time)}
+                              </div>
+                            )}
                           </motion.div>
                         ))}
                       </div>
@@ -231,14 +308,17 @@ export default function Timetable() {
   
   // My Timetable state
   const [myTimetable, setMyTimetable] = useState<TimetableData>({});
+  const [myRawSlots, setMyRawSlots] = useState<any[]>([]);
   
   // Faculty Timetable state
   const [facultyTimetable, setFacultyTimetable] = useState<TimetableData>({});
+  const [facultyRawSlots, setFacultyRawSlots] = useState<any[]>([]);
   const [facultyList, setFacultyList] = useState<Faculty[]>([]);
   const [selectedFaculty, setSelectedFaculty] = useState<string>("");
   
   // Class Timetable state
   const [classTimetable, setClassTimetable] = useState<TimetableData>({});
+  const [classRawSlots, setClassRawSlots] = useState<any[]>([]);
   const [classList, setClassList] = useState<Class[]>([]);
   const [selectedClass, setSelectedClass] = useState<string>("");
   
@@ -254,24 +334,23 @@ export default function Timetable() {
       : user.department
     : "";
 
-  // Format timetable data from API response
+  // Format timetable data from API response dynamically
   const formatTimetableData = (apiData: any[]): TimetableData => {
     const formatted: TimetableData = {};
     days.forEach((day) => {
       formatted[day] = {};
-      hours.forEach((hour) => {
-        formatted[day][hour] = [];
-      });
     });
 
     apiData.forEach((slot: any) => {
       const dayKey = slot.day ? slot.day.trim() : "";
-      const hourKey = parseInt(slot.hour, 10);
+      const hourKey = parseInt(slot.hour || slot.period_slot_id, 10);
       const day = days.find((d) => d === dayKey);
-      const hourSlot = hours.find((h) => h === hourKey);
 
-      if (day && hourSlot && formatted[day] && formatted[day][hourSlot]) {
-        formatted[day][hourSlot].push({
+      if (day && !isNaN(hourKey)) {
+        if (!formatted[day][hourKey]) {
+          formatted[day][hourKey] = [];
+        }
+        formatted[day][hourKey].push({
           id: slot.id || Math.random(),
           subject: slot.subject || "Unknown",
           section: slot.section || "",
@@ -279,6 +358,10 @@ export default function Timetable() {
           year: slot.year || "",
           academicYear: slot.academicYear || "",
           faculty: slot.faculty_name || "",
+          sessionType: slot.sessionType || slot.session_type || "",
+          notes: slot.notes || "",
+          start_time: slot.start_time || "",
+          end_time: slot.end_time || "",
         });
       }
     });
@@ -301,6 +384,7 @@ export default function Timetable() {
       // Handle 304 Not Modified - server is returning empty body
       if (response.status === 304) {
         console.log("[TIMETABLE] Got 304 Not Modified for my timetable - clearing cache issue");
+        setMyRawSlots([]);
         setMyTimetable({});
         return;
       }
@@ -310,6 +394,7 @@ export default function Timetable() {
       
       if (data.success && data.timetable && data.timetable.length > 0) {
         console.log("[TIMETABLE] Found my timetable with", data.timetable.length, "slots");
+        setMyRawSlots(data.timetable);
         setMyTimetable(formatTimetableData(data.timetable));
       } else {
         // Fallback: If user is faculty/department-admin, try fetching by their faculty ID
@@ -329,23 +414,28 @@ export default function Timetable() {
               
               if (fallbackData.success && fallbackData.timetable && fallbackData.timetable.length > 0) {
                 console.log("[TIMETABLE] Found timetable via fallback with", fallbackData.timetable.length, "slots");
+                setMyRawSlots(fallbackData.timetable);
                 setMyTimetable(formatTimetableData(fallbackData.timetable));
               } else {
                 console.log("[TIMETABLE] No timetable found in fallback");
+                setMyRawSlots([]);
                 setMyTimetable({});
               }
             }
           } catch (fallbackErr) {
             console.error("[TIMETABLE] Fallback fetch error:", fallbackErr);
+            setMyRawSlots([]);
             setMyTimetable({});
           }
         } else {
           console.log("[TIMETABLE] No personal timetable found (not a faculty)");
+          setMyRawSlots([]);
           setMyTimetable({});
         }
       }
     } catch (err) {
       console.error("Error fetching my timetable:", err);
+      setMyRawSlots([]);
       setMyTimetable({});
     }
   };
@@ -420,6 +510,7 @@ export default function Timetable() {
   // Fetch Faculty Timetable
   const fetchFacultyTimetable = async (facultyId: string) => {
     if (!facultyId) {
+      setFacultyRawSlots([]);
       setFacultyTimetable({});
       return;
     }
@@ -432,12 +523,15 @@ export default function Timetable() {
       });
       const data = await response.json();
       if (data.success && data.timetable) {
+        setFacultyRawSlots(data.timetable);
         setFacultyTimetable(formatTimetableData(data.timetable));
       } else {
+        setFacultyRawSlots([]);
         setFacultyTimetable({});
       }
     } catch (err) {
       console.error("Error fetching faculty timetable:", err);
+      setFacultyRawSlots([]);
       setFacultyTimetable({});
     }
   };
@@ -480,6 +574,7 @@ export default function Timetable() {
   // Fetch Class Timetable
   const fetchClassTimetable = async (classId: string) => {
     if (!classId) {
+      setClassRawSlots([]);
       setClassTimetable({});
       return;
     }
@@ -492,14 +587,18 @@ export default function Timetable() {
       });
       const data = await response.json();
       if (data.success && Array.isArray(data.timetable)) {
+        setClassRawSlots(data.timetable);
         setClassTimetable(formatTimetableData(data.timetable));
       } else if (data.timetable) {
+        setClassRawSlots([data.timetable]);
         setClassTimetable(formatTimetableData([data.timetable]));
       } else {
+        setClassRawSlots([]);
         setClassTimetable({});
       }
     } catch (err) {
       console.error("Error fetching class timetable:", err);
+      setClassRawSlots([]);
       setClassTimetable({});
     }
   };
@@ -619,7 +718,7 @@ export default function Timetable() {
           <div>
             <h2 className="text-lg font-semibold mb-4">My Personal Timetable</h2>
             {Object.keys(myTimetable).length === 0 || !days.some((day) =>
-              hours.some((hour) => myTimetable[day]?.[hour]?.length > 0)
+              Object.keys(myTimetable[day] || {}).some((hour) => myTimetable[day]?.[parseInt(hour)]?.length > 0)
             ) ? (
               <div className="py-12 text-center">
                 <CalendarIcon className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
@@ -637,9 +736,11 @@ export default function Timetable() {
             ) : (
               <TimetableTable
                 data={myTimetable}
+                rawSlots={myRawSlots}
                 loading={loading}
                 error={error}
                 onRefresh={fetchMyTimetable}
+                showBreak={true}
               />
             )}
           </div>
@@ -677,9 +778,11 @@ export default function Timetable() {
             {selectedFaculty ? (
               <TimetableTable
                 data={facultyTimetable}
+                rawSlots={facultyRawSlots}
                 loading={loading}
                 error={error}
                 onRefresh={() => fetchFacultyTimetable(selectedFaculty)}
+                showBreak={true}
               />
             ) : (
               <div className="py-12 text-center">
@@ -719,6 +822,7 @@ export default function Timetable() {
             {selectedClass ? (
               <TimetableTable
                 data={classTimetable}
+                rawSlots={classRawSlots}
                 loading={loading}
                 error={error}
                 onRefresh={() => fetchClassTimetable(selectedClass)}

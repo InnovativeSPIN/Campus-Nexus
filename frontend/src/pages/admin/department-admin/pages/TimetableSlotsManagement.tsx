@@ -82,6 +82,45 @@ const normalizeTimeFormat = (time: string | null | undefined): string | null => 
   return null;
 };
 
+/**
+ * Formats a 24-hour time string (e.g. "14:00" or "14:00:00") into a 12-hour AM/PM format (e.g. "02:00 PM").
+ * Handles times that are already in 12-hour format cleanly.
+ */
+const formatTimeTo12h = (timeStr: string | null | undefined): string => {
+  if (!timeStr) return "";
+  const trimmed = timeStr.trim();
+  if (trimmed === "") return "";
+  
+  if (trimmed.toLowerCase().includes("am") || trimmed.toLowerCase().includes("pm")) {
+    return trimmed;
+  }
+  
+  const parts = trimmed.split(":");
+  let hours = parseInt(parts[0]);
+  const minutes = parseInt(parts[1]);
+  if (isNaN(hours) || isNaN(minutes)) return trimmed;
+  
+  const ampm = hours >= 12 ? "PM" : "AM";
+  hours = hours % 12;
+  hours = hours ? hours : 12;
+  const minutesStr = minutes.toString().padStart(2, '0');
+  const hoursStr = hours.toString().padStart(2, '0');
+  
+  return `${hoursStr}:${minutesStr} ${ampm}`;
+};
+
+/**
+ * Formats a 24-hour time range (e.g. "09:30 - 10:20") into a 12-hour AM/PM format (e.g. "09:30 AM - 10:20 AM").
+ */
+const formatRangeTo12h = (rangeStr: string | null | undefined): string => {
+  if (!rangeStr) return "";
+  const parts = rangeStr.split(" - ");
+  if (parts.length === 2) {
+    return `${formatTimeTo12h(parts[0])} - ${formatTimeTo12h(parts[1])}`;
+  }
+  return rangeStr;
+};
+
 // Default periods - will be made dynamic later
 const DEFAULT_PERIODS = [
   { id: 1, label: "I", time: "09:30 AM - 10:20 AM" },
@@ -110,6 +149,7 @@ export default function TimetableSlotsManagement() {
   const [isBreakConfigOpen, setIsBreakConfigOpen] = useState(false);
   const [periods, setPeriods] = useState<typeof DEFAULT_PERIODS>([...DEFAULT_PERIODS]);
   const [breakPeriodIds, setBreakPeriodIds] = useState<number[]>([]); // Will be loaded from backend
+  const [tempBreakTimings, setTempBreakTimings] = useState<Record<number, { start_time: string; end_time: string }>>({});
   const { authToken } = useAuth();
 
   const [formData, setFormData] = useState({
@@ -473,6 +513,7 @@ export default function TimetableSlotsManagement() {
           title: "Success",
           description: "Slot created successfully",
         });
+        window.alert("✅ Slot created successfully!");
       } else {
         let errorMessage = `Failed to create slot: ${response.statusText}`;
         try {
@@ -571,6 +612,7 @@ export default function TimetableSlotsManagement() {
           title: "Success",
           description: "Slot updated successfully",
         });
+        window.alert("✅ Slot updated successfully!");
       } else {
         const errorData = await response.json().catch(() => ({}));
         const errorMessage = errorData.message || `Failed to update slot: ${response.statusText}`;
@@ -609,7 +651,7 @@ export default function TimetableSlotsManagement() {
       const periodId = parseInt(formData.period_slot_id);
       const isBreakPeriod = isPeriodBreak(periodId);
 
-      // Create payload for copying
+      // Create base payload for copying
       const basePayload: any = {
         period_slot_id: periodId,
         subject_id: formData.subject_id && formData.subject_id !== "none" ? parseInt(formData.subject_id) : null,
@@ -645,7 +687,57 @@ export default function TimetableSlotsManagement() {
             s => s.day === targetDay && s.period_slot_id === periodId
           );
 
-          const payload = { ...basePayload, day: targetDay };
+          // Construct payload to only update timing for teaching slots, and copy break settings for break slots
+          let payload: any;
+          if (existingSlot) {
+            if (isBreakPeriod || formData.session_type === 'break') {
+              payload = {
+                start_time: basePayload.start_time,
+                end_time: basePayload.end_time,
+                session_type: 'break',
+                notes: formData.notes || null,
+                subject_id: null,
+                faculty_id: null,
+                room: null,
+                is_lab_session: false,
+              };
+            } else {
+              // For teaching slots, ONLY update timings to avoid overwriting subject/faculty/etc.
+              payload = {
+                start_time: basePayload.start_time,
+                end_time: basePayload.end_time,
+              };
+            }
+          } else {
+            if (isBreakPeriod || formData.session_type === 'break') {
+              payload = {
+                day: targetDay,
+                period_slot_id: periodId,
+                session_type: 'break',
+                notes: formData.notes || null,
+                start_time: basePayload.start_time,
+                end_time: basePayload.end_time,
+                subject_id: null,
+                faculty_id: null,
+                room: null,
+                is_lab_session: false,
+              };
+            } else {
+              // Create as empty teaching slot with timing
+              payload = {
+                day: targetDay,
+                period_slot_id: periodId,
+                session_type: 'theory',
+                start_time: basePayload.start_time,
+                end_time: basePayload.end_time,
+                subject_id: null,
+                faculty_id: null,
+                room: null,
+                is_lab_session: false,
+              };
+            }
+          }
+
           const method = existingSlot ? "PATCH" : "POST";
           const url = existingSlot
             ? `/api/v1/timetable-master/${masterId}/slots/${existingSlot.id}`
@@ -706,6 +798,7 @@ export default function TimetableSlotsManagement() {
       });
 
       if (successCount > 0) {
+        window.alert(`✅ Timings copied to other days successfully!\n${description}`);
         setIsDialogOpen(false);
         setEditingSlot(null);
         resetForm();
@@ -742,6 +835,7 @@ export default function TimetableSlotsManagement() {
           title: "Success",
           description: "Slot deleted successfully",
         });
+        window.alert("✅ Slot deleted successfully!");
       } else {
         throw new Error("Failed to delete slot");
       }
@@ -1281,6 +1375,41 @@ export default function TimetableSlotsManagement() {
               // Refresh break config from backend before opening dialog
               console.log('[BREAK CONFIG] Opening dialog - refreshing from backend');
               await refetchBreakConfig();
+              
+              // Populate tempBreakTimings from periods when opening
+              const initialTimings: Record<number, { start_time: string; end_time: string }> = {};
+              periods.forEach(p => {
+                const parts = p.time.split(" - ");
+                
+                const parseTimeTo24h = (tStr: string | undefined): string => {
+                  if (!tStr) return "";
+                  const trimmed = tStr.trim();
+                  const is12h = trimmed.toLowerCase().includes("am") || trimmed.toLowerCase().includes("pm");
+                  if (is12h) {
+                    const timeParts = trimmed.split(" ");
+                    const time = timeParts[0];
+                    const ampm = timeParts[1] || "";
+                    let [hours, minutes] = time.split(":").map(Number);
+                    if (ampm.toLowerCase() === "pm" && hours < 12) hours += 12;
+                    if (ampm.toLowerCase() === "am" && hours === 12) hours = 0;
+                    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+                  }
+                  
+                  const parts24h = trimmed.split(":");
+                  const hours = parseInt(parts24h[0]);
+                  const minutes = parseInt(parts24h[1]);
+                  if (isNaN(hours) || isNaN(minutes)) return "";
+                  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+                };
+                
+                initialTimings[p.id] = {
+                  start_time: parseTimeTo24h(parts[0]),
+                  end_time: parseTimeTo24h(parts[1]),
+                };
+              });
+              console.log('[BREAK CONFIG] Initialized timings for editing:', initialTimings);
+              setTempBreakTimings(initialTimings);
+              
               setIsBreakConfigOpen(true);
             }}
             className="bg-purple-600 hover:bg-purple-700"
@@ -1550,8 +1679,8 @@ export default function TimetableSlotsManagement() {
                       
                       // Display custom timing if available, otherwise use period default
                       const displayTime = slot?.start_time && slot?.end_time 
-                        ? `${slot.start_time.substring(0, 5)} - ${slot.end_time.substring(0, 5)}`
-                        : period.time;
+                        ? `${formatTimeTo12h(slot.start_time)} - ${formatTimeTo12h(slot.end_time)}`
+                        : formatRangeTo12h(period.time);
                       
                       return (
                         <div
@@ -1564,7 +1693,7 @@ export default function TimetableSlotsManagement() {
                           <div className="flex-1">
                             <p className="font-semibold text-sm">
                               {isPeriodBreak(period.id) 
-                                ? `🔴 Period ${period.id}: ${period.label} (Break - ${period.time})` 
+                                ? `🔴 Period ${period.id}: ${period.label} (Break - ${formatRangeTo12h(period.time)})` 
                                 : `Period ${period.id}: ${period.label} (${displayTime})`}
                             </p>
                             {slot ? (
@@ -1654,7 +1783,7 @@ export default function TimetableSlotsManagement() {
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
                         <p className="font-medium">Period {period.id}: {period.label}</p>
-                        <p className="text-sm text-muted-foreground">{period.time}</p>
+                        <p className="text-sm text-muted-foreground">{formatRangeTo12h(period.time)}</p>
                       </div>
                       <div
                         className={cn(
@@ -1672,6 +1801,44 @@ export default function TimetableSlotsManagement() {
                     <p className="text-xs text-muted-foreground mt-2">
                       {isPeriodBreak(period.id) ? "Marked as BREAK" : "Teaching period"}
                     </p>
+                    {isPeriodBreak(period.id) && (
+                      <div className="mt-3 flex items-center gap-2 pt-2 border-t border-purple-200" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex flex-col gap-1">
+                          <span className="text-[10px] text-purple-700 font-semibold">Start Time</span>
+                          <Input
+                            type="time"
+                            value={tempBreakTimings[period.id]?.start_time || ""}
+                            onChange={(e) => {
+                              setTempBreakTimings(prev => ({
+                                ...prev,
+                                [period.id]: {
+                                  ...prev[period.id],
+                                  start_time: e.target.value
+                                }
+                              }));
+                            }}
+                            className="w-28 text-xs h-8 border-purple-300 bg-white text-black"
+                          />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <span className="text-[10px] text-purple-700 font-semibold">End Time</span>
+                          <Input
+                            type="time"
+                            value={tempBreakTimings[period.id]?.end_time || ""}
+                            onChange={(e) => {
+                              setTempBreakTimings(prev => ({
+                                ...prev,
+                                [period.id]: {
+                                  ...prev[period.id],
+                                  end_time: e.target.value
+                                }
+                              }));
+                            }}
+                            className="w-28 text-xs h-8 border-purple-300 bg-white text-black"
+                          />
+                        </div>
+                      </div>
+                    )}
                   </Card>
                 ))}
               </div>
@@ -1703,7 +1870,23 @@ export default function TimetableSlotsManagement() {
                   try {
                     console.log('[BREAK CONFIG] Saving to backend. Current state:', breakPeriodIds);
                     
-                    // Save break configuration to backend
+                    const timingsPayload = breakPeriodIds.map(id => ({
+                      period_slot_id: id,
+                      start_time: tempBreakTimings[id]?.start_time || "",
+                      end_time: tempBreakTimings[id]?.end_time || "",
+                    }));
+
+                    const invalidBreak = timingsPayload.find(t => !t.start_time || !t.end_time);
+                    if (invalidBreak) {
+                      toast({
+                        title: "Validation Error",
+                        description: `Please specify start and end times for Period ${invalidBreak.period_slot_id}`,
+                        variant: "destructive",
+                      });
+                      return;
+                    }
+
+                    // Save break configuration and timings to backend
                     const res = await fetch(
                       `/api/v1/timetable-master/${masterId}/break-config`,
                       {
@@ -1712,7 +1895,10 @@ export default function TimetableSlotsManagement() {
                           'Authorization': `Bearer ${authToken}`,
                           'Content-Type': 'application/json',
                         },
-                        body: JSON.stringify({ breakPeriodIds }),
+                        body: JSON.stringify({
+                          breakPeriodIds,
+                          breakTimings: timingsPayload
+                        }),
                       }
                     );
 
@@ -1734,6 +1920,10 @@ export default function TimetableSlotsManagement() {
                       console.log('[BREAK CONFIG] Cached to localStorage:', `timetable_${masterId}_breaks`, savedBreakIds);
                       
                       setIsBreakConfigOpen(false);
+                      
+                      // Explicitly refresh slots grid
+                      fetchSlots();
+
                       toast({
                         title: "✅ Break Configuration Saved",
                         description: `${periods.filter(p => {
@@ -1742,6 +1932,11 @@ export default function TimetableSlotsManagement() {
                           return Array.isArray(savedIds) && savedIds.includes(p.id);
                         }).length} periods marked as breaks for this timetable`,
                       });
+                      const count = periods.filter(p => {
+                        const savedIds = data.data?.breakPeriodIds || breakPeriodIds;
+                        return Array.isArray(savedIds) && savedIds.includes(p.id);
+                      }).length;
+                      window.alert(`✅ Break Configuration Saved successfully!\n${count} period(s) marked as breaks for this timetable.`);
                     } else {
                       const error = await res.json();
                       throw new Error(error.message || 'Failed to save break configuration');
