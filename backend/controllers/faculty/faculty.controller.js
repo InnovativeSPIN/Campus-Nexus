@@ -991,3 +991,55 @@ export const getDepartmentColleagues = asyncHandler(async (req, res, next) => {
     return next(new ErrorResponse(`Error fetching colleagues: ${error.message}`, 500));
   }
 });
+
+// @desc      Get faculty subjects
+// @route     GET /api/v1/faculty/me/subjects
+// @access    Private/Faculty
+export const getMySubjects = asyncHandler(async (req, res, next) => {
+  try {
+    const facultyId = req.user.faculty_id;
+
+    if (!facultyId) {
+      return next(new ErrorResponse('Faculty ID not found', 400));
+    }
+
+    const { sequelize } = await import('../../models/index.js');
+    
+    // Query v_faculty_timetable to get subjects
+    const query = `
+      SELECT 
+        class_name as program,
+        semester,
+        subject_code as subjectCode,
+        subject_name as subjectName,
+        session_type as category,
+        batch
+      FROM v_faculty_timetable
+      WHERE faculty_id = :facultyId
+        AND subject_code IS NOT NULL
+      GROUP BY class_name, semester, subject_code, subject_name, session_type, batch
+    `;
+    
+    const [results] = await sequelize.query(query, {
+      replacements: { facultyId }
+    });
+
+    const subjects = results.map(row => ({
+      program: row.program,
+      semester: row.semester,
+      subject: `${row.subjectCode || ''} - ${row.subjectName || ''}`,
+      result: "N/A", // Placeholder
+      category: row.category === 'lecture' ? 'T' : (row.category === 'lab' ? 'P' : 'TCL'),
+      url: "",
+      batch: row.batch
+    }));
+
+    res.status(200).json({
+      success: true,
+      data: subjects
+    });
+  } catch (error) {
+    console.error('[GET SUBJECTS ERROR]', error);
+    return next(new ErrorResponse('Failed to fetch subjects', 500));
+  }
+});
