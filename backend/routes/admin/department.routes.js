@@ -4,7 +4,8 @@ import {
     getDepartment,
     createDepartment,
     updateDepartment,
-    deleteDepartment
+    deleteDepartment,
+    getDepartmentStatistics
 } from '../../controllers/admin/department.controller.js';
 
 import { protect, authorize } from '../../middleware/auth.js';
@@ -17,6 +18,9 @@ router.use(protect);
 router.route('/')
     .get(authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin', 'faculty', 'department-admin'), getDepartments)
     .post(authorize('superadmin', 'super-admin'), createDepartment);
+
+router.route('/statistics')
+    .get(authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin', 'department-admin'), getDepartmentStatistics);
 
 router.route('/:id')
     .get(authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin', 'faculty', 'department-admin'), getDepartment)
