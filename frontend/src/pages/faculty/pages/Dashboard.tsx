@@ -11,6 +11,9 @@ import { useTodaysTimetable } from "@/hooks/useTodaysTimetable";
 import { AnnouncementNotificationModal } from "@/components/common/AnnouncementNotificationModal";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import {
   BookOpen,
   Calendar,
@@ -30,10 +33,44 @@ const leaveBalance = [
 ];
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const { announcement, showNotification, setShowNotification } = useAnnouncementNotification();
   const { current, next, allClasses, loading: timetableLoading, error: timetableError } = useTodaysTimetable();
   const [selectedSubject, setSelectedSubject] = useState<any>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
+  
+  const [studentLeaves, setStudentLeaves] = useState<any[]>([]);
+  const [showPendingLeavesPopup, setShowPendingLeavesPopup] = useState(false);
+
+  const fetchLeaveRequests = async () => {
+    try {
+      const token = localStorage.getItem('authToken');
+      if (!token) return;
+      const res = await fetch('/api/v1/student-leaves/approvals/pending/class-incharge', {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const json = await res.json();
+        const fetchedLeaves = json.data || [];
+        setStudentLeaves(fetchedLeaves);
+        // Show popup whenever there are pending leaves — no session suppression
+        if (fetchedLeaves.length > 0) {
+          setShowPendingLeavesPopup(true);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to fetch leave requests on dashboard:', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchLeaveRequests();
+  }, []);
+
+  const handleReviewRequests = () => {
+    setShowPendingLeavesPopup(false);
+    navigate('/faculty/class-incharge', { state: { activeTab: 'leaves' } });
+  };
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -118,6 +155,33 @@ export default function Dashboard() {
           updatedAt={announcement.updatedAt}
         />
       )}
+
+      {/* Pending student leave popup shown once per session */}
+      <Dialog open={showPendingLeavesPopup} onOpenChange={(open) => !open && setShowPendingLeavesPopup(false)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Pending Leave Requests</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <p className="text-sm text-muted-foreground">
+              You have {studentLeaves.length} pending student leave request{studentLeaves.length !== 1 ? 's' : ''} assigned to you as a Class Incharge.
+            </p>
+            <ul className="space-y-2 max-h-60 overflow-y-auto pr-1">
+              {studentLeaves.slice(0, 5).map((leave) => (
+                <li key={leave.id} className="rounded-xl border border-muted-foreground/10 bg-muted/40 p-3 text-sm">
+                  <p className="font-semibold text-foreground">{leave.student?.firstName} {leave.student?.lastName}</p>
+                  <p className="text-xs text-muted-foreground">{leave.leaveType} • {new Date(leave.startDate).toLocaleDateString()} - {new Date(leave.endDate).toLocaleDateString()}</p>
+                </li>
+              ))}
+            </ul>
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <Button variant="outline" onClick={() => setShowPendingLeavesPopup(false)}>Close</Button>
+              <Button onClick={handleReviewRequests}>Review Requests</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Page Header */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}

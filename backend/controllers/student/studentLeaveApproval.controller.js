@@ -2,6 +2,8 @@ import asyncHandler from '../../middleware/async.js';
 import ErrorResponse from '../../utils/errorResponse.js';
 import { models } from '../../models/index.js';
 import { Op } from 'sequelize';
+import path from 'path';
+
 import {
     notifyStudentLeaveEvent,
     notifyFacultyApprovalPending,
@@ -84,15 +86,17 @@ export const submitLeaveApplication = asyncHandler(async (req, res, next) => {
             assignedClassInchargeId = approvers.class_coordinator_id;
         }
 
-        // Attachment Filename extraction
+        // Attachment path extraction - store the full relative web URL for unambiguous access
         let imageFilename = null;
         if (req.file) {
-            imageFilename = req.file.filename;
+            // Store as full relative web path so it can be served directly without guessing
+            imageFilename = `/uploads/students/${req.file.filename}`;
         } else if (req.files && req.files.attachment) {
-            imageFilename = `legacy_upload_${Date.now()}_${req.files.attachment.name}`;
+            const legacyName = `legacy_upload_${Date.now()}_${req.files.attachment.name}`;
             // Move it if express-fileupload actually caught it
-            const uploadPath = path.join(process.cwd(), 'public', 'uploads', 'students', imageFilename);
+            const uploadPath = path.join(process.cwd(), 'public', 'uploads', 'students', legacyName);
             await req.files.attachment.mv(uploadPath);
+            imageFilename = `/uploads/students/${legacyName}`;
         } else {
             imageFilename = req.body.attachment || null;
         }
@@ -335,13 +339,42 @@ export const deptAdminApproveLeave = asyncHandler(async (req, res, next) => {
 export const getPendingLeavesForClassIncharge = asyncHandler(async (req, res, next) => {
     const facultyId = req.user.faculty_id;
 
-    const { StudentLeave, Student } = models;
-    // Get pending leaves where this faculty is the assigned incharge
-    const leaves = await StudentLeave.findAll({
+    const { StudentLeave, Student, ClassIncharge, TimetableMaster } = models;
+
+    // Strategy: find ALL class IDs where this faculty is a class incharge
+    // Method 1: ClassIncharge table (direct assignment)
+    const ciRecords = await ClassIncharge.findAll({
+        where: { faculty_id: facultyId, status: 'active' },
+        attributes: ['class_id']
+    }).catch(() => []);
+
+    // Method 2: TimetableMaster as class_coordinator or asst_coordinator
+    const tmRecords = await TimetableMaster.findAll({
         where: {
-            class_incharge_id: facultyId,
-            class_incharge_approval_status: 'pending'
+            [Op.or]: [
+                { class_coordinator_id: facultyId },
+                { asst_coordinator_id: facultyId }
+            ]
         },
+        attributes: ['class_id']
+    }).catch(() => []);
+
+    const managedClassIds = [
+        ...ciRecords.map(r => r.class_id),
+        ...tmRecords.map(r => r.class_id)
+    ].filter(Boolean);
+
+    // Build OR condition: leaves directly assigned to this faculty OR leaves for any of their managed classes
+    const whereCondition = {
+        class_incharge_approval_status: 'pending',
+        [Op.or]: [
+            { class_incharge_id: facultyId },
+            ...(managedClassIds.length > 0 ? [{ classId: managedClassIds }] : [])
+        ]
+    };
+
+    const leaves = await StudentLeave.findAll({
+        where: whereCondition,
         include: [{ model: Student, as: 'student' }],
         order: [['createdAt', 'DESC']]
     });

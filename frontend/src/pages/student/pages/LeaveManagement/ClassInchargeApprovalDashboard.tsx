@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/pages/student/lib/utils';
 import { toast } from '@/pages/student/hooks/use-toast';
+import { getStudentDocumentUrl } from '@/utils/imageUrl';
 
 interface PendingLeave {
   id: number;
@@ -44,7 +45,7 @@ interface PendingLeave {
   endDate: string;
   totalDays: number;
   reason: string;
-  attachmentPath?: string;
+  attachment?: string | null;
   created_at: string;
 }
 
@@ -211,10 +212,21 @@ export default function ClassInchargeApprovalDashboard() {
                   </p>
                 </div>
 
-                {leave.attachmentPath && (
-                  <Button variant="outline" size="sm">
-                    <FileText className="w-4 h-4 mr-2" />
-                    View Attachment
+                {leave.attachment && (
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="sm"
+                  >
+                    <a
+                      href={getStudentDocumentUrl(leave.attachment)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-2"
+                    >
+                      <FileText className="w-4 h-4" />
+                      View Attachment
+                    </a>
                   </Button>
                 )}
 
