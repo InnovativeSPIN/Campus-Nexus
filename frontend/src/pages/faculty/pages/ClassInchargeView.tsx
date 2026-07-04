@@ -1,5 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { getStudentDocumentUrl } from '@/utils/imageUrl';
 import { MainLayout } from '@/pages/faculty/components/layout/MainLayout';
 import { motion } from 'framer-motion';
 import {
@@ -111,6 +113,7 @@ interface ClassInchargeData {
 export default function ClassInchargeView() {
   const { user, refreshUserData } = useAuth();
   const { toast } = useToast();
+  const location = useLocation();
   const refreshedRef = useRef(false);
   const portfolioFetchedRef = useRef(false);
   const [data, setData] = useState<ClassInchargeData | null>(null);
@@ -120,7 +123,9 @@ export default function ClassInchargeView() {
   const [portfolioLoading, setPortfolioLoading] = useState(false);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [activeTab, setActiveTab] = useState<'students' | 'leaves' | 'portfolio'>('students');
+  const [activeTab, setActiveTab] = useState<'students' | 'leaves' | 'portfolio'>(
+    (location.state?.activeTab as any) || 'students'
+  );
   const [portfolioData, setPortfolioData] = useState<{
     sports: PortfolioItem[];
     events: PortfolioItem[];
@@ -131,6 +136,7 @@ export default function ClassInchargeView() {
   const [selectedLeave, setSelectedLeave] = useState<StudentLeave | null>(null);
   const [leaveRemarks, setLeaveRemarks] = useState('');
   const [processingLeaveId, setProcessingLeaveId] = useState<number | null>(null);
+  const [showPendingLeavesPopup, setShowPendingLeavesPopup] = useState(false);
 
   const [selectedPortfolioItem, setSelectedPortfolioItem] = useState<PortfolioItem | null>(null);
   const [isPortfolioDialogOpen, setIsPortfolioDialogOpen] = useState(false);
@@ -198,7 +204,15 @@ export default function ClassInchargeView() {
       });
       if (res.ok) {
         const json = await res.json();
-        setLeaves(json.data || []);
+        const fetchedLeaves = json.data || [];
+        setLeaves(fetchedLeaves);
+
+        const popupKey = 'ci_leave_pending_popup_shown';
+        const alreadyShown = typeof window !== 'undefined' && sessionStorage.getItem(popupKey) === 'true';
+        if (fetchedLeaves.length > 0 && !alreadyShown) {
+          setShowPendingLeavesPopup(true);
+          sessionStorage.setItem(popupKey, 'true');
+        }
       }
     } catch (err) {
       console.error('Failed to fetch leave requests:', err);
@@ -498,14 +512,15 @@ export default function ClassInchargeView() {
                         <th className="py-3 px-4 text-left">Student</th>
                         <th className="py-3 px-4 text-left">Type</th>
                         <th className="py-3 px-4 text-left">Duration</th>
+                        <th className="py-3 px-4 text-center">Attachment</th>
                         <th className="py-3 px-4 text-center">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
                       {leavesLoading ? (
-                        <tr><td colSpan={4} className="py-12 text-center"><Clock className="animate-spin inline mr-2" /> Loading...</td></tr>
+                        <tr><td colSpan={5} className="py-12 text-center"><Clock className="animate-spin inline mr-2" /> Loading...</td></tr>
                       ) : leaves.length === 0 ? (
-                        <tr><td colSpan={4} className="py-12 text-center text-muted-foreground">No pending leaves.</td></tr>
+                        <tr><td colSpan={5} className="py-12 text-center text-muted-foreground">No pending leaves.</td></tr>
                       ) : (
                         leaves.map(l => (
                           <tr key={l.id} className="border-b hover:bg-muted/10">
@@ -517,6 +532,20 @@ export default function ClassInchargeView() {
                             <td className="py-3 px-4">
                               <p className="font-bold">{l.totalDays} Days</p>
                               <p className="text-[10px] text-muted-foreground">{new Date(l.startDate).toLocaleDateString()} - {new Date(l.endDate).toLocaleDateString()}</p>
+                            </td>
+                            <td className="py-3 px-4 text-center">
+                              {l.attachment ? (
+                                <a
+                                  href={getStudentDocumentUrl(l.attachment)}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="text-xs text-primary font-semibold hover:underline"
+                                >
+                                  View
+                                </a>
+                              ) : (
+                                <span className="text-xs text-muted-foreground">None</span>
+                              )}
                             </td>
                             <td className="py-3 px-4 text-center">
                               <Button size="sm" variant="outline" onClick={() => setSelectedLeave(l)} className="h-8 text-[10px] font-bold">Review</Button>
@@ -607,6 +636,32 @@ export default function ClassInchargeView() {
 
       {/* DIALOGS */}
 
+      {/* Pending leave popup shown once per session */}
+      <Dialog open={showPendingLeavesPopup} onOpenChange={(open) => !open && setShowPendingLeavesPopup(false)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Pending Leave Requests</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <p className="text-sm text-muted-foreground">
+              You have {leaves.length} pending student leave request{leaves.length !== 1 ? 's' : ''} assigned to you.
+            </p>
+            <ul className="space-y-2">
+              {leaves.slice(0, 5).map((leave) => (
+                <li key={leave.id} className="rounded-xl border border-muted-foreground/10 bg-muted/40 p-3 text-sm">
+                  <p className="font-semibold">{leave.student?.firstName} {leave.student?.lastName}</p>
+                  <p className="text-xs text-muted-foreground">{leave.leaveType} • {new Date(leave.startDate).toLocaleDateString()} - {new Date(leave.endDate).toLocaleDateString()}</p>
+                </li>
+              ))}
+            </ul>
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <Button variant="outline" onClick={() => setShowPendingLeavesPopup(false)}>Close</Button>
+              <Button onClick={() => setShowPendingLeavesPopup(false)}>Review Requests</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Leave Dialog */}
       <Dialog open={!!selectedLeave} onOpenChange={o => !o && setSelectedLeave(null)}>
         <DialogContent className="max-w-md">
@@ -623,6 +678,20 @@ export default function ClassInchargeView() {
                 <Label className="text-xs font-bold text-muted-foreground">REMARKS</Label>
                 <Textarea value={leaveRemarks} onChange={e => setLeaveRemarks(e.target.value)} placeholder="Entry notes here..." className="min-h-[100px] text-sm resize-none" />
               </div>
+
+              {selectedLeave.attachment && (
+                <div className="rounded-2xl border border-muted-foreground/20 bg-muted/30 p-4">
+                  <p className="text-xs uppercase tracking-widest font-semibold text-muted-foreground mb-2">Student attachment</p>
+                  <a
+                    href={getStudentDocumentUrl(selectedLeave.attachment)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center justify-center rounded-full bg-primary/10 text-primary px-3 py-2 text-sm font-semibold hover:bg-primary/20 transition"
+                  >
+                    View Attachment
+                  </a>
+                </div>
+              )}
               <div className="flex gap-3">
                 <Button variant="outline" className="flex-1" onClick={() => setSelectedLeave(null)}>Cancel</Button>
                 <Button variant="destructive" className="flex-1" onClick={() => handleLeaveApproval(selectedLeave.id, 'rejected')} disabled={!!processingLeaveId}>Reject</Button>
@@ -680,7 +749,7 @@ export default function ClassInchargeView() {
                       <span className="text-xs font-bold text-blue-800">Supportive Evidence Provided</span>
                     </div>
                     <a
-                      href={`/uploads/students/${selectedPortfolioItem.documentUrl || selectedPortfolioItem.certificateUrl || selectedPortfolioItem.fileUrl || selectedPortfolioItem.document_path}`}
+                      href={getStudentDocumentUrl(selectedPortfolioItem.documentUrl || selectedPortfolioItem.certificateUrl || selectedPortfolioItem.fileUrl || selectedPortfolioItem.document_path)}
                       target="_blank" rel="noreferrer"
                       className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-[10px] font-black hover:bg-blue-700 transition-all uppercase tracking-wider whitespace-nowrap"
                     >

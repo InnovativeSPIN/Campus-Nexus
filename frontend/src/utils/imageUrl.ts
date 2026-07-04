@@ -33,3 +33,44 @@ export function normalizeImageUrl(url: string | null | undefined): string | null
   // Unknown format – return as-is and let the browser decide
   return url;
 }
+
+/**
+ * Normalizes a student document path or attachment filename to a proper relative web URL.
+ * Handles absolute local disk paths, subfolder structures, and bare filenames.
+ */
+export function getStudentDocumentUrl(url: string | null | undefined): string {
+  if (!url) return '';
+  
+  // If it's already an absolute URL, return it
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  
+  // Normalize backslashes to forward slashes
+  let cleanUrl = url.replace(/\\/g, '/');
+  
+  // If it contains '/uploads/', extract from '/uploads/' onwards
+  const idx = cleanUrl.indexOf('/uploads/');
+  if (idx !== -1) {
+    return cleanUrl.slice(idx);
+  }
+  
+  // If it starts with '/portfolio/' or 'portfolio/', place it under '/uploads/students/'
+  if (cleanUrl.startsWith('/portfolio/') || cleanUrl.startsWith('portfolio/')) {
+    const relative = cleanUrl.startsWith('/') ? cleanUrl.slice(1) : cleanUrl;
+    return `/uploads/students/${relative}`;
+  }
+  
+  // If it starts with 'students/' or '/students/' but not '/uploads/'
+  if (cleanUrl.startsWith('/students/') || cleanUrl.startsWith('students/')) {
+    const relative = cleanUrl.startsWith('/') ? cleanUrl.slice(1) : cleanUrl;
+    return `/uploads/${relative}`;
+  }
+
+  // If it already starts with '/uploads/students/' or 'uploads/students/'
+  if (cleanUrl.startsWith('/uploads/students/')) return cleanUrl;
+  if (cleanUrl.startsWith('uploads/students/')) return `/${cleanUrl}`;
+
+  // If it's just a bare filename (like attachment-xxx.pdf or doc.png)
+  const filename = cleanUrl.split('/').pop() || cleanUrl;
+  return `/uploads/students/${filename}`;
+}
+
