@@ -126,11 +126,7 @@ const initialFacultyData = {
 
 // Experience Details (split into teaching and industry)
 // Subjects Handled
-const subjectsHandled = [
-  { program: "B.E - CSE", semester: "3", subject: "CS3301 - Data Structures", result: "82%", category: "T", url: "https://example.com/subject-proof-1.pdf" },
-  { program: "B.Tech - AI&DS", semester: "4", subject: "CS3591 - Computer Networks", result: "100%", category: "P", url: "https://example.com/subject-proof-2.pdf" },
-  { program: "B.Tech - IT", semester: "4", subject: "IT3401 - Web Technology", result: "92%", category: "TCL", url: "https://example.com/subject-proof-3.pdf" },
-];
+// Removed static subjectsHandled, it is now fetched dynamically from API.
 
 // Leave Details
 const leaveDetails = {
@@ -147,6 +143,7 @@ type EventCategoryType = typeof EVENT_CATEGORIES[number];
 
 export default function Profile() {
   const { user, updateUserData } = useAuth();
+  const [subjectsHandled, setSubjectsHandled] = useState<any[]>([]);
   const [selectedEventCategory, setSelectedEventCategory] = useState<EventCategoryType>("Resource Person");
   const [selectedResearchCategory, setSelectedResearchCategory] = useState<string>("Conference");
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -421,6 +418,21 @@ export default function Profile() {
           }
         } catch (e) {
           console.warn('Failed to fetch research', e);
+        }
+
+        // Fetch subjects
+        try {
+          const subjectsResponse = await fetch('/api/v1/faculty/me/subjects', {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (subjectsResponse.ok) {
+            const subjectsResult = await subjectsResponse.json();
+            if (subjectsResult.success && Array.isArray(subjectsResult.data)) {
+              setSubjectsHandled(subjectsResult.data);
+            }
+          }
+        } catch (e) {
+          console.warn('Failed to fetch subjects', e);
         }
       } catch (error) {
         console.error('Failed to fetch data:', error);
@@ -4469,47 +4481,39 @@ export default function Profile() {
                       transition={{ delay: index * 0.1 }}
                       className="p-4 bg-muted/30 rounded-lg border border-border hover:border-primary/30 transition-colors"
                     >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
-                            <Badge variant="secondary">{subject.program}</Badge>
-                            <Badge
-                              className={`text-white ${subject.category === "T" ? "bg-blue-600" :
-                                subject.category === "P" ? "bg-green-600" :
-                                  subject.category === "TCL" ? "bg-orange-500" :
-                                    "bg-gray-600"
-                                }`}
-                            >
-                              {subject.category}
-                            </Badge>
-                            <span className="text-xs text-muted-foreground">
-                              Semester {subject.semester}
+                      <div className="flex flex-col gap-3">
+                        <div className="border-b border-border pb-2">
+                          <h4 className="text-lg font-bold text-foreground">
+                            {subject.subject}
+                          </h4>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-4 text-sm">
+                          <div className="flex items-center">
+                            <span className="text-muted-foreground w-24">Program:</span>
+                            <span className="font-medium text-foreground">{subject.program}</span>
+                          </div>
+                          <div className="flex items-center">
+                            <span className="text-muted-foreground w-24">Semester:</span>
+                            <span className="font-medium text-foreground">{subject.semester}</span>
+                          </div>
+                          <div className="flex items-center">
+                            <span className="text-muted-foreground w-24">Batch:</span>
+                            <span className="font-medium text-foreground">{subject.batch || 'N/A'}</span>
+                          </div>
+                          <div className="flex items-center">
+                            <span className="text-muted-foreground w-24">Category:</span>
+                            <span className="font-medium text-foreground">
+                              {subject.category === 'T' ? 'Theory' : 
+                               subject.category === 'P' ? 'Practical' : 
+                               subject.category === 'TCL' ? 'Theory cum Lab' : subject.category}
                             </span>
                           </div>
-                          <p className="font-semibold text-foreground">{subject.subject}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-xs text-muted-foreground">Result</p>
-                          <p className={`text-lg font-bold ${parseInt(subject.result) >= 90 ? "text-success" :
-                            parseInt(subject.result) >= 80 ? "text-secondary" : "text-warning"
-                            }`}>
-                            {subject.result}
-                          </p>
                         </div>
                       </div>
                     </motion.div>
                   ))}
               </div>
 
-              <div className="mt-6 p-4 bg-secondary/10 rounded-lg border border-secondary/30">
-                <div className="flex items-center gap-3">
-                  <Target className="w-5 h-5 text-secondary" />
-                  <div>
-                    <p className="font-semibold text-foreground">Average Result</p>
-                    <p className="text-2xl font-bold text-secondary">91%</p>
-                  </div>
-                </div>
-              </div>
             </TabsContent>
 
             <TabsContent value="events">
