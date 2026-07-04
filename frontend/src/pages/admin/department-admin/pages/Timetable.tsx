@@ -14,22 +14,22 @@ const formatTimeTo12h = (timeStr: string | null | undefined): string => {
   if (!timeStr) return "";
   const trimmed = timeStr.trim();
   if (trimmed === "") return "";
-  
+
   if (trimmed.toLowerCase().includes("am") || trimmed.toLowerCase().includes("pm")) {
     return trimmed;
   }
-  
+
   const parts = trimmed.split(":");
   let hours = parseInt(parts[0]);
   const minutes = parseInt(parts[1]);
   if (isNaN(hours) || isNaN(minutes)) return trimmed;
-  
+
   const ampm = hours >= 12 ? "PM" : "AM";
   hours = hours % 12;
   hours = hours ? hours : 12;
   const minutesStr = minutes.toString().padStart(2, '0');
   const hoursStr = hours.toString().padStart(2, '0');
-  
+
   return `${hoursStr}:${minutesStr} ${ampm}`;
 };
 
@@ -59,21 +59,27 @@ const getRomanNumeral = (num: number): string => {
 
 const getDynamicPeriods = (slots: any[]): PeriodDisplay[] => {
   const periodMap = new Map<number, PeriodDisplay>();
-  
+
   slots.forEach((slot: any) => {
     const h = parseInt(slot.hour || slot.period_slot_id, 10);
     if (isNaN(h)) return;
-    
+
     const start = slot.start_time ? slot.start_time.substring(0, 5) : "";
     const end = slot.end_time ? slot.end_time.substring(0, 5) : "";
     const timeStr = start && end ? `${start} - ${end}` : "";
-    
+
     const isBreak = slot.sessionType === "break" || slot.session_type === "break";
-    
+
     if (!periodMap.has(h)) {
+      const displayLabel = slot.period_label && slot.period_label.trim() !== ""
+        ? slot.period_label
+        : isBreak
+          ? "Break"
+          : getRomanNumeral(h);
+
       periodMap.set(h, {
         id: h,
-        label: getRomanNumeral(h),
+        label: displayLabel,
         time: timeStr,
         isBreak: isBreak
       });
@@ -87,7 +93,7 @@ const getDynamicPeriods = (slots: any[]): PeriodDisplay[] => {
       }
     }
   });
-  
+
   return Array.from(periodMap.values()).sort((a, b) => a.id - b.id);
 };
 
@@ -112,6 +118,7 @@ const getDefaultPeriods = (): PeriodDisplay[] => {
 interface ClassSlot {
   id: number | string;
   subject: string;
+  subject_code?: string;
   section: string;
   department: string;
   year: string | number;
@@ -121,6 +128,8 @@ interface ClassSlot {
   notes?: string;
   start_time?: string;
   end_time?: string;
+  period_label?: string;
+  room?: string;
 }
 
 interface Faculty {
@@ -140,14 +149,33 @@ type TimetableData = {
   };
 };
 
-const TimetableTable = ({ 
-  data, 
+const getSessionColor = (sessionType: string) => {
+  switch (sessionType?.toLowerCase()) {
+    case 'lab':
+    case 'lab/practical':
+      return 'bg-green-50 border-l-3 border-green-500 text-green-900';
+    case 'project':
+      return 'bg-purple-50 border-l-3 border-purple-500 text-purple-900';
+    case 'tutorial':
+      return 'bg-cyan-50 border-l-3 border-cyan-500 text-cyan-900';
+    case 'activity':
+      return 'bg-yellow-50 border-l-3 border-yellow-500 text-yellow-900';
+    case 'break':
+      return 'bg-gray-50 border-l-3 border-gray-500 text-gray-900';
+    case 'theory':
+    default:
+      return 'bg-blue-50 border-l-3 border-blue-500 text-blue-900';
+  }
+};
+
+const TimetableTable = ({
+  data,
   rawSlots = [],
-  loading, 
-  error, 
+  loading,
+  error,
   onRefresh,
   showBreak = true
-}: { 
+}: {
   data: TimetableData;
   rawSlots?: any[];
   loading: boolean;
@@ -195,24 +223,34 @@ const TimetableTable = ({
   }
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full border-collapse">
+    <div className="border rounded-lg border-gray-200 overflow-hidden">
+      <table className="w-full border-collapse text-[11px] table-layout-auto">
         <thead>
-          <tr className="bg-muted/50">
-            <th className="border p-3 text-left font-semibold min-w-[100px]">Day</th>
+          <tr className="bg-blue-50 border-b border-blue-200">
+            <th className="border border-gray-200 px-1 py-1.5 text-center font-semibold text-blue-900 bg-gray-50/50 text-[10px] w-[50px]">Day</th>
             {displayPeriods.map((period) => (
               <th
                 key={period.id}
-                className={`border p-3 text-center font-semibold min-w-[140px] ${
-                  period.isBreak ? 'bg-amber-100/50' : ''
-                }`}
+                className={`border border-gray-200 px-0.5 py-1 text-center font-semibold text-blue-900 border-l border-blue-100 ${period.isBreak ? 'border-l border-amber-200 bg-amber-50/80' : ''}`}
+                style={period.isBreak ? { width: '45px' } : {}}
               >
-                <div className="flex flex-col">
-                  <span className="font-semibold text-sm">Period {period.id} ({period.label})</span>
-                  {period.time && (
-                    <span className="text-xs text-muted-foreground font-normal">
-                      {formatRangeTo12h(period.time)}
-                    </span>
+                <div className="flex flex-col leading-tight">
+                  {period.isBreak ? (
+                    <>
+                      <div className="font-bold text-[9px] text-amber-700">{period.label}</div>
+                      <div className="text-[8px] text-amber-600 font-normal mt-0.5 leading-none whitespace-nowrap">
+                        {formatRangeTo12h(period.time).split(" - ").join("\n")}
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="font-bold text-[10px]">{period.label}</div>
+                      {period.time && (
+                        <div className="text-[8px] text-gray-500 font-normal mt-0.5 leading-none whitespace-nowrap">
+                          {formatRangeTo12h(period.time)}
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               </th>
@@ -221,74 +259,90 @@ const TimetableTable = ({
         </thead>
         <tbody>
           {days.map((day) => (
-            <tr key={day}>
-              <td className="border p-2 text-sm font-medium bg-muted/30 min-w-[100px]">
-                {day}
+            <tr key={day} className="border-b border-gray-200 hover:bg-gray-50/30">
+              <td className="border border-gray-200 p-1 font-semibold text-gray-800 bg-gray-50 text-center text-[10px] w-[50px]">
+                {day.substring(0, 3)}
               </td>
 
               {displayPeriods.map((period) => {
                 const slots = (data[day]?.[period.id] || []) as ClassSlot[];
                 const breakSlot = slots.find(s => s.sessionType === 'break');
-                
-                if (breakSlot) {
+
+                // Show break cell only when showBreak is true
+                if (breakSlot && showBreak) {
                   return (
                     <td
                       key={`${day}-${period.id}`}
-                      className="border p-2 min-h-[80px] bg-amber-50"
+                      className="border border-gray-200 p-0.5 bg-amber-50/40 text-center align-middle"
+                      style={{ width: '45px' }}
                     >
-                      <div className="h-full flex flex-col items-center justify-center text-center">
-                        <span className="font-semibold text-amber-700 text-xs">🔴 {breakSlot.notes || "BREAK"}</span>
-                        {breakSlot.start_time && breakSlot.end_time && (
-                          <span className="text-[10px] text-amber-600 font-normal">
-                            {formatTimeTo12h(breakSlot.start_time)} - {formatTimeTo12h(breakSlot.end_time)}
-                          </span>
-                        )}
-                      </div>
+                      <div className="text-[9px] text-amber-600 font-medium py-1">☕</div>
                     </td>
                   );
                 }
-                
+
+                // When showBreak is false and slot is a break, skip it (show regular non-break slots only)
+                if (breakSlot && !showBreak) {
+                  // Filter out break slots and show only actual subject slots
+                  const nonBreakSlots = slots.filter(s => s.sessionType !== 'break');
+                  if (nonBreakSlots.length === 0) {
+                    return (
+                      <td key={`${day}-${period.id}`} className="border border-gray-200 p-0.5 align-top">
+                        <div className="text-[9px] text-gray-300 text-center py-1.5">-</div>
+                      </td>
+                    );
+                  }
+                }
+
+                // Filter out break slots from display when showBreak is false
+                const displaySlots = showBreak ? slots : slots.filter(s => s.sessionType !== 'break');
+
                 return (
                   <td
                     key={`${day}-${period.id}`}
-                    className="border p-2 min-h-[100px]"
+                    className="border border-gray-200 p-0.5 align-top"
                   >
-                    {slots.length > 0 ? (
-                      <div className="space-y-1">
-                        {slots.map((slot, idx) => (
+                    {displaySlots.length > 0 ? (
+                      <div className="space-y-0.5">
+                        {displaySlots.map((slot, idx) => (
                           <motion.div
                             key={slot.id || idx}
                             whileHover={{ scale: 1.02 }}
-                            className="bg-primary/10 border border-primary/20 p-2 rounded text-xs hover:bg-primary/20 transition-colors cursor-default"
+                            className={`${getSessionColor(slot.sessionType || "")} p-1.5 rounded text-[10px] hover:opacity-90 transition-opacity cursor-default flex flex-col justify-between`}
                           >
-                            <div className="font-semibold text-primary">
-                              {slot.subject}
+                            <div className="text-left leading-tight">
+                              <div className="font-bold text-[11px] text-gray-900 truncate">
+                                {slot.subject_code || "N/A"}
+                              </div>
+                              <div className="text-[10px] text-gray-800 leading-snug line-clamp-2 mt-0.5" title={slot.subject}>
+                                {slot.subject}
+                              </div>
                             </div>
-                            <div className="text-muted-foreground mt-0.5">
-                              {[slot.section, slot.department]
-                                .filter(Boolean)
-                                .join(" - ")}
+                            <div className="text-left mt-0.5 border-t border-current/10 pt-0.5 leading-none">
+                              {slot.faculty && (
+                                <div className="text-[9px] text-gray-600 truncate mt-0.5">
+                                  {slot.faculty}
+                                </div>
+                              )}
+                              <div className="mt-1 flex items-center justify-between text-[9px] leading-none opacity-85">
+                                <span className="font-semibold text-blue-800">
+                                  {slot.room ? `Rm:${slot.room}` : ''}
+                                </span>
+                                <span className="font-mono px-0.5 bg-white/60 rounded text-[8px] tracking-tight">
+                                  {slot.sessionType?.toUpperCase().substring(0, 3)}
+                                </span>
+                              </div>
+                              {slot.notes && (
+                                <div className="text-[8px] text-gray-500 italic mt-0.5 truncate" title={slot.notes}>
+                                  {slot.notes}
+                                </div>
+                              )}
                             </div>
-                            {slot.year && (
-                              <div className="text-muted-foreground">
-                                Year: {slot.year}
-                              </div>
-                            )}
-                            {slot.faculty && (
-                              <div className="text-muted-foreground">
-                                Faculty: {slot.faculty}
-                              </div>
-                            )}
-                            {slot.start_time && slot.end_time && (
-                              <div className="text-[10px] text-muted-foreground font-semibold mt-1">
-                                ⏰ {formatTimeTo12h(slot.start_time)} - {formatTimeTo12h(slot.end_time)}
-                              </div>
-                            )}
                           </motion.div>
                         ))}
                       </div>
                     ) : (
-                      <div className="h-full flex items-center justify-center text-muted-foreground text-xs">
+                      <div className="text-[10px] text-gray-300 text-center py-1.5">
                         -
                       </div>
                     )}
@@ -305,23 +359,23 @@ const TimetableTable = ({
 
 export default function Timetable() {
   const { user, authToken } = useAuth();
-  
+
   // My Timetable state
   const [myTimetable, setMyTimetable] = useState<TimetableData>({});
   const [myRawSlots, setMyRawSlots] = useState<any[]>([]);
-  
+
   // Faculty Timetable state
   const [facultyTimetable, setFacultyTimetable] = useState<TimetableData>({});
   const [facultyRawSlots, setFacultyRawSlots] = useState<any[]>([]);
   const [facultyList, setFacultyList] = useState<Faculty[]>([]);
   const [selectedFaculty, setSelectedFaculty] = useState<string>("");
-  
+
   // Class Timetable state
   const [classTimetable, setClassTimetable] = useState<TimetableData>({});
   const [classRawSlots, setClassRawSlots] = useState<any[]>([]);
   const [classList, setClassList] = useState<Class[]>([]);
   const [selectedClass, setSelectedClass] = useState<string>("");
-  
+
   // General state
   const [activeTab, setActiveTab] = useState<"my" | "faculty" | "class">("my");
   const [loading, setLoading] = useState(true);
@@ -353,6 +407,7 @@ export default function Timetable() {
         formatted[day][hourKey].push({
           id: slot.id || Math.random(),
           subject: slot.subject || "Unknown",
+          subject_code: slot.subject_code || "N/A",
           section: slot.section || "",
           department: slot.department || "",
           year: slot.year || "",
@@ -362,6 +417,8 @@ export default function Timetable() {
           notes: slot.notes || "",
           start_time: slot.start_time || "",
           end_time: slot.end_time || "",
+          period_label: slot.period_label || "",
+          room: slot.room || "",
         });
       }
     });
@@ -378,9 +435,9 @@ export default function Timetable() {
           "Content-Type": "application/json",
         },
       });
-      
+
       console.log("[TIMETABLE] My timetable response status:", response.status);
-      
+
       // Handle 304 Not Modified - server is returning empty body
       if (response.status === 304) {
         console.log("[TIMETABLE] Got 304 Not Modified for my timetable - clearing cache issue");
@@ -388,10 +445,10 @@ export default function Timetable() {
         setMyTimetable({});
         return;
       }
-      
+
       const data = await response.json();
       console.log("[TIMETABLE] My timetable data - success:", data.success, "slots:", data.timetable?.length || 0);
-      
+
       if (data.success && data.timetable && data.timetable.length > 0) {
         console.log("[TIMETABLE] Found my timetable with", data.timetable.length, "slots");
         setMyRawSlots(data.timetable);
@@ -407,11 +464,11 @@ export default function Timetable() {
                 "Content-Type": "application/json",
               },
             });
-            
+
             if (fallbackResponse.ok) {
               const fallbackData = await fallbackResponse.json();
               console.log("[TIMETABLE] Fallback faculty timetable received, slots:", fallbackData.timetable?.length || 0);
-              
+
               if (fallbackData.success && fallbackData.timetable && fallbackData.timetable.length > 0) {
                 console.log("[TIMETABLE] Found timetable via fallback with", fallbackData.timetable.length, "slots");
                 setMyRawSlots(fallbackData.timetable);
@@ -445,10 +502,10 @@ export default function Timetable() {
     try {
       // Get department ID from auth context - try multiple field names
       const departmentId = user?.department_id || user?.departmentId;
-      
+
       console.log("[TIMETABLE] User full object keys:", Object.keys(user || {}));
       console.log("[TIMETABLE] Fetching faculty list for department_id:", departmentId);
-      
+
       // Build URL with department filter - only active faculty
       let url = "/api/v1/faculty?limit=1000&status=active";
       if (departmentId) {
@@ -457,38 +514,38 @@ export default function Timetable() {
       } else {
         console.log("[TIMETABLE] No department_id found - will show all faculty from institution");
       }
-      
+
       console.log("[TIMETABLE] Faculty list URL:", url);
-      
+
       const response = await fetch(url, {
         headers: {
           Authorization: token ? `Bearer ${token}` : "",
           "Content-Type": "application/json",
         },
       });
-      
+
       console.log("[TIMETABLE] Faculty list response status:", response.status);
-      
+
       // Handle 304 Not Modified
       if (response.status === 304) {
         console.log("[TIMETABLE] Got 304 Not Modified for faculty list");
         setFacultyList([]);
         return;
       }
-      
+
       const data = await response.json();
       console.log("[TIMETABLE] Faculty list data received, count:", data.data?.length || 0);
-      
+
       if (data.success && Array.isArray(data.data)) {
         // Filter out the current logged-in user from the faculty list
         const filteredFaculty = data.data.filter(
           (faculty: any) => faculty.faculty_id !== user?.id
         );
         console.log("[TIMETABLE] After filtering current user, count:", filteredFaculty.length);
-        
+
         console.log("[TIMETABLE] Setting faculty list with", filteredFaculty.length, "faculty members");
         setFacultyList(filteredFaculty);
-        
+
         // Auto-select first faculty if list is not empty
         if (filteredFaculty.length > 0 && !selectedFaculty) {
           setSelectedFaculty(String(filteredFaculty[0].faculty_id));
@@ -544,21 +601,21 @@ export default function Timetable() {
       if (departmentId) {
         url += `?department_id=${departmentId}`;
       }
-      
+
       const response = await fetch(url, {
         headers: {
           Authorization: token ? `Bearer ${token}` : "",
           "Content-Type": "application/json",
         },
       });
-      
+
       // Handle 304 Not Modified
       if (response.status === 304) {
         console.log("[TIMETABLE] Got 304 Not Modified for class list");
         setClassList([]);
         return;
       }
-      
+
       const data = await response.json();
       if (data.success && Array.isArray(data.data)) {
         setClassList(data.data);
@@ -675,31 +732,28 @@ export default function Timetable() {
         <div className="flex gap-2 border-b border-border">
           <button
             onClick={() => handleTabChange("my")}
-            className={`px-4 py-2 font-medium transition-colors ${
-              activeTab === "my"
-                ? "text-primary border-b-2 border-primary -mb-0.5"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
+            className={`px-4 py-2 font-medium transition-colors ${activeTab === "my"
+              ? "text-primary border-b-2 border-primary -mb-0.5"
+              : "text-muted-foreground hover:text-foreground"
+              }`}
           >
             My Timetable
           </button>
           <button
             onClick={() => handleTabChange("faculty")}
-            className={`px-4 py-2 font-medium transition-colors ${
-              activeTab === "faculty"
-                ? "text-primary border-b-2 border-primary -mb-0.5"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
+            className={`px-4 py-2 font-medium transition-colors ${activeTab === "faculty"
+              ? "text-primary border-b-2 border-primary -mb-0.5"
+              : "text-muted-foreground hover:text-foreground"
+              }`}
           >
             Faculty Timetable
           </button>
           <button
             onClick={() => handleTabChange("class")}
-            className={`px-4 py-2 font-medium transition-colors ${
-              activeTab === "class"
-                ? "text-primary border-b-2 border-primary -mb-0.5"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
+            className={`px-4 py-2 font-medium transition-colors ${activeTab === "class"
+              ? "text-primary border-b-2 border-primary -mb-0.5"
+              : "text-muted-foreground hover:text-foreground"
+              }`}
           >
             Class Timetable
           </button>
@@ -723,7 +777,7 @@ export default function Timetable() {
               <div className="py-12 text-center">
                 <CalendarIcon className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
                 <p className="text-muted-foreground text-lg mb-2">
-                  {user?.role === "department-admin" 
+                  {user?.role === "department-admin"
                     ? "You are a Department Admin without a faculty record."
                     : "No personal timetable found."}
                 </p>
@@ -757,7 +811,7 @@ export default function Timetable() {
                 </span>
               )}
             </h2>
-            
+
             {/* Faculty Filter */}
             <div className="mb-6">
               <label className="block text-sm font-medium mb-2">Select Faculty</label>
@@ -788,8 +842,8 @@ export default function Timetable() {
               <div className="py-12 text-center">
                 <CalendarIcon className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
                 <p className="text-muted-foreground">
-                  {facultyList.length === 0 
-                    ? "No other faculty members in your department" 
+                  {facultyList.length === 0
+                    ? "No other faculty members in your department"
                     : "Please select a faculty to view their timetable"}
                 </p>
               </div>
@@ -801,7 +855,7 @@ export default function Timetable() {
         {activeTab === "class" && (
           <div>
             <h2 className="text-lg font-semibold mb-4">Class Timetable</h2>
-            
+
             {/* Class Filter */}
             <div className="mb-6">
               <label className="block text-sm font-medium mb-2">Select Class</label>

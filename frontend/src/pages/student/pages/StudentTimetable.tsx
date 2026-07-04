@@ -49,6 +49,7 @@ interface TimetableMaster {
   classCoordinator: Faculty;
   assistantCoordinator?: Faculty;
   timetableIncharge: Faculty;
+  breakPeriodIds?: number[];
 }
 
 interface TimetableData {
@@ -69,10 +70,27 @@ const STANDARD_PERIODS: Period[] = [
 ];
 
 const BREAK_TIMINGS = [
-  { label: 'Break 1', startTime: '11:10 AM', endTime: '11:30 AM' },
-  { label: 'Lunch', startTime: '12:25 PM', endTime: '01:10 PM' },
-  { label: 'Break 2', startTime: '02:50 PM', endTime: '03:15 PM' },
+  { afterPeriodLabel: 'II', label: 'Break', startTime: '11:10 AM', endTime: '11:30 AM' },
+  { afterPeriodLabel: 'III', label: 'Lunch', startTime: '12:25 PM', endTime: '01:10 PM' },
+  { afterPeriodLabel: 'V', label: 'Break', startTime: '02:50 PM', endTime: '03:15 PM' },
 ];
+
+// Build the display sequence: periods interleaved with breaks
+type DisplayColumn = 
+  | { type: 'period'; period: Period }
+  | { type: 'break'; label: string; startTime: string; endTime: string };
+
+const buildDisplayColumns = (periods: Period[]): DisplayColumn[] => {
+  const columns: DisplayColumn[] = [];
+  periods.forEach(period => {
+    columns.push({ type: 'period', period });
+    const brk = BREAK_TIMINGS.find(b => b.afterPeriodLabel === period.label);
+    if (brk) {
+      columns.push({ type: 'break', label: brk.label, startTime: brk.startTime, endTime: brk.endTime });
+    }
+  });
+  return columns;
+};
 
 const StudentClassTimetable: React.FC = () => {
   const { authToken } = useAuth();
@@ -210,16 +228,46 @@ const StudentClassTimetable: React.FC = () => {
     );
   }
 
-  const periodByLabel = new Map<string, Period>();
+  // Get all unique period IDs and details from the slots
+  const periodMap = new Map<number, Period>();
   timetable.slots.forEach(s => {
     if (s.period) {
-      periodByLabel.set(s.period.label.trim(), s.period);
+      periodMap.set(s.period.id, s.period);
     }
   });
 
-  const allPeriods = STANDARD_PERIODS.map(std => {
-    return periodByLabel.get(std.label) || std;
-  });
+  // Sort the period slots in order of ID (typically 1 to 10)
+  const allPeriods = Array.from(periodMap.values()).sort((a, b) => a.id - b.id);
+  const periodsToUse = allPeriods.length > 0 ? allPeriods : STANDARD_PERIODS;
+
+  const breakPeriodIds = timetable.timetableMaster.breakPeriodIds || [3, 5, 8];
+
+  const buildDisplayColumns = (periods: Period[]): DisplayColumn[] => {
+    return periods.map(period => {
+      const isBreak = breakPeriodIds.includes(period.id);
+      if (isBreak) {
+        let label = period.label;
+        if (!label || label.trim() === "" || label.startsWith("Period")) {
+          if (period.id === 3) label = "Break";
+          else if (period.id === 5 || period.id === 6) label = "Lunch";
+          else label = "Break";
+        }
+        return {
+          type: 'break',
+          label,
+          startTime: period.startTime,
+          endTime: period.endTime
+        };
+      } else {
+        return {
+          type: 'period',
+          period
+        };
+      }
+    });
+  };
+
+  const displayCols = buildDisplayColumns(periodsToUse);
 
   const getSessionColor = (sessionType: string) => {
     switch (sessionType?.toLowerCase()) {
@@ -342,24 +390,7 @@ const StudentClassTimetable: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Break Timings */}
-      <Card>
-        <CardHeader className="py-2 px-3">
-          <CardTitle className="text-sm">Break Timings</CardTitle>
-        </CardHeader>
-        <CardContent className="px-3 pb-3">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-            {BREAK_TIMINGS.map((timing) => (
-              <div key={timing.label} className="rounded-lg border border-amber-200/70 bg-amber-50/70 px-3 py-2 text-xs text-amber-900">
-                <div className="font-semibold">{timing.label}</div>
-                <div className="text-amber-800/80">
-                  {timing.startTime} - {timing.endTime}
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+
 
       {/* Timetable Grid - Days on Left, Periods on Top */}
       <Card>
@@ -368,147 +399,181 @@ const StudentClassTimetable: React.FC = () => {
         </CardHeader>
         <CardContent className="px-3 pb-3">
           {/* Desktop table (md+) */}
-          <div className="hidden md:block border rounded-lg border-gray-200 overflow-hidden">
-            <table className="w-full table-fixed border-collapse text-xs">
-              <thead>
-                <tr className="bg-blue-50 border-b border-blue-200">
-                  <th className="px-2 py-1.5 text-center font-semibold text-blue-900 bg-gray-50/50 w-[9%] text-xs">Day</th>
-                  {allPeriods.map((period, periodIdx) => (
-                    <th key={`period-${periodIdx}`} className="px-1 py-1.5 text-center font-semibold text-blue-900 w-[13%] border-l border-blue-100">
-                      <div className="font-bold text-xs">{period.label}</div>
-                      <div className="text-[10px] text-gray-500 font-normal mt-0.5 leading-tight">
-                        {period.startTime.substring(0, 5)}-{period.endTime.substring(0, 5)}
-                      </div>
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {DAYS.map(day => (
-                  <tr key={day} className="border-b border-gray-200 hover:bg-gray-50">
-                    <td className="px-2 py-2 font-semibold text-gray-800 bg-gray-50 text-center text-xs border-r border-gray-200 w-[9%] truncate">
-                      {day.substring(0, 3)}
-                    </td>
-                    {allPeriods.map((period, periodIdx) => {
-                      const slot = timetable.slots.find(
-                        s => s.day === day && s.period?.label?.trim() === period.label
-                      );
+          <div className="hidden md:block border rounded-lg border-gray-200 overflow-x-auto">
+            {(() => {
+              return (
+                <table className="w-full border-collapse text-xs" style={{ minWidth: '900px' }}>
+                  <thead>
+                    <tr className="bg-blue-50 border-b border-blue-200">
+                      <th className="px-2 py-1.5 text-center font-semibold text-blue-900 bg-gray-50/50 text-xs" style={{ width: '70px', minWidth: '70px' }}>Day</th>
+                      {displayCols.map((col, colIdx) => (
+                        col.type === 'period' ? (
+                          <th key={`period-${colIdx}`} className="px-1 py-1.5 text-center font-semibold text-blue-900 border-l border-blue-100">
+                            <div className="font-bold text-xs">{col.period.label}</div>
+                            <div className="text-[10px] text-gray-500 font-normal mt-0.5 leading-tight whitespace-nowrap">
+                              {col.period.startTime} - {col.period.endTime}
+                            </div>
+                          </th>
+                        ) : (
+                          <th key={`break-${colIdx}`} className="px-1 py-1.5 text-center font-semibold border-l border-amber-200 bg-amber-50/80" style={{ width: '55px', minWidth: '55px' }}>
+                            <div className="font-bold text-[10px] text-amber-700">{col.label}</div>
+                            <div className="text-[9px] text-amber-600 font-normal mt-0.5 leading-tight whitespace-nowrap">
+                              {col.startTime}<br/>{col.endTime}
+                            </div>
+                          </th>
+                        )
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {DAYS.map(day => (
+                      <tr key={day} className="border-b border-gray-200 hover:bg-gray-50/50">
+                        <td className="px-2 py-2 font-semibold text-gray-800 bg-gray-50 text-center text-xs border-r border-gray-200" style={{ width: '70px' }}>
+                          {day.substring(0, 3)}
+                        </td>
+                        {displayCols.map((col, colIdx) => {
+                          if (col.type === 'break') {
+                            return (
+                              <td key={`${day}-break-${colIdx}`} className="border-l border-amber-200 bg-amber-50/40 text-center align-middle" style={{ width: '55px' }}>
+                                <div className="text-[9px] text-amber-600 font-medium py-1">☕</div>
+                              </td>
+                            );
+                          }
 
-                      return (
-                        <td 
-                          key={`${day}-${periodIdx}`} 
-                          className="p-1 border-l border-gray-200 align-top w-[13%]"
-                          title={slot ? (
-                            slot.sessionType === 'break' 
-                              ? `Break: ${slot.notes || 'No details'}`
-                              : slot.subject 
-                                ? `${slot.subject.name} (${slot.subject.code})\nFaculty: ${slot.faculty?.name || 'N/A'}\nRoom: ${slot.room || 'N/A'}${slot.notes ? `\nNotes: ${slot.notes}` : ''}`
-                                : undefined
-                          ) : undefined}
-                        >
-                          {slot ? (
-                            <div className={`h-full min-h-[72px] p-1.5 rounded ${getSessionColor(slot.sessionType)} flex flex-col justify-between`}>
-                              {slot.sessionType === 'break' ? (
-                                <div className="flex flex-col items-center justify-center h-full">
-                                  <div className="font-bold text-[10px] text-gray-500">BREAK</div>
-                                  {slot.notes && (
-                                    <div className="text-[9px] text-gray-400 truncate max-w-full text-center">
-                                      {slot.notes}
+                          const period = col.period;
+                          const slot = timetable.slots.find(
+                            s => s.day === day && s.period?.id === period.id
+                          );
+
+                          return (
+                            <td 
+                              key={`${day}-${colIdx}`} 
+                              className="p-1 border-l border-gray-200 align-top"
+                              title={slot ? (
+                                slot.sessionType === 'break' 
+                                  ? `Break: ${slot.notes || 'No details'}`
+                                  : slot.subject 
+                                    ? `${slot.subject.name} (${slot.subject.code})\nFaculty: ${slot.faculty?.name || 'N/A'}\nRoom: ${slot.room || 'N/A'}${slot.notes ? `\nNotes: ${slot.notes}` : ''}`
+                                    : undefined
+                              ) : undefined}
+                            >
+                              {slot ? (
+                                <div className={`h-full min-h-[72px] p-1.5 rounded ${getSessionColor(slot.sessionType)} flex flex-col justify-between`}>
+                                  {slot.sessionType === 'break' ? (
+                                    <div className="flex flex-col items-center justify-center h-full">
+                                      <div className="font-bold text-[10px] text-gray-500">BREAK</div>
+                                      {slot.notes && (
+                                        <div className="text-[9px] text-gray-400 truncate max-w-full text-center">
+                                          {slot.notes}
+                                        </div>
+                                      )}
                                     </div>
+                                  ) : slot.subject ? (
+                                    <div className="flex flex-col justify-between h-full text-left gap-0.5">
+                                      <div>
+                                        <div className="font-bold text-[11px] leading-tight text-gray-900 truncate">
+                                          {slot.subject.code}
+                                        </div>
+                                        <div className="text-[10px] text-gray-800 leading-snug line-clamp-2 mt-0.5" title={slot.subject.name}>
+                                          {slot.subject.name}
+                                        </div>
+                                      </div>
+                                      <div>
+                                        <div className="text-[9px] text-gray-600 truncate mt-0.5 leading-none">
+                                          {slot.faculty ? slot.faculty.name : ''}
+                                        </div>
+                                        <div className="mt-0.5 flex items-center justify-between text-[9px] leading-none opacity-85">
+                                          <span className="font-semibold text-blue-800">
+                                            {slot.room ? `Rm:${slot.room}` : ''}
+                                          </span>
+                                          <span className="font-mono px-0.5 bg-white/60 rounded text-[8px] tracking-tight">
+                                            {slot.sessionType?.toUpperCase().substring(0, 3)}
+                                          </span>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <div className="text-[10px] text-gray-300 text-center py-2">-</div>
                                   )}
-                                </div>
-                              ) : slot.subject ? (
-                                <div className="flex flex-col justify-between h-full text-left gap-0.5">
-                                  <div>
-                                    <div className="font-bold text-[11px] leading-tight text-gray-900 truncate">
-                                      {slot.subject.code}
-                                    </div>
-                                    <div className="text-[10px] text-gray-800 leading-snug line-clamp-2 mt-0.5" title={slot.subject.name}>
-                                      {slot.subject.name}
-                                    </div>
-                                  </div>
-                                  <div>
-                                    <div className="text-[9px] text-gray-600 truncate mt-0.5 leading-none">
-                                      {slot.faculty ? slot.faculty.name : ''}
-                                    </div>
-                                    <div className="mt-0.5 flex items-center justify-between text-[9px] leading-none opacity-85">
-                                      <span className="font-semibold text-blue-800">
-                                        {slot.room ? `Rm:${slot.room}` : ''}
-                                      </span>
-                                      <span className="font-mono px-0.5 bg-white/60 rounded text-[8px] tracking-tight">
-                                        {slot.sessionType?.toUpperCase().substring(0, 3)}
-                                      </span>
-                                    </div>
-                                  </div>
                                 </div>
                               ) : (
                                 <div className="text-[10px] text-gray-300 text-center py-2">-</div>
                               )}
-                            </div>
-                          ) : (
-                            <div className="text-[10px] text-gray-300 text-center py-2">-</div>
-                          )}
-                        </td>
-                      );
-                    })}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              );
+            })()}
           </div>
 
           {/* Mobile view (sm) */}
           <div className="md:hidden space-y-2">
-            {DAYS.map(day => (
-              <div key={day} className="border rounded-lg border-gray-200">
-                <div className="px-3 py-2 bg-blue-50 text-sm font-semibold text-blue-900">{day}</div>
-                <div className="px-3 py-2 space-y-2">
-                  {allPeriods.map((period, periodIdx) => {
-                    const slot = timetable.slots.find(
-                      s => s.day === day && s.period?.label?.trim() === period.label
-                    );
-
-                    return (
-                      <div key={`${day}-${periodIdx}`} className="flex flex-col gap-1">
-                        <div className="flex items-center justify-between text-xs text-gray-600">
-                          <div className="font-medium">{period.label}</div>
-                          <div>{period.startTime.substring(0, 5)}-{period.endTime.substring(0, 5)}</div>
-                        </div>
-                        {slot ? (
-                          <div className={`space-y-0.5 p-2 rounded text-sm ${getSessionColor(slot.sessionType)}`}>
-                            {slot.sessionType === 'break' ? (
-                              <>
-                                <div className="font-semibold">{slot.notes || 'Break'}</div>
-                                <div className="text-xs font-mono bg-white/50 px-1 py-0.5 rounded inline-block">
-                                  BREAK
-                                </div>
-                              </>
-                            ) : slot.subject ? (
-                              <>
-                                <div className="font-semibold">{slot.subject.code}</div>
-                                <div className="text-sm">{slot.subject.name}</div>
-                                <div className="text-xs font-mono bg-white/50 px-1 py-0.5 rounded inline-block">
-                                  {slot.sessionType.toUpperCase().substring(0, 3)}
-                                </div>
-                                {slot.faculty && (
-                                  <div className="text-xs opacity-75">{slot.faculty.name}</div>
-                                )}
-                                {slot.room && <div className="text-xs opacity-75">Rm:{slot.room}</div>}
-                                {slot.notes && <div className="text-xs opacity-75 italic">{slot.notes}</div>}
-                              </>
-                            ) : (
-                              <div className="text-xs text-gray-400">-</div>
-                            )}
+            {DAYS.map(day => {
+              return (
+                <div key={day} className="border rounded-lg border-gray-200">
+                  <div className="px-3 py-2 bg-blue-50 text-sm font-semibold text-blue-900">{day}</div>
+                  <div className="px-3 py-2 space-y-2">
+                    {displayCols.map((col, colIdx) => {
+                      if (col.type === 'break') {
+                        return (
+                          <div key={`${day}-break-${colIdx}`} className="flex items-center gap-2 px-2 py-1.5 rounded bg-amber-50 border border-amber-200/70">
+                            <span className="text-xs font-semibold text-amber-700">☕ {col.label}</span>
+                            <span className="text-[11px] text-amber-600 ml-auto">{col.startTime} - {col.endTime}</span>
                           </div>
-                        ) : (
-                          <div className="text-xs text-gray-300">-</div>
-                        )}
-                      </div>
-                    );
-                  })}
+                        );
+                      }
+
+                      const period = col.period;
+                      const slot = timetable.slots.find(
+                        s => s.day === day && s.period?.id === period.id
+                      );
+
+                      return (
+                        <div key={`${day}-${colIdx}`} className="flex flex-col gap-1">
+                          <div className="flex items-center justify-between text-xs text-gray-600">
+                            <div className="font-medium">Period {period.label}</div>
+                            <div>{period.startTime} - {period.endTime}</div>
+                          </div>
+                          {slot ? (
+                            <div className={`space-y-0.5 p-2 rounded text-sm ${getSessionColor(slot.sessionType)}`}>
+                              {slot.sessionType === 'break' ? (
+                                <>
+                                  <div className="font-semibold">{slot.notes || 'Break'}</div>
+                                  <div className="text-xs font-mono bg-white/50 px-1 py-0.5 rounded inline-block">
+                                    BREAK
+                                  </div>
+                                </>
+                              ) : slot.subject ? (
+                                <>
+                                  <div className="font-semibold">{slot.subject.code}</div>
+                                  <div className="text-sm">{slot.subject.name}</div>
+                                  <div className="text-xs font-mono bg-white/50 px-1 py-0.5 rounded inline-block">
+                                    {slot.sessionType.toUpperCase().substring(0, 3)}
+                                  </div>
+                                  {slot.faculty && (
+                                    <div className="text-xs opacity-75">{slot.faculty.name}</div>
+                                  )}
+                                  {slot.room && <div className="text-xs opacity-75">Rm:{slot.room}</div>}
+                                  {slot.notes && <div className="text-xs opacity-75 italic">{slot.notes}</div>}
+                                </>
+                              ) : (
+                                <div className="text-xs text-gray-400">-</div>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="text-xs text-gray-300">-</div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </CardContent>
       </Card>

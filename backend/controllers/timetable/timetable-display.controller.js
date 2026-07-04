@@ -98,6 +98,11 @@ export const getClassTimetable = asyncHandler(async (req, res, next) => {
           email: timetableMaster.timetable_incharge.email,
         } : null,
         status: timetableMaster.status,
+        breakPeriodIds: timetableMaster.break_period_ids ? (
+          typeof timetableMaster.break_period_ids === 'string'
+            ? JSON.parse(timetableMaster.break_period_ids)
+            : timetableMaster.break_period_ids
+        ) : [3, 5, 8],
       },
       slots: slots.map(slot => ({
         id: slot.id,
@@ -504,6 +509,11 @@ export const getMyClassTimetable = asyncHandler(async (req, res, next) => {
           email: timetableMaster.timetable_incharge.email,
         } : null,
         status: timetableMaster.status,
+        breakPeriodIds: timetableMaster.break_period_ids ? (
+          typeof timetableMaster.break_period_ids === 'string'
+            ? JSON.parse(timetableMaster.break_period_ids)
+            : timetableMaster.break_period_ids
+        ) : [3, 5, 8],
       },
       slots: slots.map(slot => ({
         id: slot.id,

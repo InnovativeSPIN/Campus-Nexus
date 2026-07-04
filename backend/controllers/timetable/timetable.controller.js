@@ -111,8 +111,10 @@ export const getTimetableByClass = asyncHandler(async (req, res, next) => {
       SELECT 
         s.id,
         s.day,
-        p.period_number as hour,
+        s.period_slot_id as hour,
+        p.period_label,
         COALESCE(sub.subject_name, 'Unknown') as subject,
+        COALESCE(sub.subject_code, 'N/A') as subject_code,
         c.section,
         d.short_name as department,
         CEIL(c.semester / 2) as year,
@@ -140,7 +142,7 @@ export const getTimetableByClass = asyncHandler(async (req, res, next) => {
           WHEN 'Friday' THEN 5 
           WHEN 'Saturday' THEN 6 
         END ASC,
-        p.period_number ASC
+        s.period_slot_id ASC
     `;
 
     const timetable = await sequelize.query(sql, {
@@ -156,7 +158,7 @@ export const getTimetableByClass = asyncHandler(async (req, res, next) => {
     res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     res.set('Pragma', 'no-cache');
     res.set('Expires', '0');
-    
+
     res.status(200).json({
       success: true,
       count: timetable.length,
@@ -560,7 +562,7 @@ export const getFacultyByYear = asyncHandler(async (req, res, next) => {
   let { year } = req.params;
   const yearMap = { '1st': 1, '2nd': 2, '3rd': 3, '4th': 4 };
   const yearNum = yearMap[year] || parseInt(year, 10);
-  
+
   // DEBUG: Log user department info
   console.log('[DEBUG] getFacultyByYear - user:', JSON.stringify({
     userId: req.user.id,
@@ -624,10 +626,10 @@ export const getFacultyByYear = asyncHandler(async (req, res, next) => {
 // @access    Private/DepartmentAdmin
 export const getFacultyTimetable = asyncHandler(async (req, res, next) => {
   const { facultyId } = req.params;
-  
+
   try {
     let departmentId = req.user.department_id || req.user.departmentId;
-    
+
     if (!departmentId) {
       return next(new ErrorResponse('No department associated with your account', 400));
     }
@@ -639,8 +641,10 @@ export const getFacultyTimetable = asyncHandler(async (req, res, next) => {
       SELECT 
         s.id,
         s.day,
-        p.period_number as hour,
+        s.period_slot_id as hour,
+        p.period_label,
         COALESCE(sub.subject_name, 'Unknown') as subject,
+        COALESCE(sub.subject_code, 'N/A') as subject_code,
         c.section,
         d.short_name as department,
         CEIL(c.semester / 2) as year,
@@ -669,7 +673,7 @@ export const getFacultyTimetable = asyncHandler(async (req, res, next) => {
           WHEN 'Friday' THEN 5 
           WHEN 'Saturday' THEN 6 
         END ASC,
-        p.period_number ASC
+        s.period_slot_id ASC
     `;
 
     const timetable = await sequelize.query(sql, {
@@ -679,12 +683,12 @@ export const getFacultyTimetable = asyncHandler(async (req, res, next) => {
 
     // Allow empty timetable for department admins who may not have classes assigned yet
     console.log(`[TIMETABLE] Found ${timetable.length} slots for faculty ${facultyId}`);
-    
+
     // Disable caching to ensure fresh data
     res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     res.set('Pragma', 'no-cache');
     res.set('Expires', '0');
-    
+
     res.status(200).json({
       success: true,
       count: timetable.length,
@@ -702,7 +706,7 @@ export const getFacultyTimetable = asyncHandler(async (req, res, next) => {
 export const getTimetableByDepartmentAndYear = asyncHandler(async (req, res, next) => {
   const { year } = req.params;
   const { section, academicYear } = req.query;
-  
+
   // Get user's department from token
   const deptCandidates = [];
   if (req.user.department) {
@@ -713,9 +717,9 @@ export const getTimetableByDepartmentAndYear = asyncHandler(async (req, res, nex
     }
   }
   if (req.user.departmentCode && typeof req.user.departmentCode === 'string') deptCandidates.push(req.user.departmentCode);
-  
+
   const uniqueDepts = Array.from(new Set(deptCandidates.filter(Boolean).map(String)));
-  
+
   if (uniqueDepts.length === 0) {
     return next(new ErrorResponse('No department associated with your account', 400));
   }
@@ -724,11 +728,11 @@ export const getTimetableByDepartmentAndYear = asyncHandler(async (req, res, nex
   const whereClause = {
     year: parseInt(year, 10)
   };
-  
+
   if (section) {
     whereClause.section = section;
   }
-  
+
   if (academicYear) {
     whereClause.academicYear = academicYear;
   }
@@ -737,19 +741,19 @@ export const getTimetableByDepartmentAndYear = asyncHandler(async (req, res, nex
     // Use raw query to handle the department IN clause
     const placeholders = uniqueDepts.map(() => '?').join(',');
     const replacements = [...uniqueDepts, parseInt(year, 10)];
-    
+
     let sql = `SELECT * FROM timetable WHERE department IN (${placeholders}) AND year = ?`;
-    
+
     if (section) {
       sql += ` AND section = ?`;
       replacements.push(section);
     }
-    
+
     if (academicYear) {
       sql += ` AND academicYear = ?`;
       replacements.push(academicYear);
     }
-    
+
     sql += ` ORDER BY CASE day WHEN 'Monday' THEN 1 WHEN 'Tuesday' THEN 2 WHEN 'Wednesday' THEN 3 WHEN 'Thursday' THEN 4 WHEN 'Friday' THEN 5 WHEN 'Saturday' THEN 6 WHEN 'Sunday' THEN 7 END ASC, hour ASC`;
 
     const timetable = await sequelize.query(sql, { replacements, type: QueryTypes.SELECT });
@@ -774,7 +778,7 @@ export const getDepartmentTimetable = asyncHandler(async (req, res, next) => {
   try {
     // Get user's department
     let departmentId = req.user.department_id || req.user.departmentId;
-    
+
     console.log('[TIMETABLE] getDepartmentTimetable - User info:', {
       userId: req.user.id,
       department_id: req.user.department_id,
@@ -792,8 +796,10 @@ export const getDepartmentTimetable = asyncHandler(async (req, res, next) => {
       SELECT 
         s.id,
         s.day,
-        p.period_number as hour,
+        s.period_slot_id as hour,
+        p.period_label,
         COALESCE(sub.subject_name, 'Unknown') as subject,
+        COALESCE(sub.subject_code, 'N/A') as subject_code,
         c.section,
         d.short_name as department,
         CEIL(c.semester / 2) as year,
