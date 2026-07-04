@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { toast } from "@/pages/admin/department-admin/hooks/use-toast";
 import { cn } from "@/pages/admin/department-admin/lib/utils";
+import { getStudentDocumentUrl } from "@/utils/imageUrl";
 
 // Faculty leave (HOD approval)
 interface FacultyLeave {
@@ -297,6 +298,19 @@ export function LeaveApprovals() {
                         <p className="text-sm text-foreground">{leave.reason}</p>
                       </div>
                     )}
+
+                    {/* Attachment link - visible directly in card so HOD can review before approving */}
+                    {leave.attachment && (
+                      <a
+                        href={getStudentDocumentUrl(leave.attachment)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 text-blue-600 hover:underline bg-blue-50 border border-blue-200 px-3 py-1.5 rounded text-sm font-medium mt-2"
+                      >
+                        <FileText className="w-4 h-4" />
+                        View Student Document
+                      </a>
+                    )}
                   </div>
 
                   <div className="flex gap-2">
@@ -486,7 +500,7 @@ export function LeaveApprovals() {
                   <div className="pt-2 border-t mt-2">
                     <p className="text-xs text-muted-foreground uppercase font-medium mb-1">Attached Document</p>
                     <a
-                      href={`/uploads/students/${(activeDialog.leave as StudentLeave).attachment}`}
+                      href={getStudentDocumentUrl((activeDialog.leave as StudentLeave).attachment)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-2 text-primary hover:underline bg-primary/5 px-3 py-1.5 rounded border border-primary/20"
