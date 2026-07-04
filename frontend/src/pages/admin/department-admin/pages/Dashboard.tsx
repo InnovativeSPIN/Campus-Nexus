@@ -57,7 +57,7 @@ export default function Dashboard() {
 
         // Fetch department statistics
         const statsResponse = await fetch(
-          `/api/v1/department/statistics`,
+          `/api/v1/departments/statistics`,
           { headers: { Authorization: `Bearer ${authToken}` } }
         ).catch(() => null);
 
