@@ -27,6 +27,7 @@ import {
   User,
 } from 'lucide-react';
 import { toast } from '@/pages/student/hooks/use-toast';
+import { getStudentDocumentUrl } from '@/utils/imageUrl';
 
 
 interface PendingLeave {
@@ -237,7 +238,7 @@ export default function DeptAdminApprovalDashboard() {
 
                 {(leave as any).attachment && (
                   <a
-                    href={`/uploads/students/${(leave as any).attachment}`}
+                    href={getStudentDocumentUrl((leave as any).attachment)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="block"
