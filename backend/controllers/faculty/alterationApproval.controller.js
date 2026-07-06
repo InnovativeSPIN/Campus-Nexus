@@ -24,6 +24,7 @@ export const acceptAlteration = asyncHandler(async (req, res, next) => {
   const { leaveId } = req.params;
   const facultyId = req.user.faculty_id;
   const departmentId = req.user.department_id;
+  const isDeptAdmin = req.user.role === 'department-admin';
 
   try {
     const leave = await Leave.findByPk(leaveId);
@@ -32,47 +33,77 @@ export const acceptAlteration = asyncHandler(async (req, res, next) => {
       return next(new ErrorResponse('Leave request not found', 404));
     }
 
-    // Verify the substitute faculty is accepting their own request
-    if (leave.substitute_faculty_id !== facultyId) {
+    // Allow either: the designated substitute faculty OR the department HOD/admin
+    const isSubstitute = leave.substitute_faculty_id === facultyId;
+    if (!isSubstitute && !isDeptAdmin) {
       return next(new ErrorResponse('Not authorized to accept this request', 403));
     }
 
-    // Verify request is pending
-    if (leave.overall_status !== 'substitute_pending' || leave.substitute_approval_status !== 'pending') {
+    // If dept-admin, verify the leave belongs to their department
+    if (isDeptAdmin && leave.departmentId && Number(leave.departmentId) !== Number(departmentId)) {
+      return next(new ErrorResponse('Not authorized to manage leave from another department', 403));
+    }
+
+    // Verify request is still awaiting substitute response
+    const isAlreadyActioned =
+      (leave.substitute_approval_status === 'approved' || leave.substitute_approval_status === 'rejected') ||
+      ['substitute_approved', 'substitute_rejected', 'hod_approved', 'approved', 'rejected'].includes(leave.overall_status);
+    if (isAlreadyActioned) {
       return next(new ErrorResponse('This request is no longer pending', 400));
     }
 
-    // STEP 1: Update Leave and FacultySubstitutes
+    // The actor who approves — for HOD acceptance, record the substitute's id in the substitutes table
+    const substituteId = leave.substitute_faculty_id;
+
+    // STEP 1: Update Leave status — substitute accepted, now awaiting HOD leave approval
     leave.overall_status = 'substitute_approved';
     leave.substitute_approval_status = 'approved';
     leave.substitute_approval_date = new Date();
     await leave.save();
 
-    // Update FacultySubstitutes
-    await FacultySubstitutes.update(
+    // Update FacultySubstitutes — use substituteId (not acting user) so HOD acceptance also records correctly
+    const [updatedRows] = await FacultySubstitutes.update(
       {
         status: 'approved',
-        approved_by: facultyId,
+        approved_by: isDeptAdmin ? facultyId : substituteId,
         approval_date: new Date(),
       },
       {
         where: {
           leave_id: leaveId,
-          substitute_faculty_id: facultyId,
+          substitute_faculty_id: substituteId,
         },
       }
     );
 
-    // STEP 2: Notify Timetable Incharge
+    // If no existing record (e.g. leave was submitted via old flow without pre-creating the substitutes row), create one
+    if (updatedRows === 0) {
+      await FacultySubstitutes.create({
+        faculty_id: leave.applicantId,
+        substitute_faculty_id: substituteId,
+        start_date: leave.startDate,
+        end_date: leave.endDate,
+        reason: leave.reason,
+        leave_id: parseInt(leaveId),
+        status: 'approved',
+        approved_by: isDeptAdmin ? facultyId : substituteId,
+        approval_date: new Date(),
+        requested_by: leave.applicantId,
+      });
+    }
+
+    // STEP 2: Notify Timetable Incharge and original faculty
+    const leaveDeptId = leave.departmentId || departmentId;
+
     const timetableMaster = await TimetableMaster.findOne({
       where: {
-        department_id: departmentId,
+        department_id: leaveDeptId,
         status: 'active',
       },
       attributes: ['id', 'timetable_incharge_id', 'class_id'],
     });
 
-    const substituteFaculty = await Faculty.findByPk(facultyId, {
+    const substituteFacultyInfo = await Faculty.findByPk(substituteId, {
       attributes: ['Name'],
     });
 
@@ -88,33 +119,45 @@ export const acceptAlteration = asyncHandler(async (req, res, next) => {
       day: '2-digit', month: 'short', year: 'numeric',
     });
 
+    const substituteName = substituteFacultyInfo?.Name || 'Substitute Faculty';
+    const acceptorLabel = isDeptAdmin ? `HOD (on behalf of ${substituteName})` : substituteName;
+
     const notificationData = {
       recipientType: 'faculty',
-      departmentId,
+      departmentId: leaveDeptId,
       senderId: facultyId,
-      senderName: substituteFaculty.Name,
+      senderName: substituteName,
       leaveId: leaveId,
-      facultyName: substituteFaculty.Name,
+      facultyName: substituteName,
       type: 'alteration_accepted',
-      title: `Timetable Alteration Ready to Apply`,
-      message: `${substituteFaculty.Name} has accepted the alteration request from ${applicantFaculty.Name} (${leave.leaveType} leave, ${startStr} to ${endStr}).`,
+      title: `Substitution Accepted — HOD Approval Required`,
+      message: `${acceptorLabel} has accepted the substitution for ${applicantFaculty?.Name || 'faculty'}'s ${leave.leaveType} leave (${startStr} to ${endStr}). The leave request is now pending HOD approval.`,
       isRead: false,
     };
 
-    // Notify Timetable Incharge
+    // Notify original (absent) faculty that substitute accepted
+    await LeaveNotification.create({
+      ...notificationData,
+      recipientId: leave.applicantId,
+      type: 'alteration_accepted',
+      title: `Substitution Confirmed — Awaiting HOD Approval`,
+      message: `${substituteName} has confirmed as your substitute for your ${leave.leaveType} leave (${startStr} to ${endStr}). Your leave request has been forwarded to the HOD for approval.`,
+    });
+
+    // Notify Timetable Incharge (informational)
     if (timetableMaster && timetableMaster.timetable_incharge_id) {
       await LeaveNotification.create({
         ...notificationData,
         recipientId: timetableMaster.timetable_incharge_id,
-        message: notificationData.message + ' Please review and apply the alteration to the timetable.',
+        message: notificationData.message + ' Once HOD approves, please apply the timetable alteration.',
       });
     }
 
-    // STEP 3: Notify Department Admin(s)
+    // STEP 3: Notify Department Admin(s) that substitution is confirmed and leave awaits their approval
     const deptAdmins = await Faculty.findAll({
       where: {
-        department_id: departmentId,
-        role_id: 7, // Dept Admin
+        department_id: leaveDeptId,
+        role_id: 7, // Dept Admin / HOD
         status: 'active',
       },
       attributes: ['faculty_id'],
@@ -124,13 +167,15 @@ export const acceptAlteration = asyncHandler(async (req, res, next) => {
       await LeaveNotification.create({
         ...notificationData,
         recipientId: admin.faculty_id,
-        message: notificationData.message + ' The substitute faculty has confirmed their availability.',
+        type: 'hod_approval_required',
+        title: `Leave Approval Required — Substitute Confirmed`,
+        message: `${substituteName} has confirmed as substitute for ${applicantFaculty?.Name || 'a faculty'}'s ${leave.leaveType} leave (${startStr} to ${endStr}). Please review and approve or reject the leave application.`,
       });
     }
 
     res.status(200).json({
       success: true,
-      message: 'Alteration request accepted. Timetable incharge has been notified.',
+      message: 'Substitution accepted. HOD has been notified for leave approval.',
       data: {
         leaveId: leave.id,
         status: leave.overall_status,
@@ -152,6 +197,7 @@ export const rejectAlteration = asyncHandler(async (req, res, next) => {
   const { rejection_reason } = req.body;
   const facultyId = req.user.faculty_id;
   const departmentId = req.user.department_id;
+  const isDeptAdmin = req.user.role === 'department-admin';
 
   try {
     const leave = await Leave.findByPk(leaveId);
@@ -160,25 +206,36 @@ export const rejectAlteration = asyncHandler(async (req, res, next) => {
       return next(new ErrorResponse('Leave request not found', 404));
     }
 
-    // Verify the substitute faculty is rejecting their own request
-    if (leave.substitute_faculty_id !== facultyId) {
+    // Allow either: the designated substitute faculty OR the department HOD/admin
+    const isSubstitute = leave.substitute_faculty_id === facultyId;
+    if (!isSubstitute && !isDeptAdmin) {
       return next(new ErrorResponse('Not authorized to reject this request', 403));
     }
 
-    // Verify request is pending
-    if (leave.overall_status !== 'substitute_pending' || leave.substitute_approval_status !== 'pending') {
+    // If dept-admin, verify the leave belongs to their department
+    if (isDeptAdmin && leave.departmentId && Number(leave.departmentId) !== Number(departmentId)) {
+      return next(new ErrorResponse('Not authorized to manage leave from another department', 403));
+    }
+
+    // Verify request is still awaiting substitute response
+    const isAlreadyActioned =
+      (leave.substitute_approval_status === 'approved' || leave.substitute_approval_status === 'rejected') ||
+      ['substitute_approved', 'substitute_rejected', 'hod_approved', 'approved', 'rejected'].includes(leave.overall_status);
+    if (isAlreadyActioned) {
       return next(new ErrorResponse('This request is no longer pending', 400));
     }
 
-    // STEP 1: Update Leave and FacultySubstitutes
+    const substituteId = leave.substitute_faculty_id;
+
+    // STEP 1: Update Leave status
     leave.overall_status = 'substitute_rejected';
     leave.substitute_approval_status = 'rejected';
     leave.substitute_approval_date = new Date();
     leave.substitute_rejection_reason = rejection_reason || null;
     await leave.save();
 
-    // Update FacultySubstitutes
-    await FacultySubstitutes.update(
+    // Update FacultySubstitutes — use substituteId so the record is correctly identified
+    const [updatedRows] = await FacultySubstitutes.update(
       {
         status: 'rejected',
         approval_date: new Date(),
@@ -186,13 +243,29 @@ export const rejectAlteration = asyncHandler(async (req, res, next) => {
       {
         where: {
           leave_id: leaveId,
-          substitute_faculty_id: facultyId,
+          substitute_faculty_id: substituteId,
         },
       }
     );
 
+    // If no existing record, create one with rejected status
+    if (updatedRows === 0) {
+      await FacultySubstitutes.create({
+        faculty_id: leave.applicantId,
+        substitute_faculty_id: substituteId,
+        start_date: leave.startDate,
+        end_date: leave.endDate,
+        reason: leave.reason,
+        leave_id: parseInt(leaveId),
+        status: 'rejected',
+        approval_date: new Date(),
+        requested_by: leave.applicantId,
+      });
+    }
+
     // STEP 2: Notify Original Faculty
-    const substituteFaculty = await Faculty.findByPk(facultyId, {
+    const leaveDeptId = leave.departmentId || departmentId;
+    const substituteFacultyInfo = await Faculty.findByPk(substituteId, {
       attributes: ['Name'],
     });
 
@@ -200,25 +273,27 @@ export const rejectAlteration = asyncHandler(async (req, res, next) => {
       attributes: ['Name'],
     });
 
+    const substituteName = substituteFacultyInfo?.Name || 'Substitute Faculty';
     const reasonText = rejection_reason ? ` Reason: ${rejection_reason}` : '';
+    const rejectorLabel = isDeptAdmin ? `HOD (on behalf of ${substituteName})` : substituteName;
 
     await LeaveNotification.create({
       recipientId: leave.applicantId,
       recipientType: 'faculty',
-      departmentId,
+      departmentId: leaveDeptId,
       senderId: facultyId,
-      senderName: substituteFaculty.Name,
+      senderName: substituteName,
       leaveId: leaveId,
-      facultyName: applicantFaculty.Name,
+      facultyName: applicantFaculty?.Name || 'Faculty',
       type: 'alteration_rejected',
-      title: `Alteration Request Rejected`,
-      message: `${substituteFaculty.Name} has rejected your alteration request.${reasonText} Please select another faculty to substitute.`,
+      title: `Substitution Request Rejected`,
+      message: `${rejectorLabel} has rejected the substitution request for your ${leave.leaveType} leave.${reasonText} Please select another faculty to substitute.`,
       isRead: false,
     });
 
     res.status(200).json({
       success: true,
-      message: 'Alteration request rejected. Original faculty has been notified.',
+      message: 'Substitution request rejected. Original faculty has been notified.',
       data: {
         leaveId: leave.id,
         status: leave.overall_status,
