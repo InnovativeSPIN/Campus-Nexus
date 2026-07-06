@@ -261,7 +261,6 @@ export default function Counseling() {
         </div>
         <div className="flex items-center gap-3">
           <MentorModeToggle />
-          <NotificationBell />
         </div>
       </motion.div>
 

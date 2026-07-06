@@ -57,16 +57,16 @@ async function notifyAdminAndIncharge(departmentId, senderId, senderName, title,
       try {
         if (!r.faculty_id) continue;
         await LeaveNotification.create({
-          recipient_id: r.faculty_id,
-          recipient_type: 'faculty',
+          recipientId: r.faculty_id,
+          recipientType: 'faculty',
           departmentId: departmentId,
           senderId,
           senderName,
-          leave_request_id: leaveId,
-          notification_type: notifType, // 'submitted' by default — no action buttons shown
+          leaveId: leaveId,
+          type: notifType, // 'submitted' by default — no action buttons shown
           title,
           message,
-          is_read: false,
+          isRead: false,
         });
       } catch (err) {
         console.warn('Notification failed for recipient:', r.faculty_id, err.message);
@@ -106,6 +106,15 @@ export const requestPeriodAlteration = asyncHandler(async (req, res, next) => {
 
   // Cleanup old DB barriers if this is the first interaction
   await purgeOldConstraints();
+
+  // Check if the selected substitute is the department HOD
+  const substituteInfo = await Faculty.findByPk(parseInt(substitute_faculty_id), {
+    attributes: ['faculty_id', 'Name', 'role_id', 'department_id'],
+  });
+  const isHODSubstitute =
+    substituteInfo &&
+    substituteInfo.role_id === 7 &&
+    Number(substituteInfo.department_id) === Number(departmentId);
 
   // Find ANY historical records for this period that aren't tied to a leave yet
   const oldRecords = await FacultySubstitutes.findAll({
@@ -176,17 +185,17 @@ export const requestPeriodAlteration = asyncHandler(async (req, res, next) => {
     const dateStr = new Date(period.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 
     await LeaveNotification.create({
-      recipient_id: parseInt(substitute_faculty_id),
-      recipient_type: 'faculty',
+      recipientId: parseInt(substitute_faculty_id),
+      recipientType: 'faculty',
       departmentId,
       senderId: facultyId,
       senderName: applicant.Name,
       // Store the FacultySubstitutes record ID so the frontend calls the correct endpoint
-      leave_request_id: planRecord.id,
-      notification_type: 'reassignment_requested',
+      leaveId: planRecord.id,
+      type: 'reassignment_requested',
       title: `Period Alteration Request - ${dateStr}`,
       message: `${applicant.Name} has requested you to cover their ${period.period_label || 'period'} on ${dateStr}${period.subject_name ? ` (${period.subject_name})` : ''}${period.class_name ? ` for class ${period.class_name}` : ''}. Please accept or reject.`,
-      is_read: false,
+      isRead: false,
     });
   } catch (notifErr) {
     console.warn('Alteration Notification failed:', notifErr.message);
@@ -282,17 +291,17 @@ export const reassignPeriodAlteration = asyncHandler(async (req, res, next) => {
   const dateStr = new Date(record.start_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 
   await LeaveNotification.create({
-    recipient_id: parseInt(new_substitute_faculty_id),
-    recipient_type: 'faculty',
+    recipientId: parseInt(new_substitute_faculty_id),
+    recipientType: 'faculty',
     departmentId,
     senderId: facultyId,
     senderName: applicant.Name,
     // Store the FacultySubstitutes record ID for correct endpoint routing
-    leave_request_id: record.id,
-    notification_type: 'reassignment_requested',
+    leaveId: record.id,
+    type: 'reassignment_requested',
     title: `Period Alteration Request - ${dateStr}`,
     message: `${applicant.Name} has requested you to cover their ${periodInfo.period_label || 'period'} on ${dateStr}${periodInfo.subject_name ? ` (${periodInfo.subject_name})` : ''}. Please accept or reject.`,
-    is_read: false,
+    isRead: false,
   });
 
   const updated = await FacultySubstitutes.findByPk(id, {
@@ -333,6 +342,7 @@ export const getMyPeriodRequests = asyncHandler(async (req, res, next) => {
 export const acceptPeriodAlteration = asyncHandler(async (req, res, next) => {
   const { id } = req.params;
   const facultyId = req.user.faculty_id;
+  const isDeptAdmin = req.user.role === 'department-admin';
 
   const record = await FacultySubstitutes.findByPk(id, {
     // Include department_id to ensure we notify the Correct department
@@ -341,37 +351,51 @@ export const acceptPeriodAlteration = asyncHandler(async (req, res, next) => {
 
   if (!record) return next(new ErrorResponse('Request not found', 404));
   const departmentId = record.absent_faculty?.department_id;
-  if (record.substitute_faculty_id !== facultyId) return next(new ErrorResponse('Not authorized', 403));
+
+  // Allow the substitute faculty themselves OR the HOD of the department
+  const isSubstitute = record.substitute_faculty_id === facultyId;
+  if (!isSubstitute && !isDeptAdmin) {
+    return next(new ErrorResponse('Not authorized', 403));
+  }
+
+  // HOD must belong to the correct department
+  if (isDeptAdmin && departmentId && Number(departmentId) !== Number(req.user.department_id)) {
+    return next(new ErrorResponse('Not authorized to manage requests from another department', 403));
+  }
+
   if (record.status !== 'pending') return next(new ErrorResponse('Request is no longer pending', 400));
 
+  const substituteId = record.substitute_faculty_id;
+
   record.status = 'approved';
-  record.approved_by = facultyId;
+  record.approved_by = facultyId; // record who performed the action
   record.approval_date = new Date();
   await record.save();
 
-  const substituteInfo = await Faculty.findByPk(facultyId, { attributes: ['Name'] });
+  const substituteInfo = await Faculty.findByPk(substituteId, { attributes: ['Name'] });
+  const actorLabel = isDeptAdmin ? `HOD (on behalf of ${substituteInfo?.Name || 'substitute'})` : (substituteInfo?.Name || 'Substitute');
   const periodInfo = JSON.parse(record.reason || '{}');
   const dateStr = new Date(record.start_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 
   // Notify original faculty
   await LeaveNotification.create({
-    recipient_id: record.faculty_id,
-    recipient_type: 'faculty',
+    recipientId: record.faculty_id,
+    recipientType: 'faculty',
     departmentId,
     senderId: facultyId,
-    senderName: substituteInfo.Name,
-    leave_request_id: null,
-    notification_type: 'approved',
+    senderName: substituteInfo?.Name || 'Substitute',
+    leaveId: null,
+    type: 'leave_approved',
     title: `Period Covered — ${dateStr}`,
-    message: `${substituteInfo.Name} has accepted to cover your ${periodInfo.period_label || 'period'} on ${dateStr}${periodInfo.subject_name ? ` (${periodInfo.subject_name})` : ''}.`,
-    is_read: false,
+    message: `${actorLabel} has accepted to cover your ${periodInfo.period_label || 'period'} on ${dateStr}${periodInfo.subject_name ? ` (${periodInfo.subject_name})` : ''}.`,
+    isRead: false,
   });
 
   // Notify admin and incharge
   await notifyAdminAndIncharge(
-    departmentId, facultyId, substituteInfo.Name,
+    departmentId, facultyId, substituteInfo?.Name || 'Substitute',
     `Alteration Accepted — ${dateStr}`,
-    `${substituteInfo.Name} has confirmed to cover ${record.absent_faculty?.Name || 'a faculty'}'s ${periodInfo.period_label || 'period'} on ${dateStr}.`,
+    `${actorLabel} has confirmed to cover ${record.absent_faculty?.Name || 'a faculty'}'s ${periodInfo.period_label || 'period'} on ${dateStr}.`,
   );
 
   res.status(200).json({ success: true, message: 'Period accepted. Original faculty notified.' });
@@ -386,6 +410,7 @@ export const rejectPeriodAlteration = asyncHandler(async (req, res, next) => {
   const { id } = req.params;
   const { rejection_reason } = req.body;
   const facultyId = req.user.faculty_id;
+  const isDeptAdmin = req.user.role === 'department-admin';
 
   const record = await FacultySubstitutes.findByPk(id, {
     include: [{ model: Faculty, as: 'absent_faculty', attributes: ['faculty_id', 'Name', 'department_id'] }],
@@ -393,8 +418,21 @@ export const rejectPeriodAlteration = asyncHandler(async (req, res, next) => {
 
   if (!record) return next(new ErrorResponse('Request not found', 404));
   const departmentId = record.absent_faculty?.department_id;
-  if (record.substitute_faculty_id !== facultyId) return next(new ErrorResponse('Not authorized', 403));
+
+  // Allow the substitute faculty themselves OR the HOD of the department
+  const isSubstitute = record.substitute_faculty_id === facultyId;
+  if (!isSubstitute && !isDeptAdmin) {
+    return next(new ErrorResponse('Not authorized', 403));
+  }
+
+  // HOD must belong to the correct department
+  if (isDeptAdmin && departmentId && Number(departmentId) !== Number(req.user.department_id)) {
+    return next(new ErrorResponse('Not authorized to manage requests from another department', 403));
+  }
+
   if (record.status !== 'pending') return next(new ErrorResponse('Request is no longer pending', 400));
+
+  const substituteId = record.substitute_faculty_id;
 
   // Store rejection reason inside the reason JSON
   const periodInfo = JSON.parse(record.reason || '{}');
@@ -404,29 +442,30 @@ export const rejectPeriodAlteration = asyncHandler(async (req, res, next) => {
   record.approval_date = new Date();
   await record.save();
 
-  const substituteInfo = await Faculty.findByPk(facultyId, { attributes: ['Name'] });
+  const substituteInfo = await Faculty.findByPk(substituteId, { attributes: ['Name'] });
+  const actorLabel = isDeptAdmin ? `HOD (on behalf of ${substituteInfo?.Name || 'substitute'})` : (substituteInfo?.Name || 'Substitute');
   const dateStr = new Date(record.start_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
   const reasonText = rejection_reason ? ` Reason: ${rejection_reason}.` : '';
 
   // Notify original faculty
   await LeaveNotification.create({
-    recipient_id: record.faculty_id,
-    recipient_type: 'faculty',
+    recipientId: record.faculty_id,
+    recipientType: 'faculty',
     departmentId,
     senderId: facultyId,
-    senderName: substituteInfo.Name,
-    leave_request_id: null,
-    notification_type: 'rejected',
+    senderName: substituteInfo?.Name || 'Substitute',
+    leaveId: null,
+    type: 'leave_rejected',
     title: `Period Request Rejected — ${dateStr}`,
-    message: `${substituteInfo.Name} has rejected to cover your ${periodInfo.period_label || 'period'} on ${dateStr}.${reasonText} Please assign another substitute.`,
-    is_read: false,
+    message: `${actorLabel} has rejected covering your ${periodInfo.period_label || 'period'} on ${dateStr}.${reasonText} Please assign another substitute.`,
+    isRead: false,
   });
 
   // Notify admin and incharge
   await notifyAdminAndIncharge(
-    departmentId, facultyId, substituteInfo.Name,
+    departmentId, facultyId, substituteInfo?.Name || 'Substitute',
     `Alteration Rejected — ${dateStr}`,
-    `${substituteInfo.Name} rejected covering ${record.absent_faculty?.Name || 'a faculty'}'s ${periodInfo.period_label || 'period'} on ${dateStr}.${reasonText}`,
+    `${actorLabel} rejected covering ${record.absent_faculty?.Name || 'a faculty'}'s ${periodInfo.period_label || 'period'} on ${dateStr}.${reasonText}`,
   );
 
   res.status(200).json({ success: true, message: 'Period rejected. Original faculty notified.' });
@@ -585,16 +624,16 @@ export const submitLeaveWithPlan = asyncHandler(async (req, res, next) => {
     for (const admin of deptAdmins) {
       if (!admin.faculty_id) continue;
       await LeaveNotification.create({
-        recipient_id: admin.faculty_id,
-        recipient_type: 'faculty',
+        recipientId: admin.faculty_id,
+        recipientType: 'faculty',
         departmentId: departmentId,
         senderId: facultyId,
         senderName: applicant.Name,
-        leave_request_id: leave.id,
-        notification_type: 'leave_approval_requested',
+        leaveId: leave.id,
+        type: 'leave_approval_requested',
         title: `Action Required: Leave Approval`,
         message: `${applicant.Name} has requested you to approve their ${leaveType} leave from ${startStr} to ${endStr}.`,
-        is_read: false,
+        isRead: false,
       });
     }
   } catch (err) {

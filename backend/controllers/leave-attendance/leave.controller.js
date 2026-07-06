@@ -176,7 +176,7 @@ export const createLeave = asyncHandler(async (req, res, next) => {
         // Notify Executive Admin
         await LeaveNotification.create({
           recipientId: null, // Broadcast to all executive admins
-          recipientType: 'executiveadmin',
+          recipientType: 'faculty',
           departmentId: leave.departmentId,
           senderId: req.user.id,
           senderName,
@@ -185,7 +185,7 @@ export const createLeave = asyncHandler(async (req, res, next) => {
           leaveType: req.body.leaveType,
           startDate: req.body.startDate,
           endDate: req.body.endDate,
-          type: 'leave_submitted',
+          type: 'submitted',
           title: `HOD Leave Request: ${senderName}`,
           message: `${senderName} (HOD) has applied for ${req.body.leaveType} leave from ${startStr} to ${endStr}`,
           isRead: false,
@@ -199,7 +199,7 @@ export const createLeave = asyncHandler(async (req, res, next) => {
 
         await LeaveNotification.create({
           recipientId: deptAdmin?.faculty_id || null,
-          recipientType: 'department-admin',
+          recipientType: 'hod',
           departmentId: leave.departmentId,
           senderId: req.user.id,
           senderName,
@@ -208,7 +208,7 @@ export const createLeave = asyncHandler(async (req, res, next) => {
           leaveType: req.body.leaveType,
           startDate: req.body.startDate,
           endDate: req.body.endDate,
-          type: 'leave_submitted',
+          type: 'submitted',
           title: `Leave Request from ${senderName}`,
           message: `${senderName} has applied for ${req.body.leaveType} leave from ${startStr} to ${endStr}`,
           isRead: false,
@@ -300,7 +300,67 @@ export const updateLeaveStatus = asyncHandler(async (req, res, next) => {
   leave.approvalDate = Date.now();
   leave.approvalRemarks = req.body.remarks;
 
+  // Also update overall_status to stay in sync with the workflow progression
+  if (nextStatus === 'hod_approved') {
+    leave.overall_status = 'hod_approved';
+    const hodFacultyId = req.user.faculty_id || req.user.id;
+    if (leave.substitute_faculty_id && Number(leave.substitute_faculty_id) === Number(hodFacultyId)) {
+      leave.substitute_approval_status = 'approved';
+      leave.substitute_approval_date = new Date();
+    }
+  } else if (nextStatus === 'approved') {
+    leave.overall_status = 'approved';
+  } else if (nextStatus === 'rejected') {
+    leave.overall_status = 'rejected';
+    const hodFacultyId = req.user.faculty_id || req.user.id;
+    if (leave.substitute_faculty_id && Number(leave.substitute_faculty_id) === Number(hodFacultyId)) {
+      leave.substitute_approval_status = 'rejected';
+      leave.substitute_approval_date = new Date();
+    }
+  }
+
   await leave.save();
+
+  // --- Sync faculty_substitutes table when leave has a substitute ---
+  if (leave.substitute_faculty_id) {
+    const { FacultySubstitutes } = models;
+    try {
+      const substituteSyncStatus = (nextStatus === 'rejected') ? 'rejected' : 'approved';
+      const [updatedSubRows] = await FacultySubstitutes.update(
+        {
+          status: substituteSyncStatus,
+          approved_by: req.user.faculty_id || req.user.id,
+          approval_date: new Date(),
+        },
+        {
+          where: {
+            leave_id: leave.id,
+            substitute_faculty_id: leave.substitute_faculty_id,
+          },
+        }
+      );
+
+      // If no existing faculty_substitutes row found, create one
+      if (updatedSubRows === 0) {
+        await FacultySubstitutes.create({
+          faculty_id: leave.applicantId,
+          substitute_faculty_id: leave.substitute_faculty_id,
+          start_date: leave.startDate,
+          end_date: leave.endDate,
+          reason: leave.reason,
+          leave_id: leave.id,
+          status: substituteSyncStatus,
+          approved_by: req.user.faculty_id || req.user.id,
+          approval_date: new Date(),
+          requested_by: leave.applicantId,
+        });
+      }
+      console.log(`[LeaveStatus] Updated faculty_substitutes for leave ${leave.id}, status: ${substituteSyncStatus}`);
+    } catch (subErr) {
+      console.error('[LeaveStatus] faculty_substitutes sync error (non-fatal):', subErr.message);
+    }
+  }
+  // ---
 
   // Update leave balance if finally approved by higher admin or if HOD's own leave is approved
   if (nextStatus === 'approved' && leave.applicantType === 'faculty') {
@@ -670,16 +730,35 @@ export const getPendingLeaves = asyncHandler(async (req, res, next) => {
     let where = {};
 
     if (isDeptAdmin) {
-      where.status = 'pending';
+      // HOD can see:
+      // 1. Standard leaves (no substitute involved) — status = 'pending'
+      // 2. Leaves with substitute — only after substitute has accepted (overall_status = 'substitute_approved')
+      const hodFacultyId = req.user.faculty_id || req.user.id;
       where.departmentId = req.user.departmentId;
-      where.applicantId = { [Op.ne]: req.user.id }; // Don't allow HOD to approve their own
-      where[Op.and] = [
+      where.applicantId = { [Op.ne]: hodFacultyId }; // Don't allow HOD to approve their own leave
+      where[Op.or] = [
+        // No substitute involved — normal leave
         {
-          [Op.or]: [
-            { reassign_faculty_id: null },
-            { substitute_status: 'accepted' }
-          ]
-        }
+          status: 'pending',
+          substitute_faculty_id: null,
+        },
+        // Legacy reassignment-based leaves where substitute already accepted
+        {
+          status: 'pending',
+          reassign_faculty_id: { [Op.ne]: null },
+          substitute_status: 'accepted',
+        },
+        // New substitution workflow — substitute has confirmed, awaiting HOD approval
+        {
+          overall_status: 'substitute_approved',
+          substitute_approval_status: 'approved',
+        },
+        // New substitution workflow where the HOD themselves is the substitute (skip waiting for separate substitution acceptance)
+        {
+          overall_status: 'substitute_pending',
+          substitute_approval_status: 'pending',
+          substitute_faculty_id: hodFacultyId,
+        },
       ];
     } else if (isHigherAdmin) {
       where[Op.or] = [
@@ -714,7 +793,8 @@ export const getPendingLeaves = asyncHandler(async (req, res, next) => {
     const applicantIds = [...new Set(rawLeaves.map(l => l.applicantId))];
     const reassignFacultyIds = [...new Set(rawLeaves.map(l => l.reassign_faculty_id).filter(Boolean))];
     const approverIds = [...new Set(rawLeaves.map(l => l.approvedById).filter(Boolean))];
-    const allFacultyIds = [...new Set([...applicantIds, ...reassignFacultyIds, ...approverIds])];
+    const substituteIds = [...new Set(rawLeaves.map(l => l.substitute_faculty_id).filter(Boolean))];
+    const allFacultyIds = [...new Set([...applicantIds, ...reassignFacultyIds, ...approverIds, ...substituteIds])];
 
     const facultyList = allFacultyIds.length
       ? await Faculty.findAll({
@@ -739,6 +819,13 @@ export const getPendingLeaves = asyncHandler(async (req, res, next) => {
         : null,
       approverName: l.approvedById && facultyMap[l.approvedById]
         ? facultyMap[l.approvedById].Name
+        : null,
+      substituteFaculty: l.substitute_faculty_id && facultyMap[l.substitute_faculty_id]
+        ? {
+          faculty_id: facultyMap[l.substitute_faculty_id].faculty_id,
+          Name: facultyMap[l.substitute_faculty_id].Name,
+          email: facultyMap[l.substitute_faculty_id].email,
+        }
         : null,
     }));
 

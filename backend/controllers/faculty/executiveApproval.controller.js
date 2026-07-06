@@ -6,6 +6,7 @@ const {
   Leave,
   Faculty,
   LeaveNotification,
+  FacultySubstitutes,
 } = models;
 
 /**
@@ -329,7 +330,21 @@ export const departmentAdminLeaveApproval = asyncHandler(async (req, res, next) 
       leave.admin_approval_date = new Date();
       leave.overall_status = 'hod_approved';
       
+      // If HOD themselves is the substitute, mark substitution approved on the leave record too
+      if (leave.substitute_faculty_id && Number(leave.substitute_faculty_id) === Number(facultyId)) {
+        leave.substitute_approval_status = 'approved';
+        leave.substitute_approval_date = new Date();
+      }
+      
       await leave.save();
+
+      // If the leave had a substitute, mark their FacultySubstitutes record as approved
+      if (leave.substitute_faculty_id) {
+        await FacultySubstitutes.update(
+          { status: 'approved', approved_by: facultyId, approval_date: new Date() },
+          { where: { leave_id: leaveId, substitute_faculty_id: leave.substitute_faculty_id } }
+        );
+      }
 
       // Notify the applicant
       await LeaveNotification.create({
@@ -350,7 +365,22 @@ export const departmentAdminLeaveApproval = asyncHandler(async (req, res, next) 
       leave.admin_approval_status = 'rejected';
       leave.overall_status = 'rejected';
       leave.admin_approval_date = new Date();
+
+      // If HOD themselves is the substitute, mark substitution rejected on the leave record too
+      if (leave.substitute_faculty_id && Number(leave.substitute_faculty_id) === Number(facultyId)) {
+        leave.substitute_approval_status = 'rejected';
+        leave.substitute_approval_date = new Date();
+      }
+
       await leave.save();
+
+      // If the leave had a substitute, mark their FacultySubstitutes record as rejected
+      if (leave.substitute_faculty_id) {
+        await FacultySubstitutes.update(
+          { status: 'rejected', approved_by: facultyId, approval_date: new Date() },
+          { where: { leave_id: leaveId, substitute_faculty_id: leave.substitute_faculty_id } }
+        );
+      }
 
       // Notify the applicant
       await LeaveNotification.create({

@@ -110,7 +110,7 @@ router.delete('/alteration-plan/:id/cancel', authorize('faculty', 'department-ad
 // ==================== SUBSTITUTE FACULTY APPROVAL ROUTES ====================
 
 // Get pending alteration requests for substitute faculty
-router.get('/alteration/pending/:facultyId', authorize('faculty'), getPendingAlterationRequests);
+router.get('/alteration/pending/:facultyId', authorize('faculty', 'department-admin'), getPendingAlterationRequests);
 
 // Accept alteration request
 router.patch('/alteration/:leaveId/accept', authorize('faculty', 'department-admin'), acceptAlteration);

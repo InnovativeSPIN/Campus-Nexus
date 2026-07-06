@@ -91,6 +91,7 @@ export function LeaveNotificationBell() {
 
             let res: Response;
             if (isAlterationPlan && leaveId && type === "reassignment_requested") {
+                // Period-level substitution (FacultySubstitutes record ID)
                 const action = status === "accepted" ? "accept" : "reject";
                 res = await fetch(`/api/v1/faculty/alteration-plan/${leaveId}/${action}`, {
                     method: "PATCH",
@@ -100,7 +101,19 @@ export function LeaveNotificationBell() {
                     },
                     body: JSON.stringify({ rejection_reason: "Declined via notification" }),
                 });
+            } else if (type === "alteration_requested" && leaveId) {
+                // Full-leave substitution via new flow — leaveId is the Leave record ID
+                const action = status === "accepted" ? "accept" : "reject";
+                res = await fetch(`/api/v1/faculty/alteration/${leaveId}/${action}`, {
+                    method: "PATCH",
+                    headers: {
+                        "Content-Type": "application/json",
+                        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                    },
+                    body: JSON.stringify({ rejection_reason: "Declined via notification" }),
+                });
             } else if (type === "leave_approval_requested" && leaveId) {
+                // HOD leave approval
                 const action = status === "accepted" ? "approve" : "reject";
                 res = await fetch(`/api/v1/faculty/leave-approval/department/${leaveId}/${action}`, {
                     method: "PATCH",
@@ -110,6 +123,7 @@ export function LeaveNotificationBell() {
                     },
                 });
             } else if (leaveId) {
+                // Legacy: reassignment response (old flow)
                 res = await fetch(`/api/v1/leave/${leaveId}/reassignment-response`, {
                     method: "PUT",
                     headers: {
@@ -301,7 +315,7 @@ export function LeaveNotificationBell() {
                                                             minute: "2-digit"
                                                         })}
                                                     </p>
-                                                    {(notif.type === "reassignment_requested" || notif.type === "leave_approval_requested") && !notif.isRead && (
+                                                    {(notif.type === "reassignment_requested" || notif.type === "alteration_requested" || notif.type === "leave_approval_requested") && !notif.isRead && (
                                                         <div className="flex gap-2 mt-3" onClick={(e) => e.stopPropagation()}>
                                                             <button
                                                                 onClick={() => handleActionResponse(notif.id, notif.leaveId, "accepted", notif.title, notif.type)}
