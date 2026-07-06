@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import PageHeader from '@/pages/student/components/layout/PageHeader';
 import SectionCard from '@/pages/student/components/common/SectionCard';
 import Badge from '@/pages/student/components/common/Badge';
@@ -41,7 +42,8 @@ interface CoursePlan {
 }
 
 export default function Syllabus({ showHeader = true }: { showHeader?: boolean }) {
-  const [selectedSemester, setSelectedSemester] = useState<number>(6);
+  const { user } = useAuth();
+  const [selectedSemester, setSelectedSemester] = useState<number>(user?.semester ? Number(user.semester) : 6);
   const [selectedSubject, setSelectedSubject] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [syllabusData, setSyllabusData] = useState<CoursePlan[]>([]);

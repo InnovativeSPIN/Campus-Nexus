@@ -12,7 +12,7 @@ import { getMyAttendance } from '@/pages/student/services/studentApi';
 
 export default function Attendance() {
   const { user } = useAuth();
-  const [selectedSemester, setSelectedSemester] = useState<number>(user?.semester || 6);
+  const [selectedSemester, setSelectedSemester] = useState<number>(user?.semester ? Number(user.semester) : 6);
   const [loading, setLoading] = useState(true);
   const [attendanceData, setAttendanceData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
@@ -110,7 +110,7 @@ export default function Attendance() {
             onChange={(e) => setSelectedSemester(Number(e.target.value))}
             className="input-field py-2 pr-8"
           >
-            {SEMESTERS.filter(sem => sem <= (user?.semester || 8)).reverse().map((sem) => (
+            {SEMESTERS.filter(sem => sem <= (user?.semester ? Number(user.semester) : 8)).reverse().map((sem) => (
               <option key={sem} value={sem}>Semester {sem}</option>
             ))}
           </select>
