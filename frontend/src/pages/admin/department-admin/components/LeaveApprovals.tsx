@@ -31,10 +31,13 @@ interface FacultyLeave {
   reason: string;
   totalDays: number;
   status: string;
+  overall_status?: string;
+  substitute_approval_status?: string;
   applicant?: { name: string; email: string; role: string };
   applicantType: string;
   createdAt: string;
   reassignFacultyName?: string;
+  substituteFaculty?: { faculty_id: number; Name: string; email: string };
 }
 
 // Student leave (Department Admin approval - after class incharge approved)
@@ -377,6 +380,13 @@ export function LeaveApprovals() {
                     </div>
 
                     <p className="text-sm text-muted-foreground mb-3">{leave.leaveType}</p>
+
+                    {/* Substitute confirmed badge */}
+                    {(leave.overall_status === 'substitute_approved' || leave.substitute_approval_status === 'approved') && (
+                      <p className="text-xs text-green-700 bg-green-50 border border-green-200 px-2 py-1 rounded mb-2 inline-block">
+                        ✅ Substitute Confirmed{leave.substituteFaculty ? `: ${leave.substituteFaculty.Name}` : ""} · Awaiting Your Approval
+                      </p>
+                    )}
 
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-3">
                       <div>
