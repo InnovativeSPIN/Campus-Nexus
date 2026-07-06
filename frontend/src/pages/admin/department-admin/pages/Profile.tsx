@@ -2899,9 +2899,61 @@ export default function Profile() {
             </div>
 
             {/* Address */}
-            <div className="flex items-start gap-3 text-sm">
+            <div className="flex items-start gap-3 text-sm group">
               <MapPin className="w-4 h-4 text-primary flex-shrink-0 mt-1" />
-              <span className="font-medium text-sm">{facultyData.address}</span>
+              {editingField === 'address' ? (
+                <div className="flex-1 flex flex-col gap-2">
+                  <textarea
+                    value={tempValue}
+                    onChange={(e) => {
+                      setTempValue(e.target.value);
+                      setFieldError("");
+                    }}
+                    placeholder="Enter address"
+                    className="textarea textarea-bordered textarea-sm w-full text-sm"
+                    disabled={loading}
+                    autoFocus
+                    rows={3}
+                  />
+                  {fieldError && (
+                    <p className="text-xs text-red-500 font-medium">{fieldError}</p>
+                  )}
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      onClick={() => handleSaveField('address')}
+                      disabled={loading}
+                      className="h-8 px-3 bg-green-600 hover:bg-green-700"
+                    >
+                      {loading ? (
+                        <div className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                      ) : (
+                        <Check className="w-3 h-3" />
+                      )}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleCancelEdit}
+                      disabled={loading}
+                      className="h-8 px-3"
+                    >
+                      <X className="w-3 h-3" />
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex-1 flex items-start justify-between">
+                  <span className="font-medium text-sm break-words flex-1 pr-2">{facultyData.address || 'No address provided'}</span>
+                  <button
+                    onClick={() => handleEditField('address', facultyData.address)}
+                    className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-muted rounded flex-shrink-0"
+                    title="Edit address"
+                  >
+                    <Edit2 className="w-4 h-4 text-muted-foreground" />
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 
