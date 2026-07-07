@@ -34,6 +34,7 @@ interface Slot {
   sessionType: string;
   room: string;
   notes: string;
+  isAlteration?: boolean;
 }
 
 interface TimetableMaster {
@@ -325,27 +326,27 @@ const StudentClassTimetable: React.FC = () => {
         <Card>
           <CardContent className="pt-3 pb-3 px-3">
             <p className="text-xs text-gray-600">Class</p>
-            <p className="text-sm font-semibold">{timetable.timetableMaster.class.name}</p>
+            <p className="text-sm font-semibold">{timetable?.timetableMaster?.class?.name || 'N/A'}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-3 pb-3 px-3">
             <p className="text-xs text-gray-600">Roll No</p>
-            <p className="text-sm font-semibold">{timetable.student.rollNo}</p>
+            <p className="text-sm font-semibold">{timetable?.student?.rollNo || 'N/A'}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-3 pb-3 px-3">
             <p className="text-xs md:text-sm text-gray-600">Department</p>
             <p className="text-sm md:text-base font-semibold">
-              {getName(timetable.timetableMaster.department)}
+              {getName(timetable?.timetableMaster?.department)}
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-3 pb-3 px-3">
             <p className="text-xs text-gray-600">Batch</p>
-            <p className="text-sm font-semibold">{timetable.timetableMaster.batch}</p>
+            <p className="text-sm font-semibold">{timetable?.timetableMaster?.batch || 'N/A'}</p>
           </CardContent>
         </Card>
       </div>
@@ -362,26 +363,26 @@ const StudentClassTimetable: React.FC = () => {
               <div>
                 <p className="text-xs text-gray-600">Class Coordinator</p>
                 <p className="text-xs font-semibold">
-                  {getName(timetable.timetableMaster.classCoordinator) === 'N/A'
+                  {getName(timetable?.timetableMaster?.classCoordinator) === 'N/A'
                     ? 'Not assigned'
-                    : getName(timetable.timetableMaster.classCoordinator)}
+                    : getName(timetable?.timetableMaster?.classCoordinator)}
                 </p>
                 <p className="text-xs text-gray-500">
-                  {timetable.timetableMaster.classCoordinator?.email || 'Not assigned'}
+                  {timetable?.timetableMaster?.classCoordinator?.email || 'Not assigned'}
                 </p>
               </div>
             </div>
 
-            {timetable.timetableMaster.assistantCoordinator && (
+            {timetable?.timetableMaster?.assistantCoordinator && (
               <div className="flex items-start space-x-2">
                 <User className="w-4 h-4 text-indigo-600 mt-0.5 flex-shrink-0" />
                 <div>
                   <p className="text-xs text-gray-600">Assistant Coordinator</p>
                   <p className="text-xs font-semibold">
-                    {getName(timetable.timetableMaster.assistantCoordinator)}
+                    {getName(timetable?.timetableMaster?.assistantCoordinator)}
                   </p>
                   <p className="text-xs text-gray-500">
-                    {timetable.timetableMaster.assistantCoordinator?.email || 'Not assigned'}
+                    {timetable?.timetableMaster?.assistantCoordinator?.email || 'Not assigned'}
                   </p>
                 </div>
               </div>
@@ -453,7 +454,7 @@ const StudentClassTimetable: React.FC = () => {
                                 slot.sessionType === 'break' 
                                   ? `Break: ${slot.notes || 'No details'}`
                                   : slot.subject 
-                                    ? `${slot.subject.name} (${slot.subject.code})\nFaculty: ${slot.faculty?.name || 'N/A'}\nRoom: ${slot.room || 'N/A'}${slot.notes ? `\nNotes: ${slot.notes}` : ''}`
+                                    ? `${slot.subject.name} (${slot.subject.code})\nFaculty: ${slot.isAlteration ? 'Sub: ' : ''}${slot.faculty?.name || 'N/A'}\nRoom: ${slot.room || 'N/A'}${slot.notes ? `\nNotes: ${slot.notes}` : ''}`
                                     : undefined
                               ) : undefined}
                             >
@@ -479,8 +480,10 @@ const StudentClassTimetable: React.FC = () => {
                                         </div>
                                       </div>
                                       <div>
-                                        <div className="text-[9px] text-gray-600 truncate mt-0.5 leading-none">
-                                          {slot.faculty ? slot.faculty.name : ''}
+                                        <div className={`text-[9px] truncate mt-0.5 leading-none ${slot.isAlteration ? 'text-amber-600 font-bold' : 'text-gray-600'}`}>
+                                          {slot.faculty ? (
+                                            slot.isAlteration ? `Sub: ${slot.faculty.name}` : slot.faculty.name
+                                          ) : ''}
                                         </div>
                                         <div className="mt-0.5 flex items-center justify-between text-[9px] leading-none opacity-85">
                                           <span className="font-semibold text-blue-800">
@@ -555,7 +558,9 @@ const StudentClassTimetable: React.FC = () => {
                                     {slot.sessionType.toUpperCase().substring(0, 3)}
                                   </div>
                                   {slot.faculty && (
-                                    <div className="text-xs opacity-75">{slot.faculty.name}</div>
+                                    <div className={`text-xs ${slot.isAlteration ? 'text-amber-700 font-bold' : 'opacity-75'}`}>
+                                      {slot.isAlteration ? `Sub: ${slot.faculty.name}` : slot.faculty.name}
+                                    </div>
                                   )}
                                   {slot.room && <div className="text-xs opacity-75">Rm:{slot.room}</div>}
                                   {slot.notes && <div className="text-xs opacity-75 italic">{slot.notes}</div>}
