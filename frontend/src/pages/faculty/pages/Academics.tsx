@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { toast } from "@/pages/faculty/hooks/use-toast";
 import { IntegratedNotificationBell } from "@/components/common/IntegratedNotificationBell";
 import { MainLayout } from "@/pages/faculty/components/layout/MainLayout";
 import { motion } from "framer-motion";
@@ -535,7 +536,7 @@ export default function Academics() {
 
   const handleSaveCoursePlan = async () => {
     if (!selectedClass) {
-      alert('Please select a class first');
+      toast({ title: "Error", description: "Please select a class first", variant: "destructive" });
       return;
     }
 
@@ -547,14 +548,14 @@ export default function Academics() {
     for (let unitIdx = 0; unitIdx < coursePlanUnits.length; unitIdx++) {
       const unit = coursePlanUnits[unitIdx];
       if (!unit.unit_label?.trim()) {
-        alert(`Unit ${unitIdx + 1} name is required`);
+        toast({ title: "Error", description: `Unit ${unitIdx + 1} name is required`, variant: "destructive" });
         return;
       }
 
       for (let topicIdx = 0; topicIdx < unit.topics.length; topicIdx++) {
         const topic = unit.topics[topicIdx];
         if (!topic.topic?.trim()) {
-          alert(`Unit ${unitIdx + 1}, Topic ${topicIdx + 1}: Topic name is required`);
+          toast({ title: "Error", description: `Unit ${unitIdx + 1}, Topic ${topicIdx + 1}: Topic name is required`, variant: "destructive" });
           return;
         }
 
@@ -577,7 +578,7 @@ export default function Academics() {
     }
 
     if (allTopics.length === 0) {
-      alert('Please add at least one topic');
+      toast({ title: "Error", description: "Please add at least one topic", variant: "destructive" });
       return;
     }
 
@@ -608,20 +609,28 @@ export default function Academics() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to save course plan');
+        throw new Error(errorData.error || errorData.message || 'Failed to save course plan');
       }
 
       const result = await response.json();
       console.log('✅ Upload successful:', result);
       setIsFileSent(true);
-      alert(`✓ Course plan saved successfully! ${result.data?.count || allTopics.length} topics created.\n\n⏳ Your course plan has been submitted to the department admin for approval. Once approved, it will be visible in the Syllabus section. You can still view and edit your pending topics above.`);
+      toast({
+        title: "Success",
+        description: `Course plan saved successfully! ${result.data?.count || allTopics.length} topics created.\nYour course plan has been submitted to the department admin for approval.`,
+        variant: "default",
+      });
 
       // Refresh course plans for the selected class/subject to show updated syllabus (including pending)
       console.log('🔄 Refreshing course plans after upload (showing pending)...');
       await loadCoursePlans();
     } catch (error: any) {
       console.error('Error saving course plan:', error);
-      alert(error.message || 'An error occurred while saving the course plan.');
+      toast({
+        title: "Error",
+        description: error.message || 'An error occurred while saving the course plan.',
+        variant: "destructive",
+      });
     } finally {
       setIsUploading(false);
     }
