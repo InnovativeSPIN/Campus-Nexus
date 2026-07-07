@@ -14,7 +14,8 @@ const {
   Faculty,
   CourseLessonPlan,
   CourseFile,
-  CourseFileNotification
+  CourseFileNotification,
+  CourseLessonPlanNotification
 } = models;
 
 // @route   GET /api/v1/faculty/academics/my-subjects
@@ -862,21 +863,18 @@ export const uploadCourseFile = asyncHandler(async (req, res, next) => {
     });
 
     // Get department admins notification
-    // Filter for admins in this department or assigned to this subject
-    const departmentAdminsAssignments = await FacultySubjectAssignment.findAll({
+    // Find all department admins for the subject's department
+    const departmentAdmins = await Faculty.findAll({
       where: {
-        subject_id: assignment.subject_id
+        role_id: 7,
+        department_id: assignment.subject.department_id,
+        status: 'active'
       },
-      include: [{
-        model: Faculty,
-        as: 'faculty',
-        required: true,
-        where: { role_id: [7] } // 7 is typically department admin
-      }],
-      attributes: ['faculty_id']
+      attributes: ['faculty_id'],
+      raw: true
     });
 
-    const deptAdminIds = [...new Set(departmentAdminsAssignments.map(a => a.faculty_id))];
+    const deptAdminIds = departmentAdmins.map(admin => admin.faculty_id);
 
     // Create notifications for all department admins
     if (deptAdminIds.length > 0) {
@@ -1025,7 +1023,7 @@ export const uploadCoursePlan = asyncHandler(async (req, res, next) => {
         where: {
           role_id: 7,
           department_id: departmentId,
-          is_active: true
+          status: 'active'
         },
         attributes: ['faculty_id'],
         raw: true

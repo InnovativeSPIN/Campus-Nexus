@@ -425,7 +425,8 @@ export const getMyClassTimetable = asyncHandler(async (req, res, next) => {
       });
     }
 
-    // Get student's classId (note: camelCase)
+    // Since we're delegating to getEffectiveClassTimetable, we need to import Student
+    const { Student } = (await import('../../models/index.js')).models;
     const student = await Student.findByPk(studentId);
 
     if (!student || !student.classId) {
@@ -435,119 +436,57 @@ export const getMyClassTimetable = asyncHandler(async (req, res, next) => {
       });
     }
 
-    // Get active timetable for this class
-    const timetableMaster = await TimetableMaster.findOne({
-      where: { class_id: student.classId, status: 'active' },
-      include: [
-        { model: ClassModel, as: 'class', attributes: ['id', 'name', 'semester', 'batch'] },
-        { model: Department, as: 'department', attributes: ['id', 'full_name', 'short_name'] },
-        { model: Faculty, as: 'class_coordinator', attributes: ['faculty_id', 'Name', 'email'] },
-        { model: Faculty, as: 'asst_coordinator', attributes: ['faculty_id', 'Name', 'email'] },
-        { model: Faculty, as: 'timetable_incharge', attributes: ['faculty_id', 'Name', 'email'] },
-      ]
-    });
-
-    if (!timetableMaster) {
-      return res.status(404).json({
-        success: false,
-        message: 'No active timetable found for your class'
-      });
-    }
-
-    // Get all slots
-    const slots = await TimetableMasterSlots.findAll({
-      where: { master_id: timetableMaster.id },
-      include: [
-        { model: Subject, as: 'subject', attributes: ['id', 'subject_name', 'subject_code', 'type'] },
-        { model: Faculty, as: 'faculty', attributes: ['faculty_id', 'Name', 'email'] },
-        { model: PeriodSlot, as: 'period', attributes: ['id', 'period_label', 'start_time', 'end_time'] },
-      ],
-      order: [
-        [sequelize.literal('FIELD(day, "Monday","Tuesday","Wednesday","Thursday","Friday","Saturday")'), 'ASC'],
-        ['period_slot_id', 'ASC'],
-      ]
-    });
-
-    const timetableData = {
-      student: {
-        id: student.id,
-        name: `${student.firstName || ''} ${student.lastName || ''}`.trim(),
-        rollNo: student.rollNumber,
-      },
-      timetableMaster: {
-        id: timetableMaster.id,
-        class: timetableMaster.class ? {
-          id: timetableMaster.class.id,
-          name: timetableMaster.class.name,
-          semester: timetableMaster.class.semester,
-          batch: timetableMaster.class.batch,
-        } : null,
-        department: timetableMaster.department ? {
-          id: timetableMaster.department.id,
-          name: timetableMaster.department.full_name,
-          code: timetableMaster.department.short_name,
-        } : null,
-        academicYear: timetableMaster.academic_year,
-        semester: timetableMaster.semester,
-        semesterType: timetableMaster.semester_type,
-        batch: timetableMaster.batch,
-        roomNo: timetableMaster.room_no,
-        effectiveFrom: timetableMaster.effective_from ? new Date(timetableMaster.effective_from).toISOString() : null,
-        classCoordinator: timetableMaster.class_coordinator ? {
-          id: timetableMaster.class_coordinator.faculty_id,
-          name: timetableMaster.class_coordinator.Name,
-          email: timetableMaster.class_coordinator.email,
-        } : null,
-        assistantCoordinator: timetableMaster.asst_coordinator ? {
-          id: timetableMaster.asst_coordinator.faculty_id,
-          name: timetableMaster.asst_coordinator.Name,
-          email: timetableMaster.asst_coordinator.email,
-        } : null,
-        timetableIncharge: timetableMaster.timetable_incharge ? {
-          id: timetableMaster.timetable_incharge.faculty_id,
-          name: timetableMaster.timetable_incharge.Name,
-          email: timetableMaster.timetable_incharge.email,
-        } : null,
-        status: timetableMaster.status,
-        breakPeriodIds: timetableMaster.break_period_ids ? (
-          typeof timetableMaster.break_period_ids === 'string'
-            ? JSON.parse(timetableMaster.break_period_ids)
-            : timetableMaster.break_period_ids
-        ) : [3, 5, 8],
-      },
-      slots: slots.map(slot => ({
-        id: slot.id,
-        day: slot.day,
-        period: slot.period ? {
-          id: slot.period.id,
-          label: slot.period.period_label || `Period ${slot.period.id}`,
-          startTime: slot.period.start_time,
-          endTime: slot.period.end_time,
-        } : null,
-        subject: slot.subject ? {
-          id: slot.subject.id,
-          name: slot.subject.subject_name,
-          code: slot.subject.subject_code,
-          type: slot.subject.type,
-        } : null,
-        faculty: slot.faculty ? {
-          id: slot.faculty.faculty_id,
-          name: slot.faculty.Name,
-          email: slot.faculty.email,
-        } : null,
-        sessionType: slot.session_type,
-        room: slot.room || null,
-        notes: slot.notes || null,
-      }))
+    req.params.classId = student.classId;
+    
+    // Intercept res.json to format the response properly for the student frontend
+    const originalJson = res.json;
+    res.json = function(body) {
+      if (body.success && body.timetableMaster) {
+        return originalJson.call(this, {
+          success: true,
+          data: {
+            student: {
+              id: student.id,
+              name: `${student.firstName || ''} ${student.lastName || ''}`.trim(),
+              rollNo: student.rollNumber,
+            },
+            timetableMaster: {
+              id: body.timetableMaster.id,
+              class: {
+                id: student.classId,
+                name: body.timetableMaster.className,
+                semester: body.timetableMaster.semester,
+                program: ''
+              },
+              department: {
+                id: 0,
+                name: body.timetableMaster.department,
+                code: body.timetableMaster.departmentCode
+              },
+              academicYear: body.timetableMaster.academicYear,
+              semester: body.timetableMaster.semester,
+              semesterType: body.timetableMaster.semesterType,
+              batch: body.timetableMaster.batch,
+              roomNo: body.timetableMaster.roomNo,
+              effectiveFrom: body.timetableMaster.effectiveFrom,
+              classCoordinator: body.timetableMaster.coordinator,
+              breakPeriodIds: body.timetableMaster.breakPeriodIds
+            },
+            slots: body.slots
+          }
+        });
+      }
+      return originalJson.call(this, body);
     };
 
-    res.status(200).json({
-      success: true,
-      data: timetableData
-    });
+    return await getEffectiveClassTimetable(req, res, next);
   } catch (error) {
     console.error('[TimetableDisplay] Error in getMyClassTimetable:', error);
-    throw error; // Let asyncHandler catch it
+    res.status(500).json({
+      success: false,
+      message: 'Server Error',
+      error: error.message
+    });
   }
 });
 
@@ -585,6 +524,22 @@ export const getEffectiveClassTimetable = asyncHandler(async (req, res, next) =>
 
     const master = masterRows[0];
     const masterId = master.master_id;
+
+    const queryDateObj = new Date(queryDate);
+    const dayOfWeek = queryDateObj.getDay(); // 0 = Sunday, 1 = Monday, etc.
+    const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+    
+    const mondayDate = new Date(queryDateObj);
+    mondayDate.setDate(queryDateObj.getDate() + diffToMonday);
+    
+    const weekDates = {
+      Monday: new Date(mondayDate).toISOString().split('T')[0],
+      Tuesday: new Date(new Date(mondayDate).setDate(mondayDate.getDate() + 1)).toISOString().split('T')[0],
+      Wednesday: new Date(new Date(mondayDate).setDate(mondayDate.getDate() + 2)).toISOString().split('T')[0],
+      Thursday: new Date(new Date(mondayDate).setDate(mondayDate.getDate() + 3)).toISOString().split('T')[0],
+      Friday: new Date(new Date(mondayDate).setDate(mondayDate.getDate() + 4)).toISOString().split('T')[0],
+      Saturday: new Date(new Date(mondayDate).setDate(mondayDate.getDate() + 5)).toISOString().split('T')[0],
+    };
 
     const [slots] = await sequelize.query(
       `SELECT
@@ -624,16 +579,23 @@ export const getEffectiveClassTimetable = asyncHandler(async (req, res, next) =>
        LEFT JOIN timetable_overlay tov ON (
          tov.master_id = tms.master_id
          AND tov.period_slot_id = tms.period_slot_id
-         AND tov.overlay_date = ?
          AND tov.status = 'active'
+         AND (
+           (tms.day = 'Monday' AND tov.overlay_date = :Monday) OR
+           (tms.day = 'Tuesday' AND tov.overlay_date = :Tuesday) OR
+           (tms.day = 'Wednesday' AND tov.overlay_date = :Wednesday) OR
+           (tms.day = 'Thursday' AND tov.overlay_date = :Thursday) OR
+           (tms.day = 'Friday' AND tov.overlay_date = :Friday) OR
+           (tms.day = 'Saturday' AND tov.overlay_date = :Saturday)
+         )
        )
        LEFT JOIN faculty_profiles orig_fp ON orig_fp.faculty_id = tms.faculty_id
        LEFT JOIN subjects orig_s ON orig_s.id = tms.subject_id
        LEFT JOIN faculty_profiles sub_fp ON sub_fp.faculty_id = tov.substitute_faculty_id
        LEFT JOIN subjects sub_s ON sub_s.id = tov.substitute_subject_id
-       WHERE tms.master_id = ?
+       WHERE tms.master_id = :masterId
        ORDER BY FIELD(tms.day,'Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'), ps.slot_order`,
-      { replacements: [queryDate, masterId] }
+      { replacements: { ...weekDates, masterId } }
     );
 
     const leaveIds = [...new Set(slots.map(s => s.leave_request_id).filter(Boolean))];
@@ -641,7 +603,7 @@ export const getEffectiveClassTimetable = asyncHandler(async (req, res, next) =>
     if (leaveIds.length > 0) {
       const placeholders = leaveIds.map(() => '?').join(',');
       const [leaveRows] = await sequelize.query(
-        `SELECT id, end_date FROM leaves WHERE id IN (${placeholders})`,
+        `SELECT id, endDate as end_date FROM leaves WHERE id IN (${placeholders})`,
         { replacements: leaveIds }
       );
       leaveRows.forEach(lr => { leaveEndDates[lr.id] = lr.end_date; });

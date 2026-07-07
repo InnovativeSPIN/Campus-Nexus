@@ -29,6 +29,13 @@ export const applyTimetableAlterations = asyncHandler(async (req, res, next) => 
       return next(new ErrorResponse('Leave request not found', 404));
     }
 
+    // Use applicant's department for attendance and notifications
+    let departmentId = req.user.department_id;
+    const applicant = await Faculty.findByPk(leave.applicantId);
+    if (applicant && applicant.department_id) {
+      departmentId = applicant.department_id;
+    }
+
     // Verify leave is ready for alteration
     if (leave.overall_status !== 'hod_approved') {
       return next(new ErrorResponse(
@@ -40,27 +47,32 @@ export const applyTimetableAlterations = asyncHandler(async (req, res, next) => 
     // STEP 1: Create TimetableOverlay rows (one per affected period)
     const overlayCreated = [];
     
-    // Get all approved faculty_substitutes linked to this leave
-    const allSubstitutes = await sequelize.models.FacultySubstitutes.findAll({
-      where: { leave_id: leave.id, status: 'approved' },
-      raw: true,
-    });
+    // Use affected_periods from request body, fallback to leave.affected_periods
+    let periodsToApply = req.body.affected_periods;
+    if (!periodsToApply) {
+      periodsToApply = typeof leave.affected_periods === 'string'
+        ? JSON.parse(leave.affected_periods)
+        : (leave.affected_periods || []);
+    } else if (typeof periodsToApply === 'string') {
+      periodsToApply = JSON.parse(periodsToApply);
+    }
 
-    for (const sub of allSubstitutes) {
-      // Parse JSON reason to get timetable slot details
-      let reasonData = null;
-      try {
-        reasonData = typeof sub.reason === 'string' ? JSON.parse(sub.reason) : sub.reason;
-      } catch {
-        console.warn('[TimetableOverlay] Could not parse reason JSON for substitute id:', sub.id);
-        continue;
-      }
+    const startDate = new Date(leave.startDate);
+    const endDate = new Date(leave.endDate);
 
-      if (!reasonData || !reasonData.period_slot_id || !reasonData.master_id) continue;
+    for (const periodData of periodsToApply) {
+      if (!periodData || !periodData.period_slot_id || !periodData.master_id) continue;
 
-      const { period_slot_id, master_id, original_subject_id, substitute_subject_id } = reasonData;
-      const startDate = new Date(sub.start_date);
-      const endDate = new Date(sub.end_date);
+      const { period_slot_id, master_id, original_subject_id, substitute_subject_id, substitute_faculty_id } = periodData;
+
+      const master = await TimetableMaster.findByPk(master_id, { raw: true });
+      const slot = await sequelize.models.TimetableSlot.findByPk(period_slot_id, { raw: true });
+      
+      const class_id = master ? master.class_id : null;
+      const department_id = master ? master.department_id : null;
+      
+      const final_original_subject = original_subject_id || (slot ? slot.subject_id : null) || leave.subject_id || null;
+      const final_substitute_subject = substitute_subject_id || final_original_subject;
 
       let loopDate = new Date(startDate);
       while (loopDate <= endDate) {
@@ -70,10 +82,12 @@ export const applyTimetableAlterations = asyncHandler(async (req, res, next) => 
             master_id: master_id,
             overlay_date: formattedDate,
             period_slot_id: period_slot_id,
-            original_faculty_id: sub.absent_faculty_id,
-            substitute_faculty_id: sub.substitute_faculty_id,
-            original_subject_id: original_subject_id || leave.subject_id || null,
-            substitute_subject_id: substitute_subject_id || leave.subject_id || null,
+            class_id: class_id,
+            department_id: department_id,
+            original_faculty_id: leave.applicantId,
+            substitute_faculty_id: substitute_faculty_id || leave.substitute_faculty_id,
+            original_subject_id: final_original_subject,
+            substitute_subject_id: final_substitute_subject,
             leave_request_id: leaveId,
             reason: `Leave: ${leave.leaveType} - ${leave.reason}`,
             created_by: facultyId,
@@ -101,15 +115,14 @@ export const applyTimetableAlterations = asyncHandler(async (req, res, next) => 
     // STEP 3: Create staff attendance records for each day
     const attendanceRecords = [];
     const currentDate = new Date(leave.startDate);
-    const endDate = new Date(leave.endDate);
+    const attendanceEndDate = new Date(leave.endDate);
 
-    while (currentDate <= endDate) {
+    while (currentDate <= attendanceEndDate) {
       attendanceRecords.push({
-        faculty_id: leave.applicantId,
+        staff_id: leave.applicantId,
         department_id: departmentId,
-        attendance_date: new Date(currentDate),
-        day_status: 'on_leave',
-        leave_request_id: leaveId,
+        work_date: new Date(currentDate),
+        attendance_status: 'On-Leave',
       });
       currentDate.setDate(currentDate.getDate() + 1);
     }
@@ -117,7 +130,7 @@ export const applyTimetableAlterations = asyncHandler(async (req, res, next) => 
     if (attendanceRecords.length > 0) {
       try {
         await sequelize.models.Attendance.bulkCreate(attendanceRecords, {
-          updateOnDuplicate: ['day_status', 'leave_request_id'],
+          updateOnDuplicate: ['attendance_status'],
           ignoreDuplicates: false,
         });
       } catch (err) {
@@ -138,7 +151,9 @@ export const applyTimetableAlterations = asyncHandler(async (req, res, next) => 
 
     // Update Leave status
     leave.overall_status = newStatus;
-    leave.status = newStatus;
+    if (newStatus === 'approved') {
+      leave.status = 'approved';
+    }
     leave.timetable_incharge_approval_status = 'approved';
     leave.timetable_incharge_id = facultyId;
     leave.timetable_incharge_approval_date = new Date();
@@ -218,17 +233,21 @@ export const applyTimetableAlterations = asyncHandler(async (req, res, next) => 
     });
 
     // Notify Department Admin
+    const inchargeName = inchargeFaculty ? inchargeFaculty.Name : 'Timetable Incharge';
+    const applicantName = applicantFaculty ? applicantFaculty.Name : 'Faculty';
+    const substituteName = substituteFA ? substituteFA.Name : 'Substitute';
+
     for (const admin of deptAdmins) {
       await LeaveNotification.create({
         recipientId: admin.faculty_id,
         recipientType: 'faculty',
         departmentId,
         senderId: facultyId,
-        senderName: inchargeFaculty.Name,
+        senderName: inchargeName,
         leaveId: leaveId,
         type: 'alteration_applied',
         title: `Timetable Updated - Alteration Applied`,
-        message: `Timetable incharge ${inchargeFaculty.Name} has applied alteration for ${applicantFaculty.Name}'s ${leave.leaveType} leave (${startStr} to ${endStr}). Substitute: ${substituteFA.Name}.`,
+        message: `Timetable incharge ${inchargeName} has applied alteration for ${applicantName}'s ${leave.leaveType} leave (${startStr} to ${endStr}). Substitute: ${substituteName}.`,
         isRead: false,
       });
     }
@@ -249,11 +268,11 @@ export const applyTimetableAlterations = asyncHandler(async (req, res, next) => 
           recipientType: 'faculty',
           departmentId,
           senderId: facultyId,
-          senderName: inchargeFaculty.Name,
+          senderName: inchargeName,
           leaveId: leaveId,
           type: 'executive_approval_required',
           title: `Executive Approval Required - Multi-Day Leave`,
-          message: `${applicantFaculty.Name} has applied for a ${leave.leaveType} leave of ${leave.totalDays} days (${startStr} to ${endStr}). This requires executive admin approval. Substitute: ${substituteFA.Name}.`,
+          message: `${applicantName} has applied for a ${leave.leaveType} leave of ${leave.totalDays} days (${startStr} to ${endStr}). This requires executive admin approval. Substitute: ${substituteName}.`,
           isRead: false,
         });
       }

@@ -6,6 +6,7 @@ import fs from 'fs';
 const {
   CourseFile,
   CourseFileNotification,
+  CourseLessonPlanNotification,
   Faculty,
   Subject,
   Class: ClassModel,
@@ -689,5 +690,74 @@ export const rejectCourseLessonPlan = asyncHandler(async (req, res, next) => {
   } catch (error) {
     console.error('[rejectCourseLessonPlan] Error:', error);
     return next(new ErrorResponse(`Error rejecting lesson plan: ${error.message}`, 500));
+  }
+});
+
+export const getNotifications = asyncHandler(async (req, res, next) => {
+  const adminId = req.user.faculty_id || req.user.id;
+
+  try {
+    const courseFileNotifications = await CourseFileNotification.findAll({
+      where: { recipient_id: adminId },
+      include: [
+        {
+          model: Faculty,
+          as: 'recipient',
+          attributes: ['faculty_id', 'faculty_college_code', 'Name']
+        }
+      ],
+      order: [['created_at', 'DESC']]
+    });
+
+    const courseLessonPlanNotifications = await CourseLessonPlanNotification.findAll({
+      where: { recipient_id: adminId },
+      include: [
+        {
+          model: Faculty,
+          as: 'recipient',
+          attributes: ['faculty_id', 'faculty_college_code', 'Name']
+        },
+        {
+          model: Faculty,
+          as: 'sender',
+          attributes: ['faculty_id', 'faculty_college_code', 'Name']
+        }
+      ],
+      order: [['created_at', 'DESC']]
+    });
+
+    // Merge and format
+    const formattedFileNotifs = courseFileNotifications.map(n => ({
+      id: `file_${n.id}`,
+      title: n.title,
+      description: 'Course File submission',
+      message: n.message,
+      source: 'admin',
+      type: 'course_file',
+      timestamp: n.created_at,
+      isRead: n.is_read
+    }));
+
+    const formattedPlanNotifs = courseLessonPlanNotifications.map(n => ({
+      id: `plan_${n.id}`,
+      title: 'Course Plan Approval Request',
+      description: `Course Plan submitted by ${n.sender ? n.sender.Name : 'Faculty'}`,
+      message: `A course plan has been submitted for approval.`,
+      source: 'admin',
+      type: 'course_plan',
+      timestamp: n.created_at,
+      isRead: n.is_read
+    }));
+
+    const notifications = [...formattedFileNotifs, ...formattedPlanNotifs]
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+    res.status(200).json({
+      success: true,
+      data: notifications
+    });
+  } catch (error) {
+    console.error('[getNotifications] Error:', error);
+    return next(new ErrorResponse('Error fetching notifications', 500));
   }
 });

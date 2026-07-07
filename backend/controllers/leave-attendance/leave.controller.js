@@ -333,6 +333,8 @@ export const updateLeaveStatus = asyncHandler(async (req, res, next) => {
   // Also update overall_status to stay in sync with the workflow progression
   if (nextStatus === 'hod_approved') {
     leave.overall_status = 'hod_approved';
+    leave.admin_approval_status = 'approved';
+    leave.admin_approval_date = new Date();
     const hodFacultyId = req.user.faculty_id || req.user.id;
     if (leave.substitute_faculty_id && Number(leave.substitute_faculty_id) === Number(hodFacultyId)) {
       leave.substitute_approval_status = 'approved';
@@ -365,7 +367,6 @@ export const updateLeaveStatus = asyncHandler(async (req, res, next) => {
         {
           where: {
             leave_id: leave.id,
-            substitute_faculty_id: leave.substitute_faculty_id,
           },
         }
       );
