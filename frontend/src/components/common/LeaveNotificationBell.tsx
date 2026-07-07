@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 interface LeaveNotif {
     id: number;
     leaveId: number;
-    type: "leave_submitted" | "leave_approved" | "leave_rejected" | "reassignment_requested" | "leave_approval_requested" | "load_accepted" | "load_rejected";
+    type: "leave_submitted" | "leave_approved" | "leave_rejected" | "reassignment_requested" | "leave_approval_requested" | "load_accepted" | "load_rejected" | "alteration_requested";
     title: string;
     message: string;
     facultyName: string;
@@ -186,7 +186,7 @@ export function LeaveNotificationBell() {
     const getTypeIcon = (type: LeaveNotif["type"]) => {
         if (type === "leave_submitted") return <Clock className="w-5 h-5 text-warning" />;
         if (type === "leave_approved" || type === "load_accepted") return <CheckCircle2 className="w-5 h-5 text-success" />;
-        if (type === "reassignment_requested" || type === "leave_approval_requested") return <CalendarDays className="w-5 h-5 text-primary" />;
+        if (type === "reassignment_requested" || type === "leave_approval_requested" || type === "alteration_requested") return <CalendarDays className="w-5 h-5 text-primary" />;
         return <XCircle className="w-5 h-5 text-destructive" />;
     };
 
@@ -194,7 +194,7 @@ export function LeaveNotificationBell() {
     const getTypeBg = (type: LeaveNotif["type"]) => {
         if (type === "leave_submitted") return "bg-warning/10";
         if (type === "leave_approved" || type === "load_accepted") return "bg-success/10";
-        if (type === "reassignment_requested" || type === "leave_approval_requested") return "bg-primary/10";
+        if (type === "reassignment_requested" || type === "leave_approval_requested" || type === "alteration_requested") return "bg-primary/10";
         return "bg-destructive/10";
     };
 
