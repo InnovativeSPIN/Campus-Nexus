@@ -16,7 +16,6 @@ import Attendance from "./pages/Attendance";
 import Academics from "./pages/Academics";
 import Assessments from "./pages/Assessments";
 import Communication from "./pages/Communication";
-import Counseling from "./pages/Counseling";
 import Reports from "./pages/Reports";
 import NotFound from "./pages/NotFound";
 import { MentorDashboard } from "./pages/MentorDashboard";
@@ -59,15 +58,14 @@ const FacultyRoutes = () => (
 
               <Route path="assessments" element={<Assessments />} />
               <Route path="communication" element={<Communication />} />
-              <Route path="counseling" element={<Counseling />} />
               <Route path="reports" element={<Reports />} />
               <Route path="announcements" element={<Announcements />} />
               <Route path="announcements/:id" element={<AnnouncementDetail />} />
               <Route path="notifications" element={<NotificationCenter />} />
               <Route path="internal-marks" element={<InternalMarksEntry />} />
-              <Route path="mentor" element={<MentorDashboard />} />
-              <Route path="mentor/:year" element={<MenteesList />} />
-              <Route path="mentor/student/:studentId" element={<StudentProfileView />} />
+              <Route path="mentorship" element={<MentorDashboard />} />
+              <Route path="mentorship/:year" element={<MenteesList />} />
+              <Route path="mentorship/student/:studentId" element={<StudentProfileView />} />
               <Route path="class-incharge" element={<ClassInchargeView />} />
               <Route path="*" element={<NotFound />} />
             </Routes>

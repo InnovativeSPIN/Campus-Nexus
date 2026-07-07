@@ -1,7 +1,8 @@
-﻿import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useMentor } from "@/pages/faculty/context";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
+import { MainLayout } from "@/pages/faculty/components/layout/MainLayout";
 
 export function MenteesList() {
   const { selectedYear, setSelectedStudent, getStudentsByYear } = useMentor();
@@ -15,12 +16,13 @@ export function MenteesList() {
     const student = students.find((s) => s.id === studentId);
     if (student) {
       setSelectedStudent(student);
-      navigate(`/faculty/mentor/student/${studentId}`);
+      navigate(`/faculty/mentorship/student/${studentId}`);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-8">
+    <MainLayout hideHeader={true}>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-8 -m-4 md:-m-6 lg:-m-8">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, x: -20 }}
@@ -30,7 +32,7 @@ export function MenteesList() {
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          onClick={() => navigate("/faculty/mentor")}
+          onClick={() => navigate("/faculty/mentorship")}
           className="p-2 hover:bg-white rounded-lg transition-colors"
         >
           <ArrowLeft className="text-gray-700" size={24} />
@@ -125,6 +127,7 @@ export function MenteesList() {
         </motion.div>
       )}
     </div>
+    </MainLayout>
   );
 }
 

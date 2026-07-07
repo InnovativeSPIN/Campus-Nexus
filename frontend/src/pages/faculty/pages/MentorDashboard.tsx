@@ -1,9 +1,10 @@
-﻿import { motion } from "framer-motion";
+import { motion } from "framer-motion";
 import { useMentor } from "@/pages/faculty/context";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight, ArrowLeft } from "lucide-react";
 import { MentorModeToggle } from "@/pages/faculty/components/mentor/MentorModeToggle";
 import { NotificationBell } from "@/pages/faculty/components/notifications/NotificationBell";
+import { MainLayout } from "@/pages/faculty/components/layout/MainLayout";
 
 export function MentorDashboard() {
   const { setSelectedYear } = useMentor();
@@ -17,11 +18,12 @@ export function MentorDashboard() {
 
   const handleYearClick = (year: "2nd" | "3rd" | "Final") => {
     setSelectedYear(year);
-    navigate(`/faculty/mentor/${year.toLowerCase()}`);
+    navigate(`/faculty/mentorship/${year.toLowerCase()}`);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#790c0c] via-[#01898d] to-[#790c0c] p-8">
+    <MainLayout hideHeader={true}>
+    <div className="min-h-screen bg-gradient-to-br from-[#790c0c] via-[#01898d] to-[#790c0c] p-8 -m-4 md:-m-6 lg:-m-8 rounded-xl">
       {/* Top Bar with Toggle and Notification */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
@@ -119,6 +121,7 @@ export function MentorDashboard() {
         transition={{ duration: 4, repeat: Infinity }}
       />
     </div>
+    </MainLayout>
   );
 }
 

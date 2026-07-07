@@ -1,9 +1,9 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { useMentor } from "@/pages/faculty/context";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, AlertCircle, Check, X } from "lucide-react";
-import { menteeStudents, StudentProfile } from "@/pages/faculty/data/menteeStudents";
+import { StudentProfile } from "@/pages/faculty/data/menteeStudents";
 import { MentorStudentSidebar } from "@/pages/faculty/components/mentor/MentorStudentSidebar";
 import { EditableSection } from "@/pages/faculty/components/mentor/EditableSection";
 import { AcademicsPlaceholder } from "@/pages/faculty/components/mentor/AcademicsPlaceholder";
@@ -11,6 +11,7 @@ import { SiblingsEditor } from "@/pages/faculty/components/mentor/SiblingsEditor
 import { AcademicsView } from "@/pages/faculty/components/mentor/AcademicsView";
 import { RecordsView } from "@/pages/faculty/components/mentor/RecordsView";
 import { ExtraCurricularView } from "@/pages/faculty/components/mentor/ExtraCurricularView";
+import { MainLayout } from "@/pages/faculty/components/layout/MainLayout";
 
 type TabType = "basic" | "personal" | "parent" | "reference" | "photos";
 
@@ -24,13 +25,13 @@ const tabs: Array<{ id: TabType; label: string; icon: string }> = [
 
 export function StudentProfileView() {
   const { studentId } = useParams<{ studentId: string }>();
-  const { approvePendingChange, rejectPendingChange } = useMentor();
+  const { getStudentById, approvePendingChange, rejectPendingChange, updateStudentData } = useMentor();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabType>("basic");
   const [activeMenu, setActiveMenu] = useState("profile");
   const [isMentorMode] = useState(true);
 
-  const student = menteeStudents.find((s) => s.id === studentId);
+  const student = studentId ? getStudentById(studentId) : undefined;
 
   if (!student) {
     return (
@@ -40,14 +41,17 @@ export function StudentProfileView() {
     );
   }
 
-  const handleSaveSection = (sectionName: string, updatedFields: Record<string, string>) => {
-    // Simulate save - in real app, this would update state and call API
-    console.log(`Saved ${sectionName}:`, updatedFields);
-    // You could add toast notification here
+  const handleSaveSection = async (sectionName: string, updatedFields: Record<string, string>) => {
+    if (!studentId) return;
+    // We expect updatedFields to map to the top level fields in student, or bio fields.
+    // For Basic Info/Personal Info, we should structure them properly if needed.
+    // But since the API accepts a flat updates object and updates bio/profile, this is fine.
+    await updateStudentData(studentId, updatedFields);
   };
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+    <MainLayout hideHeader={true}>
+    <div className="flex min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 -m-4 md:-m-6 lg:-m-8">
       {/* Sidebar */}
       <MentorStudentSidebar activeSection={activeMenu} onSectionChange={setActiveMenu} />
 
@@ -335,7 +339,7 @@ export function StudentProfileView() {
                   animate={{ opacity: 1, y: 0 }}
                   className="bg-white rounded-xl shadow-lg p-6"
                 >
-                  <AcademicsView studentName={student.basicInfo.name} />
+                  <AcademicsView student={student} onSave={handleSaveSection} isMentorMode={isMentorMode} />
                 </motion.div>
               )}
 
@@ -345,8 +349,7 @@ export function StudentProfileView() {
                   animate={{ opacity: 1, y: 0 }}
                   className="bg-white rounded-xl shadow-lg p-6"
                 >
-                  <h2 className="text-2xl font-bold text-gray-800 mb-6">Student Records</h2>
-                  <RecordsView />
+                  <RecordsView student={student} onSave={handleSaveSection} isMentorMode={isMentorMode} />
                 </motion.div>
               )}
 
@@ -356,8 +359,7 @@ export function StudentProfileView() {
                   animate={{ opacity: 1, y: 0 }}
                   className="bg-white rounded-xl shadow-lg p-6"
                 >
-                  <h2 className="text-2xl font-bold text-gray-800 mb-6">Extra Curricular Activities</h2>
-                  <ExtraCurricularView />
+                  <ExtraCurricularView student={student} onSave={handleSaveSection} isMentorMode={isMentorMode} />
                 </motion.div>
               )}
             </div>
@@ -365,6 +367,7 @@ export function StudentProfileView() {
         )}
       </div>
     </div>
+    </MainLayout>
   );
 }
 
