@@ -37,34 +37,54 @@ export const applyTimetableAlterations = asyncHandler(async (req, res, next) => 
       ));
     }
 
-    // Use body periods if provided (allows incharge to tweak substitute faculty/subject per period)
-    const periodsToApply = req.body.affected_periods || leave.affected_periods;
-
     // STEP 1: Create TimetableOverlay rows (one per affected period)
     const overlayCreated = [];
-    for (const period of periodsToApply) {
-      try {
-        // Use either the tweaked substitute/subject from period, or default to the leave request's values
-        const finalSubstituteId = period.requested_substitute_faculty_id || leave.substitute_faculty_id;
-        const finalSubjectId = period.subject_id; // Usually same, but could be parameterised if needed
+    
+    // Get all approved faculty_substitutes linked to this leave
+    const allSubstitutes = await sequelize.models.FacultySubstitutes.findAll({
+      where: { leave_id: leave.id, status: 'approved' },
+      raw: true,
+    });
 
-        const overlay = await TimetableOverlay.create({
-          master_id: period.master_id,
-          overlay_date: new Date(period.date),
-          period_slot_id: period.period_slot_id,
-          original_faculty_id: leave.applicantId,
-          substitute_faculty_id: finalSubstituteId,
-          original_subject_id: period.subject_id,
-          substitute_subject_id: finalSubjectId,
-          leave_request_id: leaveId,
-          reason: `Leave: ${leave.leaveType} - ${leave.reason}`,
-          created_by: facultyId,
-          status: 'active',
-        });
-        overlayCreated.push(overlay);
-      } catch (err) {
-        console.error('Error creating overlay for period:', err.message);
-        // Continue with other periods
+    for (const sub of allSubstitutes) {
+      // Parse JSON reason to get timetable slot details
+      let reasonData = null;
+      try {
+        reasonData = typeof sub.reason === 'string' ? JSON.parse(sub.reason) : sub.reason;
+      } catch {
+        console.warn('[TimetableOverlay] Could not parse reason JSON for substitute id:', sub.id);
+        continue;
+      }
+
+      if (!reasonData || !reasonData.period_slot_id || !reasonData.master_id) continue;
+
+      const { period_slot_id, master_id, original_subject_id, substitute_subject_id } = reasonData;
+      const startDate = new Date(sub.start_date);
+      const endDate = new Date(sub.end_date);
+
+      let loopDate = new Date(startDate);
+      while (loopDate <= endDate) {
+        const formattedDate = loopDate.toISOString().split('T')[0];
+        try {
+          const overlay = await TimetableOverlay.create({
+            master_id: master_id,
+            overlay_date: formattedDate,
+            period_slot_id: period_slot_id,
+            original_faculty_id: sub.absent_faculty_id,
+            substitute_faculty_id: sub.substitute_faculty_id,
+            original_subject_id: original_subject_id || leave.subject_id || null,
+            substitute_subject_id: substitute_subject_id || leave.subject_id || null,
+            leave_request_id: leaveId,
+            reason: `Leave: ${leave.leaveType} - ${leave.reason}`,
+            created_by: facultyId,
+            status: 'active',
+          });
+          overlayCreated.push(overlay);
+        } catch (err) {
+          console.error('Error creating overlay for period:', err.message);
+          // If already exists, we could ignore
+        }
+        loopDate.setDate(loopDate.getDate() + 1);
       }
     }
 
@@ -118,10 +138,48 @@ export const applyTimetableAlterations = asyncHandler(async (req, res, next) => 
 
     // Update Leave status
     leave.overall_status = newStatus;
+    leave.status = newStatus;
     leave.timetable_incharge_approval_status = 'approved';
     leave.timetable_incharge_id = facultyId;
     leave.timetable_incharge_approval_date = new Date();
     await leave.save();
+
+    // If fully approved, update leave balance
+    if (newStatus === 'approved' && leave.applicantType === 'faculty') {
+      try {
+        const currentYear = new Date().getFullYear().toString();
+        const typeMappingBackend = {
+          'Medical': 'Medical Leave',
+          'Casual': 'Casual Leave',
+          'Earned': 'Earned Leave',
+          'On-Duty': 'On Duty',
+          'Personal': 'Personal Leave',
+          'Maternity': 'Maternity Leave',
+          'Comp-Off': 'Comp-Off'
+        };
+        const mappedType = typeMappingBackend[leave.leaveType] || leave.leaveType;
+        const [updatedRows] = await sequelize.query(
+          `UPDATE leave_balance_v2 
+           SET total_used = total_used + :days,
+               total_remaining = total_remaining - :days,
+               updated_at = NOW()
+           WHERE faculty_id = :facultyId 
+             AND leave_type_id = (SELECT id FROM leave_types WHERE name = :leaveType LIMIT 1)
+             AND academic_year = :year`,
+          {
+            replacements: {
+              days: leave.totalDays,
+              facultyId: leave.applicantId,
+              leaveType: mappedType,
+              year: currentYear
+            }
+          }
+        );
+        console.log(`[AlterationApply] Leave balance updated for faculty ${leave.applicantId}`);
+      } catch (balErr) {
+        console.error('[AlterationApply] Error updating leave balance:', balErr.message);
+      }
+    }
 
     // STEP 5: Notify relevant parties based on approval status
 
@@ -238,7 +296,6 @@ export const getTimetableApplyQueue = asyncHandler(async (req, res, next) => {
     const queue = await Leave.findAll({
       where: {
         overall_status: 'hod_approved',
-        admin_approval_status: 'approved',
         [Op.or]: [
           { timetable_incharge_approval_status: null },
           { timetable_incharge_approval_status: 'pending' },
@@ -258,11 +315,43 @@ export const getTimetableApplyQueue = asyncHandler(async (req, res, next) => {
       ],
       order: [['createdAt', 'ASC']],
     });
+    
+    const enrichedQueue = await Promise.all(queue.map(async (leaveObj) => {
+      const leave = leaveObj.get ? leaveObj.get({ plain: true }) : leaveObj;
+      
+      const subs = await sequelize.models.FacultySubstitutes.findAll({
+        where: { leave_id: leave.id, status: 'approved' },
+        raw: true,
+      });
+
+      const affectedPeriods = [];
+      for (const sub of subs) {
+        try {
+          const reasonData = typeof sub.reason === 'string' ? JSON.parse(sub.reason) : sub.reason;
+          if (reasonData && reasonData.period_slot_id) {
+            affectedPeriods.push({
+              date: sub.start_date,
+              period_slot_id: reasonData.period_slot_id,
+              subject_id: reasonData.original_subject_id || leave.subject_id || 0,
+              master_id: reasonData.master_id,
+              requested_substitute_faculty_id: sub.substitute_faculty_id,
+              subject_name: reasonData.subject_name || '',
+              class_name: reasonData.class_name || '',
+            });
+          }
+        } catch { }
+      }
+
+      return {
+        ...leave,
+        affected_periods: affectedPeriods,
+      };
+    }));
 
     res.status(200).json({
       success: true,
-      count: queue.length,
-      data: queue,
+      count: enrichedQueue.length,
+      data: enrichedQueue,
     });
   } catch (error) {
     console.error('[getTimetableApplyQueue] Error:', error.message);

@@ -550,3 +550,175 @@ export const getMyClassTimetable = asyncHandler(async (req, res, next) => {
     throw error; // Let asyncHandler catch it
   }
 });
+
+/**
+ * @desc    Get effective timetable for a class on a specific date (with alteration overlay)
+ * @route   GET /api/v1/timetable/view/:classId?date=YYYY-MM-DD
+ * @access  Private
+ *
+ * Uses raw SQL joining timetable_master_slots with timetable_overlay for the requested date.
+ * Returns each slot with isAlteration flag and alteration metadata (substitute/original faculty).
+ */
+export const getEffectiveClassTimetable = asyncHandler(async (req, res, next) => {
+  try {
+    const { classId } = req.params;
+    const queryDate = req.query.date || new Date().toISOString().split('T')[0];
+
+    const [masterRows] = await sequelize.query(
+      `SELECT tm.id as master_id, tm.academic_year, tm.semester, tm.semester_type,
+              tm.batch, tm.room_no, tm.effective_from, tm.break_period_ids,
+              c.name as class_name, c.batch as class_batch,
+              d.full_name as dept_name, d.short_name as dept_code,
+              fp.faculty_id as coord_id, fp.Name as coord_name
+       FROM timetable_master tm
+       JOIN classes c ON c.id = tm.class_id
+       JOIN departments d ON d.id = tm.department_id
+       LEFT JOIN faculty_profiles fp ON fp.faculty_id = tm.class_coordinator_id
+       WHERE tm.class_id = ? AND tm.status = 'active'
+       LIMIT 1`,
+      { replacements: [classId] }
+    );
+
+    if (!masterRows || masterRows.length === 0) {
+      return res.status(404).json({ success: false, message: 'No active timetable found for this class' });
+    }
+
+    const master = masterRows[0];
+    const masterId = master.master_id;
+
+    const [slots] = await sequelize.query(
+      `SELECT
+         tms.id as slot_id,
+         tms.day,
+         ps.id as period_slot_id,
+         ps.slot_order,
+         ps.period_label,
+         ps.start_time,
+         ps.end_time,
+         ps.slot_type,
+         ps.break_name,
+         tms.session_type,
+         tms.is_lab_session,
+         tms.lab_group,
+         tms.room,
+         tms.notes,
+         tms.faculty_id as original_faculty_id,
+         orig_fp.Name as original_faculty_name,
+         tms.subject_id as original_subject_id,
+         orig_s.subject_name as original_subject_name,
+         orig_s.subject_code as original_subject_code,
+         tov.id as overlay_id,
+         tov.substitute_faculty_id,
+         sub_fp.Name as substitute_faculty_name,
+         tov.substitute_subject_id,
+         sub_s.subject_name as substitute_subject_name,
+         tov.overlay_date,
+         tov.leave_request_id,
+         COALESCE(tov.substitute_faculty_id, tms.faculty_id) as effective_faculty_id,
+         COALESCE(sub_fp.Name, orig_fp.Name) as effective_faculty_name,
+         COALESCE(tov.substitute_subject_id, tms.subject_id) as effective_subject_id,
+         COALESCE(sub_s.subject_name, orig_s.subject_name) as effective_subject_name,
+         COALESCE(sub_s.subject_code, orig_s.subject_code) as effective_subject_code
+       FROM timetable_master_slots tms
+       JOIN period_slots ps ON ps.id = tms.period_slot_id
+       LEFT JOIN timetable_overlay tov ON (
+         tov.master_id = tms.master_id
+         AND tov.period_slot_id = tms.period_slot_id
+         AND tov.overlay_date = ?
+         AND tov.status = 'active'
+       )
+       LEFT JOIN faculty_profiles orig_fp ON orig_fp.faculty_id = tms.faculty_id
+       LEFT JOIN subjects orig_s ON orig_s.id = tms.subject_id
+       LEFT JOIN faculty_profiles sub_fp ON sub_fp.faculty_id = tov.substitute_faculty_id
+       LEFT JOIN subjects sub_s ON sub_s.id = tov.substitute_subject_id
+       WHERE tms.master_id = ?
+       ORDER BY FIELD(tms.day,'Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'), ps.slot_order`,
+      { replacements: [queryDate, masterId] }
+    );
+
+    const leaveIds = [...new Set(slots.map(s => s.leave_request_id).filter(Boolean))];
+    const leaveEndDates = {};
+    if (leaveIds.length > 0) {
+      const placeholders = leaveIds.map(() => '?').join(',');
+      const [leaveRows] = await sequelize.query(
+        `SELECT id, end_date FROM leaves WHERE id IN (${placeholders})`,
+        { replacements: leaveIds }
+      );
+      leaveRows.forEach(lr => { leaveEndDates[lr.id] = lr.end_date; });
+    }
+
+    let breakPeriodIds = [3, 5, 8];
+    try {
+      breakPeriodIds = typeof master.break_period_ids === 'string'
+        ? JSON.parse(master.break_period_ids)
+        : (master.break_period_ids || [3, 5, 8]);
+    } catch (e) { /* use default */ }
+
+    const formattedSlots = slots.map(slot => {
+      const isAlteration = !!slot.overlay_id;
+      const isBreak = slot.slot_type === 'break' || breakPeriodIds.includes(slot.period_slot_id);
+      return {
+        id: slot.slot_id,
+        day: slot.day,
+        period: {
+          id: slot.period_slot_id,
+          label: slot.period_label || (isBreak ? (slot.break_name || 'Break') : ''),
+          startTime: slot.start_time,
+          endTime: slot.end_time,
+          slotType: slot.slot_type,
+          isBreak,
+        },
+        faculty: slot.effective_faculty_id ? {
+          id: slot.effective_faculty_id,
+          name: slot.effective_faculty_name,
+        } : null,
+        subject: slot.effective_subject_id ? {
+          id: slot.effective_subject_id,
+          name: slot.effective_subject_name,
+          code: slot.effective_subject_code,
+        } : null,
+        sessionType: slot.session_type,
+        isLabSession: !!slot.is_lab_session,
+        labGroup: slot.lab_group || null,
+        room: slot.room || null,
+        notes: slot.notes || null,
+        isAlteration,
+        source: isAlteration ? 'overlay' : 'master',
+        alteration: isAlteration ? {
+          substituteFacultyId: slot.substitute_faculty_id,
+          substituteFacultyName: slot.substitute_faculty_name,
+          originalFacultyId: slot.original_faculty_id,
+          originalFacultyName: slot.original_faculty_name,
+          overlayDate: slot.overlay_date,
+          leaveId: slot.leave_request_id,
+          leaveEndDate: slot.leave_request_id ? leaveEndDates[slot.leave_request_id] : null,
+        } : null,
+      };
+    });
+
+    res.status(200).json({
+      success: true,
+      queryDate,
+      timetableMaster: {
+        id: masterId,
+        className: master.class_name,
+        batch: master.class_batch,
+        department: master.dept_name,
+        departmentCode: master.dept_code,
+        academicYear: master.academic_year,
+        semester: master.semester,
+        semesterType: master.semester_type,
+        roomNo: master.room_no,
+        effectiveFrom: master.effective_from,
+        coordinator: master.coord_id ? { id: master.coord_id, name: master.coord_name } : null,
+        breakPeriodIds,
+      },
+      slots: formattedSlots,
+      totalSlots: formattedSlots.length,
+      totalAlterations: formattedSlots.filter(s => s.isAlteration).length,
+    });
+  } catch (error) {
+    console.error('[TimetableDisplay] Error in getEffectiveClassTimetable:', error);
+    throw error;
+  }
+});

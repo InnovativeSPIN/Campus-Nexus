@@ -16,8 +16,11 @@ export const getAllLeaves = asyncHandler(async (req, res, next) => {
     let where = {};
 
     // For non-admin users, show only their leaves
-    if (!['superadmin', 'executiveadmin', 'academicadmin'].includes(req.user.role)) {
+    const normalizedRole = req.user.role ? req.user.role.trim().toLowerCase().replace(/-/g, '') : '';
+    if (!['superadmin', 'executiveadmin', 'academicadmin', 'departmentadmin'].includes(normalizedRole)) {
       where.applicantId = req.user.id;
+    } else if (normalizedRole === 'departmentadmin') {
+      where.departmentId = req.user.departmentId;
     }
 
     // Filter by status
@@ -55,16 +58,43 @@ export const getAllLeaves = asyncHandler(async (req, res, next) => {
       raw: true
     });
 
+    // Enrich with applicant and reassign faculty names
+    const applicantIds = [...new Set(leaves.map(l => l.applicantId))];
+    const reassignIds = [...new Set(leaves.map(l => l.reassign_faculty_id).filter(Boolean))];
+    const substituteIds = [...new Set(leaves.map(l => l.substitute_faculty_id).filter(Boolean))];
+    const allFacultyIds = [...new Set([...applicantIds, ...reassignIds, ...substituteIds])];
+
+    let facultyMap = {};
+    if (allFacultyIds.length > 0) {
+      const faculties = await Faculty.findAll({
+        where: { faculty_id: allFacultyIds },
+        attributes: ['faculty_id', 'Name', 'designation'],
+        raw: true,
+      });
+      facultyMap = Object.fromEntries(faculties.map(f => [f.faculty_id, f]));
+    }
+
+    const enrichedLeaves = leaves.map(l => ({
+      ...l,
+      applicantName: facultyMap[l.applicantId] ? facultyMap[l.applicantId].Name : null,
+      reassignFacultyName: l.reassign_faculty_id && facultyMap[l.reassign_faculty_id]
+        ? facultyMap[l.reassign_faculty_id].Name
+        : null,
+      substituteFacultyName: l.substitute_faculty_id && facultyMap[l.substitute_faculty_id]
+        ? facultyMap[l.substitute_faculty_id].Name
+        : null,
+    }));
+
     res.status(200).json({
       success: true,
-      count: leaves.length,
+      count: enrichedLeaves.length,
       total,
       pagination: {
         page,
         limit,
         totalPages: Math.ceil(total / limit)
       },
-      data: leaves
+      data: enrichedLeaves
     });
   } catch (error) {
     console.error('[getAllLeaves] Error:', error.message);
@@ -340,19 +370,15 @@ export const updateLeaveStatus = asyncHandler(async (req, res, next) => {
         }
       );
 
-      // If no existing faculty_substitutes row found, create one
-      if (updatedSubRows === 0) {
+      if (updatedSubRows === 0 && substituteSyncStatus === 'rejected') {
         await FacultySubstitutes.create({
-          faculty_id: leave.applicantId,
+          absent_faculty_id: leave.applicantId,
           substitute_faculty_id: leave.substitute_faculty_id,
-          start_date: leave.startDate,
-          end_date: leave.endDate,
           reason: leave.reason,
           leave_id: leave.id,
           status: substituteSyncStatus,
           approved_by: req.user.faculty_id || req.user.id,
           approval_date: new Date(),
-          requested_by: leave.applicantId,
         });
       }
       console.log(`[LeaveStatus] Updated faculty_substitutes for leave ${leave.id}, status: ${substituteSyncStatus}`);
@@ -366,24 +392,31 @@ export const updateLeaveStatus = asyncHandler(async (req, res, next) => {
   if (nextStatus === 'approved' && leave.applicantType === 'faculty') {
     try {
       const currentYear = new Date().getFullYear().toString();
-      const [rows] = await sequelize.query(
-        'SELECT * FROM `leave_balance` WHERE userId = ? AND academicYear = ? LIMIT 1',
-        { replacements: [leave.applicantId, currentYear] }
+      const typeMappingBackend = {
+        'Medical': 'Medical Leave',
+        'Casual': 'Casual Leave',
+        'Earned': 'Earned Leave',
+        'On-Duty': 'On Duty',
+        'Personal': 'Personal Leave',
+        'Maternity': 'Maternity Leave',
+        'Comp-Off': 'Compensatory Off'
+      };
+      const backendType = typeMappingBackend[leave.leaveType] || leave.leaveType;
+
+      const [leaveTypeRows] = await sequelize.query(
+        'SELECT id FROM leave_types WHERE name = ? LIMIT 1',
+        { replacements: [backendType] }
       );
-
-      const balRow = rows && rows[0] ? rows[0] : null;
-      if (balRow && balRow[leave.leaveType]) {
-        let parsed = typeof balRow[leave.leaveType] === 'string'
-          ? JSON.parse(balRow[leave.leaveType])
-          : balRow[leave.leaveType];
-
+      
+      if (leaveTypeRows && leaveTypeRows.length > 0) {
+        const typeId = leaveTypeRows[0].id;
         const days = parseFloat(leave.totalDays) || 0;
-        parsed.balance = (parseFloat(parsed.balance) || 0) - days;
-        parsed.used = (parseFloat(parsed.used) || 0) + days;
-
+        
         await sequelize.query(
-          `UPDATE \`leave_balance\` SET \`${leave.leaveType}\` = ? WHERE id = ?`,
-          { replacements: [JSON.stringify(parsed), balRow.id] }
+          `UPDATE leave_balance_v2 
+           SET total_used = total_used + ?, total_pending = GREATEST(0, total_pending - ?)
+           WHERE applicant_id = ? AND applicant_type = 'faculty' AND academic_year = ? AND leave_type_id = ?`,
+          { replacements: [days, days, leave.applicantId, currentYear, typeId] }
         );
         console.log(`[LeaveStatus] Updated balance for user ${leave.applicantId}, type ${leave.leaveType}`);
       }
@@ -489,25 +522,31 @@ export const cancelLeave = asyncHandler(async (req, res, next) => {
   if (leave.status === 'approved') {
     try {
       const currentYear = new Date().getFullYear().toString();
-      const [rows] = await sequelize.query(
-        'SELECT * FROM `leave_balance` WHERE userId = ? AND academicYear = ? LIMIT 1',
-        { replacements: [leave.applicantId, currentYear] }
+      const typeMappingBackend = {
+        'Medical': 'Medical Leave',
+        'Casual': 'Casual Leave',
+        'Earned': 'Earned Leave',
+        'On-Duty': 'On Duty',
+        'Personal': 'Personal Leave',
+        'Maternity': 'Maternity Leave',
+        'Comp-Off': 'Compensatory Off'
+      };
+      const backendType = typeMappingBackend[leave.leaveType] || leave.leaveType;
+
+      const [leaveTypeRows] = await sequelize.query(
+        'SELECT id FROM leave_types WHERE name = ? LIMIT 1',
+        { replacements: [backendType] }
       );
-
-      const balRow = rows && rows[0] ? rows[0] : null;
-      if (balRow && balRow[leave.leaveType]) {
-        let parsed = typeof balRow[leave.leaveType] === 'string'
-          ? JSON.parse(balRow[leave.leaveType])
-          : balRow[leave.leaveType];
-
+      
+      if (leaveTypeRows && leaveTypeRows.length > 0) {
+        const typeId = leaveTypeRows[0].id;
         const days = parseFloat(leave.totalDays) || 0;
-        // Restore balance
-        parsed.balance = (parseFloat(parsed.balance) || 0) + days;
-        parsed.used = (parseFloat(parsed.used) || 0) - days;
-
+        
         await sequelize.query(
-          `UPDATE \`leave_balance\` SET \`${leave.leaveType}\` = ? WHERE id = ?`,
-          { replacements: [JSON.stringify(parsed), balRow.id] }
+          `UPDATE leave_balance_v2 
+           SET total_used = GREATEST(0, total_used - ?)
+           WHERE applicant_id = ? AND applicant_type = 'faculty' AND academic_year = ? AND leave_type_id = ?`,
+          { replacements: [days, leave.applicantId, currentYear, typeId] }
         );
         console.log(`[CancelLeave] Restored balance for user ${leave.applicantId}, type ${leave.leaveType}`);
       }
@@ -518,6 +557,17 @@ export const cancelLeave = asyncHandler(async (req, res, next) => {
 
   leave.status = 'cancelled';
   await leave.save();
+
+  // Cancel any active timetable overlays for this leave
+  try {
+    await sequelize.query(
+      `UPDATE timetable_overlay SET status = 'cancelled' WHERE leave_request_id = ?`,
+      { replacements: [leave.id] }
+    );
+    console.log(`[CancelLeave] Cancelled timetable overlays for leave ${leave.id}`);
+  } catch (overlayErr) {
+    console.error('[CancelLeave] Overlay cancellation error (non-fatal):', overlayErr.message);
+  }
 
   res.status(200).json({
     success: true,
@@ -617,40 +667,49 @@ export const getMyLeaves = asyncHandler(async (req, res, next) => {
 // @access    Private (Faculty)
 export const getLeaveBalance = asyncHandler(async (req, res, next) => {
   try {
-    const userId = req.user.id; // leave_balance uses userId (the user's login id)
+    const userId = req.user.faculty_id || req.user.id;
     const currentYear = new Date().getFullYear().toString();
 
-    // The real data lives in `leave_balance` table with JSON columns per type:
-    // Medical, Casual, Earned, On-Duty, Personal, Maternity, Comp-Off
-    // Each column is a JSON string: {"balance": N, "used": N}
     const [results] = await sequelize.query(
-      'SELECT * FROM `leave_balance` WHERE userId = ? AND academicYear = ? LIMIT 1',
+      `SELECT lb.total_allocated, lb.total_used, lt.name as leaveType 
+       FROM leave_balance_v2 lb 
+       JOIN leave_types lt ON lb.leave_type_id = lt.id 
+       WHERE lb.applicant_id = ? AND lb.applicant_type = 'faculty' AND lb.academic_year = ?`,
       { replacements: [userId, currentYear] }
     );
 
-    const leaveTypes = ['Medical', 'Casual', 'Earned', 'On-Duty', 'Personal', 'Maternity', 'Comp-Off'];
+    const leaveTypes = ['Medical Leave', 'Casual Leave', 'Earned Leave', 'On Duty', 'Personal Leave', 'Maternity Leave', 'Compensatory Off'];
+    // Map backend type names to frontend ones if necessary
+    const typeMapping = {
+      'Medical Leave': 'Medical',
+      'Casual Leave': 'Casual',
+      'Earned Leave': 'Earned',
+      'On Duty': 'On-Duty',
+      'Personal Leave': 'Personal',
+      'Maternity Leave': 'Maternity',
+      'Compensatory Off': 'Comp-Off'
+    };
+    
     const balanceMap = {};
 
-    const row = results && results[0] ? results[0] : null;
-
+    // Initialize all to 0
     leaveTypes.forEach((type) => {
-      if (row && row[type]) {
-        try {
-          const parsed = typeof row[type] === 'string' ? JSON.parse(row[type]) : row[type];
-          const allowed = parseFloat(parsed.balance) || 0;
-          const used = parseFloat(parsed.used) || 0;
-          balanceMap[type] = {
-            total_allowed: allowed,
-            used_leaves: used,
-            remaining_leaves: Math.max(0, allowed - used),
-          };
-        } catch {
-          balanceMap[type] = { total_allowed: 0, used_leaves: 0, remaining_leaves: 0 };
-        }
-      } else {
-        balanceMap[type] = { total_allowed: 0, used_leaves: 0, remaining_leaves: 0 };
-      }
+      const mappedType = typeMapping[type] || type;
+      balanceMap[mappedType] = { total_allowed: 0, used_leaves: 0, remaining_leaves: 0 };
     });
+
+    if (results && results.length > 0) {
+      results.forEach((row) => {
+        const mappedType = typeMapping[row.leaveType] || row.leaveType;
+        const allowed = parseFloat(row.total_allocated) || 0;
+        const used = parseFloat(row.total_used) || 0;
+        balanceMap[mappedType] = {
+          total_allowed: allowed,
+          used_leaves: used,
+          remaining_leaves: Math.max(0, allowed - used),
+        };
+      });
+    }
 
     res.status(200).json({
       success: true,
