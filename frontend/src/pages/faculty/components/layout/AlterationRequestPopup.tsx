@@ -33,15 +33,18 @@ export function AlterationRequestPopup() {
       if (!res.ok) return;
       const result = await res.json();
       
-      if (result.success && result.data && result.data.length > 0) {
-        // If we found requests and popup is not already showing these
-        if (result.data.length !== requests.length || !isOpen) {
-          setRequests(result.data);
-          setIsOpen(true);
+      if (result.success && result.data) {
+        const pendingRequests = result.data.filter((r: any) => r.status === 'pending');
+        // If we found pending requests and popup is not already showing these
+        if (pendingRequests.length > 0) {
+          if (pendingRequests.length !== requests.length || !isOpen) {
+            setRequests(pendingRequests);
+            setIsOpen(true);
+          }
+        } else if (isOpen) {
+          setIsOpen(false);
+          setRequests([]);
         }
-      } else if (isOpen) {
-        setIsOpen(false);
-        setRequests([]);
       }
     } catch (err) {
       // Fail silently for polling

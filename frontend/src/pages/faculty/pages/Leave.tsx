@@ -9,9 +9,10 @@ import { Label } from "@/pages/faculty/components/ui/label";
 import { Textarea } from "@/pages/faculty/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/pages/faculty/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/pages/faculty/components/ui/tabs";
-import { CalendarDays, PlusCircle, Clock, CheckCircle2, XCircle, AlertCircle, FileText, ArrowRight, Calendar, User, Trash2, Wallet, UserCheck } from "lucide-react";
+import { CalendarDays, PlusCircle, Clock, CheckCircle2, XCircle, AlertCircle, FileText, ArrowRight, Calendar, User, Trash2, Wallet, UserCheck, Download } from "lucide-react";
 import { cn } from "@/pages/faculty/lib/utils";
 import { toast } from "sonner";
+import { downloadLeaveReport } from "@/utils/leaveReport";
 
 interface LeaveRequest {
     id: number;
@@ -592,6 +593,11 @@ export default function Leave() {
                                                         {request.approvalRemarks}
                                                     </p>
                                                 )}
+                                                <div className="mt-4">
+                                                    <Button variant="outline" size="sm" onClick={() => downloadLeaveReport(request)} className="flex items-center gap-2">
+                                                        <Download className="w-4 h-4" /> Download Report
+                                                    </Button>
+                                                </div>
                                             </div>
 
                                             <div className="flex items-center gap-2">

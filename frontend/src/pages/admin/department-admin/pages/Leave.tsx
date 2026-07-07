@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { MainLayout } from "@/pages/admin/department-admin/components/layout/MainLayout";
 import { LeaveApprovals } from "@/pages/admin/department-admin/components/LeaveApprovals";
+import { ApprovedLeaveRequests } from "@/pages/admin/department-admin/components/ApprovedLeaveRequests";
 import { motion } from "framer-motion";
 import { Button } from "@/pages/admin/department-admin/components/ui/button";
 import { Input } from "@/pages/admin/department-admin/components/ui/input";
@@ -278,6 +279,10 @@ export default function Leave() {
             <FileText className="w-4 h-4" />
             My Requests
           </TabsTrigger>
+          <TabsTrigger value="approved" className="flex items-center gap-2 text-success">
+            <CheckCircle2 className="w-4 h-4" />
+            Approved Requests
+          </TabsTrigger>
         </TabsList>
 
         {/* APPLY LEAVE TAB */}
@@ -512,6 +517,11 @@ export default function Leave() {
         {/* LEAVE APPROVALS TAB */}
         <TabsContent value="approvals">
           <LeaveApprovals />
+        </TabsContent>
+
+        {/* APPROVED REQUESTS TAB */}
+        <TabsContent value="approved">
+          <ApprovedLeaveRequests />
         </TabsContent>
       </Tabs>
     </MainLayout>

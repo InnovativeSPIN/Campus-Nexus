@@ -5,6 +5,7 @@ import {
   getFacultyTimetable,
   getMyTimetable,
   getMyClassTimetable,
+  getEffectiveClassTimetable,
 } from '../../controllers/timetable/timetable-display.controller.js';
 
 const router = express.Router();
@@ -18,6 +19,9 @@ router.use(protect);
 
 // Get class timetable (for students in that class)
 router.get('/class/:classId', getClassTimetable);
+
+// Get effective class timetable with alteration overlay for a specific date
+router.get('/view/:classId', getEffectiveClassTimetable);
 
 // Get faculty timetable
 router.get('/faculty/:facultyId', getFacultyTimetable);

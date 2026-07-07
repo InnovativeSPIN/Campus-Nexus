@@ -130,6 +130,12 @@ interface ClassSlot {
   end_time?: string;
   period_label?: string;
   room?: string;
+  // Alteration overlay fields
+  isAlteration?: boolean;
+  originalFaculty?: string;
+  substituteFaculty?: string;
+  alterationEndDate?: string;
+  leaveId?: number;
 }
 
 interface Faculty {
@@ -308,8 +314,15 @@ const TimetableTable = ({
                           <motion.div
                             key={slot.id || idx}
                             whileHover={{ scale: 1.02 }}
-                            className={`${getSessionColor(slot.sessionType || "")} p-1.5 rounded text-[10px] hover:opacity-90 transition-opacity cursor-default flex flex-col justify-between`}
+                            className={`${slot.isAlteration ? 'bg-orange-50 border-l-2 border-orange-500 text-orange-900' : getSessionColor(slot.sessionType || "")} p-1.5 rounded text-[10px] hover:opacity-90 transition-opacity cursor-default flex flex-col justify-between relative`}
+                            title={slot.isAlteration ? `Alteration: ${slot.substituteFaculty} covering for ${slot.originalFaculty}${slot.alterationEndDate ? ` until ${new Date(slot.alterationEndDate).toLocaleDateString()}` : ''}` : ''}
                           >
+                            {/* Alteration badge */}
+                            {slot.isAlteration && (
+                              <div className="absolute -top-1 -right-1 bg-orange-500 text-white text-[7px] font-bold px-1 py-0.5 rounded-full leading-none z-10">
+                                ALT
+                              </div>
+                            )}
                             <div className="text-left leading-tight">
                               <div className="font-bold text-[11px] text-gray-900 truncate">
                                 {slot.subject_code || "N/A"}
@@ -322,6 +335,12 @@ const TimetableTable = ({
                               {slot.faculty && (
                                 <div className="text-[9px] text-gray-600 truncate mt-0.5">
                                   {slot.faculty}
+                                </div>
+                              )}
+                              {/* Show original faculty when alteration */}
+                              {slot.isAlteration && slot.originalFaculty && (
+                                <div className="text-[8px] text-orange-600 italic truncate mt-0.5" title={`Original: ${slot.originalFaculty}`}>
+                                  ↩ {slot.originalFaculty}
                                 </div>
                               )}
                               <div className="mt-1 flex items-center justify-between text-[9px] leading-none opacity-85">
@@ -388,7 +407,7 @@ export default function Timetable() {
       : user.department
     : "";
 
-  // Format timetable data from API response dynamically
+  // Format timetable data from API response dynamically (legacy flat-array format)
   const formatTimetableData = (apiData: any[]): TimetableData => {
     const formatted: TimetableData = {};
     days.forEach((day) => {
@@ -397,28 +416,38 @@ export default function Timetable() {
 
     apiData.forEach((slot: any) => {
       const dayKey = slot.day ? slot.day.trim() : "";
-      const hourKey = parseInt(slot.hour || slot.period_slot_id, 10);
+      const hourKey = parseInt(slot.hour || slot.period_slot_id || slot.period?.id, 10);
       const day = days.find((d) => d === dayKey);
 
       if (day && !isNaN(hourKey)) {
         if (!formatted[day][hourKey]) {
           formatted[day][hourKey] = [];
         }
+        // Support both legacy flat format and new enriched format
+        const subjectObj = slot.subject;
+        const facultyObj = slot.faculty;
+        const alteration = slot.alteration;
+
         formatted[day][hourKey].push({
           id: slot.id || Math.random(),
-          subject: slot.subject || "Unknown",
-          subject_code: slot.subject_code || "N/A",
+          subject: (typeof subjectObj === 'object' ? subjectObj?.name : subjectObj) || slot.subject_name || "Unknown",
+          subject_code: (typeof subjectObj === 'object' ? subjectObj?.code : slot.subject_code) || "N/A",
           section: slot.section || "",
           department: slot.department || "",
           year: slot.year || "",
           academicYear: slot.academicYear || "",
-          faculty: slot.faculty_name || "",
+          faculty: (typeof facultyObj === 'object' ? facultyObj?.name : facultyObj) || slot.faculty_name || "",
           sessionType: slot.sessionType || slot.session_type || "",
           notes: slot.notes || "",
-          start_time: slot.start_time || "",
-          end_time: slot.end_time || "",
-          period_label: slot.period_label || "",
+          start_time: slot.period?.startTime || slot.start_time || "",
+          end_time: slot.period?.endTime || slot.end_time || "",
+          period_label: slot.period?.label || slot.period_label || "",
           room: slot.room || "",
+          isAlteration: slot.isAlteration || false,
+          originalFaculty: alteration?.originalFacultyName || "",
+          substituteFaculty: alteration?.substituteFacultyName || "",
+          alterationEndDate: alteration?.leaveEndDate || "",
+          leaveId: alteration?.leaveId || undefined,
         });
       }
     });
@@ -628,7 +657,7 @@ export default function Timetable() {
     }
   };
 
-  // Fetch Class Timetable
+  // Fetch Class Timetable — uses the new /view/:classId endpoint with alteration overlay
   const fetchClassTimetable = async (classId: string) => {
     if (!classId) {
       setClassRawSlots([]);
@@ -636,19 +665,25 @@ export default function Timetable() {
       return;
     }
     try {
-      const response = await fetch(`/api/v1/timetable/class/${classId}`, {
+      const today = new Date().toISOString().split('T')[0];
+      const response = await fetch(`/api/v1/timetable/view/${classId}?date=${today}`, {
         headers: {
           Authorization: token ? `Bearer ${token}` : "",
           "Content-Type": "application/json",
         },
       });
       const data = await response.json();
-      if (data.success && Array.isArray(data.timetable)) {
-        setClassRawSlots(data.timetable);
-        setClassTimetable(formatTimetableData(data.timetable));
-      } else if (data.timetable) {
-        setClassRawSlots([data.timetable]);
-        setClassTimetable(formatTimetableData([data.timetable]));
+      if (data.success && Array.isArray(data.slots) && data.slots.length > 0) {
+        // New enriched format: data.slots has period/faculty/subject as objects
+        setClassRawSlots(data.slots.map((s: any) => ({
+          ...s,
+          period_slot_id: s.period?.id,
+          start_time: s.period?.startTime,
+          end_time: s.period?.endTime,
+          period_label: s.period?.label,
+          slot_type: s.period?.slotType,
+        })));
+        setClassTimetable(formatTimetableData(data.slots));
       } else {
         setClassRawSlots([]);
         setClassTimetable({});

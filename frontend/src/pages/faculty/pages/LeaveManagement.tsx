@@ -920,9 +920,15 @@ export default function FacultyLeaveManagement() {
                               <p className="text-xs text-muted-foreground">{req.absent_faculty?.email}</p>
                             </div>
                           </div>
-                          <span className="text-[10px] bg-warning/10 text-warning border border-warning/20 px-2 py-1 rounded-full font-bold">
-                            Awaiting Your Response
-                          </span>
+                          {req.status === 'approved' ? (
+                            <span className="text-[10px] bg-success/10 text-success border border-success/20 px-2 py-1 rounded-full font-bold">
+                              Accepted by You
+                            </span>
+                          ) : (
+                            <span className="text-[10px] bg-warning/10 text-warning border border-warning/20 px-2 py-1 rounded-full font-bold">
+                              Awaiting Your Response
+                            </span>
+                          )}
                         </div>
 
                         {/* Full descriptive message */}
@@ -964,25 +970,27 @@ export default function FacultyLeaveManagement() {
                         </p>
 
                         {/* Action buttons */}
-                        <div className="flex gap-3">
-                          <Button
-                            variant="outline"
-                            onClick={() => handleSubRequest(req.id, 'reject')}
-                            disabled={isActing}
-                            className="flex-1 h-11 border-destructive/30 text-destructive hover:bg-destructive/5 font-bold gap-2"
-                          >
-                            {isActing ? <RefreshCw className="w-4 h-4 animate-spin" /> : <XCircle className="w-4 h-4" />}
-                            Reject Request
-                          </Button>
-                          <Button
-                            onClick={() => handleSubRequest(req.id, 'accept')}
-                            disabled={isActing}
-                            className="flex-1 h-11 bg-success hover:bg-success/90 text-white font-bold gap-2 shadow-lg shadow-success/20"
-                          >
-                            {isActing ? <RefreshCw className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
-                            Accept Request
-                          </Button>
-                        </div>
+                        {req.status === 'pending' && (
+                          <div className="flex gap-3">
+                            <Button
+                              variant="outline"
+                              onClick={() => handleSubRequest(req.id, 'reject')}
+                              disabled={isActing}
+                              className="flex-1 h-11 border-destructive/30 text-destructive hover:bg-destructive/5 font-bold gap-2"
+                            >
+                              {isActing ? <RefreshCw className="w-4 h-4 animate-spin" /> : <XCircle className="w-4 h-4" />}
+                              Reject Request
+                            </Button>
+                            <Button
+                              onClick={() => handleSubRequest(req.id, 'accept')}
+                              disabled={isActing}
+                              className="flex-1 h-11 bg-success hover:bg-success/90 text-white font-bold gap-2 shadow-lg shadow-success/20"
+                            >
+                              {isActing ? <RefreshCw className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                              Accept Request
+                            </Button>
+                          </div>
+                        )}
                       </motion.div>
                     );
                   })}
