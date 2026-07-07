@@ -1,4 +1,4 @@
-import React, { createContext, useState, useCallback, ReactNode } from "react";
+import React, { createContext, useState, useCallback, useEffect, ReactNode } from "react";
 import { Notification, NotificationContextType } from "./NotificationContextType";
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
@@ -65,7 +65,31 @@ interface NotificationProviderProps {
 }
 
 export function NotificationProvider({ children }: NotificationProviderProps) {
-  const [notifications, setNotifications] = useState<Notification[]>(SAMPLE_NOTIFICATIONS);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const res = await fetch('/api/v1/department-admin/academics/notifications', {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('authToken')}`
+          }
+        });
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success) {
+            setNotifications(json.data.map((n: any) => ({
+              ...n,
+              timestamp: new Date(n.timestamp)
+            })));
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch notifications', err);
+      }
+    };
+    fetchNotifications();
+  }, []);
 
   const unreadCount = notifications.filter((n) => !n.isRead).length;
 

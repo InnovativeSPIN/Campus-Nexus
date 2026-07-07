@@ -18,8 +18,8 @@ interface Leave {
   applicantType: string;
   createdAt: string;
   applicantId: number;
-  // Based on your backend, the raw leaves don't auto-join name unless enriched, 
-  // but we can try to display available info or just basic details.
+  applicantName?: string;
+  applicant?: { name: string };
 }
 
 export function ApprovedLeaveRequests() {
