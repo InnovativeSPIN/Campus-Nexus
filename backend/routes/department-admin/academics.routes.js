@@ -9,7 +9,8 @@ import {
   getApprovalStatistics,
   getPendingCourseLessonPlanApprovals,
   approveCourseLessonPlan,
-  rejectCourseLessonPlan
+  rejectCourseLessonPlan,
+  getNotifications
 } from '../../controllers/department-admin/academics.controller.js';
 
 const router = express.Router();
@@ -17,6 +18,11 @@ const router = express.Router();
 // All routes require authentication and department-admin role
 router.use(protect);
 router.use(authorize('department-admin'));
+
+// ==================== NOTIFICATIONS ROUTES ====================
+
+// Get all notifications for department admin
+router.get('/notifications', getNotifications);
 
 // ==================== COURSE FILE APPROVAL ROUTES ====================
 
