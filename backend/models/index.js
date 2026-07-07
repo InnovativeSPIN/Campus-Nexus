@@ -61,6 +61,7 @@ import CourseFile from './CourseFile.model.js';
 import CourseFileNotification from './CourseFileNotification.model.js';
 import ExamCellSubmission from './ExamCellSubmission.model.js';
 import ExamCellNotification from './ExamCellNotification.model.js';
+import CourseLessonPlanNotification from './CourseLessonPlanNotification.model.js';
 import MentorAllocation from './MentorAllocation.model.js';
 
 // Initialize models
@@ -124,6 +125,7 @@ const models = {
   CourseFileNotification: CourseFileNotification(sequelize),
   ExamCellSubmission: ExamCellSubmission(sequelize),
   ExamCellNotification: ExamCellNotification(sequelize),
+  CourseLessonPlanNotification: CourseLessonPlanNotification(sequelize),
   MentorAllocation: MentorAllocation(sequelize),
 };
 

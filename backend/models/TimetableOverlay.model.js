@@ -22,6 +22,16 @@ const TimetableOverlay = (sequelize) => {
       allowNull: false,
       comment: 'FK -> period_slots.id',
     },
+    class_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      comment: 'FK -> classes.id',
+    },
+    department_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      comment: 'FK -> departments.id',
+    },
     original_faculty_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
