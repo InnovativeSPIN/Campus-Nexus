@@ -23,6 +23,9 @@ const StudentBio = (sequelize) => {
         previousEducation: { type: DataTypes.JSON, allowNull: true },
         scholarshipDetails: { type: DataTypes.JSON, allowNull: true },
         documents: { type: DataTypes.JSON, allowNull: true },
+        academics: { type: DataTypes.JSON, allowNull: true },
+        records: { type: DataTypes.JSON, allowNull: true },
+        extraCurricular: { type: DataTypes.JSON, allowNull: true },
     }, {
         tableName: 'student_bio',
         timestamps: true,
