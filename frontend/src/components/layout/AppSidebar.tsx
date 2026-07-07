@@ -28,7 +28,7 @@ const menuItems = [
   { title: "Academics", url: "/faculty/academics", icon: BookOpen },
   { title: "Leave", url: "/faculty/leave", icon: CalendarDays },
   { title: "Assessments", url: "/faculty/assessments", icon: FileText },
-  { title: "Counseling", url: "/faculty/counseling", icon: Users },
+  { title: "Mentorship", url: "/faculty/mentorship", icon: Users },
   { title: "Communication", url: "/faculty/communication", icon: MessageSquare },
   { title: "Reports", url: "/faculty/reports", icon: BarChart3 },
 ];
