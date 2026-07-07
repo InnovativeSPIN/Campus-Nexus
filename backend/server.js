@@ -64,6 +64,8 @@ import portfolioNotificationRoutes from './routes/student/portfolioNotification.
 import notificationRoutes from './routes/notification.routes.js';
 import approvalHistoryRoutes from './routes/approvalHistory.routes.js';
 import examCellRoutes from './routes/exam-cell/examCell.routes.js';
+import deptAdminMentorshipRoutes from './routes/department-admin/mentorship.routes.js';
+import facultyMentorshipRoutes from './routes/faculty/mentorship.routes.js';
 
 // Load env vars
 dotenv.config();
@@ -267,9 +269,11 @@ const startServer = () => {
   app.use('/api/v1/department-admin/labs', labRoutes);
   app.use('/api/v1/department-admin/class-incharges', classInchargeRoutes);
   app.use('/api/v1/department-admin/academics', deptAdminAcademicsRoutes);
+  app.use('/api/v1/department-admin/mentorship', deptAdminMentorshipRoutes);
   app.use('/api/v1/faculty/notifications', timetableNotificationRoutes);
   app.use('/api/v1/faculty/timetable/alterations', timetableAlterationRoutes);
   app.use('/api/v1/faculty/academics', facultyAcademicsRoutes);
+  app.use('/api/v1/faculty/mentorship', facultyMentorshipRoutes);
   app.use('/api/v1/faculty', leaveManagementRoutes);
   app.use('/api/v1/student/marks', studentMarksRoutes);
   app.use('/api/v1/student/projects', studentProjectRoutes);
