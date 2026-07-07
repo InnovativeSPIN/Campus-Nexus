@@ -3,7 +3,6 @@ import { motion } from "framer-motion";
 import { useMentor } from "@/pages/admin/department-admin/context";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, AlertCircle, Check, X } from "lucide-react";
-import { menteeStudents } from "@/pages/admin/department-admin/data/menteeStudents";
 import { MentorStudentSidebar } from "@/pages/admin/department-admin/components/mentor/MentorStudentSidebar";
 import { EditableSection } from "@/pages/admin/department-admin/components/mentor/EditableSection";
 import { SiblingsEditor } from "@/pages/admin/department-admin/components/mentor/SiblingsEditor";
@@ -23,13 +22,13 @@ const tabs: Array<{ id: TabType; label: string; icon: string }> = [
 
 export function StudentProfileView() {
   const { studentId } = useParams<{ studentId: string }>();
-  const { approvePendingChange, rejectPendingChange } = useMentor();
+  const { getStudentById, approvePendingChange, rejectPendingChange } = useMentor();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabType>("basic");
   const [activeMenu, setActiveMenu] = useState("profile");
   const [isMentorMode] = useState(true);
 
-  const student = menteeStudents.find((s) => s.id === studentId);
+  const student = studentId ? getStudentById(studentId) : undefined;
 
   if (!student) {
     return (

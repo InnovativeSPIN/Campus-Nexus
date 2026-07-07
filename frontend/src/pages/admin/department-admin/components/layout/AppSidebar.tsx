@@ -26,6 +26,7 @@ import {
   CheckSquare,
   Menu,
   X,
+  UserPlus
 } from "lucide-react";
 import { cn } from "@/pages/admin/department-admin/lib/utils";
 
@@ -42,7 +43,7 @@ const menuItems = [
   { title: "Leave & Alteration", url: "/admin/department-admin/leave-with-alteration", icon: Clock },
   { title: "Assessments", url: "/admin/department-admin/assessments", icon: FileText },
   { title: "Mentorship", url: "/admin/department-admin/mentor", icon: GraduationCap },
-  { title: "Counseling", url: "/admin/department-admin/counseling", icon: Users },
+  { title: "Mentorship Allocation", url: "/admin/department-admin/mentorship-allocation", icon: UserPlus },
   { title: "Announcement", url: "/admin/department-admin/communication", icon: MessageSquare },
   { title: "Reports", url: "/admin/department-admin/reports", icon: BarChart3 },
   { title: "Change Password", url: "/admin/department-admin/change-password", icon: Lock },

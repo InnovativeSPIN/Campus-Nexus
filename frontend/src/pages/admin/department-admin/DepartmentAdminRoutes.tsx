@@ -12,7 +12,7 @@ import Academics from "./pages/Academics";
 import Leave from "./pages/Leave";
 import Assessments from "./pages/Assessments";
 import Communication from "./pages/Communication";
-import Counseling from "./pages/Counseling";
+
 import Reports from "./pages/Reports";
 import NotFound from "./pages/NotFound";
 import AnnouncementDetail from "./pages/AnnouncementDetail";
@@ -24,6 +24,7 @@ import SubjectAllocation from './pages/SubjectAllocation';
 import TimetableMasterManagement from './pages/TimetableMasterManagement';
 import TimetableSlotsManagement from './pages/TimetableSlotsManagement';
 import LeaveWithAlteration from './pages/LeaveWithAlteration';
+import MentorshipAllocation from './pages/MentorshipAllocation';
 import Timetable from './pages/Timetable';
 import CourseLessonPlanApprovalsPage from './pages/CourseLessonPlanApprovalsPage';
 import './department-admin.css';
@@ -52,11 +53,11 @@ const DepartmentAdminRoutes = () => (
               <Route path="course-plan-approvals" element={<CourseLessonPlanApprovalsPage />} />
               <Route path="assessments" element={<Assessments />} />
               <Route path="communication" element={<Communication />} />
-              <Route path="counseling" element={<Counseling />} />
               <Route path="reports" element={<Reports />} />
               <Route path="mentor" element={<MentorDashboard />} />
               <Route path="mentor/:year" element={<MenteesList />} />
               <Route path="mentor/student/:studentId" element={<StudentProfileView />} />
+              <Route path="mentorship-allocation" element={<MentorshipAllocation />} />
               <Route path="timetable-master" element={<TimetableMasterManagement />} />
               <Route path="timetable-master/:masterId/slots" element={<TimetableSlotsManagement />} />
               <Route path="leave-with-alteration" element={<LeaveWithAlteration />} />
