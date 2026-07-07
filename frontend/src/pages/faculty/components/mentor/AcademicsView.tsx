@@ -1,133 +1,22 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/pages/faculty/components/ui/tabs";
-
-// Dummy Data
-const attendanceData = {
-  overall: 87,
-  attended: 42,
-  total: 48,
-  subjects: [
-    {
-      code: "CS201",
-      name: "Data Structures",
-      attended: 10,
-      total: 12,
-      percentage: 83.3,
-    },
-    {
-      code: "CS202",
-      name: "Web Development",
-      attended: 11,
-      total: 12,
-      percentage: 91.7,
-    },
-    {
-      code: "CS203",
-      name: "Database Systems",
-      attended: 9,
-      total: 11,
-      percentage: 81.8,
-    },
-    {
-      code: "CS204",
-      name: "Operating Systems",
-      attended: 12,
-      total: 13,
-      percentage: 92.3,
-    },
-  ],
-};
-
-const marksData = {
-  cgpa: 8.45,
-  currentSemesterGpa: 8.7,
-  percentage: 86.5,
-  creditsEarned: 142,
-  subjects: [
-    {
-      code: "CS201",
-      name: "Data Structures",
-      credits: 3,
-      internal1: 18,
-      internal2: 19,
-      assignment: 5,
-      total: 42,
-    },
-    {
-      code: "CS202",
-      name: "Web Development",
-      credits: 4,
-      internal1: 19,
-      internal2: 20,
-      assignment: 5,
-      total: 44,
-    },
-    {
-      code: "CS203",
-      name: "Database Systems",
-      credits: 3,
-      internal1: 17,
-      internal2: 18,
-      assignment: 4,
-      total: 39,
-    },
-    {
-      code: "CS204",
-      name: "Operating Systems",
-      credits: 4,
-      internal1: 20,
-      internal2: 20,
-      assignment: 5,
-      total: 45,
-    },
-  ],
-};
-
-const leaveData = {
-  totalApplied: 8,
-  approved: 6,
-  rejected: 1,
-  history: [
-    {
-      date: "2024-01-15",
-      reason: "Medical Emergency",
-      status: "Approved",
-    },
-    {
-      date: "2024-02-20",
-      reason: "Personal Work",
-      status: "Approved",
-    },
-    {
-      date: "2024-03-10",
-      reason: "Family Event",
-      status: "Pending",
-    },
-    {
-      date: "2024-04-05",
-      reason: "Doctor Appointment",
-      status: "Approved",
-    },
-    {
-      date: "2024-05-12",
-      reason: "Home Quarantine",
-      status: "Rejected",
-    },
-    {
-      date: "2024-06-18",
-      reason: "Festival Celebration",
-      status: "Approved",
-    },
-  ],
-};
+import { Button } from "@/components/ui/button";
 
 interface AcademicsViewProps {
-  studentName: string;
+  student: any;
+  onSave: (section: string, data: any) => void;
+  isMentorMode?: boolean;
 }
 
-export function AcademicsView({ studentName }: AcademicsViewProps) {
+export function AcademicsView({ student, onSave, isMentorMode }: AcademicsViewProps) {
   const [selectedSemester, setSelectedSemester] = useState("6");
+  const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState({
+    cgpa: student?.academicInfo?.cgpa || "0.0",
+    attendance: student?.academicInfo?.attendance || "0%",
+    arrears: student?.academicInfo?.arrears || 0,
+  });
 
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
@@ -142,8 +31,36 @@ export function AcademicsView({ studentName }: AcademicsViewProps) {
     }
   };
 
+  const handleSave = () => {
+    // The academics is saved into the "academics" field in backend
+    const updatedAcademics = {
+      ...student?.academicInfo,
+      cgpa: formData.cgpa,
+      attendance: formData.attendance,
+      arrears: formData.arrears,
+    };
+    onSave("Academics", { academics: updatedAcademics });
+    setIsEditing(false);
+  };
+
+  // Mock data for tables since they are too complex to edit all at once in this mockup
+  const attendanceData: { subjects: any[] } = { subjects: [] };
+  const leaveData: { totalApplied: number, approved: number, rejected: number, history: any[] } = { totalApplied: 0, approved: 0, rejected: 0, history: [] };
+
   return (
     <div className="space-y-6">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-2xl font-bold text-gray-800">Academics</h2>
+        {isMentorMode && !isEditing && (
+          <Button onClick={() => setIsEditing(true)} variant="outline">Edit Overview</Button>
+        )}
+        {isMentorMode && isEditing && (
+          <div className="flex gap-2">
+            <Button onClick={() => setIsEditing(false)} variant="ghost">Cancel</Button>
+            <Button onClick={handleSave}>Save</Button>
+          </div>
+        )}
+      </div>
       <Tabs defaultValue="attendance" className="w-full">
         <TabsList className="grid w-full grid-cols-4 bg-gray-100 rounded-lg p-1">
           <TabsTrigger value="attendance">Attendance</TabsTrigger>
@@ -162,7 +79,16 @@ export function AcademicsView({ studentName }: AcademicsViewProps) {
               className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-6 border border-blue-200"
             >
               <p className="text-gray-600 text-sm font-medium">Overall Attendance</p>
-              <p className="text-3xl font-bold text-blue-600 mt-2">{attendanceData.overall}%</p>
+              {isEditing ? (
+                <input
+                  type="text"
+                  value={formData.attendance}
+                  onChange={(e) => setFormData({ ...formData, attendance: e.target.value })}
+                  className="mt-2 w-full bg-white border border-gray-300 rounded px-2 py-1"
+                />
+              ) : (
+                <p className="text-3xl font-bold text-blue-600 mt-2">{student?.academicInfo?.attendance || "0%"}</p>
+              )}
             </motion.div>
 
             <motion.div
@@ -171,10 +97,19 @@ export function AcademicsView({ studentName }: AcademicsViewProps) {
               transition={{ delay: 0.1 }}
               className="bg-gradient-to-br from-teal-50 to-teal-100 rounded-lg p-6 border border-teal-200"
             >
-              <p className="text-gray-600 text-sm font-medium">Classes Attended</p>
-              <p className="text-3xl font-bold text-[#01898d] mt-2">
-                {attendanceData.attended}/{attendanceData.total}
-              </p>
+              <p className="text-gray-600 text-sm font-medium">CGPA</p>
+              {isEditing ? (
+                <input
+                  type="text"
+                  value={formData.cgpa}
+                  onChange={(e) => setFormData({ ...formData, cgpa: e.target.value })}
+                  className="mt-2 w-full bg-white border border-gray-300 rounded px-2 py-1"
+                />
+              ) : (
+                <p className="text-3xl font-bold text-[#01898d] mt-2">
+                  {student?.academicInfo?.cgpa || "0.0"}
+                </p>
+              )}
             </motion.div>
 
             <motion.div
@@ -183,19 +118,19 @@ export function AcademicsView({ studentName }: AcademicsViewProps) {
               transition={{ delay: 0.2 }}
               className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-6 border border-purple-200"
             >
-              <p className="text-gray-600 text-sm font-medium">Semester</p>
-              <select
-                value={selectedSemester}
-                onChange={(e) => setSelectedSemester(e.target.value)}
-                className="mt-2 w-full px-3 py-2 border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01898d] bg-white"
-              >
-                <option value="1">Semester 1</option>
-                <option value="2">Semester 2</option>
-                <option value="3">Semester 3</option>
-                <option value="4">Semester 4</option>
-                <option value="5">Semester 5</option>
-                <option value="6">Semester 6</option>
-              </select>
+              <p className="text-gray-600 text-sm font-medium">Active Arrears</p>
+              {isEditing ? (
+                <input
+                  type="number"
+                  value={formData.arrears}
+                  onChange={(e) => setFormData({ ...formData, arrears: parseInt(e.target.value) || 0 })}
+                  className="mt-2 w-full bg-white border border-gray-300 rounded px-2 py-1"
+                />
+              ) : (
+                <p className="text-3xl font-bold text-purple-600 mt-2">
+                  {student?.academicInfo?.arrears || 0}
+                </p>
+              )}
             </motion.div>
           </div>
 
@@ -274,10 +209,9 @@ export function AcademicsView({ studentName }: AcademicsViewProps) {
           {/* Summary Cards */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {[
-              { label: "CGPA", value: marksData.cgpa.toFixed(2), color: "from-blue-50 to-blue-100" },
-              { label: "Current Semester GPA", value: marksData.currentSemesterGpa.toFixed(2), color: "from-teal-50 to-teal-100" },
-              { label: "Percentage", value: marksData.percentage.toFixed(1) + "%", color: "from-purple-50 to-purple-100" },
-              { label: "Credits Earned", value: marksData.creditsEarned, color: "from-amber-50 to-amber-100" },
+              { label: "CGPA", value: student?.academicInfo?.cgpa || "0.0", color: "from-blue-50 to-blue-100" },
+              { label: "Attendance", value: student?.academicInfo?.attendance || "0%", color: "from-teal-50 to-teal-100" },
+              { label: "Arrears", value: student?.academicInfo?.arrears || 0, color: "from-purple-50 to-purple-100" },
             ].map((card, idx) => (
               <motion.div
                 key={idx}
@@ -329,37 +263,11 @@ export function AcademicsView({ studentName }: AcademicsViewProps) {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {marksData.subjects.map((subject, idx) => (
-                    <motion.tr
-                      key={idx}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: idx * 0.05 }}
-                      className="hover:bg-gray-50 transition-colors"
-                    >
-                      <td className="px-4 py-3 text-sm font-medium text-gray-900">
-                        {subject.code}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-700">{subject.name}</td>
-                      <td className="px-4 py-3 text-sm text-center text-gray-900">
-                        {subject.credits}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-center text-gray-900">
-                        {subject.internal1}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-center text-gray-900">
-                        {subject.internal2}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-center text-gray-900">
-                        {subject.assignment}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-right">
-                        <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-[#01898d]/10 text-[#01898d]">
-                          {subject.total}
-                        </span>
-                      </td>
-                    </motion.tr>
-                  ))}
+                  <tr className="hover:bg-gray-50 transition-colors">
+                    <td colSpan={7} className="px-4 py-8 text-center text-gray-500">
+                      No subjects data recorded.
+                    </td>
+                  </tr>
                 </tbody>
               </table>
             </div>

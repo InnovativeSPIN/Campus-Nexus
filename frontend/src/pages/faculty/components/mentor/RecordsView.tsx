@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Search, Check, X } from "lucide-react";
+import { Search, Check, X, Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface Certificate {
   id: string;
@@ -10,47 +11,20 @@ interface Certificate {
   status: "Approved" | "Pending" | "Rejected";
 }
 
-const dummyCertificates: Certificate[] = [
-  {
-    id: "1",
-    name: "NPTEL Certificate - Python for Data Science",
-    issuedBy: "NPTEL, IIT Bombay",
-    date: "2024-01-15",
-    status: "Approved",
-  },
-  {
-    id: "2",
-    name: "Hackathon Participation - Smart India Hackathon",
-    issuedBy: "Ministry of Education",
-    date: "2024-02-20",
-    status: "Pending",
-  },
-  {
-    id: "3",
-    name: "Workshop Certificate - Cloud Computing",
-    issuedBy: "AWS Academy",
-    date: "2024-03-10",
-    status: "Approved",
-  },
-  {
-    id: "4",
-    name: "Internship Completion - Web Development",
-    issuedBy: "TechCorp Solutions",
-    date: "2024-04-05",
-    status: "Approved",
-  },
-  {
-    id: "5",
-    name: "Google Cloud Skills Badge - Data Engineering",
-    issuedBy: "Google Cloud",
-    date: "2024-05-12",
-    status: "Pending",
-  },
-];
+interface RecordsViewProps {
+  student: any;
+  onSave: (section: string, data: any) => void;
+  isMentorMode?: boolean;
+}
 
-export function RecordsView() {
+export function RecordsView({ student, onSave, isMentorMode }: RecordsViewProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [certificates, setCertificates] = useState<Certificate[]>(dummyCertificates);
+  // Local state for adding a new record
+  const [isAdding, setIsAdding] = useState(false);
+  const [newRecord, setNewRecord] = useState({ name: "", issuedBy: "", date: "" });
+  
+  // records come from student.records
+  const certificates: Certificate[] = student?.records || [];
 
   const filteredCertificates = useMemo(() => {
     return certificates.filter(
@@ -60,20 +34,33 @@ export function RecordsView() {
     );
   }, [searchQuery, certificates]);
 
+  const handleAddRecord = () => {
+    if (!newRecord.name) return;
+    const cert: Certificate = {
+      id: Date.now().toString(),
+      name: newRecord.name,
+      issuedBy: newRecord.issuedBy,
+      date: newRecord.date || new Date().toISOString().split('T')[0],
+      status: "Approved", // Mentor added records are pre-approved
+    };
+    const updatedRecords = [...certificates, cert];
+    onSave("Records", { records: updatedRecords });
+    setIsAdding(false);
+    setNewRecord({ name: "", issuedBy: "", date: "" });
+  };
+
   const handleApproveCertificate = (id: string) => {
-    setCertificates(
-      certificates.map((cert) =>
-        cert.id === id ? { ...cert, status: "Approved" } : cert
-      )
+    const updatedRecords = certificates.map((cert) =>
+      cert.id === id ? { ...cert, status: "Approved" as const } : cert
     );
+    onSave("Records", { records: updatedRecords });
   };
 
   const handleRejectCertificate = (id: string) => {
-    setCertificates(
-      certificates.map((cert) =>
-        cert.id === id ? { ...cert, status: "Rejected" } : cert
-      )
+    const updatedRecords = certificates.map((cert) =>
+      cert.id === id ? { ...cert, status: "Rejected" as const } : cert
     );
+    onSave("Records", { records: updatedRecords });
   };
 
   const getStatusColor = (status: string) => {
@@ -91,6 +78,29 @@ export function RecordsView() {
 
   return (
     <div className="space-y-6">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-2xl font-bold text-gray-800">Student Records</h2>
+        {isMentorMode && !isAdding && (
+          <Button onClick={() => setIsAdding(true)} variant="outline">
+            <Plus size={16} className="mr-2" /> Add Record
+          </Button>
+        )}
+      </div>
+
+      {isAdding && (
+        <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 space-y-4 mb-4">
+          <h3 className="font-semibold text-gray-900">Add New Record</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <input type="text" placeholder="Record Name" value={newRecord.name} onChange={(e) => setNewRecord({ ...newRecord, name: e.target.value })} className="px-3 py-2 border border-gray-300 rounded-md" />
+            <input type="text" placeholder="Issued By" value={newRecord.issuedBy} onChange={(e) => setNewRecord({ ...newRecord, issuedBy: e.target.value })} className="px-3 py-2 border border-gray-300 rounded-md" />
+            <input type="date" value={newRecord.date} onChange={(e) => setNewRecord({ ...newRecord, date: e.target.value })} className="px-3 py-2 border border-gray-300 rounded-md" />
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" onClick={() => setIsAdding(false)}>Cancel</Button>
+            <Button onClick={handleAddRecord}>Save Record</Button>
+          </div>
+        </div>
+      )}
       {/* Search Bar */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}

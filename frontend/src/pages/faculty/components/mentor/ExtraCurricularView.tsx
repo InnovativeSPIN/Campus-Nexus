@@ -1,7 +1,8 @@
-﻿import { useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/pages/faculty/components/ui/tabs";
-import { Search } from "lucide-react";
+import { Search, Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface Sport {
   id: string;
@@ -19,94 +20,58 @@ interface Event {
   year: string;
 }
 
-const dummySports: Sport[] = [
-  {
-    id: "1",
-    name: "Basketball",
-    level: "District",
-    achievement: "Runner",
-    year: "2023",
-  },
-  {
-    id: "2",
-    name: "Athletics",
-    level: "College",
-    achievement: "Winner - 100m Sprint",
-    year: "2024",
-  },
-  {
-    id: "3",
-    name: "Table Tennis",
-    level: "State",
-    achievement: "Participant",
-    year: "2023",
-  },
-  {
-    id: "4",
-    name: "Volleyball",
-    level: "College",
-    achievement: "Winner",
-    year: "2024",
-  },
-];
+interface ExtraCurricularViewProps {
+  student: any;
+  onSave: (section: string, data: any) => void;
+  isMentorMode?: boolean;
+}
 
-const dummyEvents: Event[] = [
-  {
-    id: "1",
-    name: "Smart India Hackathon 2024",
-    type: "Hackathon",
-    role: "Participant",
-    year: "2024",
-  },
-  {
-    id: "2",
-    name: "Tech Symposium",
-    type: "Technical",
-    role: "Organizer",
-    year: "2023",
-  },
-  {
-    id: "3",
-    name: "AI Workshop",
-    type: "Seminar",
-    role: "Participant",
-    year: "2024",
-  },
-  {
-    id: "4",
-    name: "Cultural Fest 2024",
-    type: "Cultural",
-    role: "Volunteer",
-    year: "2024",
-  },
-  {
-    id: "5",
-    name: "Code Debugging Championship",
-    type: "Technical",
-    role: "Participant",
-    year: "2023",
-  },
-];
-
-export function ExtraCurricularView() {
+export function ExtraCurricularView({ student, onSave, isMentorMode }: ExtraCurricularViewProps) {
   const [sportsSearch, setSportsSearch] = useState("");
   const [eventsSearch, setEventsSearch] = useState("");
+  
+  const [isAddingSport, setIsAddingSport] = useState(false);
+  const [newSport, setNewSport] = useState({ name: "", level: "", achievement: "", year: "" });
+  
+  const [isAddingEvent, setIsAddingEvent] = useState(false);
+  const [newEvent, setNewEvent] = useState({ name: "", type: "", role: "", year: "" });
+
+  const sports: Sport[] = student?.extraCurricular?.sports || [];
+  const events: Event[] = student?.extraCurricular?.events || [];
 
   const filteredSports = useMemo(() => {
-    return dummySports.filter(
+    return sports.filter(
       (sport) =>
         sport.name.toLowerCase().includes(sportsSearch.toLowerCase()) ||
         sport.level.toLowerCase().includes(sportsSearch.toLowerCase())
     );
-  }, [sportsSearch]);
+  }, [sportsSearch, sports]);
 
   const filteredEvents = useMemo(() => {
-    return dummyEvents.filter(
+    return events.filter(
       (event) =>
         event.name.toLowerCase().includes(eventsSearch.toLowerCase()) ||
         event.type.toLowerCase().includes(eventsSearch.toLowerCase())
     );
-  }, [eventsSearch]);
+  }, [eventsSearch, events]);
+
+  const handleAddSport = () => {
+    if (!newSport.name) return;
+    const sport: Sport = { id: Date.now().toString(), ...newSport };
+    const updatedSports = [...sports, sport];
+    onSave("ExtraCurricular", { extraCurricular: { sports: updatedSports, events } });
+    setIsAddingSport(false);
+    setNewSport({ name: "", level: "", achievement: "", year: "" });
+  };
+
+  const handleAddEvent = () => {
+    if (!newEvent.name) return;
+    const event: Event = { id: Date.now().toString(), ...newEvent };
+    const updatedEvents = [...events, event];
+    onSave("ExtraCurricular", { extraCurricular: { sports, events: updatedEvents } });
+    setIsAddingEvent(false);
+    setNewEvent({ name: "", type: "", role: "", year: "" });
+  };
 
   const getAchievementColor = (achievement: string) => {
     if (achievement.includes("Winner")) return "bg-yellow-100 text-yellow-800";
@@ -131,6 +96,9 @@ export function ExtraCurricularView() {
 
   return (
     <div className="space-y-6">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-2xl font-bold text-gray-800">Extra Curricular Activities</h2>
+      </div>
       <Tabs defaultValue="sports" className="w-full">
         <TabsList className="grid w-full grid-cols-2 bg-gray-100 rounded-lg p-1">
           <TabsTrigger value="sports">Sports</TabsTrigger>
@@ -139,6 +107,30 @@ export function ExtraCurricularView() {
 
         {/* Sports Tab */}
         <TabsContent value="sports" className="space-y-4">
+          <div className="flex justify-end mb-4">
+            {isMentorMode && !isAddingSport && (
+              <Button onClick={() => setIsAddingSport(true)} variant="outline">
+                <Plus size={16} className="mr-2" /> Add Sport
+              </Button>
+            )}
+          </div>
+          
+          {isAddingSport && (
+            <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 space-y-4 mb-4">
+              <h3 className="font-semibold text-gray-900">Add New Sport</h3>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <input type="text" placeholder="Sport Name" value={newSport.name} onChange={(e) => setNewSport({ ...newSport, name: e.target.value })} className="px-3 py-2 border border-gray-300 rounded-md" />
+                <input type="text" placeholder="Level (e.g. District)" value={newSport.level} onChange={(e) => setNewSport({ ...newSport, level: e.target.value })} className="px-3 py-2 border border-gray-300 rounded-md" />
+                <input type="text" placeholder="Achievement" value={newSport.achievement} onChange={(e) => setNewSport({ ...newSport, achievement: e.target.value })} className="px-3 py-2 border border-gray-300 rounded-md" />
+                <input type="text" placeholder="Year" value={newSport.year} onChange={(e) => setNewSport({ ...newSport, year: e.target.value })} className="px-3 py-2 border border-gray-300 rounded-md" />
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="ghost" onClick={() => setIsAddingSport(false)}>Cancel</Button>
+                <Button onClick={handleAddSport}>Save Sport</Button>
+              </div>
+            </div>
+          )}
+
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -201,6 +193,30 @@ export function ExtraCurricularView() {
 
         {/* Events Tab */}
         <TabsContent value="events" className="space-y-4">
+          <div className="flex justify-end mb-4">
+            {isMentorMode && !isAddingEvent && (
+              <Button onClick={() => setIsAddingEvent(true)} variant="outline">
+                <Plus size={16} className="mr-2" /> Add Event
+              </Button>
+            )}
+          </div>
+
+          {isAddingEvent && (
+            <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 space-y-4 mb-4">
+              <h3 className="font-semibold text-gray-900">Add New Event</h3>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <input type="text" placeholder="Event Name" value={newEvent.name} onChange={(e) => setNewEvent({ ...newEvent, name: e.target.value })} className="px-3 py-2 border border-gray-300 rounded-md" />
+                <input type="text" placeholder="Type (e.g. Technical)" value={newEvent.type} onChange={(e) => setNewEvent({ ...newEvent, type: e.target.value })} className="px-3 py-2 border border-gray-300 rounded-md" />
+                <input type="text" placeholder="Role" value={newEvent.role} onChange={(e) => setNewEvent({ ...newEvent, role: e.target.value })} className="px-3 py-2 border border-gray-300 rounded-md" />
+                <input type="text" placeholder="Year" value={newEvent.year} onChange={(e) => setNewEvent({ ...newEvent, year: e.target.value })} className="px-3 py-2 border border-gray-300 rounded-md" />
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="ghost" onClick={() => setIsAddingEvent(false)}>Cancel</Button>
+                <Button onClick={handleAddEvent}>Save Event</Button>
+              </div>
+            </div>
+          )}
+
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}

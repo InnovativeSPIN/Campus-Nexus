@@ -30,7 +30,7 @@ const menuItems = [
   { title: "Attendance", url: "/faculty/attendance", icon: ClipboardCheck },
   { title: "Academics", url: "/faculty/academics", icon: BookOpen },
   { title: "Assessments", url: "/faculty/assessments", icon: FileText },
-  { title: "Counseling", url: "/faculty/counseling", icon: Users },
+  { title: "Mentorship", url: "/faculty/mentorship", icon: Users },
   { title: "Change Password", url: "/faculty/change-password", icon: Lock },
   { title: "Announcement", url: "/faculty/communication", icon: MessageSquare },
   { title: "Reports", url: "/faculty/reports", icon: BarChart3 },
