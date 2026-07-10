@@ -20,6 +20,7 @@ import {
   Lock,
   CheckCircle2,
   X,
+  Megaphone,
 } from "lucide-react";
 import { cn } from "@/pages/faculty/lib/utils";
 
@@ -32,7 +33,8 @@ const menuItems = [
   { title: "Assessments", url: "/faculty/assessments", icon: FileText },
   { title: "Mentorship", url: "/faculty/mentorship", icon: Users },
   { title: "Change Password", url: "/faculty/change-password", icon: Lock },
-  { title: "Announcement", url: "/faculty/communication", icon: MessageSquare },
+  { title: "Announcements", url: "/faculty/announcements", icon: Megaphone },
+  { title: "Student Queries", url: "/faculty/communication", icon: MessageSquare },
   { title: "Reports", url: "/faculty/reports", icon: BarChart3 },
 ];
 
