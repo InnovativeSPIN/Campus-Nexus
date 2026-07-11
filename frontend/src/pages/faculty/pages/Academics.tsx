@@ -35,6 +35,7 @@ import {
   Calendar,
   ChevronDown,
   ChevronRight,
+  Edit,
 } from "lucide-react";
 import { cn } from "@/pages/faculty/lib/utils";
 import {
@@ -115,6 +116,7 @@ interface SemesterCredits {
 interface CourseLessonPlan {
   id: number;
   sno: number;
+  unit_number?: number;
   unit_label?: string;
   topic: string;
   co_number?: string;
@@ -238,6 +240,15 @@ export default function Academics() {
       setSelectedClassId(fetchedClassesHandled[0].id);
     }
   }, [fetchedClassesHandled, selectedClassId]);
+
+  // Reset Course Plan Upload form when class is changed
+  useEffect(() => {
+    setCoursePlanUnits([
+      { unit_label: "", topics: [{ topic: "", co_number: "", btl: "", delivery_mode: "", reference_book: "", periods_required: 1, tentative_date: "" }] }
+    ]);
+    setCsvUploadError(null);
+    setCsvPreviewRows(0);
+  }, [selectedClassId]);
   const [topicsData, setTopicsData] = useState<Record<string, Topic[]>>({});
   const [materialsData, setMaterialsData] = useState<Record<string, Material[]>>({});
   const [marksData, setMarksData] = useState<Record<string, StudentMark[]>>({});
@@ -534,6 +545,37 @@ export default function Academics() {
     }
   };
 
+  const handleDeleteCoursePlan = async () => {
+    if (!selectedClass) return;
+
+    if (!confirm('Are you sure you want to completely delete this course plan? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      const res = await apiFetch(
+        `/api/v1/faculty/academics/course-plans/bulk?subjectId=${selectedClass.subject_id}&classId=${selectedClass.class_id}`,
+        { method: 'DELETE' }
+      );
+
+      if (res.success) {
+        toast({ description: 'Course plan deleted successfully!' });
+        setCoursePlans([]);
+        setCoursePlanUnits([
+          {
+            unit_label: "Unit 1",
+            topics: [{ topic: "", co_number: "", btl: "", delivery_mode: "", reference_book: "", periods_required: 1, tentative_date: "" }]
+          }
+        ]);
+      } else {
+        throw new Error(res.message || 'Server returned an error');
+      }
+    } catch (error: any) {
+      console.error('Delete course plan error:', error);
+      alert('Failed to delete course plan: ' + error.message);
+    }
+  };
+
   const handleSaveCoursePlan = async () => {
     if (!selectedClass) {
       toast({ title: "Error", description: "Please select a class first", variant: "destructive" });
@@ -617,7 +659,7 @@ export default function Academics() {
       setIsFileSent(true);
       toast({
         title: "Success",
-        description: `Course plan saved successfully! ${result.data?.count || allTopics.length} topics created.\nYour course plan has been submitted to the department admin for approval.`,
+        description: `Course plan saved successfully! Your course plan has been sent for approval to the HOD.`,
         variant: "default",
       });
 
@@ -1979,6 +2021,46 @@ export default function Academics() {
                         <Check className="w-3 h-3 mr-1" /> Approved
                       </Badge>
                     ) : null}
+                    
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const unitsMap: Record<string, any> = {};
+                        coursePlans.forEach(plan => {
+                          const unitKey = plan.unit_label || `Unit ${plan.unit_number}`;
+                          if (!unitsMap[unitKey]) {
+                            unitsMap[unitKey] = {
+                              unit_label: plan.unit_label || `Unit ${plan.unit_number}`,
+                              topics: []
+                            };
+                          }
+                          unitsMap[unitKey].topics.push({
+                            topic: plan.topic,
+                            co_number: plan.co_number || '',
+                            btl: plan.btl || '',
+                            delivery_mode: plan.delivery_mode || '',
+                            reference_book: plan.reference_book || '',
+                            periods_required: plan.periods_required || 1,
+                            tentative_date: plan.tentative_date || ''
+                          });
+                        });
+                        setCoursePlanUnits(Object.values(unitsMap));
+                        toast({ description: 'Existing course plan loaded for editing. Make your changes and click Save.' });
+                      }}
+                    >
+                      <Edit className="w-4 h-4 mr-2" />
+                      Edit Existing Plan
+                    </Button>
+                    
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={handleDeleteCoursePlan}
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Delete Plan
+                    </Button>
                   </>
                 )}
                 {isFileSent && (

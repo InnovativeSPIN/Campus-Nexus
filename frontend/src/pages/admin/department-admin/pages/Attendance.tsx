@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import headerImage from "@/assets/NSCET New College header 2026.png";
 import { MainLayout } from "@/pages/admin/department-admin/components/layout/MainLayout";
 import { motion } from "framer-motion";
 import { Button } from "@/pages/admin/department-admin/components/ui/button";
@@ -21,10 +22,12 @@ import {
   CheckCircle2,
   Save,
   History,
+  Download,
 } from "lucide-react";
 import { toast } from '@/components/ui/sonner';
 import { cn } from "@/pages/admin/department-admin/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
+import { normalizeImageUrl } from "@/utils/imageUrl";
 
 const apiFetch = async (url: string, options?: RequestInit) => {
   const token = localStorage.getItem('authToken');
@@ -45,7 +48,8 @@ const apiFetch = async (url: string, options?: RequestInit) => {
 
 interface Student {
   id: string;
-  rollNo: string;
+  rollNo?: string;
+  rollNumber?: string;
   name: string;
   photo: string;
   attendance?: "present" | "absent" | "leave" | "od";
@@ -95,6 +99,7 @@ export default function Attendance() {  const { authToken, user } = useAuth();
   const [loadingTopics, setLoadingTopics] = useState(false);
   const [selectedUnit, setSelectedUnit] = useState<string>("");
   const [selectedLessonPlanId, setSelectedLessonPlanId] = useState<string>("");
+  const [originalLessonPlanId, setOriginalLessonPlanId] = useState<string>("");
   const [periodsCovered, setPeriodsCovered] = useState<number>(1);
   const [coverageCompletionStatus, setCoverageCompletionStatus] = useState<"completed" | "deviation">("completed");
   const [deviationReasonForCoverage, setDeviationReasonForCoverage] = useState<string>("");
@@ -129,6 +134,7 @@ export default function Attendance() {  const { authToken, user } = useAuth();
         className="border-b hover:bg-muted/50 transition-colors"
       >
         <td className="p-3 text-sm font-medium">{record.date}</td>
+        <td className="p-3 text-sm text-center">{record.period}</td>
         <td className="p-3 text-sm">{record.subject}</td>
         <td className="p-3 text-sm">{record.section}</td>
         <td className="p-3 text-center">
@@ -153,6 +159,15 @@ export default function Attendance() {  const { authToken, user } = useAuth();
             onClick={() => handleEditHistoryRow(record)}
           >
             Edit
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-primary hover:text-primary hover:bg-primary/10 ml-2"
+            onClick={() => downloadAttendanceReportPdf(false, record)}
+            disabled={attendanceReportLoading}
+          >
+            <Download className="w-4 h-4" />
           </Button>
         </td>
       </motion.tr>
@@ -249,32 +264,48 @@ export default function Attendance() {  const { authToken, user } = useAuth();
     }
   };
 
-  const downloadAttendanceReportPdf = async (overall = false) => {
+  const downloadAttendanceReportPdf = async (overall = false, record: any = null) => {
     setAttendanceReportLoading(true);
     try {
-      const classFilter = overall ? 'all' : historyClassFilter;
-      const subjectFilter = overall ? 'all' : historySubjectFilter;
+      let classFilter = overall ? 'all' : historyClassFilter;
+      let subjectFilter = overall ? 'all' : historySubjectFilter;
+      let startDate = historyStartDate;
+      let endDate = historyEndDate;
+      
+      if (record) {
+        classFilter = record.classId.toString();
+        subjectFilter = record.subjectId.toString();
+        startDate = record.date;
+        endDate = record.date;
+      }
+
       const classFilterLabel = classFilter === 'all'
         ? 'All classes'
-        : classes.find(c => c.id.toString() === classFilter)?.name || classFilter;
+        : classes.find(c => c.id.toString() === classFilter)?.name || (record ? `${record.className} ${record.section}` : classFilter);
       const subjectFilterLabel = subjectFilter === 'all'
         ? 'All subjects'
-        : subjects.find(s => s.id === subjectFilter)?.name || subjectFilter;
+        : subjects.find(s => s.id.toString() === subjectFilter)?.name || (record ? record.subject : subjectFilter);
 
       let reportUrl = `/api/v1/attendance?limit=10000`;
       if (classFilter && classFilter !== 'all') reportUrl += `&class=${classFilter}`;
       if (subjectFilter && subjectFilter !== 'all') reportUrl += `&subject=${subjectFilter}`;
-      if (historyStartDate && historyEndDate) reportUrl += `&startDate=${historyStartDate}&endDate=${historyEndDate}`;
+      if (startDate && endDate) reportUrl += `&startDate=${startDate}&endDate=${endDate}`;
 
       const result = await apiFetch(reportUrl);
       if (!result.success) {
         toast.error(result.message || 'Failed to fetch report data');
+        setAttendanceReportLoading(false);
         return;
       }
 
-      const entries = result.data || [];
+      let entries = result.data || [];
+      if (record) {
+         entries = entries.filter((e: any) => (e.period_slot_id || e.period) === record.period);
+      }
+      
       if (!entries.length) {
         toast.error('No data available for this report');
+        setAttendanceReportLoading(false);
         return;
       }
 
@@ -381,7 +412,7 @@ export default function Attendance() {  const { authToken, user } = useAuth();
 
       const script = document.createElement('script');
       script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
-      script.onload = () => {
+      script.onload = async () => {
         const jsPDF = (window as any).jspdf?.jsPDF || (window as any).jsPDF;
         if (!jsPDF) {
           toast.error('PDF generator not available');
@@ -395,23 +426,38 @@ export default function Attendance() {  const { authToken, user } = useAuth();
         const pageWidth = doc.internal.pageSize.getWidth();
         let y = 10;
 
-        doc.setFontSize(16);
-        doc.text('Nadar Saraswathi College of Engineering & Technology', pageWidth / 2, y, { align: 'center' });
-        y += 8;
+        // Load header image
+        const img = new Image();
+        img.src = headerImage;
+        await new Promise((resolve) => {
+          img.onload = resolve;
+          img.onerror = resolve; // fallback to text on error
+        });
 
-        doc.setFontSize(10);
-        doc.text('Approved by AICTE, New Delhi | Affiliated to Anna University, Chennai', pageWidth / 2, y, { align: 'center' });
-        y += 6;
-        doc.text('Vadapudupatti, Annanji (PO), Theni - 625 531', pageWidth / 2, y, { align: 'center' });
-        y += 10;
+        if (img.complete && img.naturalWidth > 0) {
+          const imgWidth = 190;
+          const imgHeight = (img.naturalHeight * imgWidth) / img.naturalWidth;
+          doc.addImage(img, 'PNG', 10, y, imgWidth, imgHeight);
+          y += imgHeight + 8;
+        } else {
+          doc.setFontSize(16);
+          doc.text('Nadar Saraswathi College of Engineering & Technology', pageWidth / 2, y, { align: 'center' });
+          y += 8;
+
+          doc.setFontSize(10);
+          doc.text('Approved by AICTE, New Delhi | Affiliated to Anna University, Chennai', pageWidth / 2, y, { align: 'center' });
+          y += 6;
+          doc.text('Vadapudupatti, Annanji (PO), Theni - 625 531', pageWidth / 2, y, { align: 'center' });
+          y += 10;
+        }
 
         doc.setFontSize(12);
         doc.text('Attendance Report', 14, y);
         y += 6;
         doc.setFontSize(10);
-        doc.text(`Class filter: ${classFilterLabel}`, 14, y);
-        y += 4;
-        doc.text(`Date range: ${historyStartDate} to ${historyEndDate}`, 14, y);
+        doc.text(`Class: ${classFilterLabel}    Subject: ${subjectFilterLabel}`, 14, y);
+        y += 6;
+        doc.text(`Date: ${historyStartDate} to ${historyEndDate}` + (record ? `    Period: ${record.period}` : ''), 14, y);
         y += 8;
 
         const headers = ['Register', 'Name', 'Dept', 'Year', 'Present', 'Absent'];
@@ -419,20 +465,42 @@ export default function Attendance() {  const { authToken, user } = useAuth();
 
         const drawTableRow = (values: string[], isHeader = false) => {
           let x = 14;
-          const rowHeight = 6;
-          if (y + rowHeight > doc.internal.pageSize.getHeight() - 20) {
+          const rowHeight = 7;
+          let maxHeight = rowHeight;
+
+          values.forEach((value, index) => {
+            const lines = doc.splitTextToSize(String(value), columnWidths[index] - 4);
+            maxHeight = Math.max(maxHeight, lines.length * 4 + 2);
+          });
+
+          if (y + maxHeight > doc.internal.pageSize.getHeight() - 20) {
             doc.addPage();
             y = 20;
           }
 
-          values.forEach((text, index) => {
-            doc.setFontSize(isHeader ? 10 : 9);
+          values.forEach((value, index) => {
+            const width = columnWidths[index];
+            const lines = doc.splitTextToSize(String(value), width - 4);
+            
+            doc.setFontSize(isHeader ? 9 : 8);
             doc.setFont('helvetica', isHeader ? 'bold' : 'normal');
-            doc.text(String(text), x + 1, y + 4, { maxWidth: columnWidths[index] - 2 });
-            x += columnWidths[index];
+            
+            if (isHeader) {
+              doc.setFillColor(242, 242, 242);
+              doc.rect(x, y, width, maxHeight, 'FD');
+            } else {
+              doc.rect(x, y, width, maxHeight);
+            }
+            
+            if (!isHeader && (index === 4 || index === 5)) {
+               doc.text(lines, x + width/2, y + 5, { align: 'center' });
+            } else {
+               doc.text(lines, x + 2, y + 5);
+            }
+            x += width;
           });
 
-          y += rowHeight;
+          y += maxHeight;
         };
 
         drawTableRow(headers, true);
@@ -473,8 +541,8 @@ export default function Attendance() {  const { authToken, user } = useAuth();
 
   useEffect(() => {
     if (!selectedDate) return;
-    // Use the same faculty timetable endpoint so department-admin only sees their OWN assigned slots
-    fetch(`/api/v1/attendance/faculty/timetable/${selectedDate}`, { headers: { 'Authorization': `Bearer ${authToken}` } })
+    // Fetch all department classes for the selected date to allow full department-wide editing
+    fetch(`/api/v1/attendance/department-admin/classes/${selectedDate}`, { headers: { 'Authorization': `Bearer ${authToken}` } })
       .then(r => r.json())
       .then(data => { 
         if (data.success && data.data) { 
@@ -615,6 +683,7 @@ export default function Attendance() {  const { authToken, user } = useAuth();
               });
               setAttendanceData(marks);
               setTopicCovered(attendanceRecord.remarks || "");
+              setOriginalLessonPlanId(attendanceRecord.lesson_plan_id?.toString() || "");
               // Department admins can always override, faculty can only mark on today or if not already marked
               const markedByFaculty = !isDepartmentAdmin && !isToday;
               setPreviouslyMarkedBy(markedByFaculty ? 'Faculty' : null);
@@ -624,6 +693,7 @@ export default function Attendance() {  const { authToken, user } = useAuth();
           }
           setAttendanceData({});
           setTopicCovered("");
+          setOriginalLessonPlanId("");
           setPreviouslyMarkedBy(null);
           // Department admins can always edit, faculty can only edit on today
           setLocked(!isDepartmentAdmin && !isToday);
@@ -632,6 +702,7 @@ export default function Attendance() {  const { authToken, user } = useAuth();
     } else {
       setSlotStudents([]);
       setAttendanceData({});
+      setOriginalLessonPlanId("");
       setPreviouslyMarkedBy(null);
       setLocked(!isDepartmentAdmin && !isToday);
     }
@@ -681,8 +752,17 @@ export default function Attendance() {  const { authToken, user } = useAuth();
   const handleSave = async (showSummary = false) => {
     if (!slotInfo) return;
 
-    // Validate required fields for coverage
-    if (!selectedLessonPlanId) {
+    const EXEMPTED_SUBJECTS = [
+      "Coding Hours",
+      "LIBRARY",
+      "English Communication Skills Laboratory – I",
+      "NAAN MUDHALVAN",
+      "Summer Internship"
+    ];
+    const isExempted = EXEMPTED_SUBJECTS.some(sub => slotInfo.subjectName?.toLowerCase().includes(sub.toLowerCase()));
+
+    // Validate required fields for coverage (unless exempted or department admin is just overwriting attendance)
+    if (!selectedLessonPlanId && !isExempted && !isDepartmentAdmin) {
       toast.error("Please select a topic for class coverage");
       return;
     }
@@ -720,7 +800,7 @@ export default function Attendance() {  const { authToken, user } = useAuth();
           sessionType: slotInfo.sessionType || 'theory',
           isLabSession: Boolean(slotInfo.isLabSession),
           labGroup: slotInfo.labGroup || null,
-          lesson_plan_id: selectedLessonPlanId ? parseInt(selectedLessonPlanId, 10) : null,
+          lesson_plan_id: selectedLessonPlanId ? parseInt(selectedLessonPlanId, 10) : (originalLessonPlanId ? parseInt(originalLessonPlanId, 10) : null),
           students: studentsArray,
           // Coverage tracking info
           coverageStatus: coverageCompletionStatus,
@@ -834,12 +914,15 @@ export default function Attendance() {  const { authToken, user } = useAuth();
     let matchedCount = 0;
 
     slotStudents.forEach((student) => {
-      const lastTwoDigits = student.rollNo.slice(-2);
+      const roll = student.rollNumber || "";
+      const lastTwoDigits = roll.slice(-2);
       if (validDigits.includes(lastTwoDigits)) {
         newAttendance[student.id] = bulkStatus;
         matchedCount++;
       } else {
-        newAttendance[student.id] = "present";
+        if (!newAttendance[student.id]) {
+          newAttendance[student.id] = "present";
+        }
       }
     });
 
@@ -858,11 +941,11 @@ export default function Attendance() {  const { authToken, user } = useAuth();
   const filteredStudents = slotStudents.filter(
     (s) => {
       if (digitSearch && (digitSearch.length === 2 || digitSearch.length === 3)) {
-        return s.rollNo.slice(-3).endsWith(digitSearch);
+        return (s.rollNumber || "").slice(-3).endsWith(digitSearch);
       }
       return (
         s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        s.rollNo.toLowerCase().includes(searchQuery.toLowerCase())
+        (s.rollNumber || "").toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
   );
@@ -875,7 +958,7 @@ export default function Attendance() {  const { authToken, user } = useAuth();
   const getRollNumbersByStatus = (status: string) => {
     return Object.entries(attendanceData)
       .filter(([, v]) => v === status)
-      .map(([sid]) => slotStudents.find((s) => s.id === sid)?.rollNo)
+      .map(([sid]) => slotStudents.find((s) => s.id === sid)?.rollNumber)
       .filter(Boolean)
       .join(", ") || "-";
   };
@@ -1168,20 +1251,29 @@ export default function Attendance() {  const { authToken, user } = useAuth();
                     >
                       {/* Avatar */}
                       <div className="col-span-1 flex justify-center">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white text-xs font-bold">
-                          {student.photo}
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white text-xs font-bold overflow-hidden">
+                          {student.photo && student.photo !== "default-student.png" ? (
+                            <img 
+                              src={normalizeImageUrl(student.photo) || ""} 
+                              alt={student.name} 
+                              className="w-full h-full object-cover" 
+                              onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                            />
+                          ) : (
+                            student.name.charAt(0).toUpperCase()
+                          )}
                         </div>
                       </div>
 
                       {/* Name and Roll (Mobile shows name only) */}
                       <div className="col-span-3 md:col-span-5">
                         <p className="font-semibold text-sm text-foreground">{student.name}</p>
-                        <p className="text-xs text-muted-foreground md:hidden">{student.rollNo}</p>
+                        <p className="text-xs text-muted-foreground md:hidden">{student.rollNumber}</p>
                       </div>
 
                       {/* Roll Number (Desktop only) */}
                       <div className="hidden md:block col-span-3">
-                        <p className="text-sm text-muted-foreground">{student.rollNo}</p>
+                        <p className="text-sm text-muted-foreground">{student.rollNumber}</p>
                       </div>
 
                       {/* Attendance Buttons */}
@@ -1568,6 +1660,7 @@ export default function Attendance() {  const { authToken, user } = useAuth();
                 <thead>
                   <tr className="border-b">
                     <th className="text-left p-3 text-sm font-semibold text-muted-foreground">Date</th>
+                    <th className="text-left p-3 text-sm font-semibold text-muted-foreground text-center">Period</th>
                     <th className="text-left p-3 text-sm font-semibold text-muted-foreground">Subject</th>
                     <th className="text-left p-3 text-sm font-semibold text-muted-foreground">Section</th>
                     <th className="text-center p-3 text-sm font-semibold text-success">Present</th>

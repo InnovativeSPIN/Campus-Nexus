@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import headerImage from "@/assets/NSCET New College header 2026.png";
 import { MainLayout } from "@/pages/faculty/components/layout/MainLayout";
 import { motion } from "framer-motion";
 import { Button } from "@/pages/faculty/components/ui/button";
@@ -34,6 +35,7 @@ import {
 import { toast } from "@/components/ui/sonner";
 import { cn } from "@/pages/faculty/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
+import { normalizeImageUrl } from "@/utils/imageUrl";
 
 interface Student {
   id: string;
@@ -41,6 +43,7 @@ interface Student {
   firstName: string;
   lastName: string;
   rollNumber: string;
+  name: string;
   photo?: string;
   attendance?: "present" | "absent" | "leave" | "od";
 }
@@ -56,6 +59,8 @@ interface AttendanceHistoryRecord {
   leave: number;
   od: number;
   total: number;
+  subjectId?: number | string;
+  period?: number | string;
 }
 
 interface PendingTopic {
@@ -245,7 +250,8 @@ export default function Attendance() {
         firstName: s.firstName || s.first_name || s.name || "",
         lastName: s.lastName || s.last_name || "",
         rollNumber: s.rollNumber || s.roll_number || "",
-        photo: s.photo || s.photo_path || ""
+        photo: s.photo || s.photo_path || "",
+        name: s.firstName ? `${s.firstName} ${s.lastName || ""}` : (s.name || `Student ${s.id}`)
       })));
 
       // Fetch pending topics for this subject and class
@@ -344,8 +350,17 @@ export default function Attendance() {
   const handleSave = async (showSummary = false) => {
     if (!slotInfo) return;
     
-    // Validate required fields for coverage
-    if (!selectedLessonPlanId) {
+    const EXEMPTED_SUBJECTS = [
+      "Coding Hours",
+      "LIBRARY",
+      "English Communication Skills Laboratory – I",
+      "NAAN MUDHALVAN",
+      "Summer Internship"
+    ];
+    const isExempted = EXEMPTED_SUBJECTS.some(sub => slotInfo.subjectName?.toLowerCase().includes(sub.toLowerCase()));
+
+    // Validate required fields for coverage (unless exempted)
+    if (!selectedLessonPlanId && !isExempted) {
       toast.error("Please select a topic for class coverage");
       return;
     }
@@ -466,7 +481,8 @@ export default function Attendance() {
     let matchedCount = 0;
 
     slotStudents.forEach((student) => {
-      const lastTwoDigits = student.rollNumber.slice(-2);
+      const roll = student.rollNumber || "";
+      const lastTwoDigits = roll.slice(-2);
       if (validDigits.includes(lastTwoDigits)) {
         newAttendance[student.id] = bulkStatus;
         matchedCount++;
@@ -492,12 +508,12 @@ export default function Attendance() {
   const filteredStudents = slotStudents.filter(
     (s) => {
       if (digitSearch && (digitSearch.length === 2 || digitSearch.length === 3)) {
-        return s.rollNumber.slice(-3).endsWith(digitSearch);
+        return (s.rollNumber || "").slice(-3).endsWith(digitSearch);
       }
       return (
         s.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
         s.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        s.rollNumber.toLowerCase().includes(searchQuery.toLowerCase())
+        (s.rollNumber || "").toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
   );
@@ -566,6 +582,8 @@ export default function Attendance() {
             subject: row.subject?.subject_name || `Subject ${row.subject_id}`,
             section: `${className}${classSection}`,
             classId: Number(row.class_id),
+            subjectId: row.subject_id,
+            period: row.period_slot_id,
             present: 0,
             absent: 0,
             leave: 0,
@@ -731,7 +749,7 @@ export default function Attendance() {
     return Array.from(map.entries()).map(([id, label]) => ({ id, label }));
   }, [attendanceHistory]);
 
-  const downloadHistoryReport = async () => {
+  const downloadHistoryReport = async (record: any = null) => {
     if (!authToken) {
       toast.error("You are not authenticated");
       return;
@@ -768,16 +786,20 @@ export default function Attendance() {
         params.set('faculty', String(facultyId));
       }
 
-      if (historyClassFilter !== 'all') {
-        params.set('class', historyClassFilter);
-      }
-
-      if (historyDateFrom) {
-        params.set('startDate', historyDateFrom);
-      }
-
-      if (historyDateTo) {
-        params.set('endDate', historyDateTo);
+      if (record) {
+        params.set('class', String(record.classId));
+        params.set('startDate', record.date);
+        params.set('endDate', record.date);
+      } else {
+        if (historyClassFilter !== 'all') {
+          params.set('class', historyClassFilter);
+        }
+        if (historyDateFrom) {
+          params.set('startDate', historyDateFrom);
+        }
+        if (historyDateTo) {
+          params.set('endDate', historyDateTo);
+        }
       }
 
       params.set('limit', '10000');
@@ -808,6 +830,14 @@ export default function Attendance() {
 
       const sessions = new Map<string, any>();
       rows.forEach((row: any) => {
+        if (record) {
+          if (String(row.class_id || row.classId) !== String(record.classId) || 
+              String(row.subject_id || row.subjectId) !== String(record.subjectId) || 
+              String(row.period_slot_id || row.period) !== String(record.period)) {
+            return;
+          }
+        }
+        
         const classId = row.class_id || row.classId || row.class?.id;
         const subjectId = row.subject_id || row.subjectId || row.subject?.id;
         const date = row.attendance_date || row.date || row.attendanceDate;
@@ -816,6 +846,7 @@ export default function Attendance() {
         if (!sessions.has(key)) {
           sessions.set(key, {
             date,
+            period: row.period_slot_id || row.periodSlotId || row.period || '',
             classId: Number(classId),
             subjectId: Number(subjectId),
             subjectName: row.subject?.subject_name || row.subject_name || 'Unknown Subject',
@@ -832,6 +863,11 @@ export default function Attendance() {
           status: normalizeStatus(row.status),
         });
       });
+      
+      if (sessions.size === 0) {
+        toast.error('No matching session data found for report');
+        return;
+      }
 
       const classIds = Array.from(new Set(Array.from(sessions.values()).map((session: any) => session.classId).filter(Boolean)));
       const studentsByClass = new Map<number, any[]>();
@@ -858,17 +894,32 @@ export default function Attendance() {
       const margin = 14;
       let y = 12;
 
+      // Load header image
+      const img = new Image();
+      img.src = headerImage;
+      await new Promise((resolve) => {
+        img.onload = resolve;
+        img.onerror = resolve; // fallback to text on error
+      });
+
       const addHeader = () => {
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(16);
-        doc.text('Nadar Saraswathi College of Engineering & Technology', pageWidth / 2, y, { align: 'center' });
-        y += 6;
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(10);
-        doc.text('Approved by AICTE, New Delhi | Affiliated to Anna University, Chennai', pageWidth / 2, y, { align: 'center' });
-        y += 5;
-        doc.text('Vadapudupatti, Annanji (PO), Theni - 625 531', pageWidth / 2, y, { align: 'center' });
-        y += 8;
+        if (img.complete && img.naturalWidth > 0) {
+          const imgWidth = 190;
+          const imgHeight = (img.naturalHeight * imgWidth) / img.naturalWidth;
+          doc.addImage(img, 'PNG', 10, y, imgWidth, imgHeight);
+          y += imgHeight + 8;
+        } else {
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(16);
+          doc.text('Nadar Saraswathi College of Engineering & Technology', pageWidth / 2, y, { align: 'center' });
+          y += 6;
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(10);
+          doc.text('Approved by AICTE, New Delhi | Affiliated to Anna University, Chennai', pageWidth / 2, y, { align: 'center' });
+          y += 5;
+          doc.text('Vadapudupatti, Annanji (PO), Theni - 625 531', pageWidth / 2, y, { align: 'center' });
+          y += 8;
+        }
       };
 
       const addPageBreakIfNeeded = (neededHeight: number) => {
@@ -880,13 +931,13 @@ export default function Attendance() {
       };
 
       const drawTableRow = (values: string[], isHeader = false) => {
-        const columnWidths = [28, 110, 30];
-        const rowHeight = 6;
+        const columnWidths = [30, 110, 30];
+        const rowHeight = 7;
         let maxHeight = rowHeight;
 
         values.forEach((value, index) => {
-          const lines = doc.splitTextToSize(String(value), columnWidths[index] - 2);
-          maxHeight = Math.max(maxHeight, lines.length * 3.2 + 2);
+          const lines = doc.splitTextToSize(String(value), columnWidths[index] - 4);
+          maxHeight = Math.max(maxHeight, lines.length * 4 + 2);
         });
 
         addPageBreakIfNeeded(maxHeight + 2);
@@ -894,11 +945,22 @@ export default function Attendance() {
         let x = margin;
         values.forEach((value, index) => {
           const width = columnWidths[index];
-          const lines = doc.splitTextToSize(String(value), width - 2);
+          const lines = doc.splitTextToSize(String(value), width - 4);
           doc.setFont('helvetica', isHeader ? 'bold' : 'normal');
-          doc.setFontSize(isHeader ? 8.5 : 8);
-          doc.rect(x, y, width, maxHeight);
-          doc.text(lines, x + 1.2, y + 2.4);
+          doc.setFontSize(isHeader ? 9 : 8);
+          
+          if (isHeader) {
+            doc.setFillColor(242, 242, 242);
+            doc.rect(x, y, width, maxHeight, 'FD');
+          } else {
+            doc.rect(x, y, width, maxHeight);
+          }
+          
+          if (index === 2) {
+            doc.text(lines, x + width/2, y + 5, { align: 'center' });
+          } else {
+            doc.text(lines, x + 2, y + 5);
+          }
           x += width;
         });
         y += maxHeight;
@@ -935,7 +997,7 @@ export default function Attendance() {
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(10);
         const sectionLabel = `${session.className}${session.classSection ? ` - ${session.classSection}` : ''}`;
-        doc.text(`${session.date} • ${sectionLabel} • ${session.subjectName}`, margin, y);
+        doc.text(`${session.date} • Period ${session.period || 'N/A'} • ${sectionLabel} • ${session.subjectName}`, margin, y);
         y += 5;
 
         drawTableRow(['Roll No', 'Student Name', 'Status'], true);
@@ -1346,8 +1408,17 @@ export default function Attendance() {
                     >
                       {/* Avatar */}
                       <div className="col-span-1 flex justify-center">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white text-xs font-bold">
-                          {student.photo}
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white text-xs font-bold overflow-hidden">
+                          {student.photo && student.photo !== "default-student.png" ? (
+                            <img 
+                              src={normalizeImageUrl(student.photo) || ""} 
+                              alt={student.name} 
+                              className="w-full h-full object-cover" 
+                              onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                            />
+                          ) : (
+                            student.name.charAt(0).toUpperCase()
+                          )}
                         </div>
                       </div>
 
@@ -1773,6 +1844,7 @@ export default function Attendance() {
                 <thead>
                   <tr className="border-b">
                     <th className="text-left p-3 text-sm font-semibold text-muted-foreground">Date</th>
+                    <th className="text-left p-3 text-sm font-semibold text-muted-foreground text-center">Period</th>
                     <th className="text-left p-3 text-sm font-semibold text-muted-foreground">Subject</th>
                     <th className="text-left p-3 text-sm font-semibold text-muted-foreground">Section</th>
                     <th className="text-center p-3 text-sm font-semibold text-success">Present</th>
@@ -1781,6 +1853,7 @@ export default function Attendance() {
                     <th className="text-center p-3 text-sm font-semibold text-warning">Leave</th>
                     <th className="text-center p-3 text-sm font-semibold text-muted-foreground">Total</th>
                     <th className="text-center p-3 text-sm font-semibold text-muted-foreground">Attendance %</th>
+                    <th className="text-right p-3 text-sm font-semibold text-muted-foreground">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1801,6 +1874,7 @@ export default function Attendance() {
                       className="border-b hover:bg-muted/50 transition-colors"
                     >
                       <td className="p-3 text-sm font-medium">{record.date}</td>
+                      <td className="p-3 text-sm text-center">{record.period}</td>
                       <td className="p-3 text-sm">{record.subject}</td>
                       <td className="p-3 text-sm">{record.section}</td>
                       <td className="p-3 text-center">
@@ -1826,6 +1900,16 @@ export default function Attendance() {
                       <td className="p-3 text-center text-sm font-medium">{record.total}</td>
                       <td className="p-3 text-center text-sm font-semibold">
                         {record.total > 0 ? (((record.present + record.od) * 100) / record.total).toFixed(1) : "0.0"}%
+                      </td>
+                      <td className="p-3 text-right">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-primary hover:text-primary hover:bg-primary/10"
+                          onClick={() => downloadHistoryReport(record)}
+                        >
+                          <Download className="w-4 h-4" />
+                        </Button>
                       </td>
                     </motion.tr>
                   ))}

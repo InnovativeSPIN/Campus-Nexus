@@ -16,6 +16,7 @@ import { Input } from '@/pages/admin/department-admin/components/ui/input';
 import { Card } from '@/pages/admin/department-admin/components/ui/card';
 import { Badge } from '@/pages/admin/department-admin/components/ui/badge';
 import { Textarea } from '@/pages/admin/department-admin/components/ui/textarea';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/pages/admin/department-admin/components/ui/tabs";
 
 const apiFetch = async (url: string, options?: RequestInit) => {
   const token = localStorage.getItem('authToken');
@@ -72,10 +73,16 @@ export default function CourseLessonPlanApprovalsPage() {
   const [remarks, setRemarks] = useState('');
   const [modalAction, setModalAction] = useState<'approve' | 'reject' | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [activeTab, setActiveTab] = useState("pending");
+  const [historyBatches, setHistoryBatches] = useState<CoursePlanApprovalBatch[]>([]);
 
   useEffect(() => {
-    fetchPendingApprovals();
-  }, []);
+    if (activeTab === "pending") {
+      fetchPendingApprovals();
+    } else {
+      fetchApprovedHistory();
+    }
+  }, [activeTab]);
 
   const fetchPendingApprovals = async () => {
     try {
@@ -87,6 +94,21 @@ export default function CourseLessonPlanApprovalsPage() {
     } catch (error) {
       console.error('Error fetching pending approvals:', error);
       alert('Failed to load pending course plan approvals');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchApprovedHistory = async () => {
+    try {
+      setLoading(true);
+      const response = await apiFetch('/api/v1/department-admin/academics/course-plans/history');
+      if (response.success && response.data) {
+        setHistoryBatches(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching approved history:', error);
+      alert('Failed to load approved course plan history');
     } finally {
       setLoading(false);
     }
@@ -127,7 +149,7 @@ export default function CourseLessonPlanApprovalsPage() {
     }
   };
 
-  const filteredBatches = batches.filter(b =>
+  const filteredBatches = (activeTab === "pending" ? batches : historyBatches).filter(b =>
     searchTerm === '' ||
     b.faculty.Name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     b.subject.subject_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -196,13 +218,22 @@ export default function CourseLessonPlanApprovalsPage() {
         </div>
       </Card>
 
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
+        <TabsList>
+          <TabsTrigger value="pending">Pending Approvals</TabsTrigger>
+          <TabsTrigger value="history">Approved History</TabsTrigger>
+        </TabsList>
+      </Tabs>
+
       {/* Batch List */}
       <div className="space-y-3">
         {loading ? (
-          <Card className="p-8 text-center text-muted-foreground">Loading approvals...</Card>
+          <Card className="p-8 text-center text-muted-foreground">Loading...</Card>
         ) : filteredBatches.length === 0 ? (
           <Card className="p-8 text-center text-muted-foreground">
-            {batches.length === 0 ? 'No pending course plan approvals' : 'No matching course plan batches found'}
+            {activeTab === "pending" 
+              ? (batches.length === 0 ? 'No pending course plan approvals' : 'No matching course plan batches found')
+              : (historyBatches.length === 0 ? 'No approved course plan history' : 'No matching history found')}
           </Card>
         ) : (
           filteredBatches.map((batch) => (
@@ -238,32 +269,43 @@ export default function CourseLessonPlanApprovalsPage() {
                 </div>
 
                 <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="text-success hover:text-success hover:bg-success/10"
-                    onClick={() => {
-                      setSelectedBatch(batch);
-                      setModalAction('approve');
-                      setShowModal(true);
-                      setRemarks('');
-                    }}
-                  >
-                    <CheckCircle className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                    onClick={() => {
-                      setSelectedBatch(batch);
-                      setModalAction('reject');
-                      setShowModal(true);
-                      setRemarks('');
-                    }}
-                  >
-                    <XCircle className="w-4 h-4" />
-                  </Button>
+                  {activeTab === "pending" ? (
+                    <>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-success hover:text-success hover:bg-success/10"
+                        onClick={() => {
+                          setSelectedBatch(batch);
+                          setModalAction('approve');
+                          setShowModal(true);
+                          setRemarks('');
+                        }}
+                      >
+                        <CheckCircle className="w-4 h-4 mr-1" />
+                        Approve
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        onClick={() => {
+                          setSelectedBatch(batch);
+                          setModalAction('reject');
+                          setShowModal(true);
+                          setRemarks('');
+                        }}
+                      >
+                        <XCircle className="w-4 h-4 mr-1" />
+                        Reject
+                      </Button>
+                    </>
+                  ) : (
+                    <Badge className="bg-success/20 text-success border-success/30">
+                      <CheckCircle className="w-4 h-4 mr-1" />
+                      Approved
+                    </Badge>
+                  )}
                   <Button
                     size="sm"
                     variant="outline"
