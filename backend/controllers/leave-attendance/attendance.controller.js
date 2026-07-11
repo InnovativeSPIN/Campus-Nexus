@@ -84,7 +84,7 @@ export const getAllAttendance = asyncHandler(async (req, res, next) => {
           as: 'student',
           required: true, // INNER JOIN to exclude students who changed classes
           where: { classId: classId }, 
-          attributes: ['id', 'studentId', 'firstName', 'lastName', 'rollNumber']
+          attributes: ['id', 'studentId', 'firstName', 'lastName', 'rollNumber', 'photo']
         }
       ],
       order: [['period_number', 'ASC'], ['student_id', 'ASC']]
@@ -169,7 +169,7 @@ export const getAllAttendance = asyncHandler(async (req, res, next) => {
   const attendance = await StudentAttendance.findAll({
     where,
     include: [
-      { model: Student, as: 'student', attributes: ['id', 'studentId', 'firstName', 'lastName', 'rollNumber'] },
+      { model: Student, as: 'student', attributes: ['id', 'studentId', 'firstName', 'lastName', 'rollNumber', 'photo'] },
       { model: Subject, as: 'subject', attributes: ['subject_name', 'subject_code'] },
       { model: ClassModel, as: 'class', attributes: ['id', 'name', 'section'] },
       { model: Faculty, as: 'faculty', attributes: ['Name'] }
@@ -204,7 +204,7 @@ export const getAttendance = asyncHandler(async (req, res, next) => {
       {
         model: AttendanceStudent,
         as: 'students',
-        include: [{ model: Student, as: 'student', attributes: ['firstName', 'lastName', 'rollNumber', 'studentId'] }]
+        include: [{ model: Student, as: 'student', attributes: ['firstName', 'lastName', 'rollNumber', 'studentId', 'photo'] }]
       }
     ]
   });
@@ -556,7 +556,7 @@ export const getAttendanceByClass = asyncHandler(async (req, res, next) => {
           as: 'student', 
           required: true,
           where: { classId: req.params.classId },
-          attributes: ['firstName', 'lastName', 'rollNumber'] 
+          attributes: ['firstName', 'lastName', 'rollNumber', 'photo'] 
         }]
       }
     ],

@@ -92,6 +92,101 @@ export const getPendingCourseFileApprovals = asyncHandler(async (req, res, next)
 });
 
 /**
+ * @desc    Get approved course lesson plan history for department admin
+ * @route   GET /api/v1/department-admin/academics/course-plans/history
+ * @access  Private (Department Admin)
+ */
+export const getApprovedCourseLessonPlanHistory = asyncHandler(async (req, res, next) => {
+  const departmentId = req.user.department_id;
+
+  if (!departmentId) {
+    return next(new ErrorResponse('Department information not found', 400));
+  }
+
+  try {
+    let approvedPlans;
+    try {
+      approvedPlans = await CourseLessonPlan.findAll({
+        where: {
+          approval_status: 'approved'
+        },
+        include: [
+          {
+            model: Faculty,
+            as: 'faculty',
+            attributes: ['faculty_id', 'faculty_college_code', 'Name', 'email'],
+            where: { department_id: departmentId },
+            required: true
+          },
+          {
+            model: Subject,
+            as: 'subject',
+            attributes: ['id', 'subject_name', 'subject_code']
+          },
+          {
+            model: ClassModel,
+            as: 'class',
+            attributes: ['id', 'name', 'section']
+          }
+        ],
+        order: [['approved_date', 'DESC'], ['created_at', 'DESC']],
+        raw: false
+      });
+    } catch (err) {
+      if (err.original?.code === 'ER_BAD_FIELD_ERROR' || (err.message && err.message.includes('Unknown column'))) {
+        console.warn('[getApprovedCourseLessonPlanHistory] approval_status column missing. Returning empty array.');
+        approvedPlans = [];
+      } else {
+        throw err;
+      }
+    }
+
+    // Group by upload_batch_id
+    const groupedByBatch = {};
+    approvedPlans.forEach(plan => {
+      const batchId = plan.upload_batch_id || `legacy_${plan.faculty_id}_${plan.subject_id}_${plan.class_id}_${new Date(plan.created_at).getTime()}`;
+      if (!groupedByBatch[batchId]) {
+        groupedByBatch[batchId] = {
+          batch_id: batchId,
+          faculty: plan.faculty,
+          subject: plan.subject,
+          class: plan.class,
+          academic_year: plan.academic_year,
+          semester: plan.semester,
+          batch_submission_date: plan.batch_submission_date || plan.created_at,
+          approved_date: plan.approved_date || plan.updated_at,
+          approved_by: plan.approved_by,
+          topics_count: 0,
+          topics: []
+        };
+      }
+      groupedByBatch[batchId].topics.push({
+        id: plan.id,
+        sno: plan.sno,
+        unit_number: plan.unit_number,
+        unit_label: plan.unit_label,
+        topic: plan.topic,
+        co_number: plan.co_number,
+        btl: plan.btl,
+        delivery_mode: plan.delivery_mode,
+        reference_book: plan.reference_book,
+        periods_required: plan.periods_required,
+        tentative_date: plan.tentative_date
+      });
+      groupedByBatch[batchId].topics_count++;
+    });
+
+    res.status(200).json({
+      success: true,
+      data: Object.values(groupedByBatch)
+    });
+  } catch (error) {
+    console.error('[getApprovedCourseLessonPlanHistory] Error:', error);
+    return next(new ErrorResponse(`Error fetching approved history: ${error.message}`, 500));
+  }
+});
+
+/**
  * @desc    Get single course file approval details
  * @route   GET /api/v1/department-admin/academics/approvals/:id
  * @access  Private (Department Admin)
@@ -439,37 +534,69 @@ export const getPendingCourseLessonPlanApprovals = asyncHandler(async (req, res,
 
   try {
     // Get all pending plans
-    const pendingPlans = await CourseLessonPlan.findAll({
-      where: {
-        approval_status: 'pending'
-      },
-      include: [
-        {
-          model: Faculty,
-          as: 'faculty',
-          attributes: ['faculty_id', 'faculty_college_code', 'Name', 'email'],
-          where: { department_id: departmentId },
-          required: true
+    let pendingPlans;
+    try {
+      pendingPlans = await CourseLessonPlan.findAll({
+        where: {
+          approval_status: 'pending'
         },
-        {
-          model: Subject,
-          as: 'subject',
-          attributes: ['id', 'subject_name', 'subject_code']
-        },
-        {
-          model: ClassModel,
-          as: 'class',
-          attributes: ['id', 'name', 'section']
-        }
-      ],
-      order: [['created_at', 'DESC']],
-      raw: false
-    });
+        include: [
+          {
+            model: Faculty,
+            as: 'faculty',
+            attributes: ['faculty_id', 'faculty_college_code', 'Name', 'email'],
+            where: { department_id: departmentId },
+            required: true
+          },
+          {
+            model: Subject,
+            as: 'subject',
+            attributes: ['id', 'subject_name', 'subject_code']
+          },
+          {
+            model: ClassModel,
+            as: 'class',
+            attributes: ['id', 'name', 'section']
+          }
+        ],
+        order: [['created_at', 'DESC']],
+        raw: false
+      });
+    } catch (err) {
+      if (err.original?.code === 'ER_BAD_FIELD_ERROR' || (err.message && err.message.includes('Unknown column'))) {
+        console.warn('[getPendingCourseLessonPlanApprovals] approval_status column missing. Returning all plans as pending for this query.');
+        pendingPlans = await CourseLessonPlan.findAll({
+          include: [
+            {
+              model: Faculty,
+              as: 'faculty',
+              attributes: ['faculty_id', 'faculty_college_code', 'Name', 'email'],
+              where: { department_id: departmentId },
+              required: true
+            },
+            {
+              model: Subject,
+              as: 'subject',
+              attributes: ['id', 'subject_name', 'subject_code']
+            },
+            {
+              model: ClassModel,
+              as: 'class',
+              attributes: ['id', 'name', 'section']
+            }
+          ],
+          order: [['created_at', 'DESC']],
+          raw: false
+        });
+      } else {
+        throw err;
+      }
+    }
 
     // Group by upload_batch_id
     const groupedByBatch = {};
     pendingPlans.forEach(plan => {
-      const batchId = plan.upload_batch_id || `legacy_${plan.faculty_id}_${plan.subject_id}_${plan.class_id}`;
+      const batchId = plan.upload_batch_id || `legacy_${plan.faculty_id}_${plan.subject_id}_${plan.class_id}_${new Date(plan.created_at).getTime()}`;
       if (!groupedByBatch[batchId]) {
         groupedByBatch[batchId] = {
           batch_id: batchId,
