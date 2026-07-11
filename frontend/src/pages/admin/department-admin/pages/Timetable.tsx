@@ -666,7 +666,7 @@ export default function Timetable() {
     }
     try {
       const today = new Date().toISOString().split('T')[0];
-      const response = await fetch(`/api/v1/timetable/view/${classId}?date=${today}`, {
+      const response = await fetch(`/api/v1/timetable-display/view/${classId}?date=${today}`, {
         headers: {
           Authorization: token ? `Bearer ${token}` : "",
           "Content-Type": "application/json",

@@ -222,7 +222,12 @@ export default function TimetableManagement() {
                         View Slots
                       </Button>
                       {timetable.status === "active" && (
-                        <Button className="flex-1" variant="outline" size="sm">
+                        <Button 
+                          className="flex-1" 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => navigate('/faculty/alteration-approval')}
+                        >
                           Alterations
                         </Button>
                       )}

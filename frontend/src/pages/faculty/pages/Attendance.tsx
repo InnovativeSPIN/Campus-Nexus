@@ -244,8 +244,9 @@ export default function Attendance() {
         studentId: s.studentId || s.student_id || "",
         firstName: s.firstName || s.first_name || s.name || "",
         lastName: s.lastName || s.last_name || "",
-        rollNumber: s.rollNumber || s.roll_number || "",
-        photo: s.photo || s.photo_path || ""
+        rollNumber: s.rollNumber || s.roll_number || s.registerNumber || s.register_number || s.studentId || s.student_id || "",
+        photo: s.photo || s.photo_path || s.profile_image_url || "",
+        name: s.firstName ? `${s.firstName} ${s.lastName || ""}` : (s.name || `Student ${s.id}`)
       })));
 
       // Fetch pending topics for this subject and class
@@ -340,21 +341,13 @@ export default function Attendance() {
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   };
-
   const handleSave = async (showSummary = false) => {
     if (!slotInfo) return;
-    
-    // Validate required fields for coverage
-    if (!selectedLessonPlanId) {
-      toast.error("Please select a topic for class coverage");
-      return;
-    }
-    
-    if (coverageCompletionStatus === "deviation" && !deviationReasonForCoverage.trim()) {
-      toast.error("Please provide a reason for the deviation");
-      return;
-    }
 
+    if (!window.confirm('You are about to overwrite attendance for this date. Are you sure?')) {
+      return;
+    }
+    
     const studentsArray = slotStudents.map(student => ({
       studentId: parseInt(student.id),
       status: attendanceData[student.id] || 'absent',
@@ -1346,8 +1339,20 @@ export default function Attendance() {
                     >
                       {/* Avatar */}
                       <div className="col-span-1 flex justify-center">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white text-xs font-bold">
-                          {student.photo}
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white text-xs font-bold overflow-hidden relative">
+                          {/* Always show initial as background fallback */}
+                          <span className="text-white text-xs font-bold absolute">
+                            {student.name ? student.name.charAt(0).toUpperCase() : 'S'}
+                          </span>
+                          {/* Image overlays the initial; hidden on error so initial shows through */}
+                          {student.photo && (
+                            <img
+                              src={student.photo}
+                              alt={student.name || 'Student'}
+                              className="w-full h-full object-cover absolute inset-0"
+                              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                            />
+                          )}
                         </div>
                       </div>
 
@@ -1671,18 +1676,9 @@ export default function Attendance() {
             <div className="mt-6 flex justify-end">
               <Button
                 onClick={() => handleSave(false)}
-                disabled={
-                  locked || 
-                  !isToday || 
-                  !selectedLessonPlanId || 
-                  (coverageCompletionStatus === "deviation" && !deviationReasonForCoverage.trim())
-                }
+                disabled={locked || !isToday}
                 className="bg-primary hover:bg-primary/90 min-w-[200px]"
-                title={
-                  !selectedLessonPlanId ? "Please select a topic" :
-                  coverageCompletionStatus === "deviation" && !deviationReasonForCoverage.trim() ? "Please provide a deviation reason" :
-                  "Submit attendance and class coverage"
-                }
+                title="Submit attendance and class coverage"
               >
                 <Save className="w-4 h-4 mr-2" />
                 {coverageCompletionStatus === "completed" ? "✅ Mark as Completed" : "⚠️ Mark as Deviation"}
