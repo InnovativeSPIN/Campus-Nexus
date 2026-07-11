@@ -598,8 +598,8 @@ export default function Attendance() {  const { authToken, user } = useAuth();
         studentId: s.studentId || s.student_id || "",
         firstName: s.firstName || s.first_name || s.name || "",
         lastName: s.lastName || s.last_name || "",
-        rollNumber: s.rollNumber || s.roll_number || "",
-        photo: s.photo || s.photo_path || "",
+        rollNumber: s.rollNumber || s.roll_number || s.registerNumber || s.register_number || s.studentId || s.student_id || "",
+        photo: s.photo || s.photo_path || s.profile_image_url || "",
         name: s.firstName ? `${s.firstName} ${s.lastName || ""}` : (s.name || `Student ${s.id}`)
       })));
 
@@ -676,21 +676,8 @@ export default function Attendance() {  const { authToken, user } = useAuth();
     setDeviationReasonForCoverage("");
   }, [slotInfo, selectedClassId, authToken]);
 
-  // Empty content or preserve needed functions since earlier chunk replaced to line 148
-
   const handleSave = async (showSummary = false) => {
     if (!slotInfo) return;
-
-    // Validate required fields for coverage
-    if (!selectedLessonPlanId) {
-      toast.error("Please select a topic for class coverage");
-      return;
-    }
-    
-    if (coverageCompletionStatus === "deviation" && !deviationReasonForCoverage.trim()) {
-      toast.error("Please provide a reason for the deviation");
-      return;
-    }
 
     if (!window.confirm('You are about to overwrite attendance for this date. Are you sure?')) {
       return;
@@ -1168,20 +1155,32 @@ export default function Attendance() {  const { authToken, user } = useAuth();
                     >
                       {/* Avatar */}
                       <div className="col-span-1 flex justify-center">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white text-xs font-bold">
-                          {student.photo}
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white text-xs font-bold overflow-hidden relative">
+                          {/* Always show initial as background fallback */}
+                          <span className="text-white text-xs font-bold absolute">
+                            {student.name ? student.name.charAt(0).toUpperCase() : 'S'}
+                          </span>
+                          {/* Image overlays the initial; hidden on error so initial shows through */}
+                          {student.photo && (
+                            <img
+                              src={student.photo}
+                              alt={student.name || 'Student'}
+                              className="w-full h-full object-cover absolute inset-0"
+                              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                            />
+                          )}
                         </div>
                       </div>
 
                       {/* Name and Roll (Mobile shows name only) */}
                       <div className="col-span-3 md:col-span-5">
                         <p className="font-semibold text-sm text-foreground">{student.name}</p>
-                        <p className="text-xs text-muted-foreground md:hidden">{student.rollNo}</p>
+                        <p className="text-xs text-muted-foreground md:hidden">{student.rollNumber || student.rollNo}</p>
                       </div>
 
                       {/* Roll Number (Desktop only) */}
                       <div className="hidden md:block col-span-3">
-                        <p className="text-sm text-muted-foreground">{student.rollNo}</p>
+                        <p className="text-sm text-muted-foreground">{student.rollNumber || student.rollNo}</p>
                       </div>
 
                       {/* Attendance Buttons */}
@@ -1490,17 +1489,9 @@ export default function Attendance() {  const { authToken, user } = useAuth();
             <div className="mt-6 flex justify-end">
               <Button
                 onClick={() => handleSave(false)}
-                disabled={
-                  (locked && !isDepartmentAdmin) || 
-                  !selectedLessonPlanId || 
-                  (coverageCompletionStatus === "deviation" && !deviationReasonForCoverage.trim())
-                }
+                disabled={(locked && !isDepartmentAdmin)}
                 className="bg-primary hover:bg-primary/90 min-w-[200px]"
-                title={
-                  !selectedLessonPlanId ? "Please select a topic" :
-                  coverageCompletionStatus === "deviation" && !deviationReasonForCoverage.trim() ? "Please provide a deviation reason" :
-                  "Submit attendance and class coverage"
-                }
+                title="Submit attendance and class coverage"
               >
                 <Save className="w-4 h-4 mr-2" />
                 {coverageCompletionStatus === "completed" ? "✅ Mark as Completed" : "⚠️ Mark as Deviation"}

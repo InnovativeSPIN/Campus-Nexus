@@ -370,7 +370,8 @@ export const markAttendance = asyncHandler(async (req, res, next) => {
     }
   });
 
-  // 2. Upsert each student's attendance record
+  // 2. Insert all students' attendance records
+  const payloads = [];
   const results = [];
   for (const student of students) {
     const studentId = parseInt(student.studentId ?? student.student ?? student.id, 10);
@@ -380,18 +381,7 @@ export const markAttendance = asyncHandler(async (req, res, next) => {
     }
 
     const status = normalizeAttendanceStatus(student.status);
-
-    const existing = await StudentAttendance.findOne({
-      where: {
-        student_id: studentId,
-        attendance_date: attendanceDateStr,
-        period_slot_id: periodSlotId,
-        subject_id: subjectId,
-      },
-      attributes: ['id'],
-    });
-
-    const payload = {
+    payloads.push({
       student_id: studentId,
       class_id: classId,
       subject_id: subjectId,
@@ -410,29 +400,19 @@ export const markAttendance = asyncHandler(async (req, res, next) => {
       marked_at: new Date(),
       remarks: student.remarks || null,
       lesson_plan_id: lessonPlanId,
-    };
+    });
+    results.push({ studentId, status, created: true });
+  }
 
-    if (existing) {
-      payload.is_modified = 1;
-      payload.modified_by = markedBy;
-      payload.modified_at = new Date();
+  try {
+    if (payloads.length > 0) {
+      await StudentAttendance.bulkCreate(payloads);
     }
-
-    try {
-      await StudentAttendance.upsert(payload);
-      results.push({ studentId, status, created: !existing });
-    } catch (err) {
-      console.error('[markAttendance] Failed to upsert student attendance', {
-        studentId,
-        classId,
-        subjectId,
-        periodSlotId,
-        attendanceDate: attendanceDateStr,
-        payload,
-        error: err.message || err,
-      });
-      return next(new ErrorResponse('Failed to save attendance for student records', 500));
-    }
+  } catch (err) {
+    console.error('[markAttendance] Failed to bulk insert student attendance', {
+      classId, subjectId, periodSlotId, attendanceDate: attendanceDateStr, error: err.message || err,
+    });
+    return next(new ErrorResponse('Failed to save attendance for student records', 500));
   }
 
   res.status(201).json({
@@ -933,7 +913,13 @@ export const getFacultyTimetableSlots = asyncHandler(async (req, res, next) => {
         order: [['rollNumber', 'ASC']],
         raw: true,
       });
-      classStudents[classStrId] = students;
+      // Normalize photo URL so frontend can display it properly
+      classStudents[classStrId] = students.map(s => ({
+        ...s,
+        photo: s.photo && s.photo.startsWith('/') ? s.photo
+             : s.photo && s.photo !== 'default-student.png' ? `/uploads/${s.photo}`
+             : null,
+      }));
     }
 
     res.status(200).json({
@@ -1039,7 +1025,13 @@ export const getDepartmentAdminClassSlots = asyncHandler(async (req, res, next) 
         order: [['rollNumber', 'ASC']],
         raw: true,
       });
-      classStudents[classId] = students;
+      // Normalize photo URL so frontend can display it properly
+      classStudents[classId] = students.map(s => ({
+        ...s,
+        photo: s.photo && s.photo.startsWith('/') ? s.photo
+             : s.photo && s.photo !== 'default-student.png' ? `/uploads/${s.photo}`
+             : null,
+      }));
     }
 
     res.status(200).json({
