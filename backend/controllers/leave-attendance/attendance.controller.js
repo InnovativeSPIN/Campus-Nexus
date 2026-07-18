@@ -845,14 +845,14 @@ export const getFacultyTimetableSlots = asyncHandler(async (req, res, next) => {
           required: true,
           include: [
             { model: ClassModel, as: 'class', attributes: ['id', 'name', 'section'] }
-          ]
+          ],
+          attributes: ['id', 'class_id', 'academic_year', 'semester', 'batch', 'break_period_ids']
         },
         { model: Subject, as: 'subject', attributes: ['id', 'subject_code', 'subject_name'] },
         {
           model: PeriodSlot,
           as: 'period',
           attributes: ['id', 'period_label', 'start_time', 'end_time', 'slot_type'],
-          where: { slot_type: 'teaching' },
           required: true
         },
       ],
@@ -869,6 +869,35 @@ export const getFacultyTimetableSlots = asyncHandler(async (req, res, next) => {
       if (!uniqueSlots[key] && slot.master && slot.master.class && slot.period) {
         const classId = slot.master.class_id;
 
+        let breakPeriodIds = [3, 5, 8];
+        try {
+          breakPeriodIds = typeof slot.master.break_period_ids === 'string'
+            ? JSON.parse(slot.master.break_period_ids)
+            : (slot.master.break_period_ids || [3, 5, 8]);
+        } catch (e) { /* use default */ }
+
+        const breakIdsArray = Array.isArray(breakPeriodIds) ? breakPeriodIds.map(Number) : [3, 5, 8];
+
+        // Compute dynamic label map using Roman numerals for teaching periods
+        const ROMAN_NUMERALS = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"];
+        let teachingCount = 0;
+        const periodLabelMap = {};
+        for (let id = 1; id <= 10; id++) {
+          const isSlotBreak = breakIdsArray.includes(id);
+          if (isSlotBreak) {
+            if (id === 3) periodLabelMap[id] = "Break";
+            else if (id === 5 || id === 6) periodLabelMap[id] = "Lunch";
+            else periodLabelMap[id] = "Break";
+          } else {
+            periodLabelMap[id] = ROMAN_NUMERALS[teachingCount] || `Period ${id}`;
+            teachingCount++;
+          }
+        }
+
+        const periodId = slot.period?.id;
+        const isBreak = breakIdsArray.includes(periodId);
+        const dynamicLabel = periodLabelMap[periodId] || slot.period?.period_label;
+
         uniqueSlots[key] = {
           slotId: slot.id,
           masterSlotId: slot.id,
@@ -882,13 +911,13 @@ export const getFacultyTimetableSlots = asyncHandler(async (req, res, next) => {
           subjectId: slot.subject?.id,
           subjectCode: slot.subject?.subject_code,
           subjectName: slot.subject?.subject_name,
-          sessionType: slot.session_type,
+          sessionType: isBreak ? 'break' : slot.session_type,
           isLabSession: slot.is_lab_session,
           labGroup: slot.lab_group,
-          periodId: slot.period?.id,
-          periodLabel: slot.period?.period_label,
-          startTime: slot.period?.start_time,
-          endTime: slot.period?.end_time,
+          periodId: periodId,
+          periodLabel: dynamicLabel,
+          startTime: slot.start_time || slot.period?.start_time,
+          endTime: slot.end_time || slot.period?.end_time,
           dayOfWeek: slot.day,
         };
 
@@ -975,34 +1004,67 @@ export const getDepartmentAdminClassSlots = asyncHandler(async (req, res, next) 
             { model: Subject, as: 'subject', attributes: ['id', 'subject_code', 'subject_name'] },
             { model: PeriodSlot, as: 'period', attributes: ['id', 'period_label', 'start_time', 'end_time'] },
           ],
-          attributes: ['id', 'day', 'subject_id', 'period_slot_id', 'faculty_id'],
+          attributes: ['id', 'day', 'subject_id', 'period_slot_id', 'faculty_id', 'start_time', 'end_time', 'session_type', 'is_lab_session', 'lab_group'],
         },
         { model: ClassModel, as: 'class', attributes: ['id', 'name', 'section'] },
       ],
-      attributes: ['id', 'class_id', 'academic_year'],
+      attributes: ['id', 'class_id', 'academic_year', 'semester', 'batch', 'break_period_ids'],
       raw: false,
     });
 
     // Format response removing duplicates
     const uniqueSlots = {};
     timetableMasters.forEach(master => {
+      let breakPeriodIds = [3, 5, 8];
+      try {
+        breakPeriodIds = typeof master.break_period_ids === 'string'
+          ? JSON.parse(master.break_period_ids)
+          : (master.break_period_ids || [3, 5, 8]);
+      } catch (e) { /* use default */ }
+
+      const breakIdsArray = Array.isArray(breakPeriodIds) ? breakPeriodIds.map(Number) : [3, 5, 8];
+
+      // Compute dynamic label map using Roman numerals for teaching periods
+      const ROMAN_NUMERALS = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"];
+      let teachingCount = 0;
+      const periodLabelMap = {};
+      for (let id = 1; id <= 10; id++) {
+        const isSlotBreak = breakIdsArray.includes(id);
+        if (isSlotBreak) {
+          if (id === 3) periodLabelMap[id] = "Break";
+          else if (id === 5 || id === 6) periodLabelMap[id] = "Lunch";
+          else periodLabelMap[id] = "Break";
+        } else {
+          periodLabelMap[id] = ROMAN_NUMERALS[teachingCount] || `Period ${id}`;
+          teachingCount++;
+        }
+      }
+
       master.slots.forEach(slot => {
         const key = `${slot.subject_id}_${slot.period_slot_id}`;
         if (!uniqueSlots[key]) {
+          const isBreak = breakIdsArray.includes(slot.period_slot_id);
+          const dynamicLabel = periodLabelMap[slot.period_slot_id] || (slot.period && slot.period.period_label);
+
           uniqueSlots[key] = {
             slotId: `${slot.subject_id}_${slot.period_slot_id}`,
             classSectionId: master.class_id,
             className: master.class?.name || '',
             classSection: master.class?.section || '',
             academicYear: master.academic_year,
+            semester: master.semester,
+            batch: master.batch,
             facultyId: slot.faculty_id,
             subjectId: slot.subject?.id,
             subjectCode: slot.subject?.subject_code,
             subjectName: slot.subject?.subject_name,
-            periodId: slot.period?.id,
-            periodLabel: slot.period?.period_label,
-            startTime: slot.period?.start_time,
-            endTime: slot.period?.end_time,
+            sessionType: isBreak ? 'break' : slot.session_type,
+            isLabSession: slot.is_lab_session,
+            labGroup: slot.lab_group,
+            periodId: slot.period_slot_id,
+            periodLabel: dynamicLabel,
+            startTime: slot.start_time || (slot.period && slot.period.start_time),
+            endTime: slot.end_time || (slot.period && slot.period.end_time),
             dayOfWeek: slot.day,
           };
         }

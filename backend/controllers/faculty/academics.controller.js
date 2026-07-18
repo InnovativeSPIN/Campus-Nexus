@@ -1314,6 +1314,8 @@ export const getTodaySchedule = asyncHandler(async (req, res, next) => {
       const master = slot.master || {};
       const classData = master.class || {};
       const classId = master.class_id;
+      const startTime = slot.start_time || period.start_time;
+      const endTime = slot.end_time || period.end_time;
 
       return {
         id: slot.id,
@@ -1324,8 +1326,8 @@ export const getTodaySchedule = asyncHandler(async (req, res, next) => {
         room: slot.room || 'TBD',
         day: slot.day,
         timeSlot: {
-          start: period.start_time ? (typeof period.start_time === 'string' ? period.start_time.substring(0, 5) : new Date(period.start_time).toTimeString().substring(0, 5)) : '00:00',
-          end: period.end_time ? (typeof period.end_time === 'string' ? period.end_time.substring(0, 5) : new Date(period.end_time).toTimeString().substring(0, 5)) : '00:00'
+          start: startTime ? (typeof startTime === 'string' ? startTime.substring(0, 5) : new Date(startTime).toTimeString().substring(0, 5)) : '00:00',
+          end: endTime ? (typeof endTime === 'string' ? endTime.substring(0, 5) : new Date(endTime).toTimeString().substring(0, 5)) : '00:00'
         },
         type: slot.session_type || 'lecture',
         studentsCount: classId ? (studentCountsByClass[classId] || 0) : 0,

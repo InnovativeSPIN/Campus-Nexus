@@ -177,14 +177,14 @@ export const getFacultyTimetable = asyncHandler(async (req, res, next) => {
     // Get all active timetables this faculty is assigned to
     const timetables = await TimetableMaster.findAll({
       where: masterWhere,
-      attributes: ['id', 'class_id', 'academic_year', 'semester', 'semester_type', 'batch', 'room_no', 'effective_from'],
+      attributes: ['id', 'class_id', 'academic_year', 'semester', 'semester_type', 'batch', 'room_no', 'effective_from', 'break_period_ids'],
       include: [
         { model: ClassModel, as: 'class', attributes: ['id', 'name', 'semester', 'batch'] },
         { model: Department, as: 'department', attributes: ['id', 'full_name', 'short_name'] },
         {
           model: TimetableMasterSlots,
           as: 'slots',
-          attributes: ['id', 'day', 'period_slot_id', 'subject_id', 'faculty_id', 'session_type', 'room', 'notes'],
+          attributes: ['id', 'day', 'period_slot_id', 'subject_id', 'faculty_id', 'session_type', 'room', 'notes', 'start_time', 'end_time'],
           where: slotWhere,
           required: true,
           include: [
@@ -201,43 +201,74 @@ export const getFacultyTimetable = asyncHandler(async (req, res, next) => {
     });
 
     // Format response
-    const formattedTimetables = timetables.map(tt => ({
-      id: tt.id,
-      class: tt.class ? {
-        id: tt.class.id,
-        name: tt.class.name,
-        batch: tt.class.batch,
-        semester: tt.class.semester,
-      } : null,
-      department: tt.department ? {
-        id: tt.department.id,
-        name: tt.department.full_name,
-        code: tt.department.short_name,
-      } : null,
-      academicYear: tt.academic_year,
-      semester: tt.semester,
-      semesterType: tt.semester_type,
-      batch: tt.batch,
-      effectiveFrom: tt.effective_from ? new Date(tt.effective_from).toISOString() : null,
-      slots: (tt.slots || []).map(slot => ({
-        id: slot.id,
-        day: slot.day,
-        period: slot.period ? {
-          id: slot.period.id,
-          label: slot.period.period_label || `Period ${slot.period.id}`,
-          startTime: slot.period.start_time,
-          endTime: slot.period.end_time,
+    const formattedTimetables = timetables.map(tt => {
+      let breakPeriodIds = [3, 5, 8];
+      try {
+        breakPeriodIds = typeof tt.break_period_ids === 'string'
+          ? JSON.parse(tt.break_period_ids)
+          : (tt.break_period_ids || [3, 5, 8]);
+      } catch (e) { /* use default */ }
+
+      const breakIdsArray = Array.isArray(breakPeriodIds) ? breakPeriodIds.map(Number) : [3, 5, 8];
+
+      // Compute dynamic label map using Roman numerals for teaching periods
+      const ROMAN_NUMERALS = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"];
+      let teachingCount = 0;
+      const periodLabelMap = {};
+      for (let id = 1; id <= 10; id++) {
+        const isSlotBreak = breakIdsArray.includes(id);
+        if (isSlotBreak) {
+          if (id === 3) periodLabelMap[id] = "Break";
+          else if (id === 5 || id === 6) periodLabelMap[id] = "Lunch";
+          else periodLabelMap[id] = "Break";
+        } else {
+          periodLabelMap[id] = ROMAN_NUMERALS[teachingCount] || `Period ${id}`;
+          teachingCount++;
+        }
+      }
+
+      return {
+        id: tt.id,
+        class: tt.class ? {
+          id: tt.class.id,
+          name: tt.class.name,
+          batch: tt.class.batch,
+          semester: tt.class.semester,
         } : null,
-        subject: slot.subject ? {
-          id: slot.subject.id,
-          name: slot.subject.subject_name,
-          code: slot.subject.subject_code,
+        department: tt.department ? {
+          id: tt.department.id,
+          name: tt.department.full_name,
+          code: tt.department.short_name,
         } : null,
-        sessionType: slot.session_type,
-        room: slot.room || null,
-        notes: slot.notes || null,
-      }))
-    }));
+        academicYear: tt.academic_year,
+        semester: tt.semester,
+        semesterType: tt.semester_type,
+        batch: tt.batch,
+        effectiveFrom: tt.effective_from ? new Date(tt.effective_from).toISOString() : null,
+        slots: (tt.slots || []).map(slot => {
+          const isBreak = breakIdsArray.includes(slot.period_slot_id);
+          const dynamicLabel = periodLabelMap[slot.period_slot_id] || (slot.period && slot.period.period_label);
+          return {
+            id: slot.id,
+            day: slot.day,
+            period: slot.period ? {
+              id: slot.period.id,
+              label: dynamicLabel,
+              startTime: slot.start_time || slot.period.start_time,
+              endTime: slot.end_time || slot.period.end_time,
+            } : null,
+            subject: slot.subject ? {
+              id: slot.subject.id,
+              name: slot.subject.subject_name,
+              code: slot.subject.subject_code,
+            } : null,
+            sessionType: isBreak ? 'break' : slot.session_type,
+            room: slot.room || null,
+            notes: slot.notes || null,
+          };
+        })
+      };
+    });
 
     res.status(200).json({
       success: true,
@@ -299,7 +330,7 @@ export const getMyTimetable = asyncHandler(async (req, res, next) => {
 
     const timetables = await TimetableMaster.findAll({
       where: masterWhere,
-      attributes: ['id', 'class_id', 'academic_year', 'semester', 'semester_type', 'batch', 'room_no', 'effective_from'],
+      attributes: ['id', 'class_id', 'academic_year', 'semester', 'semester_type', 'batch', 'room_no', 'effective_from', 'break_period_ids'],
       include: [
         {
           model: ClassModel,
@@ -316,7 +347,7 @@ export const getMyTimetable = asyncHandler(async (req, res, next) => {
         {
           model: TimetableMasterSlots,
           as: 'slots',
-          attributes: ['id', 'day', 'period_slot_id', 'subject_id', 'faculty_id', 'session_type', 'room', 'notes'],
+          attributes: ['id', 'day', 'period_slot_id', 'subject_id', 'faculty_id', 'session_type', 'room', 'notes', 'start_time', 'end_time'],
           where: { faculty_id: facultyId },
           required: false,
           include: [
@@ -345,6 +376,31 @@ export const getMyTimetable = asyncHandler(async (req, res, next) => {
       .filter(tt => tt.slots && tt.slots.length > 0) // Only return timetables with slots for this faculty
       .map(tt => {
         try {
+          let breakPeriodIds = [3, 5, 8];
+          try {
+            breakPeriodIds = typeof tt.break_period_ids === 'string'
+              ? JSON.parse(tt.break_period_ids)
+              : (tt.break_period_ids || [3, 5, 8]);
+          } catch (e) { /* use default */ }
+
+          const breakIdsArray = Array.isArray(breakPeriodIds) ? breakPeriodIds.map(Number) : [3, 5, 8];
+
+          // Compute dynamic label map using Roman numerals for teaching periods
+          const ROMAN_NUMERALS = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"];
+          let teachingCount = 0;
+          const periodLabelMap = {};
+          for (let id = 1; id <= 10; id++) {
+            const isSlotBreak = breakIdsArray.includes(id);
+            if (isSlotBreak) {
+              if (id === 3) periodLabelMap[id] = "Break";
+              else if (id === 5 || id === 6) periodLabelMap[id] = "Lunch";
+              else periodLabelMap[id] = "Break";
+            } else {
+              periodLabelMap[id] = ROMAN_NUMERALS[teachingCount] || `Period ${id}`;
+              teachingCount++;
+            }
+          }
+
           return {
             id: tt.id,
             class: tt.class ? {
@@ -363,24 +419,28 @@ export const getMyTimetable = asyncHandler(async (req, res, next) => {
             semesterType: tt.semester_type,
             batch: tt.batch,
             effectiveFrom: tt.effective_from ? new Date(tt.effective_from).toISOString() : null,
-            slots: (tt.slots || []).map(slot => ({
-              id: slot.id,
-              day: slot.day,
-              period: slot.period ? {
-                id: slot.period.id,
-                label: slot.period.period_label || `Period ${slot.period.id}`,
-                startTime: slot.period.start_time,
-                endTime: slot.period.end_time,
-              } : null,
-              subject: slot.subject ? {
-                id: slot.subject.id,
-                name: slot.subject.subject_name,
-                code: slot.subject.subject_code,
-              } : null,
-              sessionType: slot.session_type,
-              room: slot.room || null,
-              notes: slot.notes || null,
-            }))
+            slots: (tt.slots || []).map(slot => {
+              const isBreak = breakIdsArray.includes(slot.period_slot_id);
+              const dynamicLabel = periodLabelMap[slot.period_slot_id] || (slot.period && slot.period.period_label);
+              return {
+                id: slot.id,
+                day: slot.day,
+                period: slot.period ? {
+                  id: slot.period.id,
+                  label: dynamicLabel,
+                  startTime: slot.start_time || slot.period.start_time,
+                  endTime: slot.end_time || slot.period.end_time,
+                } : null,
+                subject: slot.subject ? {
+                  id: slot.subject.id,
+                  name: slot.subject.subject_name,
+                  code: slot.subject.subject_code,
+                } : null,
+                sessionType: isBreak ? 'break' : slot.session_type,
+                room: slot.room || null,
+                notes: slot.notes || null,
+              };
+            })
           };
         } catch (mapError) {
           console.error('[TimetableDisplay] Error mapping timetable:', mapError);
@@ -548,8 +608,8 @@ export const getEffectiveClassTimetable = asyncHandler(async (req, res, next) =>
          ps.id as period_slot_id,
          ps.slot_order,
          ps.period_label,
-         ps.start_time,
-         ps.end_time,
+         COALESCE(tms.start_time, ps.start_time) as start_time,
+         COALESCE(tms.end_time, ps.end_time) as end_time,
          ps.slot_type,
          ps.break_name,
          tms.session_type,
@@ -603,7 +663,7 @@ export const getEffectiveClassTimetable = asyncHandler(async (req, res, next) =>
     if (leaveIds.length > 0) {
       const placeholders = leaveIds.map(() => '?').join(',');
       const [leaveRows] = await sequelize.query(
-        `SELECT id, endDate as end_date FROM leaves WHERE id IN (${placeholders})`,
+         `SELECT id, endDate as end_date FROM leaves WHERE id IN (${placeholders})`,
         { replacements: leaveIds }
       );
       leaveRows.forEach(lr => { leaveEndDates[lr.id] = lr.end_date; });
@@ -616,18 +676,37 @@ export const getEffectiveClassTimetable = asyncHandler(async (req, res, next) =>
         : (master.break_period_ids || [3, 5, 8]);
     } catch (e) { /* use default */ }
 
+    const breakIdsArray = Array.isArray(breakPeriodIds) ? breakPeriodIds.map(Number) : [3, 5, 8];
+
+    // Compute period label map dynamically using Roman numerals for teaching periods
+    const ROMAN_NUMERALS = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"];
+    let teachingCount = 0;
+    const periodLabelMap = {};
+    for (let id = 1; id <= 10; id++) {
+      const isSlotBreak = breakIdsArray.includes(id);
+      if (isSlotBreak) {
+        if (id === 3) periodLabelMap[id] = "Break";
+        else if (id === 5 || id === 6) periodLabelMap[id] = "Lunch";
+        else periodLabelMap[id] = "Break";
+      } else {
+        periodLabelMap[id] = ROMAN_NUMERALS[teachingCount] || `Period ${id}`;
+        teachingCount++;
+      }
+    }
+
     const formattedSlots = slots.map(slot => {
       const isAlteration = !!slot.overlay_id;
-      const isBreak = slot.slot_type === 'break' || breakPeriodIds.includes(slot.period_slot_id);
+      const isBreak = breakIdsArray.includes(slot.period_slot_id);
+      const dynamicLabel = periodLabelMap[slot.period_slot_id] || slot.period_label;
       return {
         id: slot.slot_id,
         day: slot.day,
         period: {
           id: slot.period_slot_id,
-          label: slot.period_label || (isBreak ? (slot.break_name || 'Break') : ''),
+          label: dynamicLabel,
           startTime: slot.start_time,
           endTime: slot.end_time,
-          slotType: slot.slot_type,
+          slotType: isBreak ? 'break' : 'teaching',
           isBreak,
         },
         faculty: slot.effective_faculty_id ? {
