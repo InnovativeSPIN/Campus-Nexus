@@ -413,13 +413,18 @@ export default function TimetableSlotsManagement() {
             console.log('[PERIOD SLOTS] Loaded from backend:', periodData);
             
             // Build periods array with label and time from database
+            const ROMAN_NUMERALS = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"];
+            let teachingCount = 0;
             const updatedPeriods = periodData.map((p: any) => {
-              let label = `Period ${p.id}`;
-              // Check if it's a break period to add label
-              if (breakPeriodIds.includes(p.id)) {
+              const isBreak = breakPeriodIds.includes(p.id);
+              let label = "";
+              if (isBreak) {
                 if (p.id === 3) label = "Break";
-                else if (p.id === 5) label = "Lunch";
-                else if (p.id === 8) label = "Break";
+                else if (p.id === 5 || p.id === 6) label = "Lunch";
+                else label = "Break";
+              } else {
+                label = ROMAN_NUMERALS[teachingCount] || `Period ${p.id}`;
+                teachingCount++;
               }
               return {
                 id: p.id,

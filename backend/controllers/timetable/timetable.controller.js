@@ -643,6 +643,7 @@ export const getFacultyTimetable = asyncHandler(async (req, res, next) => {
         s.day,
         s.period_slot_id as hour,
         p.period_label,
+        tm.break_period_ids,
         COALESCE(sub.subject_name, 'Unknown') as subject,
         COALESCE(sub.subject_code, 'N/A') as subject_code,
         c.section,
@@ -681,6 +682,54 @@ export const getFacultyTimetable = asyncHandler(async (req, res, next) => {
       type: QueryTypes.SELECT
     });
 
+    const processedTimetable = timetable.map(slot => {
+      let breakPeriodIds = [3, 5, 8];
+      try {
+        breakPeriodIds = typeof slot.break_period_ids === 'string'
+          ? JSON.parse(slot.break_period_ids)
+          : (slot.break_period_ids || [3, 5, 8]);
+      } catch (e) { /* use default */ }
+
+      const breakIdsArray = Array.isArray(breakPeriodIds) ? breakPeriodIds.map(Number) : [3, 5, 8];
+
+      const ROMAN_NUMERALS = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"];
+      let teachingCount = 0;
+      const periodLabelMap = {};
+      for (let id = 1; id <= 10; id++) {
+        const isSlotBreak = breakIdsArray.includes(id);
+        if (isSlotBreak) {
+          if (id === 3) periodLabelMap[id] = "Break";
+          else if (id === 5 || id === 6) periodLabelMap[id] = "Lunch";
+          else periodLabelMap[id] = "Break";
+        } else {
+          periodLabelMap[id] = ROMAN_NUMERALS[teachingCount] || `Period ${id}`;
+          teachingCount++;
+        }
+      }
+
+      const h = parseInt(slot.hour, 10);
+      const isBreak = breakIdsArray.includes(h);
+      const dynamicLabel = periodLabelMap[h] || slot.period_label;
+
+      return {
+        id: slot.id,
+        day: slot.day,
+        hour: slot.hour,
+        period_label: dynamicLabel,
+        subject: slot.subject,
+        subject_code: slot.subject_code,
+        section: slot.section,
+        department: slot.department,
+        year: slot.year,
+        academicYear: slot.academicYear,
+        faculty_name: slot.faculty_name,
+        sessionType: isBreak ? 'break' : slot.sessionType,
+        room: slot.room,
+        start_time: slot.start_time,
+        end_time: slot.end_time
+      };
+    });
+
     // Allow empty timetable for department admins who may not have classes assigned yet
     console.log(`[TIMETABLE] Found ${timetable.length} slots for faculty ${facultyId}`);
 
@@ -691,8 +740,8 @@ export const getFacultyTimetable = asyncHandler(async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      count: timetable.length,
-      timetable: timetable
+      count: processedTimetable.length,
+      timetable: processedTimetable
     });
   } catch (err) {
     console.error('[TIMETABLE] getFacultyTimetable error:', err);
