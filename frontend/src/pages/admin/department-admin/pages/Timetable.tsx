@@ -229,8 +229,8 @@ const TimetableTable = ({
   }
 
   return (
-    <div className="border rounded-lg border-gray-200 overflow-hidden">
-      <table className="w-full border-collapse text-[11px] table-layout-auto">
+    <div className="w-full overflow-x-auto border rounded-lg border-gray-200 pb-2 scrollbar-thin">
+      <table className="w-full border-collapse text-[11px] min-w-[750px]">
         <thead>
           <tr className="bg-blue-50 border-b border-blue-200">
             <th className="border border-gray-200 px-1 py-1.5 text-center font-semibold text-blue-900 bg-gray-50/50 text-[10px] w-[50px]">Day</th>

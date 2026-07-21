@@ -897,30 +897,30 @@ export default function Academics() {
       </motion.div>
 
       <Tabs defaultValue="syllabus" className="w-full">
-        <TabsList className="mb-6 w-full flex justify-start overflow-x-auto overflow-y-hidden custom-scrollbar gap-2">
-          <TabsTrigger value="syllabus" className="flex items-center gap-2 px-6">
-            <BookOpen className="w-4 h-4" />
-            Syllabus
-          </TabsTrigger>
-          <TabsTrigger value="materials" className="flex items-center gap-2 px-6">
-            <FileUp className="w-4 h-4" />
-            Study Materials
-          </TabsTrigger>
-
-          <TabsTrigger value="courseplan" className="flex items-center gap-2 px-6">
-            <ClipboardList className="w-4 h-4" />
-            Course Plan
-          </TabsTrigger>
-
-          <TabsTrigger value="coursefile" className="flex items-center gap-2 px-6">
-            <FileUp className="w-4 h-4" />
-            Course Plan Upload
-          </TabsTrigger>
-          <TabsTrigger value="credits" className="flex items-center gap-2 px-6">
-            <GraduationCap className="w-4 h-4" />
-            Credits
-          </TabsTrigger>
-        </TabsList>
+        <div className="w-full overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-muted mb-6">
+          <TabsList className="flex h-auto w-max justify-start gap-1.5 p-1 bg-muted/80 rounded-xl min-w-full">
+            <TabsTrigger value="syllabus" className="flex items-center gap-2 px-4 py-2 text-xs font-semibold whitespace-nowrap shrink-0 rounded-lg">
+              <BookOpen className="w-4 h-4" />
+              Syllabus
+            </TabsTrigger>
+            <TabsTrigger value="materials" className="flex items-center gap-2 px-4 py-2 text-xs font-semibold whitespace-nowrap shrink-0 rounded-lg">
+              <FileUp className="w-4 h-4" />
+              Study Materials
+            </TabsTrigger>
+            <TabsTrigger value="courseplan" className="flex items-center gap-2 px-4 py-2 text-xs font-semibold whitespace-nowrap shrink-0 rounded-lg">
+              <ClipboardList className="w-4 h-4" />
+              Course Plan
+            </TabsTrigger>
+            <TabsTrigger value="coursefile" className="flex items-center gap-2 px-4 py-2 text-xs font-semibold whitespace-nowrap shrink-0 rounded-lg">
+              <FileUp className="w-4 h-4" />
+              Course Plan Upload
+            </TabsTrigger>
+            <TabsTrigger value="credits" className="flex items-center gap-2 px-4 py-2 text-xs font-semibold whitespace-nowrap shrink-0 rounded-lg">
+              <GraduationCap className="w-4 h-4" />
+              Credits
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="syllabus">
           {/* Subject Information Card */}

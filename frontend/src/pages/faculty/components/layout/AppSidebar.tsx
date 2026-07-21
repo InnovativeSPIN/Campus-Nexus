@@ -111,7 +111,7 @@ export function AppSidebar({
   return (
     <motion.aside
       initial={false}
-      animate={{ width: collapsed ? 80 : 280 }}
+      animate={{ width: (collapsed && !isMobileMenuOpen) ? 80 : 280 }}
       transition={{ duration: 0.3, ease: "easeInOut" }}
       className={cn(
         "fixed left-0 top-0 h-screen bg-sidebar flex flex-col shadow-xl transition-all duration-300",
@@ -125,7 +125,7 @@ export function AppSidebar({
       <div className="p-4 border-b border-sidebar-border flex items-center justify-between">
         <div className="flex items-center gap-3 overflow-hidden">
           <AnimatePresence>
-            {!collapsed && (
+            {(!collapsed || isMobileMenuOpen) && (
               <motion.div
                 initial={{ opacity: 0, width: 0 }}
                 animate={{ opacity: 1, width: "auto" }}
@@ -450,12 +450,12 @@ export function AppSidebar({
           onClick={handleLogout}
           className={cn(
             "w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-destructive/90 text-white hover:bg-destructive transition-colors",
-            collapsed && "px-0"
+            (collapsed && !isMobileMenuOpen) && "px-0"
           )}
         >
           <LogOut className="w-5 h-5 flex-shrink-0" />
           <AnimatePresence>
-            {!collapsed && (
+            {(!collapsed || isMobileMenuOpen) && (
               <motion.span
                 initial={{ opacity: 0, width: 0 }}
                 animate={{ opacity: 1, width: "auto" }}
