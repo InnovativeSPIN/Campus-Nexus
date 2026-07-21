@@ -304,8 +304,8 @@ export default function Timetable() {
                 </p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse text-sm">
+              <div className="w-full overflow-x-auto pb-2 scrollbar-thin">
+                <table className="w-full border-collapse text-sm min-w-[750px]">
                   <thead>
                     <tr className="bg-muted/50">
                       <th className="border border-border p-3 text-left font-semibold min-w-[110px] text-foreground">

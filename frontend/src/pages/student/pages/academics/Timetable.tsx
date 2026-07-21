@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import PageHeader from '@/pages/student/components/layout/PageHeader';
 import SectionCard from '@/pages/student/components/common/SectionCard';
 import { useAuth } from "@/contexts/AuthContext";
@@ -200,8 +200,8 @@ export default function Timetable() {
             <p className="text-sm mt-2">Please contact your department admin for timetable details.</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
+          <div className="w-full overflow-x-auto pb-2 scrollbar-thin">
+            <table className="w-full border-collapse min-w-[750px]">
               <thead>
                 <tr className="bg-muted/50">
                   <th className="border p-3 text-left font-semibold min-w-[100px]">Time</th>

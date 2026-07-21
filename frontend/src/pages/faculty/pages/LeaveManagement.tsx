@@ -562,55 +562,30 @@ export default function FacultyLeaveManagement() {
         </div>
 
         {/* Step indicator */}
-        <div className="flex items-center gap-2 mb-5 text-[11px] font-semibold">
-          {[
-            { key: "plan", label: "1. Alteration Faculty", icon: Users },
-            { key: "apply", label: "2. Apply Leave", icon: allConfirmed ? Unlock : Lock },
-            { key: "applications", label: "3. My Applications", icon: FileText },
-          ].map((step, i, arr) => {
-            const StepIcon = step.icon;
-            const isActive = activeTab === step.key;
-            const isDone =
-              (step.key === "plan" && allConfirmed) ||
-              (step.key === "apply" && activeTab === "applications");
-            return (
-              <span key={step.key} className="flex items-center gap-1.5">
-                <span className={cn("flex items-center gap-1 px-2.5 py-1 rounded-full border transition-all",
-                  isActive ? "bg-primary/10 border-primary/30 text-primary" :
-                    isDone ? "bg-success/10 border-success/30 text-success" :
-                      "border-border text-muted-foreground"
-                )}>
-                  <StepIcon className="w-3 h-3" />
-                  {step.label}
-                  {isDone && <CheckIcon className="w-3 h-3 ml-0.5" />}
-                </span>
-                {i < arr.length - 1 && <ChevronRight className="w-3 h-3 text-muted-foreground" />}
-              </span>
-            );
-          })}
-        </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-4 mb-5">
-            <TabsTrigger value="plan" className="gap-1.5 text-xs">
-              <Users className="w-3.5 h-3.5" /> Alteration Faculty
-            </TabsTrigger>
-            <TabsTrigger value="apply" disabled={!allConfirmed} className="gap-1.5 text-xs">
-              {allConfirmed ? <Unlock className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
-              Apply Leave
-            </TabsTrigger>
-            <TabsTrigger value="applications" className="gap-1.5 text-xs" onClick={fetchMyLeaves}>
-              <FileText className="w-3.5 h-3.5" /> My Applications
-            </TabsTrigger>
-            <TabsTrigger value="requests" className="gap-1.5 text-xs relative" onClick={fetchMyRequests}>
-              <UserCheck className="w-3.5 h-3.5" /> Sub Requests
-              {myRequests.length > 0 && (
-                <span className="absolute -top-1 -right-1 bg-destructive text-white text-[9px] font-black rounded-full w-4 h-4 flex items-center justify-center">
-                  {myRequests.length}
-                </span>
-              )}
-            </TabsTrigger>
-          </TabsList>
+          <div className="w-full overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-muted mb-5">
+            <TabsList className="flex h-auto w-max justify-start gap-1.5 p-1 bg-muted/80 rounded-xl min-w-full">
+              <TabsTrigger value="plan" className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold whitespace-nowrap shrink-0 rounded-lg">
+                <Users className="w-3.5 h-3.5" /> Alteration Faculty
+              </TabsTrigger>
+              <TabsTrigger value="apply" disabled={!allConfirmed} className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold whitespace-nowrap shrink-0 rounded-lg">
+                {allConfirmed ? <Unlock className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
+                Apply Leave
+              </TabsTrigger>
+              <TabsTrigger value="applications" className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold whitespace-nowrap shrink-0 rounded-lg" onClick={fetchMyLeaves}>
+                <FileText className="w-3.5 h-3.5" /> My Applications
+              </TabsTrigger>
+              <TabsTrigger value="requests" className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold whitespace-nowrap shrink-0 rounded-lg relative" onClick={fetchMyRequests}>
+                <UserCheck className="w-3.5 h-3.5" /> Sub Requests
+                {myRequests.length > 0 && (
+                  <span className="ml-1 bg-destructive text-white text-[9px] font-black rounded-full px-1.5 py-0.2">
+                    {myRequests.length}
+                  </span>
+                )}
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           {/* ══════════════════ TAB 1: ALTERATION FACULTY ══════════════════ */}
           <TabsContent value="plan" className="space-y-4">

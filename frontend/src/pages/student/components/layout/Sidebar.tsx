@@ -64,7 +64,7 @@ export default function Sidebar({
   return (
     <motion.aside
       initial={false}
-      animate={{ width: collapsed ? 80 : 280 }}
+      animate={{ width: (collapsed && !isMobileMenuOpen) ? 80 : 280 }}
       transition={{ duration: 0.3, ease: "easeInOut" }}
       className={cn(
         "fixed left-0 top-0 h-screen h-[100dvh] bg-sidebar z-[100] lg:z-50 flex flex-col shadow-2xl transition-transform duration-300",

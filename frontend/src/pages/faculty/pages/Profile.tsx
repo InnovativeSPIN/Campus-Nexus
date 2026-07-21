@@ -3088,14 +3088,14 @@ export default function Profile() {
           className="widget-card lg:col-span-2"
         >
           <Tabs defaultValue="education" className="w-full">
-            <div className="overflow-x-auto pb-2 scrollbar-hide -mx-2 px-2">
-              <TabsList className="flex w-max lg:grid lg:w-full lg:grid-cols-6 mb-2">
-                <TabsTrigger value="education" className="text-xs min-w-[100px] lg:min-w-0">Education</TabsTrigger>
-                <TabsTrigger value="experience" className="text-xs min-w-[100px] lg:min-w-0">Experience</TabsTrigger>
-                <TabsTrigger value="subjects" className="text-xs min-w-[100px] lg:min-w-0">Subjects</TabsTrigger>
-                <TabsTrigger value="events" className="text-xs min-w-[100px] lg:min-w-0">Events</TabsTrigger>
-                <TabsTrigger value="research" className="text-xs min-w-[100px] lg:min-w-0">Research</TabsTrigger>
-                <TabsTrigger value="phd" className="text-xs min-w-[100px] lg:min-w-0">PHD Status</TabsTrigger>
+            <div className="w-full overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-muted">
+              <TabsList className="flex h-auto w-max lg:w-full lg:grid lg:grid-cols-6 gap-1 p-1 bg-muted/80 rounded-xl mb-2 min-w-full">
+                <TabsTrigger value="education" className="text-xs font-semibold whitespace-nowrap shrink-0 px-3 py-2 rounded-lg">Education</TabsTrigger>
+                <TabsTrigger value="experience" className="text-xs font-semibold whitespace-nowrap shrink-0 px-3 py-2 rounded-lg">Experience</TabsTrigger>
+                <TabsTrigger value="subjects" className="text-xs font-semibold whitespace-nowrap shrink-0 px-3 py-2 rounded-lg">Subjects</TabsTrigger>
+                <TabsTrigger value="events" className="text-xs font-semibold whitespace-nowrap shrink-0 px-3 py-2 rounded-lg">Events</TabsTrigger>
+                <TabsTrigger value="research" className="text-xs font-semibold whitespace-nowrap shrink-0 px-3 py-2 rounded-lg">Research</TabsTrigger>
+                <TabsTrigger value="phd" className="text-xs font-semibold whitespace-nowrap shrink-0 px-3 py-2 rounded-lg">PhD Status</TabsTrigger>
               </TabsList>
             </div>
 
