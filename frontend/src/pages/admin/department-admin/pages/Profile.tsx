@@ -2992,14 +2992,16 @@ export default function Profile() {
           className="widget-card lg:col-span-2"
         >
           <Tabs defaultValue="education" className="w-full">
-            <TabsList className="grid w-full grid-cols-6 mb-6">
-              <TabsTrigger value="education" className="text-xs">Education</TabsTrigger>
-              <TabsTrigger value="experience" className="text-xs">Experience</TabsTrigger>
-              <TabsTrigger value="subjects" className="text-xs">Subjects</TabsTrigger>
-              <TabsTrigger value="events" className="text-xs">Events</TabsTrigger>
-              <TabsTrigger value="research" className="text-xs">Research</TabsTrigger>
-              <TabsTrigger value="phd" className="text-xs">PhD Status</TabsTrigger>
-            </TabsList>
+            <div className="w-full overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-muted mb-6">
+              <TabsList className="flex h-auto w-max lg:w-full lg:grid lg:grid-cols-6 gap-1 p-1 bg-muted/80 rounded-xl min-w-full">
+                <TabsTrigger value="education" className="text-xs font-semibold whitespace-nowrap shrink-0 px-3 py-2 rounded-lg">Education</TabsTrigger>
+                <TabsTrigger value="experience" className="text-xs font-semibold whitespace-nowrap shrink-0 px-3 py-2 rounded-lg">Experience</TabsTrigger>
+                <TabsTrigger value="subjects" className="text-xs font-semibold whitespace-nowrap shrink-0 px-3 py-2 rounded-lg">Subjects</TabsTrigger>
+                <TabsTrigger value="events" className="text-xs font-semibold whitespace-nowrap shrink-0 px-3 py-2 rounded-lg">Events</TabsTrigger>
+                <TabsTrigger value="research" className="text-xs font-semibold whitespace-nowrap shrink-0 px-3 py-2 rounded-lg">Research</TabsTrigger>
+                <TabsTrigger value="phd" className="text-xs font-semibold whitespace-nowrap shrink-0 px-3 py-2 rounded-lg">PhD Status</TabsTrigger>
+              </TabsList>
+            </div>
 
             {/* Educational Qualifications */}
             <TabsContent value="education">

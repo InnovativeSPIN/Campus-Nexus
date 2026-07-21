@@ -1146,21 +1146,19 @@ export default function Attendance() {  const { authToken, user } = useAuth();
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.3 + index * 0.05 }}
                       className={cn(
-                        "grid grid-cols-4 md:grid-cols-12 gap-3 p-4 items-center hover:bg-muted/50 transition-colors",
+                        "flex flex-col sm:flex-row gap-3 p-4 items-start sm:items-center justify-between hover:bg-muted/50 transition-colors",
                         attendanceData[student.id] === "present" && "bg-success/5",
                         attendanceData[student.id] === "absent" && "bg-destructive/5",
                         attendanceData[student.id] === "leave" && "bg-warning/5",
                         attendanceData[student.id] === "od" && "bg-info/5"
                       )}
                     >
-                      {/* Avatar */}
-                      <div className="col-span-1 flex justify-center">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white text-xs font-bold overflow-hidden relative">
-                          {/* Always show initial as background fallback */}
+                      {/* Avatar & Info */}
+                      <div className="flex items-center gap-3 w-full sm:w-auto">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white text-xs font-bold overflow-hidden relative shrink-0">
                           <span className="text-white text-xs font-bold absolute">
                             {student.name ? student.name.charAt(0).toUpperCase() : 'S'}
                           </span>
-                          {/* Image overlays the initial; hidden on error so initial shows through */}
                           {student.photo && (
                             <img
                               src={student.photo}
@@ -1170,25 +1168,18 @@ export default function Attendance() {  const { authToken, user } = useAuth();
                             />
                           )}
                         </div>
-                      </div>
-
-                      {/* Name and Roll (Mobile shows name only) */}
-                      <div className="col-span-3 md:col-span-5">
-                        <p className="font-semibold text-sm text-foreground">{student.name}</p>
-                        <p className="text-xs text-muted-foreground md:hidden">{student.rollNumber || student.rollNo}</p>
-                      </div>
-
-                      {/* Roll Number (Desktop only) */}
-                      <div className="hidden md:block col-span-3">
-                        <p className="text-sm text-muted-foreground">{student.rollNumber || student.rollNo}</p>
+                        <div className="flex flex-col min-w-0 flex-1">
+                          <p className="font-semibold text-sm text-foreground truncate">{student.name}</p>
+                          <p className="text-xs text-muted-foreground">{(student as any).rollNumber || student.rollNo}</p>
+                        </div>
                       </div>
 
                       {/* Attendance Buttons */}
-                      <div className="col-span-3 md:col-span-3">
+                      <div className="w-full sm:w-auto mt-2 sm:mt-0">
                         <RadioGroup
                           value={attendanceData[student.id] || ""}
                           onValueChange={(value) => handleAttendanceChange(student.id, value)}
-                          className="flex gap-1 justify-end"
+                          className="flex gap-1.5 justify-between sm:justify-end w-full sm:w-auto"
                         >
                           <div className="flex-1 md:flex-none">
                             <RadioGroupItem

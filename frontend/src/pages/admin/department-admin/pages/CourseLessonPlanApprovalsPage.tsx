@@ -213,9 +213,9 @@ export default function CourseLessonPlanApprovalsPage() {
               className="bg-card border border-border rounded-lg p-4 hover:border-primary/50 transition-colors"
             >
               {/* Batch Header */}
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
+              <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center gap-2 mb-2">
                     <h3 className="font-bold text-lg text-foreground">
                       {batch.faculty.Name}
                     </h3>
@@ -237,7 +237,7 @@ export default function CourseLessonPlanApprovalsPage() {
                   </div>
                 </div>
 
-                <div className="flex gap-2">
+                <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
                   <Button
                     size="sm"
                     variant="outline"

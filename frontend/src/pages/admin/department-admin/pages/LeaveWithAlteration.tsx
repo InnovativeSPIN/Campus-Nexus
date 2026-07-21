@@ -397,10 +397,12 @@ export default function LeaveManagementWithAlteration() {
       </motion.div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="apply">Apply Leave</TabsTrigger>
-          <TabsTrigger value="status">My Applications</TabsTrigger>
-        </TabsList>
+        <div className="w-full overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-muted mb-6">
+          <TabsList className="flex h-auto w-max sm:w-full sm:grid sm:grid-cols-2 gap-1 p-1 bg-muted/80 rounded-xl min-w-full">
+            <TabsTrigger value="apply" className="text-xs font-semibold whitespace-nowrap shrink-0 px-4 py-2 rounded-lg">Apply Leave</TabsTrigger>
+            <TabsTrigger value="status" className="text-xs font-semibold whitespace-nowrap shrink-0 px-4 py-2 rounded-lg">My Applications</TabsTrigger>
+          </TabsList>
+        </div>
 
         {/* Apply Leave Tab */}
         <TabsContent value="apply" className="mt-6 space-y-6">

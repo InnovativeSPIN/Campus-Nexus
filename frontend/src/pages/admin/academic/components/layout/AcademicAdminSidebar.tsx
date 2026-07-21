@@ -85,7 +85,7 @@ export function AcademicAdminSidebar({
   return (
     <motion.aside
       initial={false}
-      animate={{ width: collapsed ? 80 : 280 }}
+      animate={{ width: (collapsed && !isMobileMenuOpen) ? 80 : 280 }}
       transition={{ duration: 0.3, ease: "easeInOut" }}
       className={cn(
         "fixed left-0 top-0 h-screen bg-sidebar z-[100] lg:z-50 flex flex-col shadow-2xl transition-transform duration-300",
@@ -111,7 +111,7 @@ export function AcademicAdminSidebar({
       <div className="p-4 border-b border-sidebar-border bg-gradient-to-b from-sidebar-accent/20 to-sidebar-accent/5">
         <div className="flex items-center justify-between">
           <AnimatePresence>
-            {!collapsed && (
+            {(!collapsed || isMobileMenuOpen) && (
               <motion.div
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -131,7 +131,7 @@ export function AcademicAdminSidebar({
             )}
           </AnimatePresence>
 
-          {collapsed && (
+          {(collapsed && !isMobileMenuOpen) && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -151,7 +151,7 @@ export function AcademicAdminSidebar({
               <span className="text-white font-bold text-xs">{getInitials(user.name)}</span>
             </div>
             <AnimatePresence>
-              {!collapsed && (
+              {(!collapsed || isMobileMenuOpen) && (
                 <motion.div
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -208,7 +208,7 @@ export function AcademicAdminSidebar({
                   </div>
 
                   <AnimatePresence>
-                    {!collapsed && (
+                    {(!collapsed || isMobileMenuOpen) && (
                       <motion.span
                         initial={{ opacity: 0, width: 0 }}
                         animate={{ opacity: 1, width: "auto" }}
@@ -238,7 +238,7 @@ export function AcademicAdminSidebar({
         >
           <LogOut className="w-5 h-5 flex-shrink-0" />
           <AnimatePresence>
-            {!collapsed && (
+            {(!collapsed || isMobileMenuOpen) && (
               <motion.span
                 initial={{ opacity: 0, width: 0 }}
                 animate={{ opacity: 1, width: "auto" }}

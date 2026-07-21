@@ -266,24 +266,26 @@ export default function Leave() {
       )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="mb-6">
-          <TabsTrigger value="approvals" className="flex items-center gap-2 text-secondary">
-            <CheckCircle2 className="w-4 h-4" />
-            Leave Approvals
-          </TabsTrigger>
-          <TabsTrigger value="apply" className="flex items-center gap-2">
-            <PlusCircle className="w-4 h-4" />
-            Apply Leave
-          </TabsTrigger>
-          <TabsTrigger value="status" className="flex items-center gap-2">
-            <FileText className="w-4 h-4" />
-            My Requests
-          </TabsTrigger>
-          <TabsTrigger value="approved" className="flex items-center gap-2 text-success">
-            <CheckCircle2 className="w-4 h-4" />
-            Approved Requests
-          </TabsTrigger>
-        </TabsList>
+        <div className="w-full overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-muted mb-6">
+          <TabsList className="flex h-auto w-max justify-start gap-1.5 p-1 bg-muted/80 rounded-xl min-w-full">
+            <TabsTrigger value="approvals" className="flex items-center gap-2 px-4 py-2 text-xs font-semibold whitespace-nowrap shrink-0 rounded-lg text-secondary">
+              <CheckCircle2 className="w-4 h-4" />
+              Leave Approvals
+            </TabsTrigger>
+            <TabsTrigger value="apply" className="flex items-center gap-2 px-4 py-2 text-xs font-semibold whitespace-nowrap shrink-0 rounded-lg">
+              <PlusCircle className="w-4 h-4" />
+              Apply Leave
+            </TabsTrigger>
+            <TabsTrigger value="status" className="flex items-center gap-2 px-4 py-2 text-xs font-semibold whitespace-nowrap shrink-0 rounded-lg">
+              <FileText className="w-4 h-4" />
+              My Requests
+            </TabsTrigger>
+            <TabsTrigger value="approved" className="flex items-center gap-2 px-4 py-2 text-xs font-semibold whitespace-nowrap shrink-0 rounded-lg text-success">
+              <CheckCircle2 className="w-4 h-4" />
+              Approved Requests
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         {/* APPLY LEAVE TAB */}
         <TabsContent value="apply">
