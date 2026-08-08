@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
+import { toast } from "@/pages/admin/department-admin/hooks/use-toast";
 import { IntegratedNotificationBell } from "@/components/common/IntegratedNotificationBell";
 import { MainLayout } from "@/pages/admin/department-admin/components/layout/MainLayout";
 import { motion } from "framer-motion";
@@ -33,6 +34,7 @@ import {
   Download,
   Plus,
   FileIcon,
+  Edit,
 } from "lucide-react";
 import { cn } from "@/pages/admin/department-admin/lib/utils";
 import {
@@ -108,6 +110,7 @@ interface SemesterCredits {
 interface CourseLessonPlan {
   id: number;
   sno: number;
+  unit_number?: number;
   unit_label?: string;
   topic: string;
   co_number?: string;
@@ -318,7 +321,7 @@ export default function Academics() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [fetchedClassesHandled, setFetchedClassesHandled] = useState<ClassSubject[]>([]);
   const [selectedClassId, setSelectedClassId] = useState<string>("");
-  const [topicsData, setTopicsData] = useState<Record<string, Topic[]>>(syllabusDataByClass);
+  const [topicsData, setTopicsData] = useState<Record<string, Topic[]>>({});
   const [materialsData, setMaterialsData] = useState<Record<string, Material[]>>(materialsDataByClass);
   const [marksData, setMarksData] = useState<Record<string, StudentMark[]>>(studentMarksDataByClass);
   const [lockedClasses, setLockedClasses] = useState<Record<string, boolean>>({});
@@ -356,6 +359,15 @@ export default function Academics() {
       setSelectedClassId(fetchedClassesHandled[0].id);
     }
   }, [fetchedClassesHandled, selectedClassId]);
+
+  // Reset Course Plan Upload form when class is changed
+  useEffect(() => {
+    setCoursePlanUnits([
+      { unit_label: "", topics: [{ topic: "", co_number: "", btl: "", delivery_mode: "", reference_book: "", periods_required: 1, tentative_date: "" }] }
+    ]);
+    setCsvUploadError(null);
+    setCsvPreviewRows(0);
+  }, [selectedClassId]);
 
   // Fetch department admin's assigned classes (treated as faculty)
   useEffect(() => {
@@ -742,6 +754,41 @@ export default function Academics() {
     return Object.values(unitsMap);
   };
 
+  const handleDeleteCoursePlan = async () => {
+    if (!selectedClass) return;
+    
+    // Derive a proper numeric subjectId (the API requires a numeric DB id, not a name)
+    const subjectId = parseInt((selectedClass as any).subject_id, 10);
+    const classId = parseInt((selectedClass as any).class_id || (selectedClass as any).id, 10);
+
+    if (!confirm('Are you sure you want to completely delete this course plan? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      const res = await apiFetch(
+        `/api/v1/faculty/academics/course-plans/bulk?subjectId=${subjectId}&classId=${classId}`,
+        { method: 'DELETE' }
+      );
+
+      if (res.success) {
+        toast({ description: 'Course plan deleted successfully!' });
+        setCoursePlans([]);
+        setCoursePlanUnits([
+          {
+            unit_label: "Unit 1",
+            topics: [{ topic: "", co_number: "", btl: "", delivery_mode: "", reference_book: "", periods_required: 1, tentative_date: "" }]
+          }
+        ]);
+      } else {
+        throw new Error(res.message || 'Server returned an error');
+      }
+    } catch (error: any) {
+      console.error('Delete course plan error:', error);
+      alert('Failed to delete course plan: ' + error.message);
+    }
+  };
+
   const handleSaveCoursePlan = async () => {
     if (!selectedClass) return alert('Select a class first');
     setIsUploading(true);
@@ -796,7 +843,7 @@ export default function Academics() {
       });
       if (res.success) {
         setIsFileSent(true);
-        alert(`Course plan saved successfully! (${res.count ?? allTopics.length} topics)`);
+        alert(`Course plan saved successfully! (${res.count ?? allTopics.length} topics)\nYour course plan has been sent for approval to the HOD.`);
       } else {
         throw new Error(res.message || res.error || 'Server returned an error');
       }
@@ -896,30 +943,30 @@ export default function Academics() {
         </motion.div>
 
         <Tabs defaultValue="syllabus" className="w-full">
-          <div className="w-full overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-muted mb-6">
-            <TabsList className="flex h-auto w-max justify-start gap-1.5 p-1 bg-muted/80 rounded-xl min-w-full">
-              <TabsTrigger value="syllabus" className="flex items-center gap-2 px-4 py-2 text-xs font-semibold whitespace-nowrap shrink-0 rounded-lg">
-                <BookOpen className="w-4 h-4" />
-                Syllabus
-              </TabsTrigger>
-              <TabsTrigger value="materials" className="flex items-center gap-2 px-4 py-2 text-xs font-semibold whitespace-nowrap shrink-0 rounded-lg">
-                <FileUp className="w-4 h-4" />
-                Study Materials
-              </TabsTrigger>
-              <TabsTrigger value="courseplan" className="flex items-center gap-2 px-4 py-2 text-xs font-semibold whitespace-nowrap shrink-0 rounded-lg">
-                <ClipboardList className="w-4 h-4" />
-                Course Plan
-              </TabsTrigger>
-              <TabsTrigger value="courseplan-upload" className="flex items-center gap-2 px-4 py-2 text-xs font-semibold whitespace-nowrap shrink-0 rounded-lg">
-                <Upload className="w-4 h-4" />
-                Course Plan Upload
-              </TabsTrigger>
-              <TabsTrigger value="credits" className="flex items-center gap-2 px-4 py-2 text-xs font-semibold whitespace-nowrap shrink-0 rounded-lg">
-                <GraduationCap className="w-4 h-4" />
-                Credits
-              </TabsTrigger>
-            </TabsList>
-          </div>
+          <TabsList className="mb-6">
+            <TabsTrigger value="syllabus" className="flex items-center gap-2">
+              <BookOpen className="w-4 h-4" />
+              Syllabus
+            </TabsTrigger>
+            <TabsTrigger value="materials" className="flex items-center gap-2">
+              <FileUp className="w-4 h-4" />
+              Study Materials
+            </TabsTrigger>
+
+            <TabsTrigger value="courseplan" className="flex items-center gap-2">
+              <ClipboardList className="w-4 h-4" />
+              Course Plan
+            </TabsTrigger>
+            <TabsTrigger value="courseplan-upload" className="flex items-center gap-2">
+              <Upload className="w-4 h-4" />
+              Course Plan Upload
+            </TabsTrigger>
+
+            <TabsTrigger value="credits" className="flex items-center gap-2">
+              <GraduationCap className="w-4 h-4" />
+              Credits
+            </TabsTrigger>
+          </TabsList>
 
           <TabsContent value="syllabus">
             {/* Subject Information Card */}
@@ -1772,6 +1819,46 @@ export default function Academics() {
                           <Check className="w-3 h-3 mr-1" /> Approved
                         </Badge>
                       ) : null}
+                      
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const unitsMap: Record<string, any> = {};
+                          coursePlans.forEach(plan => {
+                            const unitKey = plan.unit_label || `Unit ${plan.unit_number}`;
+                            if (!unitsMap[unitKey]) {
+                              unitsMap[unitKey] = {
+                                unit_label: plan.unit_label || `Unit ${plan.unit_number}`,
+                                topics: []
+                              };
+                            }
+                            unitsMap[unitKey].topics.push({
+                              topic: plan.topic,
+                              co_number: plan.co_number || '',
+                              btl: plan.btl || '',
+                              delivery_mode: plan.delivery_mode || '',
+                              reference_book: plan.reference_book || '',
+                              periods_required: plan.periods_required || 1,
+                              tentative_date: plan.tentative_date || ''
+                            });
+                          });
+                          setCoursePlanUnits(Object.values(unitsMap));
+                          alert('Existing course plan loaded for editing. Make your changes and click Save.');
+                        }}
+                      >
+                        <Edit className="w-4 h-4 mr-2" />
+                        Edit Existing Plan
+                      </Button>
+
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={handleDeleteCoursePlan}
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Delete Plan
+                      </Button>
                     </>
                   )}
                   {isFileSent && (

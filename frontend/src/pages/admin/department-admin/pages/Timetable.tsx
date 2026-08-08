@@ -64,32 +64,27 @@ const getDynamicPeriods = (slots: any[]): PeriodDisplay[] => {
     const h = parseInt(slot.hour || slot.period_slot_id, 10);
     if (isNaN(h)) return;
 
-    const start = slot.start_time ? slot.start_time.substring(0, 5) : "";
-    const end = slot.end_time ? slot.end_time.substring(0, 5) : "";
-    const timeStr = start && end ? `${start} - ${end}` : "";
+    const start = slot.period?.startTime || slot.start_time || "";
+    const end = slot.period?.endTime || slot.end_time || "";
+    const startStr = start ? start.substring(0, 5) : "";
+    const endStr = end ? end.substring(0, 5) : "";
+    const timeStr = startStr && endStr ? `${startStr} - ${endStr}` : "";
 
-    const isBreak = slot.sessionType === "break" || slot.session_type === "break";
+    const isBreak = slot.sessionType === "break" || slot.session_type === "break" || slot.isBreak;
 
     if (!periodMap.has(h)) {
-      const displayLabel = slot.period_label && slot.period_label.trim() !== ""
-        ? slot.period_label
-        : isBreak
-          ? "Break"
-          : getRomanNumeral(h);
-
       periodMap.set(h, {
         id: h,
-        label: displayLabel,
+        label: slot.period_label || getRomanNumeral(h),
         time: timeStr,
         isBreak: isBreak
       });
     } else {
       const existing = periodMap.get(h)!;
-      if (!existing.time && timeStr) {
-        existing.time = timeStr;
-      }
-      if (isBreak) {
-        existing.isBreak = true;
+      if (!existing.time && timeStr) existing.time = timeStr;
+      if (isBreak) existing.isBreak = true;
+      if (slot.period_label && slot.period_label.trim() !== "" && slot.period_label !== getRomanNumeral(h)) {
+         existing.label = slot.period_label;
       }
     }
   });
@@ -189,7 +184,20 @@ const TimetableTable = ({
   onRefresh: () => void;
   showBreak?: boolean;
 }) => {
-  const displayPeriods = rawSlots.length > 0 ? getDynamicPeriods(rawSlots) : getDefaultPeriods();
+  let displayPeriods = rawSlots.length > 0 ? getDynamicPeriods(rawSlots) : getDefaultPeriods();
+  
+  if (!showBreak) {
+    displayPeriods = displayPeriods.filter(period => {
+      const lbl = (period.label || '').toLowerCase();
+      return !period.isBreak && lbl !== 'lunch' && lbl !== 'break';
+    });
+    
+    // Reassign sequential Roman numerals to remove gaps (e.g., IX showing up)
+    displayPeriods.forEach((period, index) => {
+      period.label = getRomanNumeral(index + 1);
+    });
+  }
+
   const hasTimetableData = days.some((day) =>
     displayPeriods.some((period) => data[day]?.[period.id]?.length > 0)
   );
@@ -229,8 +237,8 @@ const TimetableTable = ({
   }
 
   return (
-    <div className="w-full overflow-x-auto border rounded-lg border-gray-200 pb-2 scrollbar-thin">
-      <table className="w-full border-collapse text-[11px] min-w-[750px]">
+    <div className="border rounded-lg border-gray-200 overflow-hidden">
+      <table className="w-full border-collapse text-[11px] table-layout-auto">
         <thead>
           <tr className="bg-blue-50 border-b border-blue-200">
             <th className="border border-gray-200 px-1 py-1.5 text-center font-semibold text-blue-900 bg-gray-50/50 text-[10px] w-[50px]">Day</th>
@@ -458,7 +466,7 @@ export default function Timetable() {
   const fetchMyTimetable = async () => {
     try {
       console.log("[TIMETABLE] Fetching my timetable...");
-      const response = await fetch("/api/v1/timetable/faculty/me", {
+      const response = await fetch("/api/v1/timetable-display/my-timetable", {
         headers: {
           Authorization: token ? `Bearer ${token}` : "",
           "Content-Type": "application/json",
@@ -829,7 +837,7 @@ export default function Timetable() {
                 loading={loading}
                 error={error}
                 onRefresh={fetchMyTimetable}
-                showBreak={true}
+                showBreak={false}
               />
             )}
           </div>
@@ -871,7 +879,7 @@ export default function Timetable() {
                 loading={loading}
                 error={error}
                 onRefresh={() => fetchFacultyTimetable(selectedFaculty)}
-                showBreak={true}
+                showBreak={false}
               />
             ) : (
               <div className="py-12 text-center">
@@ -915,7 +923,7 @@ export default function Timetable() {
                 loading={loading}
                 error={error}
                 onRefresh={() => fetchClassTimetable(selectedClass)}
-                showBreak={true}
+                showBreak={false}
               />
             ) : (
               <div className="py-12 text-center">

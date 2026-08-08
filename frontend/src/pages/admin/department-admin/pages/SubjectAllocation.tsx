@@ -561,22 +561,20 @@ export default function SubjectAllocation() {
           </div>
 
           {/* Tabs */}
-          <div className="w-full overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-muted mb-6">
-            <div className="flex h-auto w-max justify-start gap-1 bg-white rounded-lg shadow p-1 min-w-full">
-              {(['curriculum', 'faculty-allocation', 'allocations'] as const).map(tab => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={`px-4 py-2 rounded-md font-semibold text-sm transition-all capitalize whitespace-nowrap shrink-0 ${
-                    activeTab === tab
-                      ? 'bg-[#790c0c] text-white'
-                      : 'text-gray-600 hover:bg-gray-100'
-                  }`}
-                >
-                  {tab === 'curriculum' ? 'Curriculum Mapping' : tab === 'faculty-allocation' ? 'Faculty Subject Allocation' : 'Allocations'}
-                </button>
-              ))}
-            </div>
+          <div className="flex gap-1 bg-white rounded-lg shadow p-1 mb-6 w-fit">
+            {(['curriculum', 'faculty-allocation', 'allocations'] as const).map(tab => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`px-6 py-2 rounded-md font-semibold text-sm transition-all capitalize ${
+                  activeTab === tab
+                    ? 'bg-[#790c0c] text-white'
+                    : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                {tab === 'curriculum' ? 'Curriculum Mapping' : tab === 'faculty-allocation' ? 'Faculty Subject Allocation' : 'Allocations'}
+              </button>
+            ))}
           </div>
 
           {/* ═══ CURRICULUM MAPPING TAB ════════════════════════════════════ */}

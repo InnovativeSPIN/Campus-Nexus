@@ -95,7 +95,7 @@ export function AppSidebar({
   return (
     <motion.aside
       initial={false}
-      animate={{ width: (collapsed && !isMobileMenuOpen) ? 80 : 280 }}
+      animate={{ width: collapsed ? 80 : 280 }}
       transition={{ duration: 0.3, ease: "easeInOut" }}
       className={cn(
         "fixed left-0 top-0 h-screen bg-sidebar z-[100] lg:z-50 flex flex-col shadow-2xl transition-transform duration-300",
@@ -128,7 +128,7 @@ export function AppSidebar({
               <span className="text-white font-bold text-xs">{getInitials(user.name)}</span>
             </div>
             <AnimatePresence>
-              {(!collapsed || isMobileMenuOpen) && (
+              {!collapsed && (
                 <motion.div
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -190,7 +190,7 @@ export function AppSidebar({
 
                   {/* Label */}
                   <AnimatePresence>
-                    {(!collapsed || isMobileMenuOpen) && (
+                    {!collapsed && (
                       <motion.span
                         initial={{ opacity: 0, width: 0 }}
                         animate={{ opacity: 1, width: "auto" }}
@@ -203,7 +203,7 @@ export function AppSidebar({
                   </AnimatePresence>
 
                   {/* Badge */}
-                  {item.badge && (!collapsed || isMobileMenuOpen) && (
+                  {item.badge && !collapsed && (
                     <motion.span
                       initial={{ opacity: 0, scale: 0.8 }}
                       animate={{ opacity: 1, scale: 1 }}
@@ -236,7 +236,7 @@ export function AppSidebar({
         >
           <LogOut className="w-5 h-5 flex-shrink-0" />
           <AnimatePresence>
-            {(!collapsed || isMobileMenuOpen) && (
+            {!collapsed && (
               <motion.span
                 initial={{ opacity: 0, width: 0 }}
                 animate={{ opacity: 1, width: "auto" }}

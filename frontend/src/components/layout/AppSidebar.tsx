@@ -1,4 +1,4 @@
-import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard,
@@ -15,7 +15,6 @@ import {
   GraduationCap,
   Users,
   X,
-  LogOut,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { NotificationBell } from "./NotificationBell";
@@ -48,20 +47,14 @@ export function AppSidebar({
   setIsMobileMenuOpen 
 }: AppSidebarProps) {
   const location = useLocation();
-  const navigate = useNavigate();
-  const { user, logout } = useAuth();
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
+  const { user } = useAuth();
 
   return (
     <motion.aside
       initial={false}
       // On mobile we force width to 280 when open, on desktop we use the collapsed state
       animate={{ 
-        width: (collapsed && !isMobileMenuOpen) ? 80 : 280,
+        width: collapsed ? 80 : 280,
       }}
       transition={{ duration: 0.3, ease: "easeInOut" }}
       className={cn(
@@ -78,7 +71,7 @@ export function AppSidebar({
             <GraduationCap className="w-6 h-6 text-white" />
           </div>
           <AnimatePresence>
-            {(!collapsed || isMobileMenuOpen) && (
+            {!collapsed && (
               <motion.div
                 initial={{ opacity: 0, width: 0 }}
                 animate={{ opacity: 1, width: "auto" }}
@@ -140,7 +133,7 @@ export function AppSidebar({
                     )}
                   />
                   <AnimatePresence>
-                    {(!collapsed || isMobileMenuOpen) && (
+                    {!collapsed && (
                       <motion.span
                         initial={{ opacity: 0, width: 0 }}
                         animate={{ opacity: 1, width: "auto" }}
@@ -158,44 +151,21 @@ export function AppSidebar({
         </ul>
       </nav>
 
-      {/* Footer Section */}
-      <div className="p-4 border-t border-sidebar-border space-y-2">
-        {/* Logout Button */}
+      {/* Collapse Toggle - Hide on mobile since sidebar is a drawer */}
+      <div className="p-4 border-t border-sidebar-border hidden lg:block">
         <button
-          onClick={handleLogout}
-          className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-destructive/90 text-white hover:bg-destructive transition-colors"
+          onClick={() => setCollapsed(!collapsed)}
+          className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-sidebar-accent/50 text-white hover:bg-sidebar-accent transition-colors"
         >
-          <LogOut className="w-5 h-5 flex-shrink-0" />
-          <AnimatePresence>
-            {(!collapsed || isMobileMenuOpen) && (
-              <motion.span
-                initial={{ opacity: 0, width: 0 }}
-                animate={{ opacity: 1, width: "auto" }}
-                exit={{ opacity: 0, width: 0 }}
-                className="text-sm font-medium whitespace-nowrap overflow-hidden"
-              >
-                Logout
-              </motion.span>
-            )}
-          </AnimatePresence>
+          {collapsed ? (
+            <ChevronRight className="w-5 h-5" />
+          ) : (
+            <>
+              <ChevronLeft className="w-5 h-5" />
+              <span className="text-sm font-medium">Collapse</span>
+            </>
+          )}
         </button>
-
-        {/* Collapse Toggle - Hide on mobile since sidebar is a drawer */}
-        <div className="hidden lg:block">
-          <button
-            onClick={() => setCollapsed(!collapsed)}
-            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-sidebar-accent/50 text-white hover:bg-sidebar-accent transition-colors"
-          >
-            {collapsed ? (
-              <ChevronRight className="w-5 h-5" />
-            ) : (
-              <>
-                <ChevronLeft className="w-5 h-5" />
-                <span className="text-sm font-medium">Collapse</span>
-              </>
-            )}
-          </button>
-        </div>
       </div>
     </motion.aside>
   );

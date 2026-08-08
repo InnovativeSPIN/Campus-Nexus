@@ -30,6 +30,7 @@ export default function Dashboard() {
   const [stats, setStats] = useState({ students: 0, faculty: 0, pending: 0, attendance: 0, syllabusProgress: 0, onLeave: 0, projects: 0 });
   const [slotStudents, setSlotStudents] = useState<any>({});
   const [loading, setLoading] = useState(true);
+  const [selectedSubject, setSelectedSubject] = useState<any>(null);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -168,6 +169,7 @@ export default function Dashboard() {
     }
 
     const currentClassData = current ? {
+      id: current.id || 0,
       subject: current.subjectName || "Class",
       time: `${current.startTime} - ${current.endTime}`,
       room: current.room || "TBD",
@@ -180,6 +182,7 @@ export default function Dashboard() {
     } : null;
 
     const nextClassData = next ? {
+      id: next.id || 0,
       subject: next.subjectName || "Class",
       time: `${next.startTime} - ${next.endTime}`,
       room: next.room || "TBD",
@@ -198,6 +201,7 @@ export default function Dashboard() {
 
     return {
       currentClass: currentClassData || {
+        id: 0,
         subject: "No class scheduled",
         time: "N/A",
         room: "N/A",
@@ -209,6 +213,7 @@ export default function Dashboard() {
         isUpcomingOnly: false
       },
       nextClass: nextClassData || {
+        id: 0,
         subject: "No upcoming class",
         time: "N/A",
         room: "N/A",
@@ -285,11 +290,83 @@ export default function Dashboard() {
       {/* Main Content Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         <div className="lg:col-span-2 space-y-6">
-          <NextClassCard
-            currentClass={currentClass}
-            nextClass={nextClass}
-            onClassClick={() => { }}
-          />
+          {currentClass || nextClass ? (
+            <NextClassCard
+              currentClass={currentClass}
+              nextClass={nextClass}
+              onClassClick={(classInfo) => setSelectedSubject({
+                id: (classInfo as any).id || currentClass?.id || nextClass?.id || 0,
+                name: classInfo.subject,
+                room: classInfo.room,
+                type: classInfo.type || "Theory",
+                totalPeriods: classInfo.totalPeriods || 1,
+                duration: classInfo.duration || "50 mins",
+              })}
+            />
+          ) : todaySlots.length > 0 ? (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="widget-card p-5 bg-secondary/5 border border-secondary/20"
+            >
+              <h3 className="text-lg font-bold text-foreground mb-4">Today&apos;s Classes</h3>
+              <div className="space-y-2">
+                {todaySlots.map((cls) => {
+                  const sHour = parseInt(cls.startTime?.split(':')[0] || "0");
+                  const sMin = parseInt(cls.startTime?.split(':')[1] || "0");
+                  const eHour = parseInt(cls.endTime?.split(':')[0] || "0");
+                  const eMin = parseInt(cls.endTime?.split(':')[1] || "0");
+                  const durationMins = (eHour - sHour) * 60 + (eMin - sMin);
+                  return (
+                    <button
+                      key={`${cls.id}-${cls.startTime}`}
+                      className="w-full text-left px-3 py-2 bg-background/70 hover:bg-background rounded-lg border border-border"
+                      onClick={() => setSelectedSubject({
+                        id: cls.id,
+                        name: cls.subjectName || "Class",
+                        room: cls.room || "TBD",
+                        type: cls.session_type === 'lab' ? 'Lab' : 'Theory',
+                        totalPeriods: 1,
+                        duration: `${durationMins} mins`,
+                      })}
+                    >
+                      <div className="flex justify-between items-center">
+                        <span className="font-semibold text-sm text-foreground">{cls.subjectName || "Class"}</span>
+                        <span className="text-xs text-muted-foreground">{cls.startTime} - {cls.endTime}</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground">{cls.className || "CLASS"} &bull; {cls.room || "TBD"}</p>
+                    </button>
+                  );
+                })}
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="widget-card flex flex-col items-center justify-center py-16 bg-gradient-to-br from-secondary/10 to-primary/10 border-2 border-dashed border-primary/30"
+            >
+              <div className="flex flex-col items-center gap-4 text-center">
+                <div className="relative">
+                  <Calendar className="w-16 h-16 text-primary/40" />
+                  <div className="absolute -bottom-2 -right-2 bg-green-500 rounded-full p-2">
+                    <Calendar className="w-5 h-5 text-white" />
+                  </div>
+                </div>
+                <div>
+                  <p className="text-lg font-semibold text-foreground mb-2">No Class Today</p>
+                  <p className="text-sm text-muted-foreground">
+                    You have a free day! No classes scheduled for today.
+                  </p>
+                </div>
+                <div className="mt-4 pt-4 border-t border-primary/20 w-full">
+                  <p className="text-xs text-muted-foreground">
+                    Use this time for preparation, grading, or administrative tasks
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          )}
 
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
@@ -318,10 +395,54 @@ export default function Dashboard() {
           </motion.div>
         </div>
 
-        <div className="flex flex-col gap-6">
-          <PendingTasksList tasks={pendingTasks} />
-          <LeaveSnapshot leaves={[]} />
-        </div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.2 }}
+          className="widget-card flex flex-col h-fit"
+        >
+          <h3 className="section-title text-center mb-4">Class Details</h3>
+          {todaySlots.length === 0 ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="text-center">
+                <Calendar className="w-12 h-12 text-muted-foreground/40 mx-auto mb-3" />
+                <p className="text-sm text-muted-foreground font-medium">No Classes Today</p>
+                <p className="text-xs text-muted-foreground mt-2">Your schedule is clear</p>
+              </div>
+            </div>
+          ) : selectedSubject ? (
+            <div className="space-y-4">
+              <div className="bg-primary/5 rounded-lg p-5 border border-primary/20">
+                <h4 className="font-semibold text-lg text-foreground flex items-center gap-2 mb-4">
+                  <GraduationCap className="w-5 h-5 text-primary" />
+                  {selectedSubject.name}
+                </h4>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Room</p>
+                    <p className="font-bold">{selectedSubject.room}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Type</p>
+                    <p className="font-bold">{selectedSubject.type}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center py-8">
+              <p className="text-sm text-muted-foreground">Select a class to view details</p>
+            </div>
+          )}
+        </motion.div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 mb-6">
+        <PendingTasksList tasks={pendingTasks} />
+      </div>
+
+      <div className="grid grid-cols-1 gap-6">
+        <LeaveSnapshot leaves={[]} />
       </div>
     </MainLayout>
   );

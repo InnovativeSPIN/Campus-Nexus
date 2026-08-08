@@ -14,19 +14,24 @@ import {
 import { Badge } from "@/pages/faculty/components/ui/badge";
 
 const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-const hours = [1, 2, 3, 4, 5, 6, 7];
+const getRomanNumeral = (num: number): string => {
+  const romanMap = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"];
+  return romanMap[num - 1] || String(num);
+};
 
-const formatHourForDisplay = (hour: number): string => {
-  const timeMap: { [key: number]: string } = {
-    1: "9:30 AM - 10:20 AM",
-    2: "10:20 AM - 11:10 AM",
-    3: "11:30 AM - 12:25 PM",
-    4: "1:10 PM - 2:00 PM",
-    5: "2:00 PM - 2:50 PM",
-    6: "3:15 PM - 4:00 PM",
-    7: "4:00 PM - 4:45 PM",
-  };
-  return timeMap[hour] || `Hour ${hour}`;
+const formatTimeTo12h = (timeStr: string | null | undefined): string => {
+  if (!timeStr) return "";
+  const trimmed = timeStr.trim();
+  if (trimmed === "") return "";
+  if (trimmed.toLowerCase().includes("am") || trimmed.toLowerCase().includes("pm")) return trimmed;
+  const parts = trimmed.split(":");
+  let hours = parseInt(parts[0]);
+  const minutes = parseInt(parts[1]);
+  if (isNaN(hours) || isNaN(minutes)) return trimmed;
+  const ampm = hours >= 12 ? "PM" : "AM";
+  hours = hours % 12;
+  hours = hours ? hours : 12;
+  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')} ${ampm}`;
 };
 
 interface ClassSlot {
@@ -47,6 +52,8 @@ interface RawSlot {
   department: string;
   year: string | number;
   academicYear: string;
+  startTime?: string;
+  endTime?: string;
 }
 
 type TimetableData = {
@@ -85,7 +92,7 @@ export default function Timetable() {
       setError(null);
 
       const token = authToken || localStorage.getItem("authToken");
-      const response = await fetch("/api/v1/timetable/faculty/me", {
+      const response = await fetch("/api/v1/timetable-display/my-timetable", {
         headers: {
           Authorization: token ? `Bearer ${token}` : "",
           "Content-Type": "application/json",
@@ -95,16 +102,21 @@ export default function Timetable() {
       const data = await response.json();
 
       if (data.success && data.timetable && data.timetable.length > 0) {
-        const slots: RawSlot[] = data.timetable.map((slot: any) => ({
-          id: slot.id || Math.random(),
-          day: slot.day?.trim() || "",
-          hour: parseInt(slot.hour, 10),
-          subject: slot.subject || "Unknown",
-          section: slot.section || "",
-          department: slot.department || "",
-          year: slot.year || "",
-          academicYear: slot.academicYear || "",
-        })).filter((s: RawSlot) => days.includes(s.day) && hours.includes(s.hour));
+        const slots: RawSlot[] = data.timetable
+          .filter((slot: any) => slot.sessionType !== "break" && slot.session_type !== "break" && !slot.isBreak && slot.subject !== "Lunch" && slot.subject !== "Break")
+          .map((slot: any) => ({
+            id: slot.id || Math.random(),
+            day: slot.day?.trim() || "",
+            hour: parseInt(slot.hour, 10),
+            subject: slot.subject || "Unknown",
+            section: slot.section || "",
+            department: slot.department || "",
+            year: slot.year || "",
+            academicYear: slot.academicYear || "",
+            startTime: slot.period?.startTime || slot.start_time || "",
+            endTime: slot.period?.endTime || slot.end_time || "",
+          }))
+          .filter((s: RawSlot) => days.includes(s.day) && s.hour > 0);
 
         setRawSlots(slots);
 
@@ -154,12 +166,22 @@ export default function Timetable() {
     return Array.from(subjects);
   }, [rawSlots, selectedClassKey]);
 
+  /** Dynamic hours from the slots to handle varying periods properly */
+  const dynamicHours = useMemo(() => {
+    if (rawSlots.length === 0) return [1, 2, 3, 4, 5, 6, 7];
+    const hourSet = new Set<number>();
+    rawSlots.forEach(s => {
+      if (s.hour > 0) hourSet.add(s.hour);
+    });
+    return Array.from(hourSet).sort((a, b) => a - b);
+  }, [rawSlots]);
+
   /** Build day → hour → slot[] map for the selected class only */
   const timetableData = useMemo<TimetableData>(() => {
     const grid: TimetableData = {};
     days.forEach((day) => {
       grid[day] = {};
-      hours.forEach((hour) => {
+      dynamicHours.forEach((hour) => {
         grid[day][hour] = [];
       });
     });
@@ -183,7 +205,7 @@ export default function Timetable() {
   }, [rawSlots, selectedClassKey]);
 
   const hasTimetableData = days.some((day) =>
-    hours.some((hour) => timetableData[day]?.[hour]?.length > 0)
+    dynamicHours.some((hour) => timetableData[day]?.[hour]?.length > 0)
   );
 
   const selectedClassInfo = classOptions.find((c) => c.key === selectedClassKey);
@@ -304,8 +326,8 @@ export default function Timetable() {
                 </p>
               </div>
             ) : (
-              <div className="w-full overflow-x-auto pb-2 scrollbar-thin">
-                <table className="w-full border-collapse text-sm min-w-[750px]">
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse text-sm">
                   <thead>
                     <tr className="bg-muted/50">
                       <th className="border border-border p-3 text-left font-semibold min-w-[110px] text-foreground">
@@ -322,14 +344,20 @@ export default function Timetable() {
                     </tr>
                   </thead>
                   <tbody>
-                    {hours.map((hour) => (
+                    {dynamicHours.map((hour, index) => (
                       <tr key={hour} className="hover:bg-muted/20 transition-colors">
                         {/* Time column */}
                         <td className="border border-border p-2 bg-muted/30 text-sm">
                           <div className="flex flex-col gap-0.5">
-                            <span className="font-medium text-foreground">Hour {hour}</span>
+                            <span className="font-medium text-foreground">Period {getRomanNumeral(index + 1)}</span>
                             <span className="text-xs text-muted-foreground">
-                              {formatHourForDisplay(hour)}
+                              {(() => {
+                                const slotWithTime = rawSlots.find(s => s.hour === hour && s.startTime && s.endTime);
+                                if (slotWithTime) {
+                                  return `${formatTimeTo12h(slotWithTime.startTime)} - ${formatTimeTo12h(slotWithTime.endTime)}`;
+                                }
+                                return "Time not set";
+                              })()}
                             </span>
                           </div>
                         </td>
