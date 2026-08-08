@@ -8,6 +8,7 @@ import {
   getCourseLessonPlans,
   createCourseLessonPlan,
   createCourseLessonPlanBulk,
+  deleteCourseLessonPlanBulk,
   getPendingCourseLessonPlans,
   getCourseLessonPlanProgress,
   uploadCourseFile,
@@ -52,6 +53,9 @@ router.post('/course-plans', createCourseLessonPlan);
 
 // Create/update lesson plans in bulk (from form submission)
 router.post('/course-plans/bulk', createCourseLessonPlanBulk);
+
+// Delete entirely a course plan for a class
+router.delete('/course-plans/bulk', deleteCourseLessonPlanBulk);
 
 // Get pending topics for attendance marking
 router.get('/course-plans/pending', getPendingCourseLessonPlans);

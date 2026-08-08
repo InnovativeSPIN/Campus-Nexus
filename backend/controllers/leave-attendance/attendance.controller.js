@@ -84,7 +84,7 @@ export const getAllAttendance = asyncHandler(async (req, res, next) => {
           as: 'student',
           required: true, // INNER JOIN to exclude students who changed classes
           where: { classId: classId }, 
-          attributes: ['id', 'studentId', 'firstName', 'lastName', 'rollNumber']
+          attributes: ['id', 'studentId', 'firstName', 'lastName', 'rollNumber', 'photo']
         }
       ],
       order: [['period_number', 'ASC'], ['student_id', 'ASC']]
@@ -169,7 +169,7 @@ export const getAllAttendance = asyncHandler(async (req, res, next) => {
   const attendance = await StudentAttendance.findAll({
     where,
     include: [
-      { model: Student, as: 'student', attributes: ['id', 'studentId', 'firstName', 'lastName', 'rollNumber'] },
+      { model: Student, as: 'student', attributes: ['id', 'studentId', 'firstName', 'lastName', 'rollNumber', 'photo'] },
       { model: Subject, as: 'subject', attributes: ['subject_name', 'subject_code'] },
       { model: ClassModel, as: 'class', attributes: ['id', 'name', 'section'] },
       { model: Faculty, as: 'faculty', attributes: ['Name'] }
@@ -204,7 +204,7 @@ export const getAttendance = asyncHandler(async (req, res, next) => {
       {
         model: AttendanceStudent,
         as: 'students',
-        include: [{ model: Student, as: 'student', attributes: ['firstName', 'lastName', 'rollNumber', 'studentId'] }]
+        include: [{ model: Student, as: 'student', attributes: ['firstName', 'lastName', 'rollNumber', 'studentId', 'photo'] }]
       }
     ]
   });
@@ -370,8 +370,7 @@ export const markAttendance = asyncHandler(async (req, res, next) => {
     }
   });
 
-  // 2. Insert all students' attendance records
-  const payloads = [];
+  // 2. Upsert each student's attendance record
   const results = [];
   for (const student of students) {
     const studentId = parseInt(student.studentId ?? student.student ?? student.id, 10);
@@ -381,7 +380,18 @@ export const markAttendance = asyncHandler(async (req, res, next) => {
     }
 
     const status = normalizeAttendanceStatus(student.status);
-    payloads.push({
+
+    const existing = await StudentAttendance.findOne({
+      where: {
+        student_id: studentId,
+        attendance_date: attendanceDateStr,
+        period_slot_id: periodSlotId,
+        subject_id: subjectId,
+      },
+      attributes: ['id'],
+    });
+
+    const payload = {
       student_id: studentId,
       class_id: classId,
       subject_id: subjectId,
@@ -400,19 +410,29 @@ export const markAttendance = asyncHandler(async (req, res, next) => {
       marked_at: new Date(),
       remarks: student.remarks || null,
       lesson_plan_id: lessonPlanId,
-    });
-    results.push({ studentId, status, created: true });
-  }
+    };
 
-  try {
-    if (payloads.length > 0) {
-      await StudentAttendance.bulkCreate(payloads);
+    if (existing) {
+      payload.is_modified = 1;
+      payload.modified_by = markedBy;
+      payload.modified_at = new Date();
     }
-  } catch (err) {
-    console.error('[markAttendance] Failed to bulk insert student attendance', {
-      classId, subjectId, periodSlotId, attendanceDate: attendanceDateStr, error: err.message || err,
-    });
-    return next(new ErrorResponse('Failed to save attendance for student records', 500));
+
+    try {
+      await StudentAttendance.upsert(payload);
+      results.push({ studentId, status, created: !existing });
+    } catch (err) {
+      console.error('[markAttendance] Failed to upsert student attendance', {
+        studentId,
+        classId,
+        subjectId,
+        periodSlotId,
+        attendanceDate: attendanceDateStr,
+        payload,
+        error: err.message || err,
+      });
+      return next(new ErrorResponse('Failed to save attendance for student records', 500));
+    }
   }
 
   res.status(201).json({
@@ -536,7 +556,7 @@ export const getAttendanceByClass = asyncHandler(async (req, res, next) => {
           as: 'student', 
           required: true,
           where: { classId: req.params.classId },
-          attributes: ['firstName', 'lastName', 'rollNumber'] 
+          attributes: ['firstName', 'lastName', 'rollNumber', 'photo'] 
         }]
       }
     ],
@@ -845,14 +865,14 @@ export const getFacultyTimetableSlots = asyncHandler(async (req, res, next) => {
           required: true,
           include: [
             { model: ClassModel, as: 'class', attributes: ['id', 'name', 'section'] }
-          ],
-          attributes: ['id', 'class_id', 'academic_year', 'semester', 'batch', 'break_period_ids']
+          ]
         },
         { model: Subject, as: 'subject', attributes: ['id', 'subject_code', 'subject_name'] },
         {
           model: PeriodSlot,
           as: 'period',
           attributes: ['id', 'period_label', 'start_time', 'end_time', 'slot_type'],
+          where: { slot_type: 'teaching' },
           required: true
         },
       ],
@@ -869,35 +889,6 @@ export const getFacultyTimetableSlots = asyncHandler(async (req, res, next) => {
       if (!uniqueSlots[key] && slot.master && slot.master.class && slot.period) {
         const classId = slot.master.class_id;
 
-        let breakPeriodIds = [3, 5, 8];
-        try {
-          breakPeriodIds = typeof slot.master.break_period_ids === 'string'
-            ? JSON.parse(slot.master.break_period_ids)
-            : (slot.master.break_period_ids || [3, 5, 8]);
-        } catch (e) { /* use default */ }
-
-        const breakIdsArray = Array.isArray(breakPeriodIds) ? breakPeriodIds.map(Number) : [3, 5, 8];
-
-        // Compute dynamic label map using Roman numerals for teaching periods
-        const ROMAN_NUMERALS = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"];
-        let teachingCount = 0;
-        const periodLabelMap = {};
-        for (let id = 1; id <= 10; id++) {
-          const isSlotBreak = breakIdsArray.includes(id);
-          if (isSlotBreak) {
-            if (id === 3) periodLabelMap[id] = "Break";
-            else if (id === 5 || id === 6) periodLabelMap[id] = "Lunch";
-            else periodLabelMap[id] = "Break";
-          } else {
-            periodLabelMap[id] = ROMAN_NUMERALS[teachingCount] || `Period ${id}`;
-            teachingCount++;
-          }
-        }
-
-        const periodId = slot.period?.id;
-        const isBreak = breakIdsArray.includes(periodId);
-        const dynamicLabel = periodLabelMap[periodId] || slot.period?.period_label;
-
         uniqueSlots[key] = {
           slotId: slot.id,
           masterSlotId: slot.id,
@@ -911,13 +902,13 @@ export const getFacultyTimetableSlots = asyncHandler(async (req, res, next) => {
           subjectId: slot.subject?.id,
           subjectCode: slot.subject?.subject_code,
           subjectName: slot.subject?.subject_name,
-          sessionType: isBreak ? 'break' : slot.session_type,
+          sessionType: slot.session_type,
           isLabSession: slot.is_lab_session,
           labGroup: slot.lab_group,
-          periodId: periodId,
-          periodLabel: dynamicLabel,
-          startTime: slot.start_time || slot.period?.start_time,
-          endTime: slot.end_time || slot.period?.end_time,
+          periodId: slot.period?.id,
+          periodLabel: slot.period?.period_label,
+          startTime: slot.period?.start_time,
+          endTime: slot.period?.end_time,
           dayOfWeek: slot.day,
         };
 
@@ -942,13 +933,7 @@ export const getFacultyTimetableSlots = asyncHandler(async (req, res, next) => {
         order: [['rollNumber', 'ASC']],
         raw: true,
       });
-      // Normalize photo URL so frontend can display it properly
-      classStudents[classStrId] = students.map(s => ({
-        ...s,
-        photo: s.photo && s.photo.startsWith('/') ? s.photo
-             : s.photo && s.photo !== 'default-student.png' ? `/uploads/${s.photo}`
-             : null,
-      }));
+      classStudents[classStrId] = students;
     }
 
     res.status(200).json({
@@ -1004,67 +989,34 @@ export const getDepartmentAdminClassSlots = asyncHandler(async (req, res, next) 
             { model: Subject, as: 'subject', attributes: ['id', 'subject_code', 'subject_name'] },
             { model: PeriodSlot, as: 'period', attributes: ['id', 'period_label', 'start_time', 'end_time'] },
           ],
-          attributes: ['id', 'day', 'subject_id', 'period_slot_id', 'faculty_id', 'start_time', 'end_time', 'session_type', 'is_lab_session', 'lab_group'],
+          attributes: ['id', 'day', 'subject_id', 'period_slot_id', 'faculty_id'],
         },
         { model: ClassModel, as: 'class', attributes: ['id', 'name', 'section'] },
       ],
-      attributes: ['id', 'class_id', 'academic_year', 'semester', 'batch', 'break_period_ids'],
+      attributes: ['id', 'class_id', 'academic_year'],
       raw: false,
     });
 
     // Format response removing duplicates
     const uniqueSlots = {};
     timetableMasters.forEach(master => {
-      let breakPeriodIds = [3, 5, 8];
-      try {
-        breakPeriodIds = typeof master.break_period_ids === 'string'
-          ? JSON.parse(master.break_period_ids)
-          : (master.break_period_ids || [3, 5, 8]);
-      } catch (e) { /* use default */ }
-
-      const breakIdsArray = Array.isArray(breakPeriodIds) ? breakPeriodIds.map(Number) : [3, 5, 8];
-
-      // Compute dynamic label map using Roman numerals for teaching periods
-      const ROMAN_NUMERALS = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"];
-      let teachingCount = 0;
-      const periodLabelMap = {};
-      for (let id = 1; id <= 10; id++) {
-        const isSlotBreak = breakIdsArray.includes(id);
-        if (isSlotBreak) {
-          if (id === 3) periodLabelMap[id] = "Break";
-          else if (id === 5 || id === 6) periodLabelMap[id] = "Lunch";
-          else periodLabelMap[id] = "Break";
-        } else {
-          periodLabelMap[id] = ROMAN_NUMERALS[teachingCount] || `Period ${id}`;
-          teachingCount++;
-        }
-      }
-
       master.slots.forEach(slot => {
         const key = `${slot.subject_id}_${slot.period_slot_id}`;
         if (!uniqueSlots[key]) {
-          const isBreak = breakIdsArray.includes(slot.period_slot_id);
-          const dynamicLabel = periodLabelMap[slot.period_slot_id] || (slot.period && slot.period.period_label);
-
           uniqueSlots[key] = {
             slotId: `${slot.subject_id}_${slot.period_slot_id}`,
             classSectionId: master.class_id,
             className: master.class?.name || '',
             classSection: master.class?.section || '',
             academicYear: master.academic_year,
-            semester: master.semester,
-            batch: master.batch,
             facultyId: slot.faculty_id,
             subjectId: slot.subject?.id,
             subjectCode: slot.subject?.subject_code,
             subjectName: slot.subject?.subject_name,
-            sessionType: isBreak ? 'break' : slot.session_type,
-            isLabSession: slot.is_lab_session,
-            labGroup: slot.lab_group,
-            periodId: slot.period_slot_id,
-            periodLabel: dynamicLabel,
-            startTime: slot.start_time || (slot.period && slot.period.start_time),
-            endTime: slot.end_time || (slot.period && slot.period.end_time),
+            periodId: slot.period?.id,
+            periodLabel: slot.period?.period_label,
+            startTime: slot.period?.start_time,
+            endTime: slot.period?.end_time,
             dayOfWeek: slot.day,
           };
         }
@@ -1087,13 +1039,7 @@ export const getDepartmentAdminClassSlots = asyncHandler(async (req, res, next) 
         order: [['rollNumber', 'ASC']],
         raw: true,
       });
-      // Normalize photo URL so frontend can display it properly
-      classStudents[classId] = students.map(s => ({
-        ...s,
-        photo: s.photo && s.photo.startsWith('/') ? s.photo
-             : s.photo && s.photo !== 'default-student.png' ? `/uploads/${s.photo}`
-             : null,
-      }));
+      classStudents[classId] = students;
     }
 
     res.status(200).json({

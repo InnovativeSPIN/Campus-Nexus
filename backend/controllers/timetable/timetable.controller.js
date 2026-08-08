@@ -610,7 +610,18 @@ export const getFacultyByYear = asyncHandler(async (req, res, next) => {
     const placeholders = uniqueDepts.map(() => '?').join(',');
     const replacements = [yearNum, ...uniqueDepts];
 
-    const sql = `SELECT DISTINCT facultyId, facultyName FROM timetable WHERE year = ? AND department IN (${placeholders}) ORDER BY facultyName ASC`;
+    const sql = `
+      SELECT DISTINCT 
+        f.id AS facultyId, 
+        f.Name AS facultyName 
+      FROM timetable_master_slots s
+      INNER JOIN timetable_master tm ON s.master_id = tm.id
+      INNER JOIN classes c ON tm.class_id = c.id
+      INNER JOIN faculty_profiles f ON s.faculty_id = f.faculty_id
+      WHERE CEIL(c.semester / 2) = ? 
+      AND tm.department_id IN (${placeholders}) 
+      ORDER BY f.Name ASC
+    `;
     const faculty = await sequelize.query(sql, { replacements, type: QueryTypes.SELECT });
 
     console.log(`[TIMETABLE] Found ${faculty.length} faculty for year ${year}`);
@@ -643,7 +654,6 @@ export const getFacultyTimetable = asyncHandler(async (req, res, next) => {
         s.day,
         s.period_slot_id as hour,
         p.period_label,
-        tm.break_period_ids,
         COALESCE(sub.subject_name, 'Unknown') as subject,
         COALESCE(sub.subject_code, 'N/A') as subject_code,
         c.section,
@@ -682,54 +692,6 @@ export const getFacultyTimetable = asyncHandler(async (req, res, next) => {
       type: QueryTypes.SELECT
     });
 
-    const processedTimetable = timetable.map(slot => {
-      let breakPeriodIds = [3, 5, 8];
-      try {
-        breakPeriodIds = typeof slot.break_period_ids === 'string'
-          ? JSON.parse(slot.break_period_ids)
-          : (slot.break_period_ids || [3, 5, 8]);
-      } catch (e) { /* use default */ }
-
-      const breakIdsArray = Array.isArray(breakPeriodIds) ? breakPeriodIds.map(Number) : [3, 5, 8];
-
-      const ROMAN_NUMERALS = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"];
-      let teachingCount = 0;
-      const periodLabelMap = {};
-      for (let id = 1; id <= 10; id++) {
-        const isSlotBreak = breakIdsArray.includes(id);
-        if (isSlotBreak) {
-          if (id === 3) periodLabelMap[id] = "Break";
-          else if (id === 5 || id === 6) periodLabelMap[id] = "Lunch";
-          else periodLabelMap[id] = "Break";
-        } else {
-          periodLabelMap[id] = ROMAN_NUMERALS[teachingCount] || `Period ${id}`;
-          teachingCount++;
-        }
-      }
-
-      const h = parseInt(slot.hour, 10);
-      const isBreak = breakIdsArray.includes(h);
-      const dynamicLabel = periodLabelMap[h] || slot.period_label;
-
-      return {
-        id: slot.id,
-        day: slot.day,
-        hour: slot.hour,
-        period_label: dynamicLabel,
-        subject: slot.subject,
-        subject_code: slot.subject_code,
-        section: slot.section,
-        department: slot.department,
-        year: slot.year,
-        academicYear: slot.academicYear,
-        faculty_name: slot.faculty_name,
-        sessionType: isBreak ? 'break' : slot.sessionType,
-        room: slot.room,
-        start_time: slot.start_time,
-        end_time: slot.end_time
-      };
-    });
-
     // Allow empty timetable for department admins who may not have classes assigned yet
     console.log(`[TIMETABLE] Found ${timetable.length} slots for faculty ${facultyId}`);
 
@@ -740,8 +702,8 @@ export const getFacultyTimetable = asyncHandler(async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      count: processedTimetable.length,
-      timetable: processedTimetable
+      count: timetable.length,
+      timetable: timetable
     });
   } catch (err) {
     console.error('[TIMETABLE] getFacultyTimetable error:', err);
@@ -791,19 +753,38 @@ export const getTimetableByDepartmentAndYear = asyncHandler(async (req, res, nex
     const placeholders = uniqueDepts.map(() => '?').join(',');
     const replacements = [...uniqueDepts, parseInt(year, 10)];
 
-    let sql = `SELECT * FROM timetable WHERE department IN (${placeholders}) AND year = ?`;
+    let sql = `
+      SELECT 
+        s.*, 
+        s.period_slot_id as hour,
+        tm.academic_year as academicYear, 
+        c.section, 
+        c.semester, 
+        CEIL(c.semester / 2) as year,
+        fp.Name as facultyName,
+        sub.subject_name as subject,
+        p.start_time as p_start_time,
+        p.end_time as p_end_time
+      FROM timetable_master_slots s
+      INNER JOIN timetable_master tm ON s.master_id = tm.id
+      INNER JOIN classes c ON tm.class_id = c.id
+      LEFT JOIN faculty_profiles fp ON s.faculty_id = fp.id
+      LEFT JOIN subjects sub ON s.subject_id = sub.id
+      LEFT JOIN period_slots p ON s.period_slot_id = p.id
+      WHERE tm.department_id IN (${placeholders}) AND CEIL(c.semester / 2) = ?
+    `;
 
     if (section) {
-      sql += ` AND section = ?`;
+      sql += ` AND c.section = ?`;
       replacements.push(section);
     }
 
     if (academicYear) {
-      sql += ` AND academicYear = ?`;
+      sql += ` AND tm.academic_year = ?`;
       replacements.push(academicYear);
     }
 
-    sql += ` ORDER BY CASE day WHEN 'Monday' THEN 1 WHEN 'Tuesday' THEN 2 WHEN 'Wednesday' THEN 3 WHEN 'Thursday' THEN 4 WHEN 'Friday' THEN 5 WHEN 'Saturday' THEN 6 WHEN 'Sunday' THEN 7 END ASC, hour ASC`;
+    sql += ` ORDER BY CASE s.day WHEN 'Monday' THEN 1 WHEN 'Tuesday' THEN 2 WHEN 'Wednesday' THEN 3 WHEN 'Thursday' THEN 4 WHEN 'Friday' THEN 5 WHEN 'Saturday' THEN 6 WHEN 'Sunday' THEN 7 END ASC, s.period_slot_id ASC`;
 
     const timetable = await sequelize.query(sql, { replacements, type: QueryTypes.SELECT });
 

@@ -516,6 +516,28 @@ export const createCourseLessonPlanBulk = asyncHandler(async (req, res, next) =>
     // academic_year format mismatches between old saved records (e.g. "2025-2026") and
     // new submissions (e.g. "2024-25") — the old destroy would find 0 rows to delete,
     // then bulkCreate would hit the unique index and crash with a 500.
+    // First, find the IDs of the course lesson plans we're about to delete
+    const existingPlans = await CourseLessonPlan.findAll({
+      where: {
+        faculty_id: facultyId,
+        subject_id: subjectIdNum,
+        class_id: classIdNum,
+      },
+      attributes: ['id']
+    });
+
+    if (existingPlans.length > 0) {
+      const planIds = existingPlans.map(p => p.id);
+      
+      // Delete child notifications first to avoid foreign key constraint error
+      if (models.CourseLessonPlanNotification) {
+        await models.CourseLessonPlanNotification.destroy({
+          where: { course_lesson_plan_id: { [Op.in]: planIds } }
+        }).catch(e => console.warn('Could not delete course plan notifications:', e.message));
+      }
+      console.log(`[createCourseLessonPlanBulk] Deleted notifications for ${planIds.length} existing plans`);
+    }
+
     const deletedCount = await CourseLessonPlan.destroy({
       where: {
         faculty_id: facultyId,
@@ -645,6 +667,62 @@ export const createCourseLessonPlanBulk = asyncHandler(async (req, res, next) =>
       stack: error.stack?.split('\n').slice(0, 5).join('\n'),
     });
     return next(new ErrorResponse(`Error creating lesson plans: ${error.original?.message || error.message}`, 500));
+  }
+});
+
+/**
+ * @desc    Delete entire course lesson plan for a subject and class
+ * @route   DELETE /api/v1/faculty/academics/course-plans/bulk
+ * @access  Private (Faculty, Department Admin)
+ */
+export const deleteCourseLessonPlanBulk = asyncHandler(async (req, res, next) => {
+  const facultyId = req.user.faculty_id || req.user.id;
+  const { subjectId, classId } = req.query;
+
+  const subjectIdNum = parseInt(subjectId, 10);
+  const classIdNum = parseInt(classId, 10);
+
+  if (isNaN(subjectIdNum) || subjectIdNum <= 0 || isNaN(classIdNum) || classIdNum <= 0) {
+    return next(new ErrorResponse('Invalid subjectId or classId', 400));
+  }
+
+  try {
+    const existingPlans = await CourseLessonPlan.findAll({
+      where: {
+        faculty_id: facultyId,
+        subject_id: subjectIdNum,
+        class_id: classIdNum,
+      },
+      attributes: ['id']
+    });
+
+    if (existingPlans.length > 0) {
+      const planIds = existingPlans.map(p => p.id);
+      
+      // Delete child notifications first to avoid foreign key constraint error
+      if (models.CourseLessonPlanNotification) {
+        await models.CourseLessonPlanNotification.destroy({
+          where: { course_lesson_plan_id: { [Op.in]: planIds } }
+        }).catch(e => console.warn('Could not delete course plan notifications:', e.message));
+      }
+    }
+
+    const deletedCount = await CourseLessonPlan.destroy({
+      where: {
+        faculty_id: facultyId,
+        subject_id: subjectIdNum,
+        class_id: classIdNum,
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      count: deletedCount,
+      message: 'Course plan deleted successfully'
+    });
+  } catch (error) {
+    console.error('[deleteCourseLessonPlanBulk] Error:', error);
+    return next(new ErrorResponse(`Error deleting lesson plan: ${error.message}`, 500));
   }
 });
 
@@ -1314,8 +1392,6 @@ export const getTodaySchedule = asyncHandler(async (req, res, next) => {
       const master = slot.master || {};
       const classData = master.class || {};
       const classId = master.class_id;
-      const startTime = slot.start_time || period.start_time;
-      const endTime = slot.end_time || period.end_time;
 
       return {
         id: slot.id,
@@ -1326,8 +1402,8 @@ export const getTodaySchedule = asyncHandler(async (req, res, next) => {
         room: slot.room || 'TBD',
         day: slot.day,
         timeSlot: {
-          start: startTime ? (typeof startTime === 'string' ? startTime.substring(0, 5) : new Date(startTime).toTimeString().substring(0, 5)) : '00:00',
-          end: endTime ? (typeof endTime === 'string' ? endTime.substring(0, 5) : new Date(endTime).toTimeString().substring(0, 5)) : '00:00'
+          start: period.start_time ? (typeof period.start_time === 'string' ? period.start_time.substring(0, 5) : new Date(period.start_time).toTimeString().substring(0, 5)) : '00:00',
+          end: period.end_time ? (typeof period.end_time === 'string' ? period.end_time.substring(0, 5) : new Date(period.end_time).toTimeString().substring(0, 5)) : '00:00'
         },
         type: slot.session_type || 'lecture',
         studentsCount: classId ? (studentCountsByClass[classId] || 0) : 0,

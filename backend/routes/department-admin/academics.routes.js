@@ -8,6 +8,7 @@ import {
   requestCourseFileRevision,
   getApprovalStatistics,
   getPendingCourseLessonPlanApprovals,
+  getApprovedCourseLessonPlanHistory,
   approveCourseLessonPlan,
   rejectCourseLessonPlan,
   getNotifications
@@ -48,6 +49,9 @@ router.post('/approvals/:id/revision', requestCourseFileRevision);
 
 // Get pending course lesson plan approvals
 router.get('/course-plans/pending', getPendingCourseLessonPlanApprovals);
+
+// Get approved course lesson plan history
+router.get('/course-plans/history', getApprovedCourseLessonPlanHistory);
 
 // Approve course lesson plan batch
 router.post('/course-plans/batch/:batchId/approve', approveCourseLessonPlan);
