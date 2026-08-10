@@ -74,7 +74,7 @@ export function AppSidebar({
   };
 
   const getInitials = (name: string) => {
-    return name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'DA';
+    return name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'HOD';
   };
 
   return (
@@ -111,15 +111,17 @@ export function AppSidebar({
                   }}
                 />
                 <div className="hidden w-12 h-12 rounded-full bg-gradient-to-br from-sidebar-accent to-secondary flex items-center justify-center flex-shrink-0 text-white font-bold text-sm border-2 border-white">
-                  {getInitials(user?.name || 'DA')}
+                  {getInitials(user?.name || 'HOD')}
                 </div>
                 {/* Name and Role */}
                 <div className="flex flex-col ml-3">
                   <span className="font-serif font-bold text-white text-lg whitespace-nowrap">
-                    {user?.name || 'Department Admin'}
+                    {user?.name || 'Head of Department'}
                   </span>
                   <span className="text-[10px] text-white/70 uppercase tracking-widest font-semibold mt-1">
-                    {user?.role?.replace('-', ' ') || 'HEAD OF THE DEPARTMENT'}
+                    {user?.role === 'department-admin' || user?.role === 'department_admin' 
+                      ? 'HEAD OF THE DEPARTMENT' 
+                      : (user?.role ? user.role.replace('-', ' ') : 'HEAD OF THE DEPARTMENT')}
                   </span>
                   <span className="text-[10px] text-white/50 uppercase tracking-wider">
                     {(() => {
