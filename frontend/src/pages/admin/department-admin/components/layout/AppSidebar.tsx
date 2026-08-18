@@ -119,9 +119,9 @@ export function AppSidebar({
                     {user?.name || 'Head of Department'}
                   </span>
                   <span className="text-[10px] text-white/70 uppercase tracking-widest font-semibold mt-1">
-                    {user?.role === 'department-admin' || user?.role === 'department_admin' 
+                    {user?.role === 'department-admin' || !user?.role
                       ? 'HEAD OF THE DEPARTMENT' 
-                      : (user?.role ? user.role.replace('-', ' ') : 'HEAD OF THE DEPARTMENT')}
+                      : user.role.replace('-', ' ')}
                   </span>
                   <span className="text-[10px] text-white/50 uppercase tracking-wider">
                     {(() => {
