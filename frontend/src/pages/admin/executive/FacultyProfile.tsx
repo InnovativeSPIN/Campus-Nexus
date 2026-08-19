@@ -1,3 +1,4 @@
+import { apiFetch } from '@/lib/apiFetch';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { AdminLayout } from '@/pages/admin/executive/components/layout/AdminLayout';
@@ -23,7 +24,6 @@ import {
 } from '@/pages/admin/executive/components/ui/select';
 import { Label } from '@/pages/admin/executive/components/ui/label';
 import { normalizeImageUrl } from '@/utils/imageUrl';
-
 export default function ExecutiveFacultyProfile() {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -37,7 +37,7 @@ export default function ExecutiveFacultyProfile() {
         if (!id) return;
         try {
           setLoading(true);
-          const res = await fetch(`/api/v1/faculty/${id}`);
+          const res = await apiFetch(`/api/v1/faculty/${id}`);
           if (!res.ok) throw new Error(`server returned ${res.status}`);
           const json = await res.json();
           if (json.success && json.data) {
@@ -58,7 +58,7 @@ export default function ExecutiveFacultyProfile() {
       
       const fetchDepartments = async () => {
         try {
-          const res = await fetch('/api/v1/departments');
+          const res = await apiFetch('/api/v1/departments');
           const json = await res.json();
           if (json.success) {
             setDepartments(json.data);
@@ -254,9 +254,9 @@ export default function ExecutiveFacultyProfile() {
                     setEditModalOpen(false);
                     if (id) {
                       // Refresh faculty data
-                      fetch(`/api/v1/faculty/${id}`)
-                        .then(res => res.json())
-                        .then(json => {
+                      apiFetch(`/api/v1/faculty/${id}`)
+                        .then((res: Response) => res.json())
+                        .then((json: any) => {
                           if (json.success && json.data) {
                             const f = json.data;
                             f.name = f.Name || '';
@@ -265,7 +265,7 @@ export default function ExecutiveFacultyProfile() {
                             toast.success('Faculty updated successfully');
                           }
                         })
-                        .catch(err => {
+                        .catch((err: unknown) => {
                           console.error('Failed to refresh faculty', err);
                           toast.error('Failed to refresh faculty data');
                         });
@@ -306,7 +306,7 @@ function EditFacultyDialog({ open, onOpenChange, faculty, departments, onSuccess
 
     try {
       setSubmitting(true);
-      const response = await fetch(`/api/v1/faculty/${faculty.id}`, {
+      const response = await apiFetch(`/api/v1/faculty/${faculty.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),

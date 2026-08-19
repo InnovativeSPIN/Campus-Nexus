@@ -96,7 +96,7 @@ export default function ExecutiveFaculty() {
         </div>
 
         <DataTable
-          data={filteredFaculty.map(f => ({ ...f, id: (f.faculty_id ?? 0).toString() }))}
+          data={filteredFaculty.map((f, index) => ({ ...f, id: (f.faculty_id ?? index).toString() }))}
           columns={columns}
           title="All Faculty"
           searchPlaceholder="Search by Name..."

@@ -16,6 +16,8 @@ import {
   Home,
   Menu,
   X,
+  ShieldCheck,
+  Shield,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -61,12 +63,14 @@ export function ExecutiveAdminSidebar({
   const navItems: NavItem[] = [
     { label: 'Dashboard', path: '/admin/executive', icon: <LayoutDashboard className="w-5 h-5" /> },
     { label: 'Academic Performance', path: '/admin/executive/academic-performance', icon: <TrendingUp className="w-5 h-5" /> },
-    { label: 'Time Table', path: '/admin/superadmin/timetable', icon: <Calendar className="w-5 h-5" /> },
+    { label: 'Time Table', path: '/admin/executive/timetable', icon: <Calendar className="w-5 h-5" /> },
     { label: 'Students', path: '/admin/executive/students', icon: <GraduationCap className="w-5 h-5" /> },
     { label: 'Faculty', path: '/admin/executive/faculty', icon: <Users className="w-5 h-5" /> },
     { label: 'Leave Requests', path: '/admin/executive/leave-requests', icon: <Calendar className="w-5 h-5" /> },
     { label: 'Announcements', path: '/admin/executive/announcements', icon: <Bell className="w-5 h-5" /> },
     { label: 'Reports', path: '/admin/executive/reports', icon: <FileText className="w-5 h-5" /> },
+    { label: 'Audit & Reports', path: '/admin/executive/audit-and-reports', icon: <ShieldCheck className="w-5 h-5" /> },
+    { label: 'Backup & Security', path: '/admin/executive/backup-security', icon: <Shield className="w-5 h-5" /> },
   ];
 
   const handleLogout = () => {
@@ -107,6 +111,8 @@ export function ExecutiveAdminSidebar({
         <button 
           onClick={() => setIsMobileMenuOpen?.(false)}
           className="p-2 text-white/70 hover:text-white transition-colors"
+          title="Close Menu"
+          aria-label="Close Menu"
         >
           <X className="w-6 h-6" />
         </button>
@@ -162,7 +168,7 @@ export function ExecutiveAdminSidebar({
                   className="flex-1 overflow-hidden"
                 >
                   <p className="text-white font-semibold text-sm truncate">{user.name}</p>
-                  <p className="text-white/60 text-xs uppercase tracking-wider truncate">Principal & CEO</p>
+                  <p className="text-white/60 text-xs uppercase tracking-wider truncate">{user?.name?.toLowerCase().includes('vice') ? 'Vice Principal' : 'Principal & CEO'}</p>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -175,21 +181,20 @@ export function ExecutiveAdminSidebar({
           {navItems.map((item, index) => {
             const active = isActive(item.path);
             return (
-              <motion.li
-                key={item.path}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.05 }}
-              >
+              <li key={item.path}>
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                >
                 <button
                   type="button"
                   onClick={() => {
                     navigate(item.path);
                     setIsMobileMenuOpen?.(false);
                   }}
-                  style={{ pointerEvents: 'auto' }}
                   className={cn(
-                    'flex w-full items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-all duration-200 group relative cursor-pointer overflow-hidden',
+                    'flex w-full items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-all duration-200 group relative cursor-pointer overflow-hidden pointer-events-auto',
                     active
                       ? 'bg-gradient-to-r from-sidebar-accent to-sidebar-accent/80 text-white shadow-lg shadow-black/20 border-l-4 border-secondary'
                       : 'text-white/70 hover:bg-sidebar-accent/30 hover:text-white'
@@ -223,7 +228,8 @@ export function ExecutiveAdminSidebar({
                     )}
                   </AnimatePresence>
                 </button>
-              </motion.li>
+                </motion.div>
+              </li>
             );
           })}
         </ul>
@@ -233,9 +239,8 @@ export function ExecutiveAdminSidebar({
         <button
           type="button"
           onClick={handleLogout}
-          style={{ pointerEvents: 'auto' }}
           className={cn(
-            "w-full flex items-center justify-center gap-3 px-3 py-3 rounded-lg transition-all font-bold text-sm cursor-pointer",
+            "w-full flex items-center justify-center gap-3 px-3 py-3 rounded-lg transition-all font-bold text-sm cursor-pointer pointer-events-auto",
             "bg-destructive/10 text-destructive border border-destructive/20 hover:bg-destructive hover:text-white"
           )}
         >
@@ -259,9 +264,8 @@ export function ExecutiveAdminSidebar({
           <button
             type="button"
             onClick={() => setCollapsed?.(!collapsed)}
-            style={{ pointerEvents: 'auto' }}
             className={cn(
-              "w-full flex items-center justify-center gap-3 px-3 py-3 rounded-lg transition-all border font-bold text-sm cursor-pointer",
+              "w-full flex items-center justify-center gap-3 px-3 py-3 rounded-lg transition-all border font-bold text-sm cursor-pointer pointer-events-auto",
               collapsed
                 ? 'bg-sidebar-accent/40 text-white border-sidebar-accent/60 hover:bg-sidebar-accent/60'
                 : 'bg-sidebar-accent/20 text-white/80 border-sidebar-accent/30 hover:bg-sidebar-accent/40 hover:text-white'

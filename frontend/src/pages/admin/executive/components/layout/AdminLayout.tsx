@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { ExecutiveAdminSidebar } from './ExecutiveAdminSidebar';
 import { IntegratedNotificationBell } from '@/components/common/IntegratedNotificationBell';
 import { LeaveNotificationBell } from '@/components/common/LeaveNotificationBell';
+import { Toaster } from '@/pages/admin/executive/components/ui/toaster';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X, GraduationCap } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -82,7 +83,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           </div>
         </header>
 
-        <main className="flex-1 p-4 md:p-6 lg:p-8 max-w-7xl mx-auto w-full">
+        <main className="flex-1 p-4 md:p-6 lg:p-8 w-full">
           {children}
         </main>
       </div>
@@ -99,6 +100,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           />
         )}
       </AnimatePresence>
+      <Toaster />
     </div>
   );
 }

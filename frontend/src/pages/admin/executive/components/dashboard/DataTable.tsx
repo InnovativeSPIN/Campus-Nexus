@@ -96,10 +96,10 @@ export function DataTable<T extends { id: string }>({
                 </TableCell>
               </TableRow>
             ) : (
-              filteredData.map((item) => (
-                <TableRow key={item.id} className="hover:bg-muted/30">
+              filteredData.map((item, index) => (
+                <TableRow key={item.id || index} className="hover:bg-muted/30">
                   {columns.map((column) => (
-                    <TableCell key={`${item.id}-${String(column.key)}`}>
+                    <TableCell key={`${item.id || index}-${String(column.key)}`}>
                       {column.render
                         ? column.render(item)
                         : String((item as Record<string, unknown>)[column.key as string] ?? '')}

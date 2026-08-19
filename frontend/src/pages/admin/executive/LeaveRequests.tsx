@@ -1,3 +1,4 @@
+import { apiFetch } from '@/lib/apiFetch';
 import { useState, useEffect } from 'react';
 import { AdminLayout } from '@/pages/admin/executive/components/layout/AdminLayout';
 import { motion } from 'framer-motion';
@@ -15,7 +16,6 @@ import { Button } from '@/pages/admin/executive/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/pages/admin/executive/lib/utils';
 import { toast } from '@/components/ui/sonner';
-
 interface Leave {
     id: number;
     leaveType: string;
@@ -49,7 +49,7 @@ export default function LeaveRequests() {
         try {
             setLoading(true);
             const token = localStorage.getItem("authToken");
-            const response = await fetch("/api/v1/leave/pending-approvals", {
+            const response = await apiFetch("/api/v1/leave/pending-approvals", {
                 headers: token ? { Authorization: `Bearer ${token}` } : {},
             });
             const result = await response.json();
@@ -68,7 +68,7 @@ export default function LeaveRequests() {
         try {
             setActioning(id);
             const token = localStorage.getItem("authToken");
-            const response = await fetch(`/api/v1/leave/${id}/status`, {
+            const response = await apiFetch(`/api/v1/leave/${id}/status`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
