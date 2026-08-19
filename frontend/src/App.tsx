@@ -18,17 +18,8 @@ import SuperAdminStudentProfile from './pages/admin/superadmin/StudentProfile';
 import SuperAdminAnnouncements from './pages/admin/superadmin/Announcements';
 import SuperAdminAnnouncementDetail from './pages/admin/superadmin/AnnouncementDetail';
 import SuperAdminSubjectManagement from './pages/admin/superadmin/SubjectManagement';
-//executive admin pages
-import ExecutiveAdminDashboard from '@/pages/admin/executive/Dashboard';
-import ExecutiveStudents from '@/pages/admin/executive/Students';
-import ExecutiveFaculty from '@/pages/admin/executive/Faculty';
-import ExecutiveReports from '@/pages/admin/executive/Reports';
-import ExecutiveLeaveRequests from '@/pages/admin/executive/LeaveRequests';
-import AcademicPerformance from '@/pages/admin/executive/AcademicPerformance';
-import ExecutiveStudentProfile from '@/pages/admin/executive/StudentProfile';
-import ExecutiveFacultyProfile from '@/pages/admin/executive/FacultyProfile';
-import ExecutiveAnnouncementDetail from '@/pages/admin/executive/AnnouncementDetail';
-import ExecutiveAnnouncements from '@/pages/admin/executive/Announcements';
+// Executive Admin Routes
+import ExecutiveAdminRoutes from '@/pages/admin/executive/ExecutiveAdminRoutes';
 
 // academic admin pages
 import AcademicAdminDashboard from './pages/admin/academic/Dashboard';
@@ -133,16 +124,7 @@ const AppRoutes = () => (
         <Route path="/admin/superadmin/subjects" element={<SuperAdminSubjectManagement />} />
 
         {/* Executive Admin Routes */}
-        <Route path="/admin/executive" element={<ExecutiveAdminDashboard />} />
-        <Route path="/admin/executive/students" element={<ExecutiveStudents />} />
-        <Route path="/admin/executive/students/:id" element={<ExecutiveStudentProfile />} />
-        <Route path="/admin/executive/faculty" element={<ExecutiveFaculty />} />
-        <Route path="/admin/executive/faculty/:id" element={<ExecutiveFacultyProfile />} />
-        <Route path="/admin/executive/leave-requests" element={<ExecutiveLeaveRequests />} />
-        <Route path="/admin/executive/academic-performance" element={<AcademicPerformance />} />
-        <Route path="/admin/executive/reports" element={<ExecutiveReports />} />
-        <Route path="/admin/executive/announcements" element={<ExecutiveAnnouncements />} />
-        <Route path="/admin/executive/announcements/:id" element={<ExecutiveAnnouncementDetail />} />
+        <Route path="/admin/executive/*" element={<ExecutiveAdminRoutes />} />
 
         {/* Academic Admin Routes */}
         <Route path="/admin/academic" element={<AcademicAdminDashboard />} />

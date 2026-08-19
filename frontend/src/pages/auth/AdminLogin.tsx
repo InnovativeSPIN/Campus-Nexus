@@ -40,7 +40,11 @@ const roleRoutes: Partial<Record<UserRole, string>> = {
     superadmin: '/admin/superadmin',
     'super-admin': '/admin/superadmin',
     'department-admin': '/admin/department-admin',
+    executive: '/admin/executive',
     executiveadmin: '/admin/executive',
+    principal: '/admin/executive',
+    'vice-principal': '/admin/executive',
+    academic: '/admin/academic',
     academicadmin: '/admin/academic',
     exam_cell_admin: '/admin/superadmin', // Default to superadmin or specific dashboard if available
     placement_cell_admin: '/admin/superadmin',
@@ -60,10 +64,12 @@ export default function AdminLogin() {
     const navigate = useNavigate();
 
     useEffect(() => {
-        if (isAuthenticated && user?.role && roleRoutes[user.role]) {
-            navigate(roleRoutes[user.role]!);
+        if (isAuthenticated && user) {
+            const roleStr = (typeof user.role === 'object' ? (user.role as any)?.role_name : user.role)?.toString().toLowerCase() as UserRole;
+            const target = (roleStr && roleRoutes[roleStr]) || roleRoutes[role] || '/admin/executive/dashboard';
+            navigate(target, { replace: true });
         }
-    }, [isAuthenticated, user, navigate]);
+    }, [isAuthenticated, user, navigate, role]);
 
     // Fetch admin names when role changes
     useEffect(() => {
@@ -115,7 +121,8 @@ export default function AdminLogin() {
 
         if (success) {
             toast.success(`Welcome back! Logged in as ${role}`);
-            navigate(roleRoutes[role] || '/admin/superadmin');
+            const target = roleRoutes[role] || '/admin/executive/dashboard';
+            navigate(target, { replace: true });
         } else {
             toast.error('Invalid credentials. Please try again.');
         }

@@ -67,11 +67,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (departmentObj && typeof departmentObj === 'string') {
           departmentObj = { short_name: departmentObj, full_name: departmentObj };
         }
+        const rawRole = result.user.role;
+        const normalizedRole = (typeof rawRole === 'object' ? (rawRole.role_name || rawRole.name) : rawRole) || role;
+
         const userObj: any = {
           id: result.user.id,
           email: result.user.email,
           name: result.user.name,
-          role: result.user.role as UserRole,
+          role: normalizedRole as UserRole,
           avatar: normalizeImageUrl(result.user.avatar) || '',
           department: departmentObj || null,
           designation: result.user.designation || '',
