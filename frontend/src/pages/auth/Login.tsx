@@ -2,17 +2,11 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import campusNexusLogo from '@/assets/campusnexus.png';
+import ispinLogo from '@/assets/iSPIN_logo.png';
 import { UserRole } from '@/types/auth';
 import { Button } from '@/pages/admin/superadmin/components/ui/button';
 import { Input } from '@/pages/admin/superadmin/components/ui/input';
 import { Label } from '@/pages/admin/superadmin/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/pages/admin/superadmin/components/ui/select';
 import { Lock, Mail, Users, User as UserIcon, Calendar, Building } from 'lucide-react';
 import { toast } from '@/components/ui/sonner';
 import {
@@ -26,18 +20,28 @@ import {
   AlertDialogTitle,
 } from '@/pages/admin/superadmin/components/ui/alert-dialog';
 
-const roleRoutes: Partial<Record<UserRole, string>> = {
-  'department-admin': '/admin/department-admin/dashboard',
-  faculty: '/faculty/dashboard',
-  principal: '/admin/executive',
-  'vice-principal': '/admin/executive',
+const roleRoutes: Record<string, string> = {
   student: '/student/dashboard',
+  faculty: '/faculty/dashboard',
+  'department-admin': '/admin/department-admin/dashboard',
+  executive: '/admin/executive/dashboard',
+  executiveadmin: '/admin/executive/dashboard',
+  'executive-admin': '/admin/executive/dashboard',
+  principal: '/admin/executive/dashboard',
+  'vice-principal': '/admin/executive/dashboard',
+  'vice principal': '/admin/executive/dashboard',
+  superadmin: '/admin/superadmin',
+  'super-admin': '/admin/superadmin',
+  academic: '/admin/academic',
+  academicadmin: '/admin/academic',
+  exam_cell_admin: '/admin/exam-cell/dashboard',
+  placement_cell_admin: '/admin/superadmin',
+  research_development_admin: '/admin/superadmin',
 };
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<UserRole>('student');
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingDetails, setIsFetchingDetails] = useState(false);
   const [userDetails, setUserDetails] = useState<{
@@ -53,90 +57,60 @@ export default function Login() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (isAuthenticated && user?.role && roleRoutes[user.role]) {
-      navigate(roleRoutes[user.role]!);
+    if (isAuthenticated && user?.role) {
+      const userRoleStr = (typeof user.role === 'object' ? (user.role as any)?.role_name || (user.role as any)?.name : user.role)?.toString().toLowerCase();
+      const target = (userRoleStr && roleRoutes[userRoleStr]) || roleRoutes[user.role] || '/student/dashboard';
+      if (target) {
+        navigate(target, { replace: true });
+      }
     }
   }, [isAuthenticated, user, navigate]);
 
-  // Clear user details when role changes
+  // Fetch student or faculty details when the identifier (ID or email) is entered
   useEffect(() => {
-    setUserDetails(null);
-    setEmail('');
-  }, [role]);
-
-  // Fetch student details when the identifier (ID or email) is entered
-  useEffect(() => {
-    const fetchStudentDetails = async () => {
-      if (email.trim().length === 0) {
+    const fetchUserDetails = async () => {
+      const identifier = email.trim();
+      if (identifier.length < 3) {
         setUserDetails(null);
         return;
       }
 
-      const identifier = email.trim();
-      // Avoid hammering the API (and spamming 404s) while the user types.
-      // Faculty lookup endpoint supports only exact `email` or `faculty_college_code`.
-      if (role === 'faculty' || role === 'principal' || role === 'vice-principal') {
-        const looksLikeEmail = identifier.includes('@');
-        const looksLikeCollegeCode = /^[A-Za-z0-9._-]{3,}$/.test(identifier) && !identifier.includes(' ');
-        if (!looksLikeEmail && !looksLikeCollegeCode) {
-          setUserDetails(null);
-          return;
-        }
-      }
-
       setIsFetchingDetails(true);
       try {
-        if (role === 'student') {
-          const response = await fetch(`/api/v1/auth/student-details/${encodeURIComponent(identifier)}`);
-          if (!response.ok) {
-            if (response.status !== 404) {
-              console.warn(`[student-details] HTTP ${response.status}:`, await response.text());
-            }
-            setUserDetails(null);
-            return;
-          }
-          const result = await response.json();
+        // Try student lookup first
+        const studentRes = await fetch(`/api/v1/auth/student-details/${encodeURIComponent(identifier)}`);
+        if (studentRes.ok) {
+          const result = await studentRes.json();
           if (result.success && result.data) {
             setUserDetails(result.data);
-          } else {
-            setUserDetails(null);
-          }
-        } else if (role === 'faculty' || role === 'principal' || role === 'vice-principal') {
-          const response = await fetch(`/api/v1/auth/faculty-details/${encodeURIComponent(identifier)}`);
-          if (!response.ok) {
-            if (response.status !== 404) {
-              console.warn(`[faculty-details] HTTP ${response.status}:`, await response.text());
-            }
-            setUserDetails(null);
+            setIsFetchingDetails(false);
             return;
           }
-          const result = await response.json();
+        }
+
+        // Next try faculty lookup if not student
+        const facultyRes = await fetch(`/api/v1/auth/faculty-details/${encodeURIComponent(identifier)}`);
+        if (facultyRes.ok) {
+          const result = await facultyRes.json();
           if (result.success && result.data) {
-            // If the returned faculty record is actually a department-admin
-            // (role_id === 7 or role contains 'admin'), ignore it for the
-            // faculty login/details flow so department-admins are not revealed
-            // on the faculty login page.
             const roleId = result.data.role_id || result.data.roleId || result.data.role?.role_id;
             const roleName = (result.data.role && typeof result.data.role === 'string') ? result.data.role : result.data.role?.role_name;
             if (parseInt(roleId, 10) === 7 || (roleName && roleName.toString().toLowerCase().includes('admin'))) {
               setUserDetails(null);
             } else {
-              // normalize to same shape used by UI
               setUserDetails({
                 name: result.data.name,
                 rollNo: result.data.collegeId || result.data.college_id || undefined,
                 department: result.data.department,
-                semester: undefined,
-                year: undefined,
                 designation: result.data.designation
               });
             }
-          } else {
-            setUserDetails(null);
+            setIsFetchingDetails(false);
+            return;
           }
-        } else {
-          setUserDetails(null);
         }
+
+        setUserDetails(null);
       } catch (error) {
         console.error('Error fetching user details:', error);
         setUserDetails(null);
@@ -146,24 +120,19 @@ export default function Login() {
     };
 
     // Debounce the API call
-    const timeoutId = setTimeout(fetchStudentDetails, 500);
+    const timeoutId = setTimeout(fetchUserDetails, 500);
     return () => clearTimeout(timeoutId);
-  }, [email, role]);
+  }, [email]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 800));
-
-    const success = await login(email, password, role); // "email" holds identifier (email or student ID)
+    const success = await login(email, password);
     setIsLoading(false);
 
     if (success) {
-      toast.success(`Welcome! Logged in as ${role}`);
-      // Navigation is now handled by the useEffect above
-      // to avoid double-navigation which can cause blank screens
+      toast.success('Welcome back! Logged in successfully.');
     } else {
       toast.error('Invalid credentials. Please try again.');
     }
@@ -198,14 +167,14 @@ export default function Login() {
             Campus Nexus
           </h1>
           <p className="text-lg text-primary-foreground/80">
-            Education management system for students and faculty.
+            Education management system for students, faculty, and administration.
           </p>
         </div>
       </div>
 
       {/* Right side - Login form */}
-      <div className="flex w-full lg:w-1/2 items-center justify-center p-8 bg-background">
-        <div className="w-full max-w-md space-y-8">
+      <div className="flex flex-col w-full lg:w-1/2 min-h-screen p-8 bg-background justify-between">
+        <div className="w-full max-w-md mx-auto my-auto space-y-8">
           <div className="text-center lg:hidden mb-8">
             <div
               className="inline-block rounded-full p-[3px] border border-white/30"
@@ -225,39 +194,19 @@ export default function Login() {
             </div>
             <div>
               <h1 className="font-bold text-white text-sm leading-tight uppercase tracking-tight">Campus Nexus</h1>
-              <p className="text-[10px] text-white/70 uppercase tracking-widest">Executive Panel</p>
             </div>
           </div>
 
           <div>
             <h2 className="text-2xl font-bold text-foreground">Sign in to your account</h2>
             <p className="mt-2 text-muted-foreground text-sm">
-              Select your role and enter your credentials.
+              Enter your credentials to sign in.
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="role" className="flex items-center gap-2">
-                <Users className="h-4 w-4" />
-                Select Role
-              </Label>
-              <Select value={role} onValueChange={(value) => setRole(value as UserRole)}>
-                <SelectTrigger className="h-12">
-                  <SelectValue placeholder="Select your role" />
-                </SelectTrigger>
-                <SelectContent className="bg-popover">
-                  <SelectItem value="department-admin">HOD</SelectItem>
-                  <SelectItem value="faculty">Faculty</SelectItem>
-                  <SelectItem value="principal">Principal</SelectItem>
-                  <SelectItem value="vice-principal">Vice Principal</SelectItem>
-                  <SelectItem value="student">Student</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
             {/* User Details Display */}
-            {userDetails && role !== 'department-admin' && (
+            {userDetails && (
               <div className="p-4 bg-primary/5 border border-primary/10 rounded-lg space-y-3">
                 <h3 className="text-sm font-semibold text-primary flex items-center gap-2">
                   <UserIcon className="h-4 w-4" />
@@ -274,9 +223,7 @@ export default function Login() {
                   {userDetails.rollNo && (
                     <div className="flex items-center gap-2">
                       <Mail className="h-3 w-3 text-muted-foreground" />
-                      <span className="text-muted-foreground">
-                        {role === 'faculty' || role === 'principal' || role === 'vice-principal' ? 'ID:' : 'Roll No:'}
-                      </span>
+                      <span className="text-muted-foreground">ID / Roll No:</span>
                       <span className="font-medium">{userDetails.rollNo}</span>
                     </div>
                   )}
@@ -311,18 +258,14 @@ export default function Login() {
             <div className="space-y-2">
               <Label htmlFor="email" className="flex items-center gap-2">
                 <Mail className="h-4 w-4" />
-                {role === 'student' ? 'Email or Student ID' : 'Email Address'}
+                Email or Faclty / Student ID
               </Label>
               <Input
                 id="email"
-                type={role === 'student' ? 'text' : 'email'}
+                type="text"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder={
-                  role === 'student'
-                    ? 'Email address or student ID'
-                    : 'Enter your email address'
-                }
+                placeholder="Enter your User ID"
                 className="h-12"
                 required
               />
@@ -362,6 +305,7 @@ export default function Login() {
               )}
             </Button>
           </form>
+
           <AlertDialog open={!!loginError} onOpenChange={(open) => { if (!open) clearLoginError(); }}>
             <AlertDialogContent>
               <AlertDialogHeader>
@@ -376,6 +320,20 @@ export default function Login() {
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
+        </div>
+
+        {/* Powered by ISPIN Footer - Pinned at bottom */}
+        <div className="pt-4 pb-2 border-t border-border/40 flex items-center justify-center gap-3 w-full max-w-md mx-auto">
+          <span className="text-xs font-extrabold uppercase tracking-[0.25em] text-[#f26522] drop-shadow-sm">
+            POWERED BY ISPIN
+          </span>
+          <div className="relative flex items-center justify-center rounded-full p-[2px] bg-gradient-to-tr from-[#ea580c] via-[#f26522] to-[#f97316] shadow-[0_0_12px_rgba(242,101,34,0.35)]">
+            <img
+              src={ispinLogo}
+              alt="iSPIN Logo"
+              className="h-8 w-8 rounded-full object-contain bg-white p-0.5"
+            />
+          </div>
         </div>
       </div>
     </div>

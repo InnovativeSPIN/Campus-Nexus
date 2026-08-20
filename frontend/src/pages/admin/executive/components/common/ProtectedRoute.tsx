@@ -10,6 +10,7 @@ const ALLOWED_ROLES = [
   'super-admin',
   'principal',
   'vice-principal',
+  'vice principal',
   'admin',
 ];
 
@@ -22,7 +23,7 @@ export default function ExecutiveProtectedRoute({ children }: ExecutiveProtected
   const location = useLocation();
 
   if (!isAuthenticated || !user) {
-    return <Navigate to="/admin" state={{ from: location }} replace />;
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   const roleName = typeof user.role === 'object'
@@ -32,7 +33,7 @@ export default function ExecutiveProtectedRoute({ children }: ExecutiveProtected
 
   if (!ALLOWED_ROLES.includes(userRole)) {
     console.warn('[ExecutiveProtectedRoute] Role not allowed:', userRole, user);
-    return <Navigate to="/admin" replace />;
+    return <Navigate to="/login" replace />;
   }
 
   return <>{children}</>;

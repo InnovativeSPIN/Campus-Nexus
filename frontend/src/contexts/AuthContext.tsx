@@ -6,7 +6,7 @@ interface AuthContextType {
   user: User | null;
   authToken: string | null; // JWT stored separately
   // identifier may be an email address or a student ID when role is student
-  login: (identifier: string, password: string, role: UserRole) => Promise<boolean>;
+  login: (identifier: string, password: string, role?: UserRole) => Promise<boolean>;
   logout: () => void;
   updateUserData: (newData: Partial<User>) => void;
   refreshUserData: () => Promise<void>;
@@ -43,7 +43,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const clearLoginError = () => setLoginError(null);
 
-  const login = async (identifier: string, password: string, role: UserRole): Promise<boolean> => {
+  const login = async (identifier: string, password: string, role?: UserRole): Promise<boolean> => {
     const trimmedId = identifier.trim().toLowerCase();
     const trimmedPassword = password.trim();
 
@@ -51,11 +51,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       let response;
 
-      // regardless of role, backend login endpoint now understands either studentId or email
+      const bodyData: any = { email: trimmedId, password: trimmedPassword };
+      if (role) {
+        bodyData.requestedRole = role;
+      }
+
       response = await fetch('/api/v1/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: trimmedId, password: trimmedPassword, requestedRole: role }),
+        body: JSON.stringify(bodyData),
       });
 
       const result = await response.json();
