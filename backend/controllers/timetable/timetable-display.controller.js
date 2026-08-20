@@ -1,7 +1,7 @@
 import ErrorResponse from '../../utils/errorResponse.js';
 import asyncHandler from '../../middleware/async.js';
 import { models, sequelize } from '../../models/index.js';
-import { Op } from 'sequelize';
+import { Op, QueryTypes } from 'sequelize';
 
 const {
   TimetableMaster,
@@ -25,120 +25,103 @@ const {
 export const getClassTimetable = asyncHandler(async (req, res, next) => {
   try {
     const { classId } = req.params;
-    const { academicYear, semester } = req.query;
 
-    // If academicYear/semester not provided, get current active timetable
-    let where = { class_id: classId };
+    const sql = `
+      SELECT 
+        s.id,
+        s.day,
+        s.period_slot_id as hour,
+        p.id as period_id,
+        p.period_label,
+        p.start_time,
+        p.end_time,
+        sub.id as subject_id,
+        COALESCE(sub.subject_name, 'Subject') as subject_name,
+        COALESCE(sub.subject_code, '') as subject_code,
+        fp.faculty_id,
+        COALESCE(fp.Name, '') as faculty_name,
+        c.id as class_id,
+        c.name as class_name,
+        c.section,
+        d.id as department_id,
+        d.short_name as dept_code,
+        d.full_name as dept_name,
+        tm.id as master_id,
+        tm.academic_year,
+        tm.semester,
+        s.session_type,
+        s.room
+      FROM timetable_master_slots s
+      INNER JOIN timetable_master tm ON s.master_id = tm.id
+      INNER JOIN classes c ON tm.class_id = c.id
+      LEFT JOIN departments d ON tm.department_id = d.id
+      LEFT JOIN subjects sub ON s.subject_id = sub.id
+      LEFT JOIN period_slots p ON s.period_slot_id = p.id
+      LEFT JOIN faculty_profiles fp ON s.faculty_id = fp.faculty_id
+      WHERE tm.class_id = ?
+      ORDER BY 
+        CASE s.day 
+          WHEN 'Monday' THEN 1 
+          WHEN 'Tuesday' THEN 2 
+          WHEN 'Wednesday' THEN 3 
+          WHEN 'Thursday' THEN 4 
+          WHEN 'Friday' THEN 5 
+          WHEN 'Saturday' THEN 6 
+        END ASC,
+        s.period_slot_id ASC
+    `;
 
-    if (academicYear) where.academic_year = academicYear;
-    if (semester) where.semester = semester;
-
-    // Get the active timetable for this class
-    const timetableMaster = await TimetableMaster.findOne({
-      where: { ...where, status: 'active' },
-      include: [
-        { model: ClassModel, as: 'class', attributes: ['id', 'name', 'semester', 'batch'] },
-        { model: Department, as: 'department', attributes: ['id', 'full_name', 'short_name'] },
-        { model: Faculty, as: 'class_coordinator', attributes: ['faculty_id', 'Name', 'email', 'faculty_college_code'] },
-        { model: Faculty, as: 'timetable_incharge', attributes: ['faculty_id', 'Name', 'email', 'faculty_college_code'] },
-      ]
+    const rawSlots = await sequelize.query(sql, {
+      replacements: [classId],
+      type: QueryTypes.SELECT
     });
 
-    if (!timetableMaster) {
-      return res.status(404).json({
-        success: false,
-        message: 'No active timetable found for this class'
-      });
-    }
-
-    // Fetch slots from v_effective_timetable view or from master/overlay combined
-    const slots = await TimetableMasterSlots.findAll({
-      where: { master_id: timetableMaster.id },
-      include: [
-        { model: Subject, as: 'subject', attributes: ['id', 'subject_name', 'subject_code', 'type'] },
-        { model: Faculty, as: 'faculty', attributes: ['faculty_id', 'Name', 'email', 'faculty_college_code'] },
-        { model: PeriodSlot, as: 'period', attributes: ['id', 'period_label', 'start_time', 'end_time'] },
-      ],
-      order: [
-        ['day', 'ASC'], // Orders as created, you may want to use FIELD for day ordering
-        [sequelize.literal('FIELD(day, "Monday","Tuesday","Wednesday","Thursday","Friday","Saturday")'), 'ASC'],
-        ['period_slot_id', 'ASC'],
-      ]
-    });
-
-    // Transform slots into a grid format (optional - depends on frontend needs)
-    const timetableData = {
-      timetableMaster: {
-        id: timetableMaster.id,
-        class: timetableMaster.class ? {
-          id: timetableMaster.class.id,
-          name: timetableMaster.class.name,
-          semester: timetableMaster.class.semester,
-          batch: timetableMaster.class.batch,
-        } : null,
-        department: timetableMaster.department ? {
-          id: timetableMaster.department.id,
-          name: timetableMaster.department.full_name,
-          code: timetableMaster.department.short_name,
-        } : null,
-        academicYear: timetableMaster.academic_year,
-        semester: timetableMaster.semester,
-        semesterType: timetableMaster.semester_type,
-        batch: timetableMaster.batch,
-        roomNo: timetableMaster.room_no,
-        effectiveFrom: timetableMaster.effective_from ? new Date(timetableMaster.effective_from).toISOString() : null,
-        classCoordinator: timetableMaster.class_coordinator ? {
-          id: timetableMaster.class_coordinator.faculty_id,
-          name: timetableMaster.class_coordinator.Name,
-          email: timetableMaster.class_coordinator.email,
-        } : null,
-        timetableIncharge: timetableMaster.timetable_incharge ? {
-          id: timetableMaster.timetable_incharge.faculty_id,
-          name: timetableMaster.timetable_incharge.Name,
-          email: timetableMaster.timetable_incharge.email,
-        } : null,
-        status: timetableMaster.status,
-        breakPeriodIds: timetableMaster.break_period_ids ? (
-          typeof timetableMaster.break_period_ids === 'string'
-            ? JSON.parse(timetableMaster.break_period_ids)
-            : timetableMaster.break_period_ids
-        ) : [3, 5, 8],
+    const slots = rawSlots.map(slot => ({
+      id: slot.id,
+      day: slot.day,
+      period: {
+        id: slot.hour || slot.period_id || 1,
+        label: slot.period_label || `Period ${slot.hour || 1}`,
+        startTime: slot.start_time || '',
+        endTime: slot.end_time || '',
       },
-      slots: slots.map(slot => ({
-        id: slot.id,
-        day: slot.day,
-        period: slot.period ? {
-          id: slot.period.id,
-          label: slot.period.period_label || `Period ${slot.period.id}`,
-          startTime: slot.period.start_time,
-          endTime: slot.period.end_time,
-        } : null,
-        subject: slot.subject ? {
-          id: slot.subject.id,
-          name: slot.subject.subject_name,
-          code: slot.subject.subject_code,
-          type: slot.subject.type,
-        } : null,
-        faculty: slot.faculty ? {
-          id: slot.faculty.faculty_id,
-          name: slot.faculty.Name,
-          email: slot.faculty.email,
-        } : null,
-        sessionType: slot.session_type,
-        isLabSession: slot.is_lab_session,
-        room: slot.room || null,
-        notes: slot.notes || null,
-        source: 'master', // Will be 'overlay' if from alteration
-      }))
-    };
+      subject: {
+        id: slot.subject_id,
+        name: slot.subject_name,
+        code: slot.subject_code,
+      },
+      faculty: {
+        id: slot.faculty_id,
+        name: slot.faculty_name,
+      },
+      class: {
+        id: slot.class_id,
+        name: slot.class_name,
+        section: slot.section,
+      },
+      department: {
+        id: slot.department_id,
+        name: slot.dept_name,
+        code: slot.dept_code,
+      },
+      sessionType: slot.session_type || 'theory',
+      room: slot.room || '',
+    }));
 
     res.status(200).json({
       success: true,
-      data: timetableData
+      data: {
+        timetableMaster: {
+          id: rawSlots[0]?.master_id || 1,
+          class: { id: classId, name: rawSlots[0]?.class_name || 'Class' },
+          department: { id: rawSlots[0]?.department_id, code: rawSlots[0]?.dept_code }
+        },
+        slots: slots
+      }
     });
   } catch (error) {
     console.error('[TimetableDisplay] Error in getClassTimetable:', error);
-    throw error; // Let asyncHandler catch it
+    next(error);
   }
 });
 
@@ -153,106 +136,118 @@ export const getClassTimetable = asyncHandler(async (req, res, next) => {
 export const getFacultyTimetable = asyncHandler(async (req, res, next) => {
   try {
     const { facultyId } = req.params;
-    const { academicYear, semester } = req.query;
 
-    // Check if faculty exists
-    const faculty = await Faculty.findByPk(facultyId, {
-      attributes: ['faculty_id', 'Name', 'email', 'department_id']
-    });
-
-    if (!faculty) {
-      return res.status(404).json({
-        success: false,
-        message: 'Faculty not found'
+    let faculty = null;
+    try {
+      faculty = await Faculty.findOne({
+        where: {
+          [Op.or]: [
+            { faculty_id: facultyId },
+            { id: facultyId },
+            { faculty_college_code: facultyId }
+          ]
+        },
+        attributes: ['faculty_id', 'Name', 'email', 'department_id', 'faculty_college_code']
       });
+    } catch (e) {
+      console.warn('[TimetableDisplay] Faculty lookup exception:', e);
     }
 
-    // Build where clause for slots
-    let slotWhere = { faculty_id: facultyId };
-    let masterWhere = { status: 'active' };
+    const targetFacultyId = faculty ? faculty.faculty_id : facultyId;
 
-    if (academicYear) masterWhere.academic_year = academicYear;
-    if (semester) masterWhere.semester = semester;
+    const sql = `
+      SELECT 
+        s.id,
+        s.day,
+        s.period_slot_id as hour,
+        p.id as period_id,
+        p.period_label,
+        p.start_time,
+        p.end_time,
+        sub.id as subject_id,
+        COALESCE(sub.subject_name, 'Subject') as subject_name,
+        COALESCE(sub.subject_code, '') as subject_code,
+        c.id as class_id,
+        c.name as class_name,
+        c.section,
+        d.id as department_id,
+        d.short_name as dept_code,
+        d.full_name as dept_name,
+        tm.id as master_id,
+        tm.academic_year,
+        tm.semester,
+        s.session_type,
+        s.room
+      FROM timetable_master_slots s
+      INNER JOIN timetable_master tm ON s.master_id = tm.id
+      INNER JOIN classes c ON tm.class_id = c.id
+      LEFT JOIN departments d ON tm.department_id = d.id
+      LEFT JOIN subjects sub ON s.subject_id = sub.id
+      LEFT JOIN period_slots p ON s.period_slot_id = p.id
+      WHERE (s.faculty_id = ? OR s.faculty_id = ?)
+      ORDER BY 
+        CASE s.day 
+          WHEN 'Monday' THEN 1 
+          WHEN 'Tuesday' THEN 2 
+          WHEN 'Wednesday' THEN 3 
+          WHEN 'Thursday' THEN 4 
+          WHEN 'Friday' THEN 5 
+          WHEN 'Saturday' THEN 6 
+        END ASC,
+        s.period_slot_id ASC
+    `;
 
-    // Get all active timetables this faculty is assigned to
-    const timetables = await TimetableMaster.findAll({
-      where: masterWhere,
-      attributes: ['id', 'class_id', 'academic_year', 'semester', 'semester_type', 'batch', 'room_no', 'effective_from'],
-      include: [
-        { model: ClassModel, as: 'class', attributes: ['id', 'name', 'semester', 'batch'] },
-        { model: Department, as: 'department', attributes: ['id', 'full_name', 'short_name'] },
-        {
-          model: TimetableMasterSlots,
-          as: 'slots',
-          attributes: ['id', 'day', 'period_slot_id', 'subject_id', 'faculty_id', 'session_type', 'room', 'notes'],
-          where: slotWhere,
-          required: true,
-          include: [
-            { model: Subject, as: 'subject', attributes: ['id', 'subject_name', 'subject_code'] },
-            { model: PeriodSlot, as: 'period', attributes: ['id', 'period_label', 'start_time', 'end_time'] },
-          ]
-        }
-      ],
-      order: [
-        ['academic_year', 'DESC'],
-        ['semester', 'DESC'],
-        [sequelize.col('class.name'), 'ASC'],
-      ]
+    const rawSlots = await sequelize.query(sql, {
+      replacements: [targetFacultyId, facultyId],
+      type: QueryTypes.SELECT
     });
 
-    // Format response
-    const formattedTimetables = timetables.map(tt => ({
-      id: tt.id,
-      class: tt.class ? {
-        id: tt.class.id,
-        name: tt.class.name,
-        batch: tt.class.batch,
-        semester: tt.class.semester,
-      } : null,
-      department: tt.department ? {
-        id: tt.department.id,
-        name: tt.department.full_name,
-        code: tt.department.short_name,
-      } : null,
-      academicYear: tt.academic_year,
-      semester: tt.semester,
-      semesterType: tt.semester_type,
-      batch: tt.batch,
-      effectiveFrom: tt.effective_from ? new Date(tt.effective_from).toISOString() : null,
-      slots: (tt.slots || []).map(slot => ({
-        id: slot.id,
-        day: slot.day,
-        period: slot.period ? {
-          id: slot.period.id,
-          label: slot.period.period_label || `Period ${slot.period.id}`,
-          startTime: slot.period.start_time,
-          endTime: slot.period.end_time,
-        } : null,
-        subject: slot.subject ? {
-          id: slot.subject.id,
-          name: slot.subject.subject_name,
-          code: slot.subject.subject_code,
-        } : null,
-        sessionType: slot.session_type,
-        room: slot.room || null,
-        notes: slot.notes || null,
-      }))
+    const slots = rawSlots.map(slot => ({
+      id: slot.id,
+      day: slot.day,
+      period: {
+        id: slot.hour || slot.period_id || 1,
+        label: slot.period_label || `Period ${slot.hour || 1}`,
+        startTime: slot.start_time || '',
+        endTime: slot.end_time || '',
+      },
+      subject: {
+        id: slot.subject_id,
+        name: slot.subject_name,
+        code: slot.subject_code,
+      },
+      class: {
+        id: slot.class_id,
+        name: slot.class_name,
+        section: slot.section,
+      },
+      department: {
+        id: slot.department_id,
+        name: slot.dept_name,
+        code: slot.dept_code,
+      },
+      sessionType: slot.session_type || 'theory',
+      room: slot.room || '',
     }));
 
     res.status(200).json({
       success: true,
       faculty: {
-        id: faculty.faculty_id,
-        name: faculty.Name,
-        email: faculty.email,
-        department_id: faculty.department_id,
+        id: faculty ? faculty.faculty_id : facultyId,
+        name: faculty ? faculty.Name : 'Faculty',
+        email: faculty ? faculty.email : '',
+        department_id: faculty ? faculty.department_id : null,
       },
-      timetables: formattedTimetables,
-      totalClasses: formattedTimetables.reduce((sum, tt) => sum + (tt.slots ? tt.slots.length : 0), 0),
+      timetables: [{
+        id: 1,
+        slots: slots
+      }],
+      slots: slots,
+      totalClasses: slots.length
     });
   } catch (error) {
     console.error('[TimetableDisplay] Error in getFacultyTimetable:', error);
-    throw error; // Let asyncHandler catch it
+    next(error);
   }
 });
 
