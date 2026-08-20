@@ -66,6 +66,7 @@ import approvalHistoryRoutes from './routes/approvalHistory.routes.js';
 import examCellRoutes from './routes/exam-cell/examCell.routes.js';
 import deptAdminMentorshipRoutes from './routes/department-admin/mentorship.routes.js';
 import facultyMentorshipRoutes from './routes/faculty/mentorship.routes.js';
+import executiveRoutes from './routes/admin/executive.routes.js';
 
 // Load env vars
 dotenv.config();
@@ -290,6 +291,7 @@ const startServer = () => {
   app.use('/api/v1/notifications', notificationRoutes);
   app.use('/api/v1/approval-history', approvalHistoryRoutes);
   app.use('/api/v1/exam-cell', examCellRoutes);
+  app.use('/api/v1/executive', executiveRoutes);
 
   // Dashboard stats - real counts from DB
   app.get('/api/v1/dashboard/stats', async (req, res) => {

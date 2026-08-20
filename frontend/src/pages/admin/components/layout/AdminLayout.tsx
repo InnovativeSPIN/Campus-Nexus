@@ -147,7 +147,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
   // Determine user info display
   const userRoleDisplay = user.role === 'executive' 
-    ? 'Principal & CEO' 
+    ? 'Principal' 
     : user.role === 'exam_cell_admin' 
       ? 'Exam Cell Admin' 
       : (user.role.charAt(0).toUpperCase() + user.role.slice(1));

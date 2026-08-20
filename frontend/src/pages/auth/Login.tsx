@@ -29,8 +29,8 @@ import {
 const roleRoutes: Partial<Record<UserRole, string>> = {
   'department-admin': '/admin/department-admin/dashboard',
   faculty: '/faculty/dashboard',
-  principal: '/faculty/dashboard',
-  'vice-principal': '/faculty/dashboard',
+  principal: '/admin/executive',
+  'vice-principal': '/admin/executive',
   student: '/student/dashboard',
 };
 

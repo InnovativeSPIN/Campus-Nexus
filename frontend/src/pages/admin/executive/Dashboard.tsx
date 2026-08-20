@@ -296,7 +296,7 @@ export default function ExecutiveAdminDashboard() {
       const statsRaw = await apiFetch('/api/v1/executive/stats');
       const statsRes = await statsRaw.json();
       if (statsRes.success) setDashboardStats(statsRes.data);
-      
+
       const approvalsRaw = await apiFetch('/api/v1/executive/pending-approvals');
       const approvalsRes = await approvalsRaw.json();
       if (approvalsRes.success) {
@@ -330,14 +330,14 @@ export default function ExecutiveAdminDashboard() {
   const academicData = dashboardCharts?.academicDataBySemester || academicDataBySemester[selectedSemester] || academicDataBySemester[semesterOptions[0]];
   const strengthData = dashboardCharts?.strengthDataByProgram?.[selectedProgram] || strengthDataByProgram[selectedProgram] || strengthDataByProgram[programOptions[0]];
   const placementData = dashboardCharts?.placementDataByBatch || placementDataByBatch[selectedBatch] || placementDataByBatch[batchOptions[0]];
-  
-  // Use real data if available, fallback to mock
-  const totalStudentsVal = dashboardStats?.totalStudents || strengthData.reduce((s: any, d: any) => s + d.value, 0);
-  const totalFacultyVal = dashboardStats?.totalFaculty || 146;
-  const totalDeptsVal = dashboardStats?.totalDepartments || 12;
-  const totalProgramsVal = dashboardStats?.totalPrograms || 28;
-  const placementRateVal = dashboardStats?.placementRate || placementData[placementData.length - 1]?.v || 0;
-  const researchFundingVal = dashboardStats?.researchFunding || 1.25;
+
+  // Use real data if available from database endpoints, fallback to default mock
+  const totalStudentsVal = dashboardStats?.totalStudents ?? strengthData.reduce((s: any, d: any) => s + d.value, 0);
+  const totalFacultyVal = dashboardStats?.totalFaculty ?? 156;
+  const totalDeptsVal = dashboardStats?.totalDepartments ?? 12;
+  const totalProgramsVal = dashboardStats?.totalPrograms ?? 28;
+  const placementRateVal = dashboardStats?.placementRate ?? placementData[placementData.length - 1]?.v ?? 0;
+  const researchFundingVal = dashboardStats?.researchFunding ?? 1.25;
 
   // Dynamic Pending Approvals mapping
   const dynamicApprovals = [
@@ -346,7 +346,7 @@ export default function ExecutiveAdminDashboard() {
       count: livePendingApprovals.length || 8, // fallback to mock 8
       icon: UserCheck,
       accent: 'text-destructive bg-destructive/10',
-      detail: livePendingApprovals.length > 0 
+      detail: livePendingApprovals.length > 0
         ? `${livePendingApprovals.length} pending leave requests from Faculty.`
         : '3 Faculty leaves (Dr. Kumar, Prof. Anitha, Dr. Raj) + 5 Student leaves pending your review.',
       originalData: livePendingApprovals
@@ -765,17 +765,16 @@ export default function ExecutiveAdminDashboard() {
       <div className="space-y-5">
 
         {/* ─── Welcome Header ─── */}
-        <div className="widget-card !p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative overflow-hidden dashboard-header-gradient">
-          <div className="dashboard-header-overlay" />
+        <div className="widget-card !p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative overflow-hidden bg-white border border-slate-200 shadow-sm rounded-2xl">
           <div className="relative z-10">
-            <h1 className="text-2xl font-bold text-white">
+            <h1 className="text-2xl font-bold text-black font-sans">
               Principal's Dashboard
             </h1>
-            <p className="text-white/80 mt-1 font-sans text-sm flex items-center gap-1.5">
+            <p className="text-black font-sans text-sm flex items-center gap-1.5 font-medium mt-1">
               Welcome, {displayName}
-              <CheckCircle2 className="inline w-4 h-4 text-green-300" />
+              <CheckCircle2 className="inline w-4 h-4 text-emerald-600" />
             </p>
-            <p className="text-white/60 font-sans text-xs mt-0.5">
+            <p className="text-slate-600 font-sans text-xs mt-0.5">
               Executive Overview · {currentTime.toLocaleString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' })}
             </p>
           </div>
@@ -783,42 +782,42 @@ export default function ExecutiveAdminDashboard() {
           <div className="flex items-center gap-3 relative z-10">
             {/* Notification Bell */}
             <button onClick={handleNotifClick}
-              className="relative w-10 h-10 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 transition-colors text-white"
+              className="relative w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 hover:bg-slate-200 transition-colors text-black border border-slate-200"
               aria-label="Notifications">
-              <Bell className="w-5 h-5" />
+              <Bell className="w-5 h-5 text-slate-800" />
               {notifCount > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 bg-yellow-400 text-yellow-900 text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center shadow-sm">
+                <span className="absolute -top-1.5 -right-1.5 bg-amber-500 text-white text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center shadow-sm">
                   {notifCount}
                 </span>
               )}
             </button>
             {/* Messages */}
             <button onClick={handleMsgClick}
-              className="relative w-10 h-10 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 transition-colors text-white"
+              className="relative w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 hover:bg-slate-200 transition-colors text-black border border-slate-200"
               aria-label="Messages">
-              <Mail className="w-5 h-5" />
+              <Mail className="w-5 h-5 text-slate-800" />
               {msgCount > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 bg-yellow-400 text-yellow-900 text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center shadow-sm">
+                <span className="absolute -top-1.5 -right-1.5 bg-amber-500 text-white text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center shadow-sm">
                   {msgCount}
                 </span>
               )}
             </button>
             {/* Profile */}
             <button onClick={() => setProfileOpen(true)}
-              className="flex items-center gap-2.5 p-1 pr-3 rounded-xl bg-white/10 hover:bg-white/20 transition-colors h-10"
+              className="flex items-center gap-2.5 p-1 pr-3 rounded-xl bg-slate-100 border border-slate-200 hover:bg-slate-200 transition-colors h-10"
               aria-label="Profile">
-              <div className="w-8 h-8 rounded-[10px] bg-white/20 flex items-center justify-center text-white font-bold text-xs">
+              <div className="w-8 h-8 rounded-[10px] bg-[#800000] flex items-center justify-center text-white font-bold text-xs">
                 {displayName.split(' ').map(n => n[0]).join('').slice(0, 2)}
               </div>
               <div className="hidden sm:block text-left">
-                <p className="text-[13px] font-bold text-white font-sans leading-none">{displayName}</p>
-                <p className="text-[10px] text-white/70 font-sans mt-0.5 leading-none">Principal</p>
+                <p className="text-[13px] font-bold text-black font-sans leading-none">{displayName}</p>
+                <p className="text-[10px] text-slate-600 font-sans mt-0.5 leading-none">Principal</p>
               </div>
             </button>
             {/* Session */}
             <div onClick={(e) => { e.stopPropagation(); setSemesterOpen(false); setBatchOpen(false); }}
-              className="flex items-center justify-center gap-1.5 border border-white/20 hover:bg-white/20 transition-colors rounded-xl px-3 h-10 bg-white/10 text-white text-xs font-bold font-sans cursor-pointer shadow-sm">
-              <Calendar className="w-4 h-4" />
+              className="flex items-center justify-center gap-1.5 border border-slate-300 hover:bg-slate-100 transition-colors rounded-xl px-3 h-10 bg-slate-50 text-black text-xs font-bold font-sans cursor-pointer shadow-sm">
+              <Calendar className="w-4 h-4 text-slate-700" />
               <span className="hidden sm:inline">2025-26 (Even)</span>
             </div>
           </div>
@@ -827,12 +826,12 @@ export default function ExecutiveAdminDashboard() {
         {/* ─── 6 Stat Cards ─── */}
         <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
           {[
-            { icon: Users, iconBg: 'bg-primary/10', iconColor: 'text-primary', label: 'Total Students', value: '2,458', change: '+6.3%', sub: 'vs Last Semester', positive: true },
-            { icon: UserCheck, iconBg: 'bg-success/10', iconColor: 'text-success', label: 'Total Faculty', value: '156', change: '+4.1%', sub: 'vs Last Semester', positive: true },
-            { icon: Building, iconBg: 'bg-warning/10', iconColor: 'text-warning', label: 'Departments', value: '12', change: '—', sub: 'No Change', positive: null },
-            { icon: BookOpen, iconBg: 'bg-secondary/10', iconColor: 'text-secondary', label: 'Programs', value: '28', change: '+2', sub: 'vs Last Semester', positive: true },
-            { icon: ClipboardCheck, iconBg: 'bg-info/10', iconColor: 'text-info', label: 'Placement Rate', value: '87.6%', change: '+5.8%', sub: 'vs Last Batch', positive: true },
-            { icon: IndianRupee, iconBg: 'bg-destructive/10', iconColor: 'text-destructive', label: 'Research Funding', value: '₹1.25Cr', change: '+12.4%', sub: 'vs Last Year', positive: true },
+            { icon: Users, iconBg: 'bg-primary/10', iconColor: 'text-primary', label: 'Total Students', value: totalStudentsVal !== undefined ? Number(totalStudentsVal).toLocaleString() : '0', change: '+6.3%', sub: 'vs Last Semester', positive: true },
+            { icon: UserCheck, iconBg: 'bg-success/10', iconColor: 'text-success', label: 'Total Faculty', value: totalFacultyVal !== undefined ? Number(totalFacultyVal).toLocaleString() : '0', change: '+4.1%', sub: 'vs Last Semester', positive: true },
+            { icon: Building, iconBg: 'bg-warning/10', iconColor: 'text-warning', label: 'Departments', value: totalDeptsVal !== undefined ? Number(totalDeptsVal).toLocaleString() : '0', change: '—', sub: 'No Change', positive: null },
+            { icon: BookOpen, iconBg: 'bg-secondary/10', iconColor: 'text-secondary', label: 'Programs', value: totalProgramsVal !== undefined ? Number(totalProgramsVal).toLocaleString() : '28', change: '+2', sub: 'vs Last Semester', positive: true },
+            { icon: ClipboardCheck, iconBg: 'bg-info/10', iconColor: 'text-info', label: 'Placement Rate', value: `${placementRateVal}%`, change: '+5.8%', sub: 'vs Last Batch', positive: true },
+            { icon: IndianRupee, iconBg: 'bg-destructive/10', iconColor: 'text-destructive', label: 'Research Funding', value: `₹${researchFundingVal}Cr`, change: '+12.4%', sub: 'vs Last Year', positive: true },
           ].map((card) => (
             <StatCard key={card.label} {...card} onClick={() => handleStatClick(card.label)} />
           ))}
@@ -1005,11 +1004,11 @@ export default function ExecutiveAdminDashboard() {
                 {strengthData.map((d: any) => (
                   d.value > 0 && (
                     <div key={d.name} className="flex items-center justify-between text-xs">
-                        <span className="flex items-center gap-2">
-                          <span className="w-2.5 h-2.5 rounded-full shrink-0"
-                            ref={(el) => { if (el) el.style.backgroundColor = d.color; }} />
-                          <span className="font-semibold text-foreground/70">{d.name}</span>
-                        </span>
+                      <span className="flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded-full shrink-0"
+                          ref={(el) => { if (el) el.style.backgroundColor = d.color; }} />
+                        <span className="font-semibold text-foreground/70">{d.name}</span>
+                      </span>
                       <span className="font-bold text-foreground">
                         {d.value} <span className="font-medium text-muted-foreground">({d.pct})</span>
                       </span>

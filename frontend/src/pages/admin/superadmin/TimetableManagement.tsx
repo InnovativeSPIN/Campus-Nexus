@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { AdminLayout } from '@/pages/admin/superadmin/components/layout/AdminLayout';
 import { Button } from '@/pages/admin/superadmin/components/ui/button';
 import { Input } from '@/pages/admin/superadmin/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/pages/admin/superadmin/components/ui/select';
@@ -167,7 +166,7 @@ export default function TimetableManagement() {
   };
 
   return (
-    <AdminLayout>
+    <>
       <div className="p-6 bg-gray-50 min-h-screen">
         <div className="max-w-7xl mx-auto">
           {/* Header with Notifications */}
@@ -471,6 +470,6 @@ export default function TimetableManagement() {
           </div>
         </div>
       )}
-    </AdminLayout>
+    </>
   );
 }

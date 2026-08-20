@@ -80,7 +80,7 @@ export function ExecutiveAdminSidebar({
 
   const isActive = (path: string) => {
     if (path === '/admin/executive') {
-      return location.pathname === path;
+      return location.pathname === path || location.pathname === '/admin/executive/' || location.pathname === '/admin/executive/dashboard';
     }
     return location.pathname.startsWith(path);
   };
@@ -168,7 +168,7 @@ export function ExecutiveAdminSidebar({
                   className="flex-1 overflow-hidden"
                 >
                   <p className="text-white font-semibold text-sm truncate">{user.name}</p>
-                  <p className="text-white/60 text-xs uppercase tracking-wider truncate">{user?.name?.toLowerCase().includes('vice') ? 'Vice Principal' : 'Principal & CEO'}</p>
+                  <p className="text-white/60 text-xs uppercase tracking-wider truncate">{user?.name?.toLowerCase().includes('vice') ? 'Vice Principal' : 'Principal'}</p>
                 </motion.div>
               )}
             </AnimatePresence>
