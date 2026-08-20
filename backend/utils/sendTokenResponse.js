@@ -46,21 +46,33 @@ const sendTokenResponse = (user, statusCode, res) => {
     };
   } else if (user.role === 'faculty' || user.role?.role_name === 'faculty' || user.Name) {
     const isDeptAdmin = user.role_id === 7 || (user.role && user.role.role_id === 7);
+    const desig = (user.designation || '').toString().toLowerCase();
+    let roleStr = 'faculty';
+    if (isDeptAdmin) {
+      roleStr = 'department-admin';
+    } else if (desig.includes('principal') || desig.includes('executive') || desig.includes('dean')) {
+      roleStr = 'executiveadmin';
+    }
     userData = {
       id: user.faculty_id || user.id,
       name: user.Name || user.name,
       email: user.email,
-      role: isDeptAdmin ? 'department-admin' : 'faculty',
+      role: roleStr,
       designation: user.designation || null,
       department: user.department,
       avatar: normalizeUrl(user.profile_image_url) || null
     };
   } else {
+    let rawRole = user.role?.role_name || user.role;
+    const rLower = (typeof rawRole === 'string' ? rawRole : '').toLowerCase();
+    if (['principal', 'vice-principal', 'vice principal', 'executive', 'executive-admin', 'executiveadmin'].includes(rLower)) {
+      rawRole = 'executiveadmin';
+    }
     userData = {
       id: user.id,
       name: user.name,
       email: user.email,
-      role: user.role?.role_name || user.role,
+      role: rawRole,
       department: user.department,
       year: user.year,
       semester: user.semester,
