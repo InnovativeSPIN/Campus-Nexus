@@ -166,15 +166,23 @@ export default function Timetable() {
     return Array.from(subjects);
   }, [rawSlots, selectedClassKey]);
 
-  /** Dynamic hours from the slots to handle varying periods properly */
+  const PERIOD_META: Record<number, { label: string; time: string; isBreak?: boolean }> = {
+    1: { label: "Period I", time: "09:30 AM - 10:20 AM" },
+    2: { label: "Period II", time: "10:20 AM - 11:10 AM" },
+    3: { label: "Tea Break", time: "11:10 AM - 11:30 AM", isBreak: true },
+    4: { label: "Period III", time: "11:30 AM - 12:25 PM" },
+    5: { label: "Lunch", time: "12:25 PM - 01:10 PM", isBreak: true },
+    6: { label: "Period IV", time: "01:10 PM - 02:00 PM" },
+    7: { label: "Period V", time: "02:00 PM - 02:50 PM" },
+    8: { label: "Short Break", time: "02:50 PM - 03:10 PM", isBreak: true },
+    9: { label: "Period VI", time: "03:10 PM - 04:00 PM" },
+    10: { label: "Period VII", time: "04:00 PM - 04:45 PM" },
+  };
+
+  /** Dynamic hours covering all standard 10 periods */
   const dynamicHours = useMemo(() => {
-    if (rawSlots.length === 0) return [1, 2, 3, 4, 5, 6, 7];
-    const hourSet = new Set<number>();
-    rawSlots.forEach(s => {
-      if (s.hour > 0) hourSet.add(s.hour);
-    });
-    return Array.from(hourSet).sort((a, b) => a - b);
-  }, [rawSlots]);
+    return [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+  }, []);
 
   /** Build day → hour → slot[] map for the selected class only */
   const timetableData = useMemo<TimetableData>(() => {
@@ -344,60 +352,74 @@ export default function Timetable() {
                     </tr>
                   </thead>
                   <tbody>
-                    {dynamicHours.map((hour, index) => (
-                      <tr key={hour} className="hover:bg-muted/20 transition-colors">
-                        {/* Time column */}
-                        <td className="border border-border p-2 bg-muted/30 text-sm">
-                          <div className="flex flex-col gap-0.5">
-                            <span className="font-medium text-foreground">Period {getRomanNumeral(index + 1)}</span>
-                            <span className="text-xs text-muted-foreground">
-                              {(() => {
-                                const slotWithTime = rawSlots.find(s => s.hour === hour && s.startTime && s.endTime);
-                                if (slotWithTime) {
-                                  return `${formatTimeTo12h(slotWithTime.startTime)} - ${formatTimeTo12h(slotWithTime.endTime)}`;
-                                }
-                                return "Time not set";
-                              })()}
-                            </span>
-                          </div>
-                        </td>
+                    {dynamicHours.map((hour) => {
+                      const meta = PERIOD_META[hour] || { label: `Period ${hour}`, time: "" };
+                      return (
+                        <tr key={hour} className={`hover:bg-muted/20 transition-colors ${meta.isBreak ? 'bg-amber-50/50' : ''}`}>
+                          {/* Time column */}
+                          <td className="border border-border p-2 bg-muted/30 text-sm">
+                            <div className="flex flex-col gap-0.5">
+                              <span className={`font-medium ${meta.isBreak ? 'text-amber-700' : 'text-foreground'}`}>{meta.label}</span>
+                              <span className="text-xs text-muted-foreground">
+                                {(() => {
+                                  const slotWithTime = rawSlots.find(s => s.hour === hour && s.startTime && s.endTime);
+                                  if (slotWithTime) {
+                                    return `${formatTimeTo12h(slotWithTime.startTime)} - ${formatTimeTo12h(slotWithTime.endTime)}`;
+                                  }
+                                  return meta.time || "Time not set";
+                                })()}
+                              </span>
+                            </div>
+                          </td>
 
-                        {days.map((day) => {
-                          const slots = timetableData[day]?.[hour] || [];
-                          return (
-                            <td
-                              key={`${day}-${hour}`}
-                              className="border border-border p-1.5 min-h-[72px] align-middle"
-                            >
-                              {slots.length > 0 ? (
-                                <div className="space-y-1">
-                                  {slots.map((slot, idx) => (
-                                    <motion.div
-                                      key={slot.id || idx}
-                                      whileHover={{ scale: 1.02 }}
-                                      className="bg-primary/10 border border-primary/20 p-2 rounded-lg text-xs hover:bg-primary/20 transition-colors cursor-default"
-                                    >
-                                      <div className="font-semibold text-primary leading-tight">
-                                        {slot.subject}
-                                      </div>
-                                      {slot.section && (
-                                        <div className="text-muted-foreground mt-0.5">
-                                          Sec {slot.section}
+                          {days.map((day) => {
+                            if (meta.isBreak) {
+                              const isLunch = meta.label.toLowerCase().includes('lunch');
+                              return (
+                                <td key={`${day}-${hour}`} className="border border-border p-1.5 bg-amber-50/40 text-center align-middle">
+                                  <div className="text-sm font-medium text-amber-700">
+                                    {isLunch ? '🍱' : '☕'}
+                                  </div>
+                                </td>
+                              );
+                            }
+
+                            const slots = timetableData[day]?.[hour] || [];
+                            return (
+                              <td
+                                key={`${day}-${hour}`}
+                                className="border border-border p-1.5 min-h-[72px] align-middle"
+                              >
+                                {slots.length > 0 ? (
+                                  <div className="space-y-1">
+                                    {slots.map((slot, idx) => (
+                                      <motion.div
+                                        key={slot.id || idx}
+                                        whileHover={{ scale: 1.02 }}
+                                        className="bg-primary/10 border border-primary/20 p-2 rounded-lg text-xs hover:bg-primary/20 transition-colors cursor-default"
+                                      >
+                                        <div className="font-semibold text-primary leading-tight">
+                                          {slot.subject}
                                         </div>
-                                      )}
-                                    </motion.div>
-                                  ))}
-                                </div>
-                              ) : (
-                                <div className="h-full flex items-center justify-center text-muted-foreground/50 text-xs">
-                                  —
-                                </div>
-                              )}
-                            </td>
-                          );
-                        })}
-                      </tr>
-                    ))}
+                                        {slot.section && (
+                                          <div className="text-muted-foreground mt-0.5">
+                                            Sec {slot.section}
+                                          </div>
+                                        )}
+                                      </motion.div>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <div className="h-full flex items-center justify-center text-muted-foreground/50 text-xs">
+                                    —
+                                  </div>
+                                )}
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

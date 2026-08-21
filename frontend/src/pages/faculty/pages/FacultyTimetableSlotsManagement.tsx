@@ -79,22 +79,22 @@ interface Faculty {
 const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 const periods = [
-  { id: 1, label: "I",      time: "09:30 AM - 10:20 AM", isBreak: false },
-  { id: 2, label: "II",     time: "10:20 AM - 11:10 AM", isBreak: false },
-  { id: 3, label: "Break",  time: "11:10 AM - 11:30 AM", isBreak: true  },
-  { id: 4, label: "III",    time: "11:30 AM - 12:25 PM", isBreak: false },
-  { id: 5, label: "Lunch",  time: "12:25 PM - 01:10 PM", isBreak: true  },
-  { id: 6, label: "IV",     time: "01:10 PM - 02:00 PM", isBreak: false },
-  { id: 7, label: "V",      time: "02:00 PM - 02:50 PM", isBreak: false },
-  { id: 8, label: "Break",  time: "02:50 PM - 03:10 PM", isBreak: true  },
-  { id: 9, label: "VI",     time: "03:10 PM - 04:00 PM", isBreak: false },
-  { id: 10, label: "VII",   time: "04:00 PM - 04:45 PM", isBreak: false },
+  { id: 1, label: "I", time: "09:30 AM - 10:20 AM", isBreak: false },
+  { id: 2, label: "II", time: "10:20 AM - 11:10 AM", isBreak: false },
+  { id: 3, label: "III", time: "11:10 AM - 11:30 AM", isBreak: false },
+  { id: 4, label: "IV", time: "11:30 AM - 12:25 PM", isBreak: false },
+  { id: 5, label: "V", time: "12:25 PM - 01:10 PM", isBreak: false },
+  { id: 6, label: "VI", time: "01:10 PM - 02:00 PM", isBreak: false },
+  { id: 7, label: "VII", time: "02:00 PM - 02:50 PM", isBreak: false },
+  { id: 8, label: "VIII", time: "02:50 PM - 03:10 PM", isBreak: false },
+  { id: 9, label: "IX", time: "03:10 PM - 04:00 PM", isBreak: false },
+  { id: 10, label: "X", time: "04:00 PM - 04:45 PM", isBreak: false },
 ];
 
 const breakTimings = {
-  morningBreak:    { startPeriod: 3, label: "Break", time: "11:10 AM - 11:30 AM" },
-  lunch:           { startPeriod: 5, label: "Lunch", time: "12:25 PM - 01:10 PM" },
-  afternoonBreak:  { startPeriod: 8, label: "Break", time: "02:50 PM - 03:10 PM" },
+  morningBreak: { startPeriod: 3, label: "Break", time: "11:10 AM - 11:30 AM" },
+  lunch: { startPeriod: 5, label: "Lunch", time: "12:25 PM - 01:10 PM" },
+  afternoonBreak: { startPeriod: 8, label: "Break", time: "02:50 PM - 03:10 PM" },
 };
 
 const sessionTypes = ["theory", "lab", "tutorial", "activity", "project", "break", "free"];
@@ -109,16 +109,16 @@ export default function FacultyTimetableSlotsManagement() {
   const [faculties, setFaculties] = useState<Faculty[]>([]);
   const [breakPeriodIds, setBreakPeriodIds] = useState<number[]>([]);
   const [periodsList, setPeriodsList] = useState([
-    { id: 1, label: "I",      time: "09:30 AM - 10:20 AM", isBreak: false },
-    { id: 2, label: "II",     time: "10:20 AM - 11:10 AM", isBreak: false },
-    { id: 3, label: "Break",  time: "11:10 AM - 11:30 AM", isBreak: true  },
-    { id: 4, label: "III",    time: "11:30 AM - 12:25 PM", isBreak: false },
-    { id: 5, label: "Lunch",  time: "12:25 PM - 01:10 PM", isBreak: true  },
-    { id: 6, label: "IV",     time: "01:10 PM - 02:00 PM", isBreak: false },
-    { id: 7, label: "V",      time: "02:00 PM - 02:50 PM", isBreak: false },
-    { id: 8, label: "Break",  time: "02:50 PM - 03:10 PM", isBreak: true  },
-    { id: 9, label: "VI",     time: "03:10 PM - 04:00 PM", isBreak: false },
-    { id: 10, label: "VII",   time: "04:00 PM - 04:45 PM", isBreak: false },
+    { id: 1, label: "I", time: "09:30 AM - 10:20 AM", isBreak: false },
+    { id: 2, label: "II", time: "10:20 AM - 11:10 AM", isBreak: false },
+    { id: 3, label: "III", time: "11:10 AM - 11:30 AM", isBreak: false },
+    { id: 4, label: "IV", time: "11:30 AM - 12:25 PM", isBreak: false },
+    { id: 5, label: "V", time: "12:25 PM - 01:10 PM", isBreak: false },
+    { id: 6, label: "VI", time: "01:10 PM - 02:00 PM", isBreak: false },
+    { id: 7, label: "VII", time: "02:00 PM - 02:50 PM", isBreak: false },
+    { id: 8, label: "VIII", time: "02:50 PM - 03:10 PM", isBreak: false },
+    { id: 9, label: "IX", time: "03:10 PM - 04:00 PM", isBreak: false },
+    { id: 10, label: "X", time: "04:00 PM - 04:45 PM", isBreak: false },
   ]);
   const [timetableName, setTimetableName] = useState<string>("");
   const [timetableInfo, setTimetableInfo] = useState<{ academic_year?: string; semester?: number; batch?: string; status?: string } | null>(null);
@@ -178,9 +178,9 @@ export default function FacultyTimetableSlotsManagement() {
           setTimetableName(cls?.name || masterData.data?.name || `Timetable #${masterId}`);
           setTimetableInfo({
             academic_year: masterData.data?.academic_year,
-            semester:      masterData.data?.semester,
-            batch:         masterData.data?.batch,
-            status:        masterData.data?.status,
+            semester: masterData.data?.semester,
+            batch: masterData.data?.batch,
+            status: masterData.data?.status,
           });
         }
 
@@ -251,39 +251,33 @@ export default function FacultyTimetableSlotsManagement() {
             `/api/v1/timetable-master/${masterId}/period-slots`,
             { headers: { Authorization: `Bearer ${authToken}` } }
           );
-          
+
           if (res.ok) {
             const data = await res.json();
             const periodData = data.data || [];
             console.log('[PERIOD SLOTS] Faculty view loaded from backend:', periodData);
-            
-            // Build periods array with label and time from database
+
+            // Build periods array with real-time label and time from database
             const updatedPeriods = periodData.map((p: any) => {
-              let label = `${p.id}`;
-              // Check if it's a break period to add label
-              if (breakPeriodIds.includes(p.id)) {
-                if (p.id === 3) label = "Break";
-                else if (p.id === 5) label = "Lunch";
-                else if (p.id === 8) label = "Break";
-              }
+              const isBreak = p.isBreak || breakPeriodIds.includes(p.id);
+              const label = p.label || p.period_label || (isBreak ? (p.break_name || (p.id === 5 ? "Lunch" : "Break")) : `Period ${p.id}`);
               return {
                 id: p.id,
                 label,
                 time: p.time || "",
-                isBreak: breakPeriodIds.includes(p.id),
+                isBreak,
               };
             });
-            
+
             setPeriodsList(updatedPeriods);
           } else {
-            console.log('[PERIOD SLOTS] Failed to fetch, using defaults');
+            console.log('[PERIOD SLOTS] Failed to fetch period slots');
           }
         } catch (error) {
           console.error('[PERIOD SLOTS] Error fetching:', error);
-          console.log('[PERIOD SLOTS] Using default periods');
         }
       };
-      
+
       fetchPeriodSlots();
     }
   }, [masterId, authToken, breakPeriodIds]);
@@ -313,18 +307,18 @@ export default function FacultyTimetableSlotsManagement() {
   const openEditDialog = (slot: TimetableSlot) => {
     setEditingSlot(slot);
     setFormData({
-      day:              slot.day,
-      period_slot_id:   slot.period_slot_id.toString(),
-      subject_id:       slot.subject_id?.toString() ?? slot.subject?.id?.toString() ?? "none",
-      faculty_id:       slot.faculty_id?.toString() ?? slot.faculty?.faculty_id?.toString() ?? "",
-      session_type:     slot.session_type,
-      is_lab_session:   slot.is_lab_session,
+      day: slot.day,
+      period_slot_id: slot.period_slot_id.toString(),
+      subject_id: slot.subject_id?.toString() ?? slot.subject?.id?.toString() ?? "none",
+      faculty_id: slot.faculty_id?.toString() ?? slot.faculty?.faculty_id?.toString() ?? "",
+      session_type: slot.session_type,
+      is_lab_session: slot.is_lab_session,
       lab_pair_slot_id: slot.lab_pair_slot_id?.toString() ?? "",
-      lab_group:        slot.lab_group ?? "",
-      room:             slot.room ?? "",
-      notes:            slot.notes ?? "",
-      start_time:       slot.start_time ?? "",
-      end_time:         slot.end_time ?? "",
+      lab_group: slot.lab_group ?? "",
+      room: slot.room ?? "",
+      notes: slot.notes ?? "",
+      start_time: slot.start_time ?? "",
+      end_time: slot.end_time ?? "",
     });
     setIsDialogOpen(true);
   };
@@ -350,18 +344,18 @@ export default function FacultyTimetableSlotsManagement() {
     try {
       setLoading(true);
       const payload = {
-        day:              formData.day,
-        period_slot_id:   parseInt(formData.period_slot_id),
-        subject_id:       formData.subject_id && formData.subject_id !== "none" ? parseInt(formData.subject_id) : null,
-        faculty_id:       formData.faculty_id ? parseInt(formData.faculty_id) : null,
-        session_type:     formData.session_type,
-        is_lab_session:   formData.is_lab_session || false,
+        day: formData.day,
+        period_slot_id: parseInt(formData.period_slot_id),
+        subject_id: formData.subject_id && formData.subject_id !== "none" ? parseInt(formData.subject_id) : null,
+        faculty_id: formData.faculty_id ? parseInt(formData.faculty_id) : null,
+        session_type: formData.session_type,
+        is_lab_session: formData.is_lab_session || false,
         lab_pair_slot_id: formData.lab_pair_slot_id ? parseInt(formData.lab_pair_slot_id) : null,
-        lab_group:        formData.lab_group || null,
-        room:             formData.room || null,
-        notes:            formData.notes || null,
-        start_time:       toTimePayload(formData.start_time),
-        end_time:         toTimePayload(formData.end_time),
+        lab_group: formData.lab_group || null,
+        room: formData.room || null,
+        notes: formData.notes || null,
+        start_time: toTimePayload(formData.start_time),
+        end_time: toTimePayload(formData.end_time),
       };
 
       const res = await fetch(`/api/v1/timetable-master/${masterId}/slots`, {
@@ -395,18 +389,18 @@ export default function FacultyTimetableSlotsManagement() {
         method: "PATCH",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${authToken}` },
         body: JSON.stringify({
-          day:              formData.day,
-          period_slot_id:   parseInt(formData.period_slot_id),
-          subject_id:       formData.subject_id && formData.subject_id !== "none" ? parseInt(formData.subject_id) : null,
-          faculty_id:       formData.faculty_id ? parseInt(formData.faculty_id) : null,
-          session_type:     formData.session_type,
-          is_lab_session:   formData.is_lab_session || false,
+          day: formData.day,
+          period_slot_id: parseInt(formData.period_slot_id),
+          subject_id: formData.subject_id && formData.subject_id !== "none" ? parseInt(formData.subject_id) : null,
+          faculty_id: formData.faculty_id ? parseInt(formData.faculty_id) : null,
+          session_type: formData.session_type,
+          is_lab_session: formData.is_lab_session || false,
           lab_pair_slot_id: formData.lab_pair_slot_id ? parseInt(formData.lab_pair_slot_id) : null,
-          lab_group:        formData.lab_group || null,
-          room:             formData.room || null,
-          notes:            formData.notes || null,
-          start_time:       toTimePayload(formData.start_time),
-          end_time:         toTimePayload(formData.end_time),
+          lab_group: formData.lab_group || null,
+          room: formData.room || null,
+          notes: formData.notes || null,
+          start_time: toTimePayload(formData.start_time),
+          end_time: toTimePayload(formData.end_time),
         }),
       });
 
@@ -545,18 +539,18 @@ export default function FacultyTimetableSlotsManagement() {
       if (lines.length < 2) throw new Error("CSV must have a header row and at least one data row");
 
       const headers = lines[0].split(",").map(h => h.trim().toLowerCase().replace(/"/g, ""));
-      const dayIdx     = headers.indexOf("day");
-      const periodIdx  = headers.indexOf("period id");
+      const dayIdx = headers.indexOf("day");
+      const periodIdx = headers.indexOf("period id");
       const subCodeIdx = headers.indexOf("subject code");
-      const subIdIdx   = headers.indexOf("subject id");
-      const subIdx     = subCodeIdx !== -1 ? subCodeIdx : subIdIdx;
+      const subIdIdx = headers.indexOf("subject id");
+      const subIdx = subCodeIdx !== -1 ? subCodeIdx : subIdIdx;
       const facCodeIdx = headers.indexOf("faculty code");
       const facLongIdx = headers.indexOf("faculty college code");
-      const facIdIdx   = headers.indexOf("faculty id");
-      const facIdx     = facLongIdx !== -1 ? facLongIdx : facCodeIdx !== -1 ? facCodeIdx : facIdIdx;
+      const facIdIdx = headers.indexOf("faculty id");
+      const facIdx = facLongIdx !== -1 ? facLongIdx : facCodeIdx !== -1 ? facCodeIdx : facIdIdx;
       const sessionIdx = headers.indexOf("session type");
-      const roomIdx    = headers.indexOf("room");
-      const notesIdx   = headers.indexOf("notes");
+      const roomIdx = headers.indexOf("room");
+      const notesIdx = headers.indexOf("notes");
 
       if (dayIdx === -1 || periodIdx === -1) throw new Error("CSV must have 'Day' and 'Period ID' columns");
 
@@ -591,13 +585,13 @@ export default function FacultyTimetableSlotsManagement() {
           if (period?.isBreak) sessionType = "break";
 
           slotsToCreate.push({
-            day:          vals[dayIdx],
+            day: vals[dayIdx],
             period_slot_id: periodId,
             subject_id,
             faculty_id,
             session_type: sessionType,
-            room:         roomIdx !== -1 && vals[roomIdx] ? vals[roomIdx] : null,
-            notes:        notesIdx !== -1 && vals[notesIdx] ? vals[notesIdx] : null,
+            room: roomIdx !== -1 && vals[roomIdx] ? vals[roomIdx] : null,
+            notes: notesIdx !== -1 && vals[notesIdx] ? vals[notesIdx] : null,
           });
         } catch (rowErr) {
           failedRows.push({ row: i + 1, reason: rowErr instanceof Error ? rowErr.message : "Unknown error" });
@@ -666,13 +660,12 @@ export default function FacultyTimetableSlotsManagement() {
             <p className="text-gray-500 mt-1 text-sm">
               {timetableInfo.academic_year} &bull; Sem {timetableInfo.semester} &bull; Batch {timetableInfo.batch}
               <span
-                className={`ml-3 px-2 py-0.5 rounded-full text-xs font-medium ${
-                  timetableInfo.status === "active"
+                className={`ml-3 px-2 py-0.5 rounded-full text-xs font-medium ${timetableInfo.status === "active"
                     ? "bg-green-100 text-green-800"
                     : timetableInfo.status === "draft"
-                    ? "bg-yellow-100 text-yellow-800"
-                    : "bg-gray-100 text-gray-700"
-                }`}
+                      ? "bg-yellow-100 text-yellow-800"
+                      : "bg-gray-100 text-gray-700"
+                  }`}
               >
                 {timetableInfo.status?.charAt(0).toUpperCase()}{timetableInfo.status?.slice(1)}
               </span>
@@ -791,7 +784,7 @@ export default function FacultyTimetableSlotsManagement() {
                           ...formData,
                           session_type: final,
                           subject_id: final === "break" ? "none" : formData.subject_id,
-                          faculty_id: final === "break" ? ""   : formData.faculty_id,
+                          faculty_id: final === "break" ? "" : formData.faculty_id,
                         });
                       }}
                     >
@@ -901,9 +894,8 @@ export default function FacultyTimetableSlotsManagement() {
                       return (
                         <div
                           key={`${day}-${period.id}`}
-                          className={`flex items-center justify-between p-3 border rounded-lg ${
-                            period.isBreak ? "bg-amber-50 border-amber-100" : "bg-gray-50"
-                          }`}
+                          className={`flex items-center justify-between p-3 border rounded-lg ${period.isBreak ? "bg-amber-50 border-amber-100" : "bg-gray-50"
+                            }`}
                         >
                           <div className="flex-1">
                             <p className="font-semibold text-sm text-gray-700">
@@ -917,10 +909,10 @@ export default function FacultyTimetableSlotsManagement() {
                                 ) : slot.subject_id ? (
                                   <p className="text-sm text-blue-700 font-medium">
                                     {/* subject.name from helper endpoints, subject_name from raw getSlots association */
-                                    slot.subject?.name ??
-                                    slot.subject?.subject_name ??
-                                    subjects.find(s => s.id === slot.subject_id)?.name ??
-                                    `Subject ${slot.subject_id}`}
+                                      slot.subject?.name ??
+                                      slot.subject?.subject_name ??
+                                      subjects.find(s => s.id === slot.subject_id)?.name ??
+                                      `Subject ${slot.subject_id}`}
                                     {(slot.subject?.code || slot.subject?.subject_code) && (
                                       <span className="ml-1 text-xs text-gray-400">
                                         ({slot.subject.code || slot.subject.subject_code})

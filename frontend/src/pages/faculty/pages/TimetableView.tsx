@@ -80,11 +80,30 @@ const FacultyIndividualTimetable: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedClassIndex, setSelectedClassIndex] = useState<string>("0");
 
+  const [masterPeriods, setMasterPeriods] = useState<any[]>([]);
+
   useEffect(() => {
     if (authToken) {
       fetchTimetable();
+      fetchMasterPeriods();
     }
   }, [authToken]);
+
+  const fetchMasterPeriods = async () => {
+    try {
+      const res = await fetch('/api/v1/timetable-display/period-slots', {
+        headers: { Authorization: `Bearer ${authToken}` }
+      });
+      if (res.ok) {
+        const json = await res.json();
+        if (json.data && Array.isArray(json.data)) {
+          setMasterPeriods(json.data);
+        }
+      }
+    } catch (e) {
+      console.warn('[FACULTY TIMETABLE] Failed to fetch master periods:', e);
+    }
+  };
 
   const fetchTimetable = async () => {
     try {
@@ -198,22 +217,46 @@ const FacultyIndividualTimetable: React.FC = () => {
     }
   };
 
-  const TimetableGrid: React.FC<{ timetable: Timetable }> = ({ timetable }) => {
-    // Use a fixed set of 7 periods to match the standard college schedule
-    const standardPeriods: Period[] = [
-      { id: 1, label: 'I', startTime: '09:30:00', endTime: '10:20:00' },
-      { id: 2, label: 'II', startTime: '10:20:00', endTime: '11:10:00' },
-      { id: 3, label: 'III', startTime: '11:30:00', endTime: '12:25:00' },
-      { id: 4, label: 'IV', startTime: '13:10:00', endTime: '14:00:00' },
-      { id: 5, label: 'V', startTime: '14:00:00', endTime: '14:50:00' },
-      { id: 6, label: 'VI', startTime: '15:15:00', endTime: '16:00:00' },
-      { id: 7, label: 'VII', startTime: '16:00:00', endTime: '16:45:00' },
-    ];
+  const ROMAN_LABELS = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
 
-    // Map labels and times from actual data if available, otherwise use defaults
-    const periodDetails = standardPeriods.map(std => {
-      const actualSlot = timetable.slots.find(s => s.period?.id === std.id || s.period?.label === std.label);
-      return actualSlot?.period || std;
+  const TimetableGrid: React.FC<{ timetable: Timetable }> = ({ timetable }) => {
+    const periodIdsSet = new Set<number>();
+    masterPeriods.forEach(p => periodIdsSet.add(p.id));
+    timetable.slots.forEach(s => { if (s.period?.id) periodIdsSet.add(s.period.id); });
+    if (periodIdsSet.size === 0) [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].forEach(id => periodIdsSet.add(id));
+
+    const sortedPeriodIds = Array.from(periodIdsSet).sort((a, b) => a - b);
+
+    const periodDetails = sortedPeriodIds.map(periodId => {
+      const slotsForPeriod = timetable.slots.filter(s => s.period?.id === periodId);
+      const teachingSlot = slotsForPeriod.find(s => s.subject && s.sessionType !== 'break');
+      const breakSlot = slotsForPeriod.find(s => s.sessionType === 'break' || (s.period as any)?.isBreak);
+      const masterInfo = masterPeriods.find(p => p.id === periodId);
+      const sampleSlot = slotsForPeriod[0];
+
+      const isBreak = !teachingSlot && (!!breakSlot || (masterInfo?.isBreak ?? false));
+
+      let label = '';
+      if (isBreak) {
+        label = breakSlot?.period?.label || (breakSlot as any)?.notes || (masterInfo as any)?.breakName || masterInfo?.label || 'Break';
+        if (!label || label.trim() === '' || label.startsWith('Period')) label = 'Break';
+      } else {
+        label = sampleSlot?.period?.label || masterInfo?.label || ROMAN_LABELS[periodId] || `Period ${periodId}`;
+        if (!label || label.trim() === '' || label.toLowerCase().includes('break') || label.toLowerCase().includes('lunch')) {
+          label = ROMAN_LABELS[periodId] || `Period ${periodId}`;
+        }
+      }
+
+      const startTime = sampleSlot?.period?.startTime || (sampleSlot as any)?.startTime || (sampleSlot as any)?.start_time || masterInfo?.startTime || '';
+      const endTime = sampleSlot?.period?.endTime || (sampleSlot as any)?.endTime || (sampleSlot as any)?.end_time || masterInfo?.endTime || '';
+
+      return {
+        id: periodId,
+        label,
+        startTime,
+        endTime,
+        isBreak
+      };
     });
 
     return (
@@ -223,10 +266,14 @@ const FacultyIndividualTimetable: React.FC = () => {
             <tr className="bg-blue-50 border-b-2 border-blue-200">
               <th className="px-4 py-3 text-left text-sm font-semibold text-blue-900 min-w-24">Day</th>
               {periodDetails.map((period, periodIdx) => (
-                <th key={`period-${periodIdx}`} className="px-4 py-3 text-center text-sm font-semibold text-blue-900 min-w-32">
-                  <div className="font-bold">{period.label}</div>
+                <th
+                  key={`period-${periodIdx}`}
+                  className={`px-3 py-2 text-center text-sm font-semibold text-blue-900 min-w-24 ${period.isBreak ? 'bg-amber-50/80 border-l border-amber-200' : ''
+                    }`}
+                >
+                  <div className={`font-bold ${period.isBreak ? 'text-amber-700 text-xs' : ''}`}>{period.label}</div>
                   <div className="text-xs text-gray-600 font-normal">
-                    {period.startTime.substring(0, 5)} - {period.endTime.substring(0, 5)}
+                    {period.startTime ? period.startTime.substring(0, 5) : ''} - {period.endTime ? period.endTime.substring(0, 5) : ''}
                   </div>
                 </th>
               ))}
@@ -239,9 +286,21 @@ const FacultyIndividualTimetable: React.FC = () => {
                   {day}
                 </td>
                 {periodDetails.map((period, periodIdx) => {
-                  const slot = timetable.slots.find(
-                    s => s.day === day && s.period?.id === period.id
-                  );
+                  const slot = timetable.slots.find(s => s.day === day && s.period?.id === period.id);
+                  const hasTeachingSlot = slot && slot.subject && slot.sessionType !== 'break';
+                  if (!hasTeachingSlot && (period.isBreak || slot?.sessionType === 'break')) {
+                    const isLunch = period.label.toLowerCase().includes('lunch');
+                    return (
+                      <td
+                        key={`${day}-${periodIdx}`}
+                        className="px-2 py-3 border-l border-amber-200 bg-amber-50/40 text-center align-middle"
+                      >
+                        <div className="text-sm font-medium text-amber-700">
+                          {isLunch ? '🍱' : '☕'}
+                        </div>
+                      </td>
+                    );
+                  }
 
                   return (
                     <td

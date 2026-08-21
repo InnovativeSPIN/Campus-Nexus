@@ -57,57 +57,48 @@ const getRomanNumeral = (num: number): string => {
   return romanMap[num - 1] || String(num);
 };
 
-const getDynamicPeriods = (slots: any[]): PeriodDisplay[] => {
-  const periodMap = new Map<number, PeriodDisplay>();
+const ROMAN_ARR = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
 
-  slots.forEach((slot: any) => {
-    const h = parseInt(slot.hour || slot.period_slot_id, 10);
-    if (isNaN(h)) return;
+const getDynamicPeriods = (slots: any[], basePeriods: PeriodDisplay[] = []): PeriodDisplay[] => {
+  const allIds = new Set<number>();
+  basePeriods.forEach(p => allIds.add(p.id));
+  slots.forEach(s => {
+    const h = parseInt(s.hour || s.period_slot_id || s.period?.id, 10);
+    if (!isNaN(h)) allIds.add(h);
+  });
+  if (allIds.size === 0) [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].forEach(id => allIds.add(id));
 
-    const start = slot.period?.startTime || slot.start_time || "";
-    const end = slot.period?.endTime || slot.end_time || "";
-    const startStr = start ? start.substring(0, 5) : "";
-    const endStr = end ? end.substring(0, 5) : "";
-    const timeStr = startStr && endStr ? `${startStr} - ${endStr}` : "";
+  const sortedIds = Array.from(allIds).sort((a, b) => a - b);
+  const result: PeriodDisplay[] = [];
 
-    const isBreak = slot.sessionType === "break" || slot.session_type === "break" || slot.isBreak;
+  sortedIds.forEach(id => {
+    const slotsForId = slots.filter(s => parseInt(s.hour || s.period_slot_id || s.period?.id, 10) === id);
+    const teachingSlot = slotsForId.find(s => s.sessionType !== 'break' && s.session_type !== 'break' && s.subject && s.subject !== 'Unknown');
+    const breakSlot = slotsForId.find(s => s.sessionType === 'break' || s.session_type === 'break' || s.isBreak || s.period?.isBreak);
+    const base = basePeriods.find(p => p.id === id);
+    const sample = slotsForId[0];
 
-    if (!periodMap.has(h)) {
-      periodMap.set(h, {
-        id: h,
-        label: slot.period_label || getRomanNumeral(h),
-        time: timeStr,
-        isBreak: isBreak
-      });
+    const isBreak = !teachingSlot && (!!breakSlot || (base?.isBreak ?? false));
+
+    let label = '';
+    if (isBreak) {
+      label = breakSlot?.notes || breakSlot?.period_label || breakSlot?.period?.label || base?.label || 'Break';
+      if (!label || label.trim() === '' || label.startsWith('Period')) label = 'Break';
     } else {
-      const existing = periodMap.get(h)!;
-      if (!existing.time && timeStr) existing.time = timeStr;
-      if (isBreak) existing.isBreak = true;
-      if (slot.period_label && slot.period_label.trim() !== "" && slot.period_label !== getRomanNumeral(h)) {
-         existing.label = slot.period_label;
+      label = sample?.period?.label || sample?.period_label || base?.label || ROMAN_ARR[id] || `Period ${id}`;
+      if (!label || label.trim() === '' || label.toLowerCase().includes('break') || label.toLowerCase().includes('lunch')) {
+        label = ROMAN_ARR[id] || `Period ${id}`;
       }
     }
+
+    const start = sample?.period?.startTime || sample?.start_time || base?.time?.split(' - ')[0] || '';
+    const end = sample?.period?.endTime || sample?.end_time || base?.time?.split(' - ')[1] || '';
+    const time = start && end ? `${start.substring(0, 5)} - ${end.substring(0, 5)}` : base?.time || '';
+
+    result.push({ id, label, time, isBreak });
   });
 
-  return Array.from(periodMap.values()).sort((a, b) => a.id - b.id);
-};
-
-const getDefaultPeriods = (): PeriodDisplay[] => {
-  const defaultTimes = [
-    "09:30 - 10:20",
-    "10:20 - 11:10",
-    "11:30 - 12:25",
-    "13:10 - 14:00",
-    "14:00 - 14:50",
-    "15:15 - 16:00",
-    "16:00 - 16:45"
-  ];
-  return Array.from({ length: 7 }, (_, i) => ({
-    id: i + 1,
-    label: getRomanNumeral(i + 1),
-    time: defaultTimes[i],
-    isBreak: false
-  }));
+  return result;
 };
 
 interface ClassSlot {
@@ -172,6 +163,7 @@ const getSessionColor = (sessionType: string) => {
 const TimetableTable = ({
   data,
   rawSlots = [],
+  basePeriods = [],
   loading,
   error,
   onRefresh,
@@ -179,22 +171,18 @@ const TimetableTable = ({
 }: {
   data: TimetableData;
   rawSlots?: any[];
+  basePeriods?: PeriodDisplay[];
   loading: boolean;
   error: string | null;
   onRefresh: () => void;
   showBreak?: boolean;
 }) => {
-  let displayPeriods = rawSlots.length > 0 ? getDynamicPeriods(rawSlots) : getDefaultPeriods();
+  let displayPeriods = getDynamicPeriods(rawSlots, basePeriods);
   
   if (!showBreak) {
     displayPeriods = displayPeriods.filter(period => {
       const lbl = (period.label || '').toLowerCase();
       return !period.isBreak && lbl !== 'lunch' && lbl !== 'break';
-    });
-    
-    // Reassign sequential Roman numerals to remove gaps (e.g., IX showing up)
-    displayPeriods.forEach((period, index) => {
-      period.label = getRomanNumeral(index + 1);
     });
   }
 
@@ -280,17 +268,22 @@ const TimetableTable = ({
 
               {displayPeriods.map((period) => {
                 const slots = (data[day]?.[period.id] || []) as ClassSlot[];
+                const teachingSlots = slots.filter(s => s.sessionType !== 'break' && s.subject && s.subject !== "Unknown");
                 const breakSlot = slots.find(s => s.sessionType === 'break');
+                const isBreakCell = teachingSlots.length === 0 && (period.isBreak || !!breakSlot);
 
-                // Show break cell only when showBreak is true
-                if (breakSlot && showBreak) {
+                // Show break cell when period is a break OR slot is a break AND no teaching slot is present
+                if (isBreakCell && showBreak) {
+                  const isLunch = period.label.toLowerCase().includes('lunch') || (breakSlot?.subject || '').toLowerCase().includes('lunch');
                   return (
                     <td
                       key={`${day}-${period.id}`}
                       className="border border-gray-200 p-0.5 bg-amber-50/40 text-center align-middle"
-                      style={{ width: '45px' }}
+                      style={{ width: '50px' }}
                     >
-                      <div className="text-[9px] text-amber-600 font-medium py-1">☕</div>
+                      <div className="text-[10px] text-amber-700 font-medium py-1" title={period.label}>
+                        {isLunch ? '🍱' : '☕'}
+                      </div>
                     </td>
                   );
                 }
@@ -408,7 +401,35 @@ export default function Timetable() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Base Master Period Slots state (fetched real-time from backend database)
+  const [basePeriods, setBasePeriods] = useState<PeriodDisplay[]>([]);
+
   const token = authToken || localStorage.getItem("authToken");
+
+  const fetchMasterPeriodSlots = async () => {
+    try {
+      const response = await fetch("/api/v1/timetable-display/period-slots", {
+        headers: {
+          Authorization: token ? `Bearer ${token}` : "",
+          "Content-Type": "application/json",
+        },
+      });
+      if (response.ok) {
+        const resData = await response.json();
+        if (resData.success && Array.isArray(resData.data) && resData.data.length > 0) {
+          const fetched: PeriodDisplay[] = resData.data.map((ps: any) => ({
+            id: ps.id,
+            label: ps.label || getRomanNumeral(ps.periodNumber || ps.id),
+            time: ps.startTime && ps.endTime ? `${ps.startTime} - ${ps.endTime}` : "",
+            isBreak: !!ps.isBreak,
+          }));
+          setBasePeriods(fetched);
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching master period slots:", err);
+    }
+  };
   const deptDisplay = user?.department
     ? typeof user.department === "object"
       ? (user.department as any).short_name || user.department
@@ -710,6 +731,7 @@ export default function Timetable() {
         setLoading(true);
         setError(null);
         await Promise.all([
+          fetchMasterPeriodSlots(),
           fetchMyTimetable(),
           fetchFacultyList(),
           fetchClassList()
@@ -834,10 +856,11 @@ export default function Timetable() {
               <TimetableTable
                 data={myTimetable}
                 rawSlots={myRawSlots}
+                basePeriods={basePeriods}
                 loading={loading}
                 error={error}
                 onRefresh={fetchMyTimetable}
-                showBreak={false}
+                showBreak={true}
               />
             )}
           </div>
@@ -876,10 +899,11 @@ export default function Timetable() {
               <TimetableTable
                 data={facultyTimetable}
                 rawSlots={facultyRawSlots}
+                basePeriods={basePeriods}
                 loading={loading}
                 error={error}
                 onRefresh={() => fetchFacultyTimetable(selectedFaculty)}
-                showBreak={false}
+                showBreak={true}
               />
             ) : (
               <div className="py-12 text-center">
@@ -920,10 +944,11 @@ export default function Timetable() {
               <TimetableTable
                 data={classTimetable}
                 rawSlots={classRawSlots}
+                basePeriods={basePeriods}
                 loading={loading}
                 error={error}
                 onRefresh={() => fetchClassTimetable(selectedClass)}
-                showBreak={false}
+                showBreak={true}
               />
             ) : (
               <div className="py-12 text-center">

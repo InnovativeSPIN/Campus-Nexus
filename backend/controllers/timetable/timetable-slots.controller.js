@@ -92,18 +92,18 @@ const checkReadAccess = (req, master) => {
  */
 const normalizeTimeFormat = (time) => {
   if (!time) return null;
-  
+
   const timeRegex = /^([0-1]?[0-9]|2[0-3]):([0-5][0-9])(?::([0-5][0-9]))?$/;
   const match = time.match(timeRegex);
-  
+
   if (!match) {
     throw new Error(`Invalid time format: ${time}. Expected HH:MM or HH:MM:SS`);
   }
-  
+
   const hours = match[1];
   const minutes = match[2];
   const seconds = match[3] || '00';
-  
+
   return `${hours.padStart(2, '0')}:${minutes}:${seconds}`;
 };
 
@@ -148,8 +148,8 @@ export const createSlot = asyncHandler(async (req, res, next) => {
   let breakPeriodIds = [];
   if (master.break_period_ids) {
     try {
-      breakPeriodIds = typeof master.break_period_ids === 'string' 
-        ? JSON.parse(master.break_period_ids) 
+      breakPeriodIds = typeof master.break_period_ids === 'string'
+        ? JSON.parse(master.break_period_ids)
         : master.break_period_ids;
     } catch (err) {
       console.error('[SLOT CREATE] Failed to parse break_period_ids:', master.break_period_ids, err);
@@ -216,7 +216,7 @@ export const createSlot = asyncHandler(async (req, res, next) => {
     });
   } catch (error) {
     console.error('[SLOT CREATE] Error:', error.name, error.message);
-    
+
     if (error.message.includes('Invalid time format')) {
       return next(new ErrorResponse(error.message, 400));
     }
@@ -383,14 +383,14 @@ export const bulkCreateSlots = asyncHandler(async (req, res, next) => {
     // Validate and normalize time formats for all slots
     const normalizedSlots = slots.map((slot) => {
       const normalized = { ...slot };
-      
+
       if (normalized.start_time) {
         normalized.start_time = normalizeTimeFormat(normalized.start_time);
       }
       if (normalized.end_time) {
         normalized.end_time = normalizeTimeFormat(normalized.end_time);
       }
-      
+
       return normalized;
     });
 
@@ -611,17 +611,17 @@ export const saveBreakConfiguration = asyncHandler(async (req, res, next) => {
   // Handle saving break timings and syncing to timetable_master_slots
   if (Array.isArray(breakTimings) && breakTimings.length > 0) {
     const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-    
+
     for (const timing of breakTimings) {
       const periodSlotId = Number(timing.period_slot_id);
-      
+
       // Only process timing if this period is actually in the breakPeriodIds list
       if (!breakPeriodIds.includes(periodSlotId)) continue;
-      
+
       const normalizedStart = timing.start_time ? normalizeTimeFormat(timing.start_time) : null;
       const normalizedEnd = timing.end_time ? normalizeTimeFormat(timing.end_time) : null;
-      const label = periodSlotId === 3 ? 'Break' : periodSlotId === 5 ? 'Lunch' : 'Break';
-      
+      const label = timing.break_name || timing.notes || (periodSlotId === 5 ? 'Lunch' : 'Break');
+
       for (const day of days) {
         // Find existing slot for this day/period
         const existingSlot = await TimetableMasterSlots.findOne({
@@ -631,7 +631,7 @@ export const saveBreakConfiguration = asyncHandler(async (req, res, next) => {
             period_slot_id: periodSlotId
           }
         });
-        
+
         if (existingSlot) {
           // Update it to be a break with the correct times
           await existingSlot.update({
@@ -706,7 +706,7 @@ export const getPeriodSlots = asyncHandler(async (req, res, next) => {
   const { masterId } = req.params;
 
   const master = await TimetableMaster.findByPk(masterId, {
-    attributes: ['id', 'department_id'],
+    attributes: ['id', 'department_id', 'break_period_ids'],
   });
   if (!master) {
     return next(new ErrorResponse(`Timetable master not found with id ${masterId}`, 404));
@@ -715,6 +715,15 @@ export const getPeriodSlots = asyncHandler(async (req, res, next) => {
   // Check read access
   const accessError = checkReadAccess(req, master);
   if (accessError) return next(accessError);
+
+  let breakPeriodIds = [3, 5, 8];
+  if (master.break_period_ids) {
+    try {
+      breakPeriodIds = typeof master.break_period_ids === 'string'
+        ? JSON.parse(master.break_period_ids)
+        : (master.break_period_ids || [3, 5, 8]);
+    } catch (e) { }
+  }
 
   // Fetch all active period slots from PeriodSlot table
   const allPeriodSlots = await PeriodSlot.findAll({
@@ -751,7 +760,7 @@ export const getPeriodSlots = asyncHandler(async (req, res, next) => {
     return time;
   };
 
-  // Convert to period format with times
+  // Convert to period format with times and labels
   const periods = allPeriodSlots.map((ps) => {
     let start = ps.start_time;
     let end = ps.end_time;
@@ -763,11 +772,30 @@ export const getPeriodSlots = asyncHandler(async (req, res, next) => {
       end = override.end_time;
     }
 
-    const timeRange = `${formatTime(start)} - ${formatTime(end)}`;
+    const timeRange = start && end ? `${formatTime(start)} - ${formatTime(end)}` : "";
+    const isBreak = ps.slot_type === 'break' || breakPeriodIds.includes(ps.id);
+
+    let label = ps.period_label;
+    if (!label || label.trim() === '') {
+      if (isBreak) {
+        label = ps.break_name || (ps.id === 5 ? 'Lunch' : 'Tea Break');
+      } else {
+        label = `Period ${ps.period_number || ps.id}`;
+      }
+    }
 
     return {
       id: ps.id,
+      slot_order: ps.slot_order,
+      slot_type: ps.slot_type,
+      period_number: ps.period_number,
+      label,
+      period_label: ps.period_label,
+      break_name: ps.break_name,
+      start_time: start,
+      end_time: end,
       time: timeRange,
+      isBreak,
     };
   });
 

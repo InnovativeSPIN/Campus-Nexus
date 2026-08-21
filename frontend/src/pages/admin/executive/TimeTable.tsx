@@ -78,7 +78,7 @@ export default function ExecutiveTimeTable() {
   const [target, setTarget] = useState<'class' | 'faculty'>('class');
   const [departments, setDepartments] = useState<Department[]>([]);
   const [selectedDepartment, setSelectedDepartment] = useState<string>('');
-  
+
   // Class filter state
   const [classes, setClasses] = useState<ClassItem[]>([]);
   const [selectedClassId, setSelectedClassId] = useState<string>('');
@@ -89,13 +89,36 @@ export default function ExecutiveTimeTable() {
 
   const [loading, setLoading] = useState<boolean>(false);
   const [slots, setSlots] = useState<TimetableSlotData[]>([]);
+  const [masterPeriods, setMasterPeriods] = useState<PeriodDisplay[]>([]);
   const [headerInfo, setHeaderInfo] = useState<{ title: string; subtitle: string }>({
     title: 'Executive Timetable View',
     subtitle: 'Select department, target, and class/faculty to view timetable'
   });
 
-  // Fetch departments on initial load
+  const fetchMasterPeriods = async () => {
+    try {
+      const response = await fetch('/api/v1/timetable-display/period-slots');
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && Array.isArray(result.data)) {
+          setMasterPeriods(result.data.map((ps: any) => ({
+            id: ps.id,
+            label: ps.label,
+            time: ps.startTime && ps.endTime ? `${ps.startTime} - ${ps.endTime}` : '',
+            isBreak: ps.isBreak
+          })));
+        }
+      }
+    } catch (e) {
+      console.warn('Error fetching master periods for ExecutiveTimetable:', e);
+    }
+  };
+
+  const displayPeriods = masterPeriods.length > 0 ? masterPeriods : STANDARD_PERIODS;
+
+  // Fetch departments & master periods on initial load
   useEffect(() => {
+    fetchMasterPeriods();
     const fetchDepartments = async () => {
       try {
         const response = await fetch('/api/v1/departments');
@@ -210,7 +233,7 @@ export default function ExecutiveTimeTable() {
       if (target === 'class') {
         const currentClassObj = classes.find(c => c.id.toString() === selectedClassId);
         const className = currentClassObj ? currentClassObj.name : 'Class';
-        
+
         setHeaderInfo({
           title: `Class Timetable - ${deptName} ${className ? `(${className})` : ''}`,
           subtitle: `Showing schedule for ${className || 'selected class'} under ${currentDeptObj?.full_name || deptName}`
@@ -244,7 +267,7 @@ export default function ExecutiveTimeTable() {
         // Faculty Target
         const currentFacObj = faculties.find(f => f.faculty_id.toString() === selectedFacultyId);
         const facultyName = currentFacObj ? (currentFacObj.Name || currentFacObj.name) : 'Faculty Member';
-        
+
         setHeaderInfo({
           title: `Faculty Timetable - ${facultyName}`,
           subtitle: `${currentFacObj?.designation || 'Faculty'} under ${currentDeptObj?.full_name || deptName}`
@@ -260,11 +283,11 @@ export default function ExecutiveTimeTable() {
           }
 
           if (result && result.success) {
-            const rawSlots = result.slots || 
-              (result.data && result.data.slots) || 
-              (result.data && Array.isArray(result.data) ? result.data : null) || 
+            const rawSlots = result.slots ||
+              (result.data && result.data.slots) ||
+              (result.data && Array.isArray(result.data) ? result.data : null) ||
               (result.timetables && result.timetables[0] && result.timetables[0].slots);
-            
+
             if (Array.isArray(rawSlots) && rawSlots.length > 0) {
               const mappedSlots: TimetableSlotData[] = rawSlots.map((s: any) => ({
                 day: s.day,
@@ -373,7 +396,7 @@ export default function ExecutiveTimeTable() {
               <div className="space-y-1 sm:col-span-2">
                 <Label className="text-[11px] font-semibold text-muted-foreground flex items-center gap-1">
                   <BookOpen className="h-3 w-3 text-primary" />
-                  Year/Class 
+                  Year/Class
                 </Label>
                 <Select value={selectedClassId} onValueChange={setSelectedClassId}>
                   <SelectTrigger className="h-9 text-xs">
@@ -471,9 +494,8 @@ export default function ExecutiveTimeTable() {
                     {STANDARD_PERIODS.map((period) => (
                       <th
                         key={period.id}
-                        className={`p-1.5 text-center border-l border-border ${
-                          period.isBreak ? 'bg-amber-500/5 text-amber-600 dark:text-amber-400 w-[70px]' : ''
-                        }`}
+                        className={`p-1.5 text-center border-l border-border ${period.isBreak ? 'bg-amber-500/5 text-amber-600 dark:text-amber-400 w-[70px]' : ''
+                          }`}
                       >
                         <div className="font-bold text-[11px] text-foreground">{period.label}</div>
                         <div className="text-[9px] text-muted-foreground font-normal leading-tight">
@@ -492,8 +514,9 @@ export default function ExecutiveTimeTable() {
                       </td>
 
                       {/* Period Cells */}
-                      {STANDARD_PERIODS.map((period) => {
-                        if (period.isBreak) {
+                      {displayPeriods.map((period) => {
+                        const slot = getSlot(day, period.id);
+                        if (!slot && period.isBreak) {
                           return (
                             <td
                               key={`${day}-${period.id}`}
@@ -505,8 +528,6 @@ export default function ExecutiveTimeTable() {
                             </td>
                           );
                         }
-
-                        const slot = getSlot(day, period.id);
 
                         if (!slot) {
                           return (
@@ -524,11 +545,10 @@ export default function ExecutiveTimeTable() {
                         return (
                           <td
                             key={`${day}-${period.id}`}
-                            className={`p-1.5 border-l border-border transition-colors ${
-                              isLab
+                            className={`p-1.5 border-l border-border transition-colors ${isLab
                                 ? 'bg-emerald-500/10 border-l-2 border-l-emerald-500'
                                 : 'bg-blue-500/5 border-l-2 border-l-blue-500'
-                            }`}
+                              }`}
                           >
                             <div className="space-y-0.5">
                               <div className="font-semibold text-[11px] text-foreground leading-tight truncate">

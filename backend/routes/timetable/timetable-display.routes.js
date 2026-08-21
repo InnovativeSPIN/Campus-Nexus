@@ -6,6 +6,7 @@ import {
   getMyTimetable,
   getMyClassTimetable,
   getEffectiveClassTimetable,
+  getAllMasterPeriodSlots,
 } from '../../controllers/timetable/timetable-display.controller.js';
 
 const router = express.Router();
@@ -16,6 +17,9 @@ router.use(protect);
 /**
  * Display Routes for Timetableviewing
  */
+
+// Get all active period slots (real-time master period definitions)
+router.get('/period-slots', getAllMasterPeriodSlots);
 
 // Get class timetable (for students in that class)
 router.get('/class/:classId', getClassTimetable);

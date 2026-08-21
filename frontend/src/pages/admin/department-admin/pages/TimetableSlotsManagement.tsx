@@ -71,14 +71,14 @@ const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"
  */
 const normalizeTimeFormat = (time: string | null | undefined): string | null => {
   if (!time || time.trim() === "") return null;
-  
+
   // Already has 3 segments (HH:MM:SS)
   const parts = time.split(":");
   if (parts.length === 3) return time;
-  
+
   // Only HH:MM format - add seconds
   if (parts.length === 2) return `${time}:00`;
-  
+
   return null;
 };
 
@@ -90,22 +90,22 @@ const formatTimeTo12h = (timeStr: string | null | undefined): string => {
   if (!timeStr) return "";
   const trimmed = timeStr.trim();
   if (trimmed === "") return "";
-  
+
   if (trimmed.toLowerCase().includes("am") || trimmed.toLowerCase().includes("pm")) {
     return trimmed;
   }
-  
+
   const parts = trimmed.split(":");
   let hours = parseInt(parts[0]);
   const minutes = parseInt(parts[1]);
   if (isNaN(hours) || isNaN(minutes)) return trimmed;
-  
+
   const ampm = hours >= 12 ? "PM" : "AM";
   hours = hours % 12;
   hours = hours ? hours : 12;
   const minutesStr = minutes.toString().padStart(2, '0');
   const hoursStr = hours.toString().padStart(2, '0');
-  
+
   return `${hoursStr}:${minutesStr} ${ampm}`;
 };
 
@@ -125,14 +125,14 @@ const formatRangeTo12h = (rangeStr: string | null | undefined): string => {
 const DEFAULT_PERIODS = [
   { id: 1, label: "I", time: "09:30 AM - 10:20 AM" },
   { id: 2, label: "II", time: "10:20 AM - 11:10 AM" },
-  { id: 3, label: "Break", time: "11:10 AM - 11:30 AM" },
-  { id: 4, label: "III", time: "11:30 AM - 12:25 PM" },
-  { id: 5, label: "Lunch", time: "12:25 PM - 01:10 PM" },
-  { id: 6, label: "IV", time: "01:10 PM - 02:00 PM" },
-  { id: 7, label: "V", time: "02:00 PM - 02:50 PM" },
-  { id: 8, label: "Break", time: "02:50 PM - 03:10 PM" },
-  { id: 9, label: "VI", time: "03:10 PM - 04:00 PM" },
-  { id: 10, label: "VII", time: "04:00 PM - 04:45 PM" },
+  { id: 3, label: "III", time: "11:10 AM - 11:30 AM" },
+  { id: 4, label: "IV", time: "11:30 AM - 12:25 PM" },
+  { id: 5, label: "V", time: "12:25 PM - 01:10 PM" },
+  { id: 6, label: "VI", time: "01:10 PM - 02:00 PM" },
+  { id: 7, label: "VII", time: "02:00 PM - 02:50 PM" },
+  { id: 8, label: "VIII", time: "02:50 PM - 03:10 PM" },
+  { id: 9, label: "IX", time: "03:10 PM - 04:00 PM" },
+  { id: 10, label: "X", time: "04:00 PM - 04:45 PM" },
 ];
 
 const sessionTypes = ["theory", "lab", "tutorial", "activity", "project", "break", "free"];
@@ -149,7 +149,7 @@ export default function TimetableSlotsManagement() {
   const [isBreakConfigOpen, setIsBreakConfigOpen] = useState(false);
   const [periods, setPeriods] = useState<typeof DEFAULT_PERIODS>([...DEFAULT_PERIODS]);
   const [breakPeriodIds, setBreakPeriodIds] = useState<number[]>([]); // Will be loaded from backend
-  const [tempBreakTimings, setTempBreakTimings] = useState<Record<number, { start_time: string; end_time: string }>>({});
+  const [tempBreakTimings, setTempBreakTimings] = useState<Record<number, { start_time: string; end_time: string; break_name?: string }>>({});
   const { authToken } = useAuth();
 
   const [formData, setFormData] = useState({
@@ -175,7 +175,7 @@ export default function TimetableSlotsManagement() {
         console.warn('[BREAK CONFIG] prev is not an array:', prev, 'Type:', typeof prev, 'Will load from backend');
         return [];
       }
-      
+
       return prev.includes(periodId)
         ? prev.filter(id => id !== periodId)
         : [...prev, periodId];
@@ -254,7 +254,7 @@ export default function TimetableSlotsManagement() {
                 // Remove duplicates
                 return unique.some(u => u.id === item.id) ? unique : [...unique, item];
               }, []);
-            
+
             console.log("[FETCH DATA] Subjects for class", classId, ":", subjectsData);
           }
         }
@@ -279,7 +279,7 @@ export default function TimetableSlotsManagement() {
                 // Remove duplicates based on faculty_id
                 return unique.some(u => u.faculty_id === item.faculty_id) ? unique : [...unique, item];
               }, []) || [];
-            
+
             facultiesData = uniqueFaculties;
             console.log("[FETCH DATA] Faculty for class", classId, ":", facultiesData);
           }
@@ -306,24 +306,24 @@ export default function TimetableSlotsManagement() {
   // Function to refetch break configuration (callable from save handler)
   const refetchBreakConfig = async () => {
     if (!masterId || !authToken) return;
-    
+
     try {
       const res = await fetch(
         `/api/v1/timetable-master/${masterId}/break-config`,
         { headers: { Authorization: `Bearer ${authToken}` } }
       );
-      
+
       if (res.ok) {
         const data = await res.json();
         let breakIds = data.data?.breakPeriodIds || [];
         console.log('[BREAK CONFIG] Refetch raw data:', data.data?.breakPeriodIds);
-        
+
         // Validate that breakIds is an array
         if (!Array.isArray(breakIds)) {
           console.warn('[BREAK CONFIG] Invalid breakIds format from refetch:', breakIds);
           breakIds = [];
         }
-        
+
         console.log('[BREAK CONFIG] Refetched from backend:', breakIds);
         setBreakPeriodIds(breakIds);
         localStorage.setItem(`timetable_${masterId}_breaks`, JSON.stringify(breakIds));
@@ -343,18 +343,18 @@ export default function TimetableSlotsManagement() {
             `/api/v1/timetable-master/${masterId}/break-config`,
             { headers: { Authorization: `Bearer ${authToken}` } }
           );
-          
+
           if (res.ok) {
             const data = await res.json();
             let breakIds = data.data?.breakPeriodIds || [];
             console.log('[BREAK CONFIG] Raw data from backend:', data.data?.breakPeriodIds);
-            
+
             // Validate that breakIds is an array
             if (!Array.isArray(breakIds)) {
               console.warn('[BREAK CONFIG] Invalid breakIds format from backend:', breakIds);
               breakIds = [];
             }
-            
+
             console.log('[BREAK CONFIG] Loaded from backend:', breakIds);
             setBreakPeriodIds(breakIds);
             localStorage.setItem(`timetable_${masterId}_breaks`, JSON.stringify(breakIds));
@@ -392,7 +392,7 @@ export default function TimetableSlotsManagement() {
           }
         }
       };
-      
+
       fetchBreakConfig();
     }
   }, [masterId, authToken]);
@@ -406,40 +406,36 @@ export default function TimetableSlotsManagement() {
             `/api/v1/timetable-master/${masterId}/period-slots`,
             { headers: { Authorization: `Bearer ${authToken}` } }
           );
-          
+
           if (res.ok) {
             const data = await res.json();
             const periodData = data.data || [];
             console.log('[PERIOD SLOTS] Loaded from backend:', periodData);
-            
-            // Build periods array with label and time from database
+
+            const ROMAN = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
             const updatedPeriods = periodData.map((p: any) => {
-              let label = `Period ${p.id}`;
-              // Check if it's a break period to add label
-              if (breakPeriodIds.includes(p.id)) {
-                if (p.id === 3) label = "Break";
-                else if (p.id === 5) label = "Lunch";
-                else if (p.id === 8) label = "Break";
+              const isBreak = p.isBreak || breakPeriodIds.includes(p.id);
+              let label = p.label || p.period_label;
+              if (!label || label.toLowerCase().includes('break') || label.toLowerCase().includes('lunch')) {
+                label = ROMAN[p.id] || `Period ${p.id}`;
               }
               return {
                 id: p.id,
                 label,
                 time: p.time || "",
+                isBreak,
               };
             });
-            
+
             setPeriods(updatedPeriods);
           } else {
-            console.log('[PERIOD SLOTS] Failed to fetch, using defaults');
-            setPeriods([...DEFAULT_PERIODS]);
+            console.log('[PERIOD SLOTS] Failed to fetch period slots');
           }
         } catch (error) {
           console.error('[PERIOD SLOTS] Error fetching:', error);
-          console.log('[PERIOD SLOTS] Using default periods');
-          setPeriods([...DEFAULT_PERIODS]);
         }
       };
-      
+
       fetchPeriodSlots();
     }
   }, [masterId, authToken, breakPeriodIds]);
@@ -489,7 +485,7 @@ export default function TimetableSlotsManagement() {
       if (response.ok) {
         const newSlot = await response.json();
         const slotData = newSlot.data;
-        
+
         // Enrich slot with subject details from our loaded subjects array
         if (slotData.subject_id) {
           const subjectDetails = subjects.find(s => s.id === slotData.subject_id);
@@ -497,7 +493,7 @@ export default function TimetableSlotsManagement() {
             slotData.subject = subjectDetails;
           }
         }
-        
+
         // Enrich slot with faculty details from our loaded faculties array
         if (slotData.faculty_id) {
           const facultyDetails = faculties.find(f => f.faculty_id === slotData.faculty_id);
@@ -505,7 +501,7 @@ export default function TimetableSlotsManagement() {
             slotData.faculty = facultyDetails;
           }
         }
-        
+
         setSlots((prev) => [...prev, slotData]);
         setIsDialogOpen(false);
         resetForm();
@@ -585,7 +581,7 @@ export default function TimetableSlotsManagement() {
       if (response.ok) {
         const updated = await response.json();
         const updatedSlotData = updated.data;
-        
+
         // Enrich slot with subject details from our loaded subjects array
         if (updatedSlotData.subject_id) {
           const subjectDetails = subjects.find(s => s.id === updatedSlotData.subject_id);
@@ -593,7 +589,7 @@ export default function TimetableSlotsManagement() {
             updatedSlotData.subject = subjectDetails;
           }
         }
-        
+
         // Enrich slot with faculty details from our loaded faculties array
         if (updatedSlotData.faculty_id) {
           const facultyDetails = faculties.find(f => f.faculty_id === updatedSlotData.faculty_id);
@@ -601,7 +597,7 @@ export default function TimetableSlotsManagement() {
             updatedSlotData.faculty = facultyDetails;
           }
         }
-        
+
         setSlots((prev) =>
           prev.map((s) => (s.id === editingSlot.id ? updatedSlotData : s))
         );
@@ -755,7 +751,7 @@ export default function TimetableSlotsManagement() {
           if (response.ok) {
             const result = await response.json();
             const slotData = result.data;
-            
+
             // Enrich with subject/faculty details
             if (slotData.subject_id) {
               const subjectDetails = subjects.find(s => s.id === slotData.subject_id);
@@ -940,7 +936,7 @@ export default function TimetableSlotsManagement() {
 
     // Generate ALL possible day/period combinations (complete schedule)
     const dataToExport: (string | number)[][] = [];
-    
+
     days.forEach((day) => {
       periods.forEach((period) => {
         const key = `${day}-${period.id}`;
@@ -950,7 +946,7 @@ export default function TimetableSlotsManagement() {
           // Existing slot - fill in with actual data
           const subjectCode = slot.subject?.code || "";
           const facultyCode = slot.faculty?.college_code || "";
-          
+
           dataToExport.push([
             slot.day,
             slot.period_slot_id,
@@ -970,7 +966,7 @@ export default function TimetableSlotsManagement() {
           // Auto-detect breaks based on breakPeriodIds
           const isBreak = isPeriodBreak(period.id);
           const sessionType = isBreak ? "break" : "theory";
-          
+
           dataToExport.push([
             day,
             period.id,
@@ -1030,7 +1026,7 @@ export default function TimetableSlotsManagement() {
       "",
       "# ============================================================",
     ];
-    
+
     // Add footer with period counts
     const teachingPeriodCount = periods.filter(p => !isPeriodBreak(p.id)).length;
     const breakPeriodCount = periods.filter(p => isPeriodBreak(p.id)).length;
@@ -1040,7 +1036,7 @@ export default function TimetableSlotsManagement() {
       "# ============================================================",
       "",
     );
-    
+
     // Debug: Log what's being exported
     const teachingPeriods = periods.filter(p => !isPeriodBreak(p.id));
     const breakPeriods = periods.filter(p => isPeriodBreak(p.id));
@@ -1071,13 +1067,13 @@ export default function TimetableSlotsManagement() {
       "href",
       "data:text/csv;charset=utf-8," + encodeURIComponent(csvContent)
     );
-    
+
     // Create a filename that includes the class name
     const sanitizedName = (timetableName || "timetable")
       .replace(/[^a-zA-Z0-9\-]/g, "-")
       .toLowerCase()
       .substring(0, 30);
-    
+
     element.setAttribute(
       "download",
       `timetable-${sanitizedName}-${new Date().toISOString().split('T')[0]}.csv`
@@ -1089,7 +1085,7 @@ export default function TimetableSlotsManagement() {
 
     toast({
       title: "Success",
-      description: slots.length > 0 
+      description: slots.length > 0
         ? `Downloaded ${slots.length} slots from current timetable.`
         : "Template downloaded. Fill it and upload to bulk add slots.",
     });
@@ -1098,15 +1094,15 @@ export default function TimetableSlotsManagement() {
   // Helper function to convert subject code to subject_id
   const getSubjectIdFromCode = (codeOrId: string): number | null => {
     if (!codeOrId || !codeOrId.trim()) return null;
-    
+
     const trimmed = codeOrId.trim().toUpperCase();
-    
+
     // Try to parse as number first (backward compatibility)
     const asNumber = parseInt(trimmed);
     if (!isNaN(asNumber)) {
       return asNumber;
     }
-    
+
     // Try to find by code
     const subject = subjects.find(
       (s) => s.code && s.code.toUpperCase() === trimmed
@@ -1117,15 +1113,15 @@ export default function TimetableSlotsManagement() {
   // Helper function to convert faculty college code to faculty_id
   const getFacultyIdFromCode = (codeOrId: string): number | null => {
     if (!codeOrId || !codeOrId.trim()) return null;
-    
+
     const trimmed = codeOrId.trim().toUpperCase();
-    
+
     // Try to parse as number first (backward compatibility)
     const asNumber = parseInt(trimmed);
     if (!isNaN(asNumber)) {
       return asNumber;
     }
-    
+
     // Try to find by college code (it's case-insensitive)
     const faculty = faculties.find(
       (f) => f.college_code && f.college_code.toUpperCase() === trimmed
@@ -1138,7 +1134,7 @@ export default function TimetableSlotsManagement() {
   ) => {
     const file = event.target.files?.[0];
     console.log("[BULK UPLOAD] File selected:", file?.name);
-    
+
     if (!file) {
       console.warn("[BULK UPLOAD] No file selected");
       toast({
@@ -1165,27 +1161,27 @@ export default function TimetableSlotsManagement() {
 
       const headers = lines[0].split(",").map((h) => h.trim().toLowerCase().replace(/"/g, ""));
       console.log("[BULK UPLOAD] Headers:", headers);
-      
+
       const dayIndex = headers.indexOf("day");
       const periodIndex = headers.indexOf("period id");
       const startTimeIndex = headers.indexOf("start time");
       const endTimeIndex = headers.indexOf("end time");
-      
+
       // Support both new code-based columns and old ID-based columns for backward compatibility
       const subjectCodeIndex = headers.indexOf("subject code");
       const subjectIdIndex = headers.indexOf("subject id");
       const subjectIndex = subjectCodeIndex !== -1 ? subjectCodeIndex : subjectIdIndex;
-      
+
       // Try multiple column name variations for faculty code
       const facultyCodeLongIndex = headers.indexOf("faculty college code");
       const facultyCodeShortIndex = headers.indexOf("faculty code");
       const facultyIdIndex = headers.indexOf("faculty id");
-      const facultyIndex = facultyCodeLongIndex !== -1 
-        ? facultyCodeLongIndex 
-        : facultyCodeShortIndex !== -1 
-        ? facultyCodeShortIndex 
-        : facultyIdIndex;
-      
+      const facultyIndex = facultyCodeLongIndex !== -1
+        ? facultyCodeLongIndex
+        : facultyCodeShortIndex !== -1
+          ? facultyCodeShortIndex
+          : facultyIdIndex;
+
       const sessionTypeIndex = headers.indexOf("session type");
       const roomIndex = headers.indexOf("room");
       const notesIndex = headers.indexOf("notes");
@@ -1201,7 +1197,7 @@ export default function TimetableSlotsManagement() {
 
       const slotsToCreate = [];
       const failedRows: Array<{ row: number; reason: string }> = [];
-      
+
       for (let i = 1; i < lines.length; i++) {
         const values = lines[i]
           .split(",")
@@ -1237,7 +1233,7 @@ export default function TimetableSlotsManagement() {
 
             const periodId = parseInt(values[periodIndex]);
             const period = periods.find(p => p.id === periodId);
-            
+
             // Auto-set session type for breaks, allow override for regular periods
             let sessionType = sessionTypeIndex !== -1 ? values[sessionTypeIndex] : "theory";
             if (isPeriodBreak(periodId)) {
@@ -1305,21 +1301,21 @@ export default function TimetableSlotsManagement() {
         const uploadedCount = result.data?.length || slotsToCreate.length;
         console.log("[BULK UPLOAD] Success - uploaded:", uploadedCount);
         setSlots(result.data || []);
-        
+
         // Prepare detailed success message
         let description = `${uploadedCount} slot(s) uploaded successfully`;
         if (failedRows.length > 0) {
           description += ` (${failedRows.length} row(s) skipped - see details in console)`;
           console.log("[BULK UPLOAD] Failed rows:", failedRows);
         }
-        
+
         console.log("[BULK UPLOAD] Calling toast...");
         toast({
           title: "✅ Upload Successful",
           description,
         });
         console.log("[BULK UPLOAD] Toast called");
-        
+
         // Fallback: Show browser alert if toast doesn't work
         let alertMsg = `✅ Upload Successful!\n${uploadedCount} slot(s) uploaded from ${file.name}`;
         if (failedRows.length > 0) {
@@ -1339,13 +1335,13 @@ export default function TimetableSlotsManagement() {
       console.error("[BULK UPLOAD] Error:", error);
       const errorMessage = error instanceof Error ? error.message : "Failed to upload slots";
       console.log("[BULK UPLOAD] Showing error toast:", errorMessage);
-      
+
       toast({
         title: "❌ Upload Failed",
         description: errorMessage,
         variant: "destructive",
       });
-      
+
       // Fallback: Show browser alert
       window.alert(`❌ Upload Failed!\n${errorMessage}`);
     } finally {
@@ -1370,17 +1366,17 @@ export default function TimetableSlotsManagement() {
         </div>
 
         <div className="flex gap-2 w-fit">
-          <Button 
+          <Button
             onClick={async () => {
               // Refresh break config from backend before opening dialog
               console.log('[BREAK CONFIG] Opening dialog - refreshing from backend');
               await refetchBreakConfig();
-              
+
               // Populate tempBreakTimings from periods when opening
               const initialTimings: Record<number, { start_time: string; end_time: string }> = {};
               periods.forEach(p => {
                 const parts = p.time.split(" - ");
-                
+
                 const parseTimeTo24h = (tStr: string | undefined): string => {
                   if (!tStr) return "";
                   const trimmed = tStr.trim();
@@ -1394,14 +1390,14 @@ export default function TimetableSlotsManagement() {
                     if (ampm.toLowerCase() === "am" && hours === 12) hours = 0;
                     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
                   }
-                  
+
                   const parts24h = trimmed.split(":");
                   const hours = parseInt(parts24h[0]);
                   const minutes = parseInt(parts24h[1]);
                   if (isNaN(hours) || isNaN(minutes)) return "";
                   return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
                 };
-                
+
                 initialTimings[p.id] = {
                   start_time: parseTimeTo24h(parts[0]),
                   end_time: parseTimeTo24h(parts[1]),
@@ -1409,7 +1405,7 @@ export default function TimetableSlotsManagement() {
               });
               console.log('[BREAK CONFIG] Initialized timings for editing:', initialTimings);
               setTempBreakTimings(initialTimings);
-              
+
               setIsBreakConfigOpen(true);
             }}
             className="bg-purple-600 hover:bg-purple-700"
@@ -1426,209 +1422,209 @@ export default function TimetableSlotsManagement() {
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>
-                {editingSlot ? "Edit Slot" : "Add New Slot"}
-              </DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              {/* Break Period Banner */}
-              {isPeriodBreak(parseInt(formData.period_slot_id)) && (
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex gap-3">
-                  <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+              <DialogHeader>
+                <DialogTitle>
+                  {editingSlot ? "Edit Slot" : "Add New Slot"}
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                {/* Break Period Banner */}
+                {isPeriodBreak(parseInt(formData.period_slot_id)) && (
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex gap-3">
+                    <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-medium text-amber-900">This is a Configured Break Period</p>
+                      <p className="text-xs text-amber-800">This period is configured as a break (e.g., lunch, tea break). You can optionally assign a subject and faculty if you want to schedule a lecture or activity during this time.</p>
+                    </div>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm font-medium text-amber-900">This is a Configured Break Period</p>
-                    <p className="text-xs text-amber-800">This period is configured as a break (e.g., lunch, tea break). You can optionally assign a subject and faculty if you want to schedule a lecture or activity during this time.</p>
+                    <Label>Day *</Label>
+                    <Select value={formData.day} onValueChange={(v) => setFormData({ ...formData, day: v })}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {days.map((day) => (
+                          <SelectItem key={day} value={day}>
+                            {day}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label>Period *</Label>
+                    <Select
+                      value={formData.period_slot_id}
+                      onValueChange={(v) => {
+                        // Allow any session type for any period - users can override break classification
+                        setFormData({
+                          ...formData,
+                          period_slot_id: v,
+                        });
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {periods.map((p) => {
+                          const isBreak = isPeriodBreak(p.id);
+                          const label = isBreak
+                            ? `🔴 Period ${p.id}: ${p.label}`
+                            : `Period ${p.id}: ${p.label}`;
+                          return (
+                            <SelectItem key={p.id} value={p.id.toString()}>
+                              {label}
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label>Start Time</Label>
+                    <Input
+                      type="time"
+                      value={formData.start_time}
+                      onChange={(e) => setFormData({ ...formData, start_time: e.target.value })}
+                    />
+                  </div>
+
+                  <div>
+                    <Label>End Time</Label>
+                    <Input
+                      type="time"
+                      value={formData.end_time}
+                      onChange={(e) => setFormData({ ...formData, end_time: e.target.value })}
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Subject</Label>
+                    <Select
+                      value={formData.subject_id}
+                      onValueChange={(v) => setFormData({ ...formData, subject_id: v })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue>{getSubjectDisplay(formData.subject_id)}</SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">None (Activity/Free)</SelectItem>
+                        {subjects.map((sub) => (
+                          <SelectItem key={sub.id} value={sub.id.toString()}>
+                            {sub.name} {sub.code && `(${sub.code})`}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label>Faculty</Label>
+                    <Select
+                      value={formData.faculty_id}
+                      onValueChange={(v) => setFormData({ ...formData, faculty_id: v })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue>{getFacultyDisplay(formData.faculty_id)}</SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {faculties.map((fac) => (
+                          <SelectItem key={fac.faculty_id} value={fac.faculty_id.toString()}>
+                            {fac.Name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label>Session Type</Label>
+                    <Select
+                      value={formData.session_type}
+                      onValueChange={(v) => {
+                        const periodId = parseInt(formData.period_slot_id);
+                        const isBreakPeriod = isPeriodBreak(periodId);
+
+                        // Allow any session type, even for break periods
+                        // (users can override break classification if needed)
+                        setFormData({
+                          ...formData,
+                          session_type: v,
+                        });
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {sessionTypes.map((type) => (
+                          <SelectItem key={type} value={type}>
+                            {type.charAt(0).toUpperCase() + type.slice(1)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label>Room/Lab</Label>
+                    <Input
+                      value={formData.room}
+                      onChange={(e) => setFormData({ ...formData, room: e.target.value })}
+                      placeholder="e.g., Room 101, Lab 1"
+                    />
+                  </div>
+
+                  <div className="col-span-2">
+                    <Label>{formData.session_type === "break" ? "Break Name" : "Notes"}</Label>
+                    <Input
+                      value={formData.notes}
+                      onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                      placeholder={
+                        formData.session_type === "break"
+                          ? "e.g., Tea Break, Lunch Break"
+                          : "e.g., YOGA, DM, APP LAB"
+                      }
+                    />
                   </div>
                 </div>
-              )}
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Day *</Label>
-                  <Select value={formData.day} onValueChange={(v) => setFormData({ ...formData, day: v })}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {days.map((day) => (
-                        <SelectItem key={day} value={day}>
-                          {day}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
 
-                <div>
-                  <Label>Period *</Label>
-                  <Select 
-                    value={formData.period_slot_id} 
-                    onValueChange={(v) => {
-                      // Allow any session type for any period - users can override break classification
-                      setFormData({
-                        ...formData,
-                        period_slot_id: v,
-                      });
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {periods.map((p) => {
-                        const isBreak = isPeriodBreak(p.id);
-                        const label = isBreak 
-                          ? `🔴 Period ${p.id}: ${p.label}` 
-                          : `Period ${p.id}: ${p.label}`;
-                        return (
-                          <SelectItem key={p.id} value={p.id.toString()}>
-                            {label}
-                          </SelectItem>
-                        );
-                      })}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label>Start Time</Label>
-                  <Input
-                    type="time"
-                    value={formData.start_time}
-                    onChange={(e) => setFormData({ ...formData, start_time: e.target.value })}
-                  />
-                </div>
-
-                <div>
-                  <Label>End Time</Label>
-                  <Input
-                    type="time"
-                    value={formData.end_time}
-                    onChange={(e) => setFormData({ ...formData, end_time: e.target.value })}
-                  />
-                </div>
-
-                <div>
-                  <Label>Subject</Label>
-                  <Select
-                    value={formData.subject_id}
-                    onValueChange={(v) => setFormData({ ...formData, subject_id: v })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue>{getSubjectDisplay(formData.subject_id)}</SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">None (Activity/Free)</SelectItem>
-                      {subjects.map((sub) => (
-                        <SelectItem key={sub.id} value={sub.id.toString()}>
-                          {sub.name} {sub.code && `(${sub.code})`}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label>Faculty</Label>
-                  <Select
-                    value={formData.faculty_id}
-                    onValueChange={(v) => setFormData({ ...formData, faculty_id: v })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue>{getFacultyDisplay(formData.faculty_id)}</SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      {faculties.map((fac) => (
-                        <SelectItem key={fac.faculty_id} value={fac.faculty_id.toString()}>
-                          {fac.Name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label>Session Type</Label>
-                  <Select
-                    value={formData.session_type}
-                    onValueChange={(v) => {
-                      const periodId = parseInt(formData.period_slot_id);
-                      const isBreakPeriod = isPeriodBreak(periodId);
-                      
-                      // Allow any session type, even for break periods
-                      // (users can override break classification if needed)
-                      setFormData({
-                        ...formData,
-                        session_type: v,
-                      });
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {sessionTypes.map((type) => (
-                        <SelectItem key={type} value={type}>
-                          {type.charAt(0).toUpperCase() + type.slice(1)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label>Room/Lab</Label>
-                  <Input
-                    value={formData.room}
-                    onChange={(e) => setFormData({ ...formData, room: e.target.value })}
-                    placeholder="e.g., Room 101, Lab 1"
-                  />
-                </div>
-
-                <div className="col-span-2">
-                  <Label>{formData.session_type === "break" ? "Break Name" : "Notes"}</Label>
-                  <Input
-                    value={formData.notes}
-                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                    placeholder={
-                      formData.session_type === "break"
-                        ? "e.g., Tea Break, Lunch Break"
-                        : "e.g., YOGA, DM, APP LAB"
-                    }
-                  />
-                </div>
-              </div>
-
-              <div className="flex gap-2 pt-4">
-                {editingSlot && formData.day === "Monday" && (
+                <div className="flex gap-2 pt-4">
+                  {editingSlot && formData.day === "Monday" && (
+                    <Button
+                      onClick={handleCopyToAllDays}
+                      disabled={loading}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      📋 Copy to All Days
+                    </Button>
+                  )}
                   <Button
-                    onClick={handleCopyToAllDays}
+                    onClick={editingSlot ? handleUpdateSlot : handleAddSlot}
                     disabled={loading}
-                    className="bg-green-600 hover:bg-green-700"
                   >
-                    📋 Copy to All Days
+                    {editingSlot ? "Update Slot" : "Add Slot"}
                   </Button>
-                )}
-                <Button
-                  onClick={editingSlot ? handleUpdateSlot : handleAddSlot}
-                  disabled={loading}
-                >
-                  {editingSlot ? "Update Slot" : "Add Slot"}
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setIsDialogOpen(false);
-                    setEditingSlot(null);
-                    resetForm();
-                  }}
-                >
-                  Cancel
-                </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setIsDialogOpen(false);
+                      setEditingSlot(null);
+                      resetForm();
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </div>
               </div>
-            </div>
-          </DialogContent>
+            </DialogContent>
           </Dialog>
 
           <Button
@@ -1676,12 +1672,12 @@ export default function TimetableSlotsManagement() {
                   <div className="space-y-2">
                     {periods.map((period) => {
                       const slot = daySlots.find((s) => s.period_slot_id === period.id);
-                      
+
                       // Display custom timing if available, otherwise use period default
-                      const displayTime = slot?.start_time && slot?.end_time 
+                      const displayTime = slot?.start_time && slot?.end_time
                         ? `${formatTimeTo12h(slot.start_time)} - ${formatTimeTo12h(slot.end_time)}`
                         : formatRangeTo12h(period.time);
-                      
+
                       return (
                         <div
                           key={`${day}-${period.id}`}
@@ -1692,8 +1688,8 @@ export default function TimetableSlotsManagement() {
                         >
                           <div className="flex-1">
                             <p className="font-semibold text-sm">
-                              {isPeriodBreak(period.id) 
-                                ? `🔴 Period ${period.id}: ${period.label} (Break - ${formatRangeTo12h(period.time)})` 
+                              {isPeriodBreak(period.id)
+                                ? `🔴 Period ${period.id}: ${period.label} (Break - ${formatRangeTo12h(period.time)})`
                                 : `Period ${period.id}: ${period.label} (${displayTime})`}
                             </p>
                             {slot ? (
@@ -1802,40 +1798,64 @@ export default function TimetableSlotsManagement() {
                       {isPeriodBreak(period.id) ? "Marked as BREAK" : "Teaching period"}
                     </p>
                     {isPeriodBreak(period.id) && (
-                      <div className="mt-3 flex items-center gap-2 pt-2 border-t border-purple-200" onClick={(e) => e.stopPropagation()}>
+                      <div className="mt-3 flex flex-col gap-2 pt-2 border-t border-purple-200" onClick={(e) => e.stopPropagation()}>
                         <div className="flex flex-col gap-1">
-                          <span className="text-[10px] text-purple-700 font-semibold">Start Time</span>
-                          <Input
-                            type="time"
-                            value={tempBreakTimings[period.id]?.start_time || ""}
+                          <span className="text-[10px] text-purple-700 font-semibold">Break Type / Name</span>
+                          <select
+                            value={tempBreakTimings[period.id]?.break_name || (period.id === 5 ? "Lunch" : "Tea Break")}
                             onChange={(e) => {
+                              const val = e.target.value;
                               setTempBreakTimings(prev => ({
                                 ...prev,
                                 [period.id]: {
                                   ...prev[period.id],
-                                  start_time: e.target.value
+                                  break_name: val
                                 }
                               }));
                             }}
-                            className="w-28 text-xs h-8 border-purple-300 bg-white text-black"
-                          />
+                            className="w-full text-xs h-8 px-2 border border-purple-300 rounded bg-white text-black focus:outline-none focus:ring-1 focus:ring-purple-500"
+                          >
+                            <option value="Lunch">Lunch 🍱</option>
+                            <option value="Tea Break">Tea Break ☕</option>
+                            <option value="Short Break">Short Break ☕</option>
+                            <option value="Break">Break ☕</option>
+                          </select>
                         </div>
-                        <div className="flex flex-col gap-1">
-                          <span className="text-[10px] text-purple-700 font-semibold">End Time</span>
-                          <Input
-                            type="time"
-                            value={tempBreakTimings[period.id]?.end_time || ""}
-                            onChange={(e) => {
-                              setTempBreakTimings(prev => ({
-                                ...prev,
-                                [period.id]: {
-                                  ...prev[period.id],
-                                  end_time: e.target.value
-                                }
-                              }));
-                            }}
-                            className="w-28 text-xs h-8 border-purple-300 bg-white text-black"
-                          />
+                        <div className="flex items-center gap-2">
+                          <div className="flex flex-col gap-1 flex-1">
+                            <span className="text-[10px] text-purple-700 font-semibold">Start Time</span>
+                            <Input
+                              type="time"
+                              value={tempBreakTimings[period.id]?.start_time || ""}
+                              onChange={(e) => {
+                                setTempBreakTimings(prev => ({
+                                  ...prev,
+                                  [period.id]: {
+                                    ...prev[period.id],
+                                    start_time: e.target.value
+                                  }
+                                }));
+                              }}
+                              className="w-full text-xs h-8 border-purple-300 bg-white text-black"
+                            />
+                          </div>
+                          <div className="flex flex-col gap-1 flex-1">
+                            <span className="text-[10px] text-purple-700 font-semibold">End Time</span>
+                            <Input
+                              type="time"
+                              value={tempBreakTimings[period.id]?.end_time || ""}
+                              onChange={(e) => {
+                                setTempBreakTimings(prev => ({
+                                  ...prev,
+                                  [period.id]: {
+                                    ...prev[period.id],
+                                    end_time: e.target.value
+                                  }
+                                }));
+                              }}
+                              className="w-full text-xs h-8 border-purple-300 bg-white text-black"
+                            />
+                          </div>
                         </div>
                       </div>
                     )}
@@ -1869,11 +1889,12 @@ export default function TimetableSlotsManagement() {
                 onClick={async () => {
                   try {
                     console.log('[BREAK CONFIG] Saving to backend. Current state:', breakPeriodIds);
-                    
+
                     const timingsPayload = breakPeriodIds.map(id => ({
                       period_slot_id: id,
                       start_time: tempBreakTimings[id]?.start_time || "",
                       end_time: tempBreakTimings[id]?.end_time || "",
+                      break_name: tempBreakTimings[id]?.break_name || (id === 5 ? "Lunch" : "Tea Break"),
                     }));
 
                     const invalidBreak = timingsPayload.find(t => !t.start_time || !t.end_time);
@@ -1905,7 +1926,7 @@ export default function TimetableSlotsManagement() {
                     if (res.ok) {
                       const data = await res.json();
                       console.log('[BREAK CONFIG] Save successful, response:', data);
-                      
+
                       // Update state with confirmed data from backend
                       const savedBreakIds = data.data?.breakPeriodIds || breakPeriodIds;
                       if (Array.isArray(savedBreakIds)) {
@@ -1914,13 +1935,13 @@ export default function TimetableSlotsManagement() {
                       } else {
                         console.warn('[BREAK CONFIG] Saved config is not an array:', savedBreakIds);
                       }
-                      
+
                       // Also save to localStorage as cache
                       localStorage.setItem(`timetable_${masterId}_breaks`, JSON.stringify(savedBreakIds));
                       console.log('[BREAK CONFIG] Cached to localStorage:', `timetable_${masterId}_breaks`, savedBreakIds);
-                      
+
                       setIsBreakConfigOpen(false);
-                      
+
                       // Explicitly refresh slots grid
                       fetchSlots();
 

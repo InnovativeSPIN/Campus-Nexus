@@ -33,8 +33,8 @@ export const getClassTimetable = asyncHandler(async (req, res, next) => {
         s.period_slot_id as hour,
         p.id as period_id,
         p.period_label,
-        p.start_time,
-        p.end_time,
+        COALESCE(s.start_time, p.start_time) as start_time,
+        COALESCE(s.end_time, p.end_time) as end_time,
         sub.id as subject_id,
         COALESCE(sub.subject_name, 'Subject') as subject_name,
         COALESCE(sub.subject_code, '') as subject_code,
@@ -162,8 +162,8 @@ export const getFacultyTimetable = asyncHandler(async (req, res, next) => {
         s.period_slot_id as hour,
         p.id as period_id,
         p.period_label,
-        p.start_time,
-        p.end_time,
+        COALESCE(s.start_time, p.start_time) as start_time,
+        COALESCE(s.end_time, p.end_time) as end_time,
         sub.id as subject_id,
         COALESCE(sub.subject_name, 'Subject') as subject_name,
         COALESCE(sub.subject_code, '') as subject_code,
@@ -432,10 +432,10 @@ export const getMyClassTimetable = asyncHandler(async (req, res, next) => {
     }
 
     req.params.classId = student.classId;
-    
+
     // Intercept res.json to format the response properly for the student frontend
     const originalJson = res.json;
-    res.json = function(body) {
+    res.json = function (body) {
       if (body.success && body.timetableMaster) {
         return originalJson.call(this, {
           success: true,
@@ -523,10 +523,10 @@ export const getEffectiveClassTimetable = asyncHandler(async (req, res, next) =>
     const queryDateObj = new Date(queryDate);
     const dayOfWeek = queryDateObj.getDay(); // 0 = Sunday, 1 = Monday, etc.
     const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-    
+
     const mondayDate = new Date(queryDateObj);
     mondayDate.setDate(queryDateObj.getDate() + diffToMonday);
-    
+
     const weekDates = {
       Monday: new Date(mondayDate).toISOString().split('T')[0],
       Tuesday: new Date(new Date(mondayDate).setDate(mondayDate.getDate() + 1)).toISOString().split('T')[0],
@@ -543,8 +543,8 @@ export const getEffectiveClassTimetable = asyncHandler(async (req, res, next) =>
          ps.id as period_slot_id,
          ps.slot_order,
          ps.period_label,
-         ps.start_time,
-         ps.end_time,
+         COALESCE(tms.start_time, ps.start_time) as start_time,
+         COALESCE(tms.end_time, ps.end_time) as end_time,
          ps.slot_type,
          ps.break_name,
          tms.session_type,
@@ -604,16 +604,21 @@ export const getEffectiveClassTimetable = asyncHandler(async (req, res, next) =>
       leaveRows.forEach(lr => { leaveEndDates[lr.id] = lr.end_date; });
     }
 
-    let breakPeriodIds = [3, 5, 8];
-    try {
-      breakPeriodIds = typeof master.break_period_ids === 'string'
-        ? JSON.parse(master.break_period_ids)
-        : (master.break_period_ids || [3, 5, 8]);
-    } catch (e) { /* use default */ }
+    let breakPeriodIds = [];
+    if (master.break_period_ids) {
+      try {
+        breakPeriodIds = typeof master.break_period_ids === 'string'
+          ? JSON.parse(master.break_period_ids)
+          : (master.break_period_ids || []);
+      } catch (e) {
+        breakPeriodIds = [];
+      }
+    }
 
     const formattedSlots = slots.map(slot => {
       const isAlteration = !!slot.overlay_id;
-      const isBreak = slot.slot_type === 'break' || breakPeriodIds.includes(slot.period_slot_id);
+      const isTeachingSession = !!slot.effective_subject_id || ['theory', 'lab', 'tutorial', 'project', 'activity'].includes(String(slot.session_type || '').toLowerCase());
+      const isBreak = !isTeachingSession && (slot.session_type === 'break' || slot.slot_type === 'break' || breakPeriodIds.includes(slot.period_slot_id));
       return {
         id: slot.slot_id,
         day: slot.day,
@@ -622,7 +627,7 @@ export const getEffectiveClassTimetable = asyncHandler(async (req, res, next) =>
           label: slot.period_label || (isBreak ? (slot.break_name || 'Break') : ''),
           startTime: slot.start_time,
           endTime: slot.end_time,
-          slotType: slot.slot_type,
+          slotType: isBreak ? 'break' : 'teaching',
           isBreak,
         },
         faculty: slot.effective_faculty_id ? {
@@ -677,5 +682,52 @@ export const getEffectiveClassTimetable = asyncHandler(async (req, res, next) =>
   } catch (error) {
     console.error('[TimetableDisplay] Error in getEffectiveClassTimetable:', error);
     throw error;
+  }
+});
+
+/**
+ * @desc    Get all active period slots (real-time master period definitions, times, and break types)
+ * @route   GET /api/v1/timetable-display/period-slots
+ * @access  Private
+ */
+export const getAllMasterPeriodSlots = asyncHandler(async (req, res, next) => {
+  try {
+    const [periodSlots] = await sequelize.query(
+      `SELECT id, slot_order, slot_type, period_number, period_label, start_time, end_time, duration_minutes, break_name
+       FROM period_slots
+       WHERE is_active = 1
+       ORDER BY slot_order ASC`
+    );
+
+    const ROMAN = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
+    const formatted = periodSlots.map(ps => {
+      const startStr = ps.start_time ? String(ps.start_time).substring(0, 5) : '';
+      const endStr = ps.end_time ? String(ps.end_time).substring(0, 5) : '';
+      const num = ps.period_number || ps.id;
+      let label = ps.period_label;
+      if (!label || label.trim() === '' || label.toLowerCase().includes('break') || label.toLowerCase().includes('lunch')) {
+        label = ROMAN[num] || `Period ${num}`;
+      }
+      return {
+        id: ps.id,
+        slotOrder: ps.slot_order,
+        slotType: ps.slot_type,
+        periodNumber: num,
+        label,
+        startTime: startStr,
+        endTime: endStr,
+        isBreak: ps.slot_type === 'break',
+        breakName: ps.break_name || 'Break',
+      };
+    });
+
+    res.status(200).json({
+      success: true,
+      count: formatted.length,
+      data: formatted,
+    });
+  } catch (error) {
+    console.error('[TimetableDisplay] Error in getAllMasterPeriodSlots:', error);
+    next(error);
   }
 });

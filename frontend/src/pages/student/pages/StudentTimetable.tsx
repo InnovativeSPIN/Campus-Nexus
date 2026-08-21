@@ -63,11 +63,14 @@ const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'
 const STANDARD_PERIODS: Period[] = [
   { id: 1, label: 'I', startTime: '09:30 AM', endTime: '10:20 AM' },
   { id: 2, label: 'II', startTime: '10:20 AM', endTime: '11:10 AM' },
-  { id: 3, label: 'III', startTime: '11:30 AM', endTime: '12:25 PM' },
-  { id: 4, label: 'IV', startTime: '01:10 PM', endTime: '02:00 PM' },
-  { id: 5, label: 'V', startTime: '02:00 PM', endTime: '02:50 PM' },
-  { id: 6, label: 'VI', startTime: '03:15 PM', endTime: '04:00 PM' },
-  { id: 7, label: 'VII', startTime: '04:00 PM', endTime: '04:45 PM' },
+  { id: 3, label: 'Tea Break', startTime: '11:10 AM', endTime: '11:30 AM' },
+  { id: 4, label: 'III', startTime: '11:30 AM', endTime: '12:25 PM' },
+  { id: 5, label: 'Lunch', startTime: '12:25 PM', endTime: '01:10 PM' },
+  { id: 6, label: 'IV', startTime: '01:10 PM', endTime: '02:00 PM' },
+  { id: 7, label: 'V', startTime: '02:00 PM', endTime: '02:50 PM' },
+  { id: 8, label: 'Short Break', startTime: '02:50 PM', endTime: '03:10 PM' },
+  { id: 9, label: 'VI', startTime: '03:10 PM', endTime: '04:00 PM' },
+  { id: 10, label: 'VII', startTime: '04:00 PM', endTime: '04:45 PM' },
 ];
 
 const BREAK_TIMINGS = [
@@ -77,7 +80,7 @@ const BREAK_TIMINGS = [
 ];
 
 // Build the display sequence: periods interleaved with breaks
-type DisplayColumn = 
+type DisplayColumn =
   | { type: 'period'; period: Period }
   | { type: 'break'; label: string; startTime: string; endTime: string };
 
@@ -153,7 +156,7 @@ const StudentClassTimetable: React.FC = () => {
       // Dynamically load html2pdf from CDN
       const script = document.createElement('script');
       script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
-      
+
       script.onload = () => {
         const element = timetableRef.current;
         if (!element) return;
@@ -243,15 +246,21 @@ const StudentClassTimetable: React.FC = () => {
 
   const breakPeriodIds = timetable.timetableMaster.breakPeriodIds || [3, 5, 8];
 
+  const ROMAN_MAP = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
+
   const buildDisplayColumns = (periods: Period[]): DisplayColumn[] => {
     return periods.map(period => {
-      const isBreak = breakPeriodIds.includes(period.id);
+      const slotsForPeriod = timetable.slots.filter(s => s.period?.id === period.id);
+      const hasTeachingSlot = slotsForPeriod.some(
+        s => (s.subject || s.sessionType === 'theory' || s.sessionType === 'lab') && s.sessionType !== 'break'
+      );
+      const breakSlot = slotsForPeriod.find(s => s.sessionType === 'break');
+      const isBreak = !hasTeachingSlot && (!!breakSlot || (period as any).isBreak || breakPeriodIds.includes(period.id));
+
       if (isBreak) {
-        let label = period.label;
+        let label = (breakSlot as any)?.notes || period.label;
         if (!label || label.trim() === "" || label.startsWith("Period")) {
-          if (period.id === 3) label = "Break";
-          else if (period.id === 5 || period.id === 6) label = "Lunch";
-          else label = "Break";
+          label = "Break";
         }
         return {
           type: 'break',
@@ -260,9 +269,16 @@ const StudentClassTimetable: React.FC = () => {
           endTime: period.endTime
         };
       } else {
+        let cleanLabel = period.label;
+        if (!cleanLabel || cleanLabel.toLowerCase().includes('break') || cleanLabel.toLowerCase().includes('lunch')) {
+          cleanLabel = ROMAN_MAP[period.id] || `Period ${period.id}`;
+        }
         return {
           type: 'period',
-          period
+          period: {
+            ...period,
+            label: cleanLabel
+          }
         };
       }
     });
@@ -419,7 +435,7 @@ const StudentClassTimetable: React.FC = () => {
                           <th key={`break-${colIdx}`} className="px-1 py-1.5 text-center font-semibold border-l border-amber-200 bg-amber-50/80" style={{ width: '55px', minWidth: '55px' }}>
                             <div className="font-bold text-[10px] text-amber-700">{col.label}</div>
                             <div className="text-[9px] text-amber-600 font-normal mt-0.5 leading-tight whitespace-nowrap">
-                              {col.startTime}<br/>{col.endTime}
+                              {col.startTime}<br />{col.endTime}
                             </div>
                           </th>
                         )
@@ -447,13 +463,13 @@ const StudentClassTimetable: React.FC = () => {
                           );
 
                           return (
-                            <td 
-                              key={`${day}-${colIdx}`} 
+                            <td
+                              key={`${day}-${colIdx}`}
                               className="p-1 border-l border-gray-200 align-top"
                               title={slot ? (
-                                slot.sessionType === 'break' 
+                                slot.sessionType === 'break'
                                   ? `Break: ${slot.notes || 'No details'}`
-                                  : slot.subject 
+                                  : slot.subject
                                     ? `${slot.subject.name} (${slot.subject.code})\nFaculty: ${slot.isAlteration ? 'Sub: ' : ''}${slot.faculty?.name || 'N/A'}\nRoom: ${slot.room || 'N/A'}${slot.notes ? `\nNotes: ${slot.notes}` : ''}`
                                     : undefined
                               ) : undefined}
