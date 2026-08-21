@@ -656,7 +656,7 @@ export default function Profile() {
       if (!token) return;
       setLoading(true);
       try {
-        const response = await fetch('http://localhost:3005/api/v1/faculty/update-profile', {
+        const response = await fetch('/api/v1/faculty/update-profile', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
           body: JSON.stringify({ phd_status: "", orcid_id: "", thesis_title: "", register_no: "", guide_name: "" })

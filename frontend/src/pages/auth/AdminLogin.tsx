@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import campusNexusLogo from '@/assets/campusnexus.png';
+import ispinLogo from '@/assets/iSPIN_logo.png';
 import { UserRole } from '@/types/auth';
 import { Button } from '@/pages/admin/superadmin/components/ui/button';
 import { Input } from '@/pages/admin/superadmin/components/ui/input';
@@ -274,6 +275,23 @@ export default function AdminLogin() {
                                 'Secure Login'
                             )}
                         </Button>
+
+                        {/* Powered by iSPIN Badge */}
+                        <div className="pt-2 flex items-center justify-center gap-2 select-none">
+                            <span className="text-[11px] font-medium tracking-wider uppercase text-muted-foreground/70">
+                                Powered by
+                            </span>
+                            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-500/5 dark:bg-orange-500/10 border border-orange-500/20 shadow-xs hover:border-orange-500/40 transition-all">
+                                <img
+                                    src={ispinLogo}
+                                    alt="iSPIN Logo"
+                                    className="h-4 w-4 rounded-full object-contain"
+                                />
+                                <span className="text-xs font-bold tracking-wide bg-gradient-to-r from-orange-600 via-amber-600 to-orange-500 dark:from-orange-400 dark:to-amber-400 bg-clip-text text-transparent">
+                                    iSPIN
+                                </span>
+                            </div>
+                        </div>
                     </form>
                     <AlertDialog open={!!loginError} onOpenChange={(open) => { if (!open) clearLoginError(); }}>
                         <AlertDialogContent>

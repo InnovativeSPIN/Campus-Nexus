@@ -304,6 +304,23 @@ export default function Login() {
                 'Sign In'
               )}
             </Button>
+
+            {/* Powered by iSPIN Badge */}
+            <div className="pt-2 flex items-center justify-center gap-2 select-none">
+              <span className="text-[11px] font-medium tracking-wider uppercase text-muted-foreground/70">
+                Powered by
+              </span>
+              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-500/5 dark:bg-orange-500/10 border border-orange-500/20 shadow-xs hover:border-orange-500/40 transition-all">
+                <img
+                  src={ispinLogo}
+                  alt="iSPIN Logo"
+                  className="h-4 w-4 rounded-full object-contain"
+                />
+                <span className="text-xs font-bold tracking-wide bg-gradient-to-r from-orange-600 via-amber-600 to-orange-500 dark:from-orange-400 dark:to-amber-400 bg-clip-text text-transparent">
+                  iSPIN
+                </span>
+              </div>
+            </div>
           </form>
 
           <AlertDialog open={!!loginError} onOpenChange={(open) => { if (!open) clearLoginError(); }}>
@@ -320,20 +337,6 @@ export default function Login() {
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
-        </div>
-
-        {/* Powered by ISPIN Footer - Pinned at bottom */}
-        <div className="pt-4 pb-2 border-t border-border/40 flex items-center justify-center gap-3 w-full max-w-md mx-auto">
-          <span className="text-xs font-extrabold uppercase tracking-[0.25em] text-[#f26522] drop-shadow-sm">
-            POWERED BY ISPIN
-          </span>
-          <div className="relative flex items-center justify-center rounded-full p-[2px] bg-gradient-to-tr from-[#ea580c] via-[#f26522] to-[#f97316] shadow-[0_0_12px_rgba(242,101,34,0.35)]">
-            <img
-              src={ispinLogo}
-              alt="iSPIN Logo"
-              className="h-8 w-8 rounded-full object-contain bg-white p-0.5"
-            />
-          </div>
         </div>
       </div>
     </div>
