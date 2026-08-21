@@ -604,15 +604,37 @@ export const updateFacultyProfile = asyncHandler(async (req, res, next) => {
 
   // Update Faculty table
   try {
+    let faculty = null;
+    const targetFacultyId = req.user.faculty_id || req.user.facultyId;
+    if (targetFacultyId) {
+      faculty = await Faculty.findByPk(targetFacultyId);
+    }
+    if (!faculty && req.user.email) {
+      faculty = await Faculty.findOne({ where: { email: req.user.email } });
+    }
+    if (!faculty && req.user.email) {
+      faculty = await Faculty.create({
+        Name: req.user.name || req.user.Name || 'Faculty Member',
+        email: req.user.email,
+        role_id: req.user.role_id || 5,
+        password: req.user.password || '$2a$10$7v59r2R3z4XWqY/r92k6eOaQG6B2d0D.uG0wK2X.y9h5G.9a.9.9',
+        faculty_college_code: req.user.faculty_college_code || `FAC_${Date.now()}`
+      });
+    }
+
+    if (!faculty) {
+      return next(new ErrorResponse('Faculty profile not found', 404));
+    }
+
     if (Object.keys(facultyUpdateFields).length > 0) {
-      await Faculty.update(facultyUpdateFields, { where: { faculty_id: req.user.faculty_id } });
+      await faculty.update(facultyUpdateFields);
     }
 
     // Fetch updated faculty record
     // If phd-related fields were provided, upsert into faculty_phd table to keep details in sync
     if (fieldsToUpdate.phd_status !== undefined || fieldsToUpdate.orcid_id || fieldsToUpdate.thesis_title || fieldsToUpdate.register_no || fieldsToUpdate.guide_name) {
       try {
-        const facultyId = req.user.faculty_id;
+        const facultyId = faculty.faculty_id;
         const PhdModel = models.FacultyPhd;
         const existing = await PhdModel.findOne({ where: { faculty_id: facultyId } });
         const phdPayload = {
@@ -637,7 +659,7 @@ export const updateFacultyProfile = asyncHandler(async (req, res, next) => {
       }
     }
 
-    const updatedFaculty = await Faculty.findByPk(req.user.faculty_id, {
+    const updatedFaculty = await Faculty.findByPk(faculty.faculty_id, {
       include: [
         {
           model: Department,

@@ -8,11 +8,12 @@ const { Faculty, FacultyExperience } = models;
 // Helper to resolve faculty profile reliably
 const getFacultyProfile = async (user) => {
     if (!user) return null;
-    const targetId = user.faculty_id || user.id;
+    const targetId = user.faculty_id || user.facultyId || user.id;
     const orConditions = [];
-    if (targetId) {
+    if (user.faculty_id) {
+        orConditions.push({ faculty_id: user.faculty_id });
+    } else if (targetId) {
         orConditions.push({ faculty_id: targetId });
-        orConditions.push({ id: targetId });
     }
     if (user.faculty_college_code) {
         orConditions.push({ faculty_college_code: user.faculty_college_code });
@@ -22,10 +23,26 @@ const getFacultyProfile = async (user) => {
     }
     if (orConditions.length === 0) return null;
     
-    return await Faculty.findOne({
+    let faculty = await Faculty.findOne({
         where: { [Op.or]: orConditions },
-        attributes: ['faculty_id', 'faculty_college_code']
+        attributes: ['faculty_id', 'faculty_college_code', 'department_id', 'role_id', 'Name', 'email']
     });
+
+    if (!faculty && user.email) {
+        try {
+            faculty = await Faculty.create({
+                Name: user.name || user.Name || 'Faculty Member',
+                email: user.email,
+                role_id: user.role_id || 5,
+                password: user.password || '$2a$10$7v59r2R3z4XWqY/r92k6eOaQG6B2d0D.uG0wK2X.y9h5G.9a.9.9',
+                faculty_college_code: user.faculty_college_code || `FAC_${Date.now()}`
+            });
+        } catch (err) {
+            console.warn('[getFacultyProfile] Auto-create faculty record failed:', err.message);
+        }
+    }
+
+    return faculty;
 };
 
 // @desc      Get current faculty experience
