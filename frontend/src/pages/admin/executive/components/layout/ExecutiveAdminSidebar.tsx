@@ -28,6 +28,14 @@ interface NavItem {
   badge?: string;
 }
 
+const normalizeImageUrl = (path?: string | null) => {
+  if (!path) return null;
+  if (path.startsWith('http://') || path.startsWith('https://')) return path;
+  if (path.startsWith('data:')) return path;
+  if (path.startsWith('/')) return path;
+  return `/${path}`;
+};
+
 interface ExecutiveAdminSidebarProps {
   collapsed?: boolean;
   setCollapsed?: (collapsed: boolean) => void;
@@ -62,11 +70,13 @@ export function ExecutiveAdminSidebar({
 
   const navItems: NavItem[] = [
     { label: 'Dashboard', path: '/admin/executive', icon: <LayoutDashboard className="w-5 h-5" /> },
-    { label: 'Academic Performance', path: '/admin/executive/academic-performance', icon: <TrendingUp className="w-5 h-5" /> },
+    { label: 'Profile', path: '/admin/executive/profile', icon: <LayoutDashboard className="w-5 h-5" /> },
+
     { label: 'Time Table', path: '/admin/executive/timetable', icon: <Calendar className="w-5 h-5" /> },
     { label: 'Students', path: '/admin/executive/students', icon: <GraduationCap className="w-5 h-5" /> },
     { label: 'Faculty', path: '/admin/executive/faculty', icon: <Users className="w-5 h-5" /> },
     { label: 'Leave Requests', path: '/admin/executive/leave-requests', icon: <Calendar className="w-5 h-5" /> },
+    { label: 'Academic Performance', path: '/admin/executive/academic-performance', icon: <TrendingUp className="w-5 h-5" /> },
     { label: 'Announcements', path: '/admin/executive/announcements', icon: <Bell className="w-5 h-5" /> },
     { label: 'Reports', path: '/admin/executive/reports', icon: <FileText className="w-5 h-5" /> },
     { label: 'Audit & Reports', path: '/admin/executive/audit-and-reports', icon: <ShieldCheck className="w-5 h-5" /> },
@@ -117,47 +127,20 @@ export function ExecutiveAdminSidebar({
           <X className="w-6 h-6" />
         </button>
       </div>
-      <div className="p-4 border-b border-sidebar-border bg-gradient-to-b from-sidebar-accent/20 to-sidebar-accent/5">
-        <div className="flex items-center justify-between">
-          <AnimatePresence>
-            {!collapsed && (
-              <motion.div
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -10 }}
-                className="flex-1 overflow-hidden"
-              >
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-secondary to-primary flex items-center justify-center flex-shrink-0">
-                    <Home className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <h1 className="font-bold text-white text-sm leading-tight uppercase tracking-tight">Campus Nexus</h1>
-                    <p className="text-[10px] text-white/70 uppercase tracking-widest">Executive Panel</p>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
 
-          {collapsed && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="w-8 h-8 rounded-lg bg-gradient-to-br from-secondary to-primary flex items-center justify-center"
-            >
-              <Home className="w-5 h-5 text-white" />
-            </motion.div>
-          )}
-        </div>
-      </div>
 
       {user && (
         <div className="p-4 border-b border-sidebar-border bg-sidebar-accent/10">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/80 to-secondary/80 flex items-center justify-center flex-shrink-0 border-2 border-white/10">
-              <span className="text-white font-bold text-xs">{getInitials(user.name)}</span>
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/80 to-secondary/80 flex items-center justify-center flex-shrink-0 border-2 border-white/10 overflow-hidden">
+              <img
+                src={normalizeImageUrl(user?.avatar || (user as any)?.profile_image_url || (user as any)?.profilePhoto) || "/src/assets/prathap.png"}
+                alt={user?.name || "User"}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = "/src/assets/prathap.png";
+                }}
+              />
             </div>
             <AnimatePresence>
               {!collapsed && (

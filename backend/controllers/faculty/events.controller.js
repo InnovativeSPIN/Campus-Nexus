@@ -7,6 +7,29 @@ import { Op } from 'sequelize';
 
 const { Faculty, FacultyEvents } = models;
 
+// Helper to resolve faculty profile reliably
+const getFacultyProfile = async (user) => {
+    if (!user) return null;
+    const targetId = user.faculty_id || user.id;
+    const orConditions = [];
+    if (targetId) {
+        orConditions.push({ faculty_id: targetId });
+        orConditions.push({ id: targetId });
+    }
+    if (user.faculty_college_code) {
+        orConditions.push({ faculty_college_code: user.faculty_college_code });
+    }
+    if (user.email) {
+        orConditions.push({ email: user.email });
+    }
+    if (orConditions.length === 0) return null;
+    
+    return await Faculty.findOne({
+        where: { [Op.or]: orConditions },
+        attributes: ['faculty_id', 'department_id']
+    });
+};
+
 // @desc      Get current faculty events
 // @route     GET /api/v1/faculty/events
 // @access    Private/Faculty
@@ -14,18 +37,12 @@ export const getMyEvents = asyncHandler(async (req, res, next) => {
     const userRole = req.user.role;
     const uploaderName = req.user.Name || req.user.name || `${req.user.firstName || ''} ${req.user.lastName || ''}`.trim();
 
-    // If faculty, show their events. If department-admin, show events uploaded by them and events for faculty in their department.
     let whereClause = {};
 
-    if (userRole === 'faculty' || req.user.faculty_college_code) {
-        const faculty_college_code = req.user.faculty_college_code;
-        const faculty = await Faculty.findOne({ where: { faculty_college_code }, attributes: ['faculty_id', 'department_id'] });
-        if (!faculty) {
-            return next(new ErrorResponse('Faculty profile not found', 404));
-        }
+    const faculty = await getFacultyProfile(req.user);
+    if (faculty) {
         whereClause = { faculty_id: faculty.faculty_id };
     } else if (userRole === 'department-admin') {
-        // find all faculty ids in this department
         const deptId = req.user.departmentId || req.user.department_id || null;
         let facultyIds = [];
         if (deptId) {
@@ -40,8 +57,7 @@ export const getMyEvents = asyncHandler(async (req, res, next) => {
             ]
         };
     } else {
-        // default: nothing
-        whereClause = {};
+        return res.status(200).json({ success: true, data: [] });
     }
 
     const eventRows = await FacultyEvents.findAll({ where: whereClause, order: [['event_date', 'DESC']] });

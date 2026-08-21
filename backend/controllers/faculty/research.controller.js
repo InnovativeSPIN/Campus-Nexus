@@ -7,32 +7,49 @@ import { Op } from 'sequelize';
 
 const { Faculty, FacultyResearch } = models;
 
+// Helper to resolve faculty profile reliably
+const getFacultyProfile = async (user) => {
+    if (!user) return null;
+    const targetId = user.faculty_id || user.id;
+    const orConditions = [];
+    if (targetId) {
+        orConditions.push({ faculty_id: targetId });
+        orConditions.push({ id: targetId });
+    }
+    if (user.faculty_college_code) {
+        orConditions.push({ faculty_college_code: user.faculty_college_code });
+    }
+    if (user.email) {
+        orConditions.push({ email: user.email });
+    }
+    if (orConditions.length === 0) return null;
+    
+    return await Faculty.findOne({
+        where: { [Op.or]: orConditions },
+        attributes: ['faculty_id', 'department_id']
+    });
+};
+
 // @desc      Get current faculty research publications
 // @route     GET /api/v1/faculty/research
 // @access    Private/Faculty
 export const getMyResearch = asyncHandler(async (req, res, next) => {
     const userRole = req.user.role;
     
-    let faculty = null;
-    if (req.user.role === 'faculty' || req.user.faculty_college_code) {
-        const faculty_college_code = req.user.faculty_college_code;
-        faculty = await Faculty.findOne({ where: { faculty_college_code }, attributes: ['faculty_id'] });
-        if (!faculty) {
-            return next(new ErrorResponse('Faculty profile not found', 404));
-        }
-    }
+    const faculty = await getFacultyProfile(req.user);
 
     let whereClause = {};
     if (faculty) {
         whereClause = { faculty_id: faculty.faculty_id };
     } else if (userRole === 'department-admin') {
-        // Department admin can see research from all faculty in their department
         const deptId = req.user.departmentId || req.user.department_id || null;
         if (deptId) {
             const facRows = await Faculty.findAll({ where: { department_id: deptId }, attributes: ['faculty_id'] });
             const facultyIds = facRows.map(f => f.faculty_id);
             whereClause = { faculty_id: { [Op.in]: facultyIds } };
         }
+    } else {
+        return res.status(200).json({ success: true, data: [] });
     }
 
     const researchRows = await FacultyResearch.findAll({ 

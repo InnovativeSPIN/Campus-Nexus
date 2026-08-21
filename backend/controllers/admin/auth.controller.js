@@ -228,15 +228,14 @@ export const login = asyncHandler(async (req, res, next) => {
   
   // Categorize the requested role to determine which tables to search
   const isStudentRequest = requestedRole === 'student';
-  const isFacultyRequest = ['faculty', 'principal', 'vice-principal', 'dean'].includes(requestedRole);
+  const isFacultyRequest = ['faculty', 'principal', 'vice-principal', 'dean', 'executive', 'executiveadmin'].includes(requestedRole);
   const isAdminRequest = requestedRole && (requestedRole.includes('admin') || requestedRole === 'super-admin');
   
   // Fallback for cases where no role is specified (backward compatibility)
   const isUnknownRequest = !requestedRole;
 
-  // 1. Check for faculty - Priority for faculty roles and department-admin (HOD)
-  // Non-HOD admin requests (superadmin, etc.) should skip this and use the User table lookup.
-  if (isUnknownRequest || isFacultyRequest || requestedRole === 'department-admin') {
+  // 1. Check for faculty profiles (Faculty, HOD role_id=7, Principal role_id=4)
+  if (isUnknownRequest || isFacultyRequest || requestedRole === 'department-admin' || requestedRole === 'executiveadmin') {
     const facultyWhere = {
       [Op.or]: [
         { email },
@@ -245,11 +244,8 @@ export const login = asyncHandler(async (req, res, next) => {
     };
     
     if (requestedRole === 'department-admin') {
-      // Strict role check for HOD login
+      // Strict role check for HOD login if requested
       facultyWhere.role_id = 7;
-    } else if (isFacultyRequest) {
-      // Strict role check for Faculty login (exclude HODs)
-      facultyWhere.role_id = { [Op.ne]: 7 };
     }
 
     user = await Faculty.findOne({

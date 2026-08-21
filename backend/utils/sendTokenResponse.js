@@ -44,13 +44,14 @@ const sendTokenResponse = (user, statusCode, res) => {
       rollNo: user.studentId,
       avatar: normalizeUrl(user.photo) || null
     };
-  } else if (user.role === 'faculty' || user.role?.role_name === 'faculty' || user.Name) {
+  } else if (user.role === 'faculty' || user.role?.role_name === 'faculty' || user.Name || user.faculty_id) {
     const isDeptAdmin = user.role_id === 7 || (user.role && user.role.role_id === 7);
+    const isPrincipalOrExecutive = user.role_id === 4 || user.role_id === 3 || (user.role && (user.role.role_id === 4 || user.role.role_id === 3));
     const desig = (user.designation || '').toString().toLowerCase();
     let roleStr = 'faculty';
     if (isDeptAdmin) {
       roleStr = 'department-admin';
-    } else if (desig.includes('principal') || desig.includes('executive') || desig.includes('dean')) {
+    } else if (isPrincipalOrExecutive || desig.includes('principal') || desig.includes('executive') || desig.includes('dean')) {
       roleStr = 'executiveadmin';
     }
     userData = {

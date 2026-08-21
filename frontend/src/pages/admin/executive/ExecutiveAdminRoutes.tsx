@@ -1,6 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import ExecutiveProtectedRoute from './components/common/ProtectedRoute';
-
+import Profile from './Profile';
 import ExecutiveAdminDashboard from './Dashboard';
 import ExecutiveStudents from './Students';
 import ExecutiveStudentProfile from './StudentProfile';
@@ -21,13 +21,15 @@ const ExecutiveAdminRoutes = () => (
     <Routes>
       <Route index element={<ExecutiveAdminDashboard />} />
       <Route path="dashboard" element={<ExecutiveAdminDashboard />} />
-      <Route path="academic-performance" element={<AcademicPerformance />} />
+      <Route path="profile" element={<Profile />} />
+
       <Route path="timetable" element={<ExecutiveTimeTable />} />
       <Route path="students" element={<ExecutiveStudents />} />
       <Route path="students/:id" element={<ExecutiveStudentProfile />} />
       <Route path="faculty" element={<ExecutiveFaculty />} />
       <Route path="faculty/:id" element={<ExecutiveFacultyProfile />} />
       <Route path="leave-requests" element={<ExecutiveLeaveRequests />} />
+      <Route path="academic-performance" element={<AcademicPerformance />} />
       <Route path="announcements" element={<ExecutiveAnnouncements />} />
       <Route path="announcements/:id" element={<ExecutiveAnnouncementDetail />} />
       <Route path="reports" element={<ExecutiveReports />} />

@@ -80,7 +80,6 @@ export default function ExecutiveTimeTable() {
   const [selectedDepartment, setSelectedDepartment] = useState<string>('');
   
   // Class filter state
-  const [selectedYear, setSelectedYear] = useState<string>('all');
   const [classes, setClasses] = useState<ClassItem[]>([]);
   const [selectedClassId, setSelectedClassId] = useState<string>('');
 
@@ -192,11 +191,11 @@ export default function ExecutiveTimeTable() {
     fetchFacultiesForDept();
   }, [selectedDepartment]);
 
-  // Load timetable slots whenever target, department, class, year, or faculty selection changes
+  // Load timetable slots whenever target, department, class, or faculty selection changes
   useEffect(() => {
     if (!selectedDepartment) return;
     loadTimetableData();
-  }, [target, selectedDepartment, selectedYear, selectedClassId, selectedFacultyId]);
+  }, [target, selectedDepartment, selectedClassId, selectedFacultyId]);
 
   const loadTimetableData = async () => {
     if (!selectedDepartment) {
@@ -210,7 +209,7 @@ export default function ExecutiveTimeTable() {
     try {
       if (target === 'class') {
         const currentClassObj = classes.find(c => c.id.toString() === selectedClassId);
-        const className = currentClassObj ? currentClassObj.name : (selectedYear !== 'all' ? `${selectedYear} Year` : 'Class');
+        const className = currentClassObj ? currentClassObj.name : 'Class';
         
         setHeaderInfo({
           title: `Class Timetable - ${deptName} ${className ? `(${className})` : ''}`,
@@ -272,7 +271,7 @@ export default function ExecutiveTimeTable() {
                 period_number: s.period?.id || s.period_slot_id || s.hour || 1,
                 subject_name: s.subject?.name || s.subject?.subject_name || (typeof s.subject === 'string' ? s.subject : 'Subject'),
                 subject_code: s.subject?.code || s.subject?.subject_code || s.subject_code || '',
-                class_name: s.class?.name || s.class_name || (s.section ? `${s.year ? `${s.year} Year ` : ''}${s.department || ''} (${s.section})` : 'Class'),
+                class_name: s.class?.name || s.class_name || (s.section ? `${s.department || ''} (${s.section})` : 'Class'),
                 room: s.room || '',
                 session_type: s.sessionType || s.session_type || 'theory'
               }));
@@ -293,16 +292,6 @@ export default function ExecutiveTimeTable() {
       setLoading(false);
     }
   };
-
-  // Filter classes by year if selected
-  const filteredClasses = classes.filter(c => {
-    if (selectedYear === 'all') return true;
-    const yrNum = parseInt(selectedYear, 10);
-    if (!isNaN(yrNum) && c.semester) {
-      return Math.ceil(c.semester / 2) === yrNum;
-    }
-    return c.name.toLowerCase().includes(`${selectedYear}`);
-  });
 
   const getSlot = (day: string, periodNumber: number) => {
     return slots.find(s => s.day.toLowerCase() === day.toLowerCase() && s.period_number === periodNumber);
@@ -381,51 +370,28 @@ export default function ExecutiveTimeTable() {
 
             {/* If Target is Class Timetable */}
             {target === 'class' && (
-              <>
-                {/* Year Filter */}
-                <div className="space-y-1">
-                  <Label className="text-[11px] font-semibold text-muted-foreground flex items-center gap-1">
-                    <CalendarIcon className="h-3 w-3 text-primary" />
-                    Year
-                  </Label>
-                  <Select value={selectedYear} onValueChange={setSelectedYear}>
-                    <SelectTrigger className="h-9 text-xs">
-                      <SelectValue placeholder="Select Year" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Years</SelectItem>
-                      <SelectItem value="1">1st Year</SelectItem>
-                      <SelectItem value="2">2nd Year</SelectItem>
-                      <SelectItem value="3">3rd Year</SelectItem>
-                      <SelectItem value="4">4th Year</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Class Selection Filter */}
-                <div className="space-y-1">
-                  <Label className="text-[11px] font-semibold text-muted-foreground flex items-center gap-1">
-                    <BookOpen className="h-3 w-3 text-primary" />
-                    Class / Section
-                  </Label>
-                  <Select value={selectedClassId} onValueChange={setSelectedClassId}>
-                    <SelectTrigger className="h-9 text-xs">
-                      <SelectValue placeholder="Select Class" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {filteredClasses.length > 0 ? (
-                        filteredClasses.map((cls) => (
-                          <SelectItem key={cls.id} value={cls.id.toString()}>
-                            {cls.name} {cls.section ? `(${cls.section})` : ''}
-                          </SelectItem>
-                        ))
-                      ) : (
-                        <SelectItem value="none" disabled>No classes found</SelectItem>
-                      )}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </>
+              <div className="space-y-1 sm:col-span-2">
+                <Label className="text-[11px] font-semibold text-muted-foreground flex items-center gap-1">
+                  <BookOpen className="h-3 w-3 text-primary" />
+                  Year/Class 
+                </Label>
+                <Select value={selectedClassId} onValueChange={setSelectedClassId}>
+                  <SelectTrigger className="h-9 text-xs">
+                    <SelectValue placeholder={classes.length > 0 ? "Select Class" : "No classes found"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {classes.length > 0 ? (
+                      classes.map((cls) => (
+                        <SelectItem key={cls.id} value={cls.id.toString()}>
+                          {cls.name} {cls.section ? `(${cls.section})` : ''}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem value="none" disabled>No classes found</SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
             )}
 
             {/* If Target is Faculty Timetable */}
