@@ -35,6 +35,8 @@ const studentYearValues: Record<string, string> = { 'I Year': '1', 'II Year': '2
    ══════════════════════════════════════════════ */
 
 const semesterOptions = ['Even Semester 2025', 'Odd Semester 2024', 'Even Semester 2024', 'Odd Semester 2023'];
+const batchOptions = ['Batch 2025', 'Batch 2024', 'Batch 2023', 'Batch 2022'];
+const programOptions = ['All Programs', 'B.E./B.Tech', 'M.E./M.Tech', 'MBA/MCA', 'Ph.D.'];
 
 // Academic Performance Filters
 const allDepartments = ['All Departments', 'CSE', 'ECE', 'IT', 'AI & DS', 'EEE', 'Civil', 'Mech', 'S&H'];
@@ -86,7 +88,6 @@ const academicDataBySemester: Record<string, { dept: string; result: number; att
   ],
 };
 
-<<<<<<< HEAD
 const strengthDataByProgram: Record<string, { name: string; value: number; pct: string; color: string }[]> = {
   'All Programs': [
     { name: 'I Year', value: 635, pct: '25.8%', color: 'hsl(0,83%,26%)' },
@@ -292,9 +293,6 @@ const placementDataByBatch: Record<string, { m: string; v: number }[]> = {
     { m: 'Apr', v: 59 }, { m: 'May', v: 66 }, { m: 'Jun', v: 73.8 },
   ],
 };
-
-=======
->>>>>>> fa946b6009d457905d7100429c88b9f0386dd7f3
 const radarData = [
   { subject: 'Teaching', A: 88, fullMark: 100 },
   { subject: 'Research', A: 72, fullMark: 100 },
@@ -433,8 +431,8 @@ export default function ExecutiveAdminDashboard() {
 
   /* dropdown states */
   const [selectedSemester, setSelectedSemester] = useState(semesterOptions[0]);
-  const [selectedDepartment, setSelectedDepartment] = useState('All Departments');
-  const [selectedYear, setSelectedYear] = useState(studentYearOptions[0]);
+  const [selectedBatch, setSelectedBatch] = useState(batchOptions[0]);
+  const [selectedProgram, setSelectedProgram] = useState(programOptions[0]);
   const [chartView, setChartView] = useState<'result' | 'attendance'>('result');
   
   // Academic Performance filters
@@ -448,7 +446,6 @@ export default function ExecutiveAdminDashboard() {
 
   /* dropdown open states */
   const [semesterOpen, setSemesterOpen] = useState(false);
-<<<<<<< HEAD
   const [batchOpen, setBatchOpen] = useState(false);
   const [programOpen, setProgramOpen] = useState(false);
   const [departmentOpen, setDepartmentOpen] = useState(false);
@@ -456,10 +453,6 @@ export default function ExecutiveAdminDashboard() {
   const [acPerfDeptOpen, setAcPerfDeptOpen] = useState(false);
   const [acPerfYearOpen, setAcPerfYearOpen] = useState(false);
   const [acPerfSemOpen, setAcPerfSemOpen] = useState(false);
-=======
-  const [yearOpen, setYearOpen] = useState(false);
-  const [departmentOpen, setDepartmentOpen] = useState(false);
->>>>>>> fa946b6009d457905d7100429c88b9f0386dd7f3
 
   /* modal state */
   const [modalOpen, setModalOpen] = useState(false);
@@ -1101,7 +1094,6 @@ export default function ExecutiveAdminDashboard() {
                 
                 {/* Department Dropdown */}
                 <Dropdown
-<<<<<<< HEAD
                   label={acPerfDept}
                   options={allDepartments}
                   open={acPerfDeptOpen}
@@ -1143,13 +1135,6 @@ export default function ExecutiveAdminDashboard() {
                   open={acPerfSemOpen}
                   onToggle={(e) => { e.stopPropagation(); setAcPerfSemOpen(!acPerfSemOpen); setAcPerfDeptOpen(false); setAcPerfYearOpen(false); }}
                   onSelect={(v) => { setAcPerfSem(v); setAcPerfSemOpen(false); }}
-=======
-                  label={selectedSemester}
-                  options={semesterOptions}
-                  open={semesterOpen}
-                  onToggle={(e) => { e.stopPropagation(); setSemesterOpen(!semesterOpen); setYearOpen(false); setDepartmentOpen(false); }}
-                  onSelect={(v) => { setSelectedSemester(v); setSemesterOpen(false); }}
->>>>>>> fa946b6009d457905d7100429c88b9f0386dd7f3
                 />
               </div>
             </div>
