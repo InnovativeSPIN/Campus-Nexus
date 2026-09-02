@@ -1226,7 +1226,7 @@ function Dropdown({
           {options.map((opt) => (
             <button key={opt} onClick={(e) => { e.stopPropagation(); onSelect(opt); }}
               className={`w-full text-left px-3 py-2 text-xs font-medium hover:bg-muted/40 transition-colors ${opt === label ? 'text-primary font-bold bg-primary/5' : 'text-foreground'}`}>
-              {opt === label && '? '}{opt}
+              {opt}
             </button>
           ))}
         </div>
