@@ -27,16 +27,16 @@ import { apiFetch } from '@/lib/apiFetch';
 
 type StudentRecord = { departmentId?: number; gender?: string; year?: string | number };
 type DepartmentOption = { id: number; short_name?: string; full_name?: string; name?: string };
+type StaffRecord = { department_id?: number; gender?: string; designation?: string; role_id?: number };
+const isTeachingStaff = (designation?: string, roleId?: number): boolean | null => { const value=String(designation||'').toLowerCase().trim(); if(roleId === 7)return true; if(!value)return null; if(/non[- ]?teaching|technical assistant|project assistant|lab assistant|technician|clerk|librarian|attender|office assistant/.test(value))return false; if(/professor|lecturer|instructor|teacher|principal|dean|hod|academic/.test(value))return true; return null; };
 const studentYearOptions = ['All Years', 'I Year', 'II Year', 'III Year', 'IV Year'];
 const studentYearValues: Record<string, string> = { 'I Year': '1', 'II Year': '2', 'III Year': '3', 'IV Year': '4' };
 
-/* ══════════════════════════════════════════════
+/* ??????????????????????????????????????????????
    DATA SETS
-   ══════════════════════════════════════════════ */
+   ?????????????????????????????????????????????? */
 
 const semesterOptions = ['Even Semester 2025', 'Odd Semester 2024', 'Even Semester 2024', 'Odd Semester 2023'];
-const batchOptions = ['Batch 2025', 'Batch 2024', 'Batch 2023', 'Batch 2022'];
-const programOptions = ['All Programs', 'B.E./B.Tech', 'M.E./M.Tech', 'MBA/MCA', 'Ph.D.'];
 
 // Academic Performance Filters
 const allDepartments = ['All Departments', 'CSE', 'ECE', 'IT', 'AI & DS', 'EEE', 'Civil', 'Mech', 'S&H'];
@@ -85,39 +85,6 @@ const academicDataBySemester: Record<string, { dept: string; result: number; att
     { dept: 'CSE', result: 79, attendance: 85 }, { dept: 'ECE', result: 74, attendance: 81 },
     { dept: 'EEE', result: 71, attendance: 77 }, { dept: 'MECH', result: 76, attendance: 83 },
     { dept: 'CIVIL', result: 73, attendance: 80 }, { dept: 'AI & DS', result: 68, attendance: 76 },
-  ],
-};
-
-const strengthDataByProgram: Record<string, { name: string; value: number; pct: string; color: string }[]> = {
-  'All Programs': [
-    { name: 'I Year', value: 635, pct: '25.8%', color: 'hsl(0,83%,26%)' },
-    { name: 'II Year', value: 612, pct: '24.9%', color: 'hsl(181,99%,28%)' },
-    { name: 'III Year', value: 643, pct: '26.2%', color: 'hsl(38,92%,50%)' },
-    { name: 'IV Year', value: 568, pct: '23.1%', color: 'hsl(142,76%,36%)' },
-  ],
-  'B.E./B.Tech': [
-    { name: 'I Year', value: 480, pct: '26.5%', color: 'hsl(0,83%,26%)' },
-    { name: 'II Year', value: 462, pct: '25.5%', color: 'hsl(181,99%,28%)' },
-    { name: 'III Year', value: 495, pct: '27.3%', color: 'hsl(38,92%,50%)' },
-    { name: 'IV Year', value: 375, pct: '20.7%', color: 'hsl(142,76%,36%)' },
-  ],
-  'M.E./M.Tech': [
-    { name: 'I Year', value: 95, pct: '52.8%', color: 'hsl(0,83%,26%)' },
-    { name: 'II Year', value: 85, pct: '47.2%', color: 'hsl(181,99%,28%)' },
-    { name: 'III Year', value: 0, pct: '0%', color: 'hsl(38,92%,50%)' },
-    { name: 'IV Year', value: 0, pct: '0%', color: 'hsl(142,76%,36%)' },
-  ],
-  'MBA/MCA': [
-    { name: 'I Year', value: 45, pct: '52.3%', color: 'hsl(0,83%,26%)' },
-    { name: 'II Year', value: 41, pct: '47.7%', color: 'hsl(181,99%,28%)' },
-    { name: 'III Year', value: 0, pct: '0%', color: 'hsl(38,92%,50%)' },
-    { name: 'IV Year', value: 0, pct: '0%', color: 'hsl(142,76%,36%)' },
-  ],
-  'Ph.D.': [
-    { name: 'I Year', value: 15, pct: '30%', color: 'hsl(0,83%,26%)' },
-    { name: 'II Year', value: 24, pct: '48%', color: 'hsl(181,99%,28%)' },
-    { name: 'III Year', value: 11, pct: '22%', color: 'hsl(38,92%,50%)' },
-    { name: 'IV Year', value: 0, pct: '0%', color: 'hsl(142,76%,36%)' },
   ],
 };
 
@@ -293,6 +260,7 @@ const placementDataByBatch: Record<string, { m: string; v: number }[]> = {
     { m: 'Apr', v: 59 }, { m: 'May', v: 66 }, { m: 'Jun', v: 73.8 },
   ],
 };
+
 const radarData = [
   { subject: 'Teaching', A: 88, fullMark: 100 },
   { subject: 'Research', A: 72, fullMark: 100 },
@@ -306,12 +274,12 @@ const pendingApprovals = [
   { label: 'Leave Applications', count: 8, icon: UserCheck, accent: 'text-destructive bg-destructive/10', detail: '3 Faculty leaves (Dr. Kumar, Prof. Anitha, Dr. Raj) + 5 Student leaves pending your review.' },
   { label: 'Faculty Requests', count: 3, icon: Users, accent: 'text-warning bg-warning/10', detail: '2 Transfer requests and 1 new equipment request from Mechanical Dept.' },
   { label: 'Student Requests', count: 12, icon: GraduationCap, accent: 'text-info bg-info/10', detail: '7 Bonafide certificate requests, 3 fee concession appeals, 2 hostel change requests.' },
-  { label: 'Budget Approvals', count: 2, icon: ClipboardCheck, accent: 'text-success bg-success/10', detail: 'AI Lab Upgrade: ₹12.5L, Library Digital Resources: ₹3.2L — awaiting your signature.' },
+  { label: 'Budget Approvals', count: 2, icon: ClipboardCheck, accent: 'text-success bg-success/10', detail: 'AI Lab Upgrade: ?12.5L, Library Digital Resources: ?3.2L ? awaiting your signature.' },
   { label: 'Event Approvals', count: 4, icon: CalendarDays, accent: 'text-secondary bg-secondary/10', detail: 'Tech Symposium (CSE), Cultural Fest (Student Council), Workshop (ECE), Hackathon (AI&DS).' },
 ];
 
 const alerts = [
-  { text: 'NAAC Data Submission Pending', date: '10 Jun 2026', urgent: true, detail: 'Criteria I–VI data must be uploaded to the NAAC portal before the deadline. SSR draft is 85% complete.' },
+  { text: 'NAAC Data Submission Pending', date: '10 Jun 2026', urgent: true, detail: 'Criteria I?VI data must be uploaded to the NAAC portal before the deadline. SSR draft is 85% complete.' },
   { text: 'AICTE Compliance Report Due', date: '15 Jun 2026', urgent: true, detail: 'Annual compliance report including faculty-student ratio, infrastructure, and placement data.' },
   { text: 'Department Budget Review', date: '18 Jun 2026', urgent: false, detail: 'Q2 budget utilisation review meeting with all HODs scheduled in Conference Hall.' },
   { text: 'Scholarship Verification Pending', date: '20 Jun 2026', urgent: false, detail: '42 BC/MBC scholarship applications and 18 SC/ST scholarship applications need verification.' },
@@ -320,7 +288,7 @@ const alerts = [
 
 const recentActivities = [
   { text: 'New faculty Dr. Anitha joined in CSE Dept.', time: '2h ago', icon: UserCheck, color: 'text-success bg-success/10', detail: 'Dr. Anitha M., Ph.D. (IIT Madras), specialising in Machine Learning, appointed as Assistant Professor.' },
-  { text: 'Budget approved for AI Lab Upgradation', time: '4h ago', icon: IndianRupee, color: 'text-info bg-info/10', detail: '₹12.5 Lakhs sanctioned for GPU workstations, networking, and software licenses.' },
+  { text: 'Budget approved for AI Lab Upgradation', time: '4h ago', icon: IndianRupee, color: 'text-info bg-info/10', detail: '?12.5 Lakhs sanctioned for GPU workstations, networking, and software licenses.' },
   { text: 'Workshop on "Cloud Computing" approved', time: '1d ago', icon: Award, color: 'text-warning bg-warning/10', detail: '2-day hands-on workshop sponsored by AWS. 120 participants from CSE and IT departments.' },
   { text: 'Student Achievements data updated', time: '2d ago', icon: Star, color: 'text-primary bg-primary/10', detail: '23 new entries: 8 Hackathon wins, 5 Paper presentations, 6 Sports, 4 Cultural awards.' },
   { text: 'NAAC Criteria VI data verified', time: '3d ago', icon: CheckCircle2, color: 'text-secondary bg-secondary/10', detail: 'Governance, Leadership, and Management data verified by IQAC. Ready for SSR upload.' },
@@ -337,23 +305,23 @@ const quickActions = [
 
 const statDetails: Record<string, { title: string; icon: React.ElementType; rows: { label: string; value: string; trend?: string }[] }> = {
   'Total Students': {
-    title: 'Student Breakdown — Academic Year 2025-26',
+    title: 'Student Breakdown ? Academic Year 2025-26',
     icon: GraduationCap,
     rows: [
-      { label: 'I Year', value: '635', trend: '↑ 4.2%' }, { label: 'II Year', value: '612', trend: '↑ 2.1%' },
-      { label: 'III Year', value: '643', trend: '↑ 7.5%' }, { label: 'IV Year', value: '568', trend: '↑ 1.8%' },
+      { label: 'I Year', value: '635', trend: '? 4.2%' }, { label: 'II Year', value: '612', trend: '? 2.1%' },
+      { label: 'III Year', value: '643', trend: '? 7.5%' }, { label: 'IV Year', value: '568', trend: '? 1.8%' },
       { label: 'Male Students', value: '1,342' }, { label: 'Female Students', value: '1,116' },
       { label: 'Day Scholars', value: '1,508' }, { label: 'Hostellers', value: '950' },
       { label: 'SC/ST Category', value: '312' }, { label: 'OBC Category', value: '890' },
     ],
   },
   'Total Faculty': {
-    title: 'Faculty Split — 2025-26',
+    title: 'Faculty Split ? 2025-26',
     icon: Users,
     rows: [
-      { label: 'Professors', value: '18', trend: '↑ 2' }, { label: 'Associate Professors', value: '34', trend: '↑ 3' },
-      { label: 'Assistant Professors', value: '82', trend: '↑ 1' }, { label: 'Visiting Faculty', value: '12' },
-      { label: 'Non-Teaching Staff', value: '10' }, { label: 'Ph.D. Holders', value: '94', trend: '↑ 6' },
+      { label: 'Professors', value: '18', trend: '? 2' }, { label: 'Associate Professors', value: '34', trend: '? 3' },
+      { label: 'Assistant Professors', value: '82', trend: '? 1' }, { label: 'Visiting Faculty', value: '12' },
+      { label: 'Non-Teaching Staff', value: '10' }, { label: 'Ph.D. Holders', value: '94', trend: '? 6' },
       { label: 'Male Faculty', value: '87' }, { label: 'Female Faculty', value: '69' },
       { label: 'Avg. Experience', value: '11.4 yrs' },
     ],
@@ -381,9 +349,9 @@ const statDetails: Record<string, { title: string; icon: React.ElementType; rows
   },
 };
 
-/* ══════════════════════════════════════════════
+/* ??????????????????????????????????????????????
    ACADEMIC PERFORMANCE TOOLTIP
-   ══════════════════════════════════════════════ */
+   ?????????????????????????????????????????????? */
 const AcademicPerformanceTooltip = ({ active, payload }: any) => {
   if (!active || !payload || !payload.length) return null;
   
@@ -399,9 +367,9 @@ const AcademicPerformanceTooltip = ({ active, payload }: any) => {
   );
 };
 
-/* ══════════════════════════════════════════════
+/* ??????????????????????????????????????????????
    CUSTOM TOOLTIP
-   ══════════════════════════════════════════════ */
+   ?????????????????????????????????????????????? */
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
@@ -420,9 +388,9 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
-/* ══════════════════════════════════════════════
+/* ??????????????????????????????????????????????
    MAIN COMPONENT
-   ══════════════════════════════════════════════ */
+   ?????????????????????????????????????????????? */
 export default function ExecutiveAdminDashboard() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
@@ -431,8 +399,9 @@ export default function ExecutiveAdminDashboard() {
 
   /* dropdown states */
   const [selectedSemester, setSelectedSemester] = useState(semesterOptions[0]);
-  const [selectedBatch, setSelectedBatch] = useState(batchOptions[0]);
-  const [selectedProgram, setSelectedProgram] = useState(programOptions[0]);
+  const [selectedDepartment, setSelectedDepartment] = useState('All Departments');
+  const [selectedYear, setSelectedYear] = useState(studentYearOptions[0]);
+  const [selectedStaffDepartment, setSelectedStaffDepartment] = useState('All Departments');
   const [chartView, setChartView] = useState<'result' | 'attendance'>('result');
   
   // Academic Performance filters
@@ -440,16 +409,11 @@ export default function ExecutiveAdminDashboard() {
   const [acPerfYear, setAcPerfYear] = useState('All Years');
   const [acPerfSem, setAcPerfSem] = useState('1st Semester');
   
-  // Legacy states (kept for other uses)
-  const [selectedDepartment, setSelectedDepartment] = useState('CSE');
-  const [selectedYear, setSelectedYear] = useState('I Year');
-
   /* dropdown open states */
   const [semesterOpen, setSemesterOpen] = useState(false);
-  const [batchOpen, setBatchOpen] = useState(false);
-  const [programOpen, setProgramOpen] = useState(false);
-  const [departmentOpen, setDepartmentOpen] = useState(false);
   const [yearOpen, setYearOpen] = useState(false);
+  const [studentDepartmentOpen, setStudentDepartmentOpen] = useState(false);
+  const [staffDepartmentOpen, setStaffDepartmentOpen] = useState(false);
   const [acPerfDeptOpen, setAcPerfDeptOpen] = useState(false);
   const [acPerfYearOpen, setAcPerfYearOpen] = useState(false);
   const [acPerfSemOpen, setAcPerfSemOpen] = useState(false);
@@ -478,6 +442,7 @@ export default function ExecutiveAdminDashboard() {
   const [dashboardCharts, setDashboardCharts] = useState<any>(null);
   const [students, setStudents] = useState<StudentRecord[]>([]);
   const [departments, setDepartments] = useState<DepartmentOption[]>([]);
+  const [staff, setStaff] = useState<StaffRecord[]>([]);
   const [liveActivities, setLiveActivities] = useState<any[]>([]);
   const [livePendingApprovals, setLivePendingApprovals] = useState<any[]>([]);
   const [liveApprovalsLoading, setLiveApprovalsLoading] = useState(false);
@@ -498,13 +463,15 @@ export default function ExecutiveAdminDashboard() {
       const chartsRes = await chartsRaw.json();
       if (chartsRes.success) setDashboardCharts(chartsRes.data);
 
-      const [studentsRaw, departmentsRaw] = await Promise.all([
+      const [studentsRaw, departmentsRaw, staffRaw] = await Promise.all([
         apiFetch('/api/v1/students?limit=0'),
-        apiFetch('/api/v1/departments')
+        apiFetch('/api/v1/departments'),
+        apiFetch('/api/v1/faculty?limit=1000')
       ]);
-      const [studentsRes, departmentsRes] = await Promise.all([studentsRaw.json(), departmentsRaw.json()]);
+      const [studentsRes, departmentsRes, staffRes] = await Promise.all([studentsRaw.json(), departmentsRaw.json(), staffRaw.json()]);
       if (studentsRes.success) setStudents(studentsRes.data || []);
       if (departmentsRes.success) setDepartments(departmentsRes.data || []);
+      if (staffRes.success) setStaff(staffRes.data || []);
 
       const activitiesRaw = await apiFetch('/api/v1/executive/activities');
       const activitiesRes = await activitiesRaw.json();
@@ -520,7 +487,7 @@ export default function ExecutiveAdminDashboard() {
 
   /* close dropdowns on outside click */
   useEffect(() => {
-    const handler = () => { setSemesterOpen(false); setDepartmentOpen(false); setYearOpen(false); };
+    const handler = () => { setSemesterOpen(false); setStudentDepartmentOpen(false); setStaffDepartmentOpen(false); setYearOpen(false); };
     document.addEventListener('click', handler);
     return () => document.removeEventListener('click', handler);
   }, []);
@@ -592,6 +559,16 @@ export default function ExecutiveAdminDashboard() {
     return { name, boys, girls, total: yearStudents.length };
   });
   const studentDepartmentOptions = ['All Departments', ...departments.map((department) => department.short_name || department.name || department.full_name || 'Unknown Department')];
+  const selectedStaffDepartmentRecord = departments.find((department) => (department.short_name || department.name || department.full_name) === selectedStaffDepartment);
+  const filteredStaff = staff.filter((member) => selectedStaffDepartment === 'All Departments' || Number(member.department_id) === selectedStaffDepartmentRecord?.id);
+  const maleStaffCount = filteredStaff.filter((member) => String(member.gender || '').toLowerCase() === 'male').length;
+  const femaleStaffCount = filteredStaff.filter((member) => String(member.gender || '').toLowerCase() === 'female').length;
+  const teachingStaffCount = filteredStaff.filter((member) => isTeachingStaff(member.designation, member.role_id) === true).length;
+  const nonTeachingStaffCount = filteredStaff.filter((member) => isTeachingStaff(member.designation, member.role_id) === false).length;
+  const staffDepartmentBreakdown = departments.map((department) => {
+    const departmentStaff = staff.filter((member) => Number(member.department_id) === department.id);
+    return { name: department.short_name || department.name || department.full_name || 'Unknown Department', male: departmentStaff.filter((member) => String(member.gender || '').toLowerCase() === 'male').length, female: departmentStaff.filter((member) => String(member.gender || '').toLowerCase() === 'female').length, teaching: departmentStaff.filter((member) => isTeachingStaff(member.designation, member.role_id) === true).length, nonTeaching: departmentStaff.filter((member) => isTeachingStaff(member.designation, member.role_id) === false).length, total: departmentStaff.length };
+  });
   // Dynamic Pending Approvals mapping
   const dynamicApprovals = [
     {
@@ -611,7 +588,7 @@ export default function ExecutiveAdminDashboard() {
     setModalTitle(title); setModalBody(body); setModalOpen(true);
   };
 
-  /* ── stat card click ── */
+  /* ?? stat card click ?? */
   const handleStatClick = (label: string) => {
     const info = statDetails[label];
     if (!info) return;
@@ -629,7 +606,7 @@ export default function ExecutiveAdminDashboard() {
             <span className="text-sm text-muted-foreground font-medium">{r.label}</span>
             <div className="flex items-center gap-2">
               {r.trend && (
-                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${r.trend.startsWith('↑') ? 'text-success bg-success/10' : 'text-destructive bg-destructive/10'}`}>
+                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${r.trend.startsWith('?') ? 'text-success bg-success/10' : 'text-destructive bg-destructive/10'}`}>
                   {r.trend}
                 </span>
               )}
@@ -641,9 +618,9 @@ export default function ExecutiveAdminDashboard() {
     ));
   };
 
-  /* ── approval click ── */
+  /* ?? approval click ?? */
   const handleApprovalClick = (item: any) => {
-    openModal(`${item.label} — ${item.count} Pending`, (
+    openModal(`${item.label} ? ${item.count} Pending`, (
       <div className="space-y-4 font-sans">
         <div className={`p-3 rounded-xl flex items-start gap-3 ${item.accent.replace('text-', 'bg-').split(' ')[0]}/5`}>
           <item.icon className={`w-5 h-5 mt-0.5 shrink-0 ${item.accent.split(' ')[0]}`} />
@@ -656,7 +633,7 @@ export default function ExecutiveAdminDashboard() {
               <div key={leave.id} className="p-3 bg-muted/30 border border-border rounded-lg flex items-center justify-between">
                 <div>
                   <p className="font-bold text-sm">{leave.applicant?.name} <span className="text-xs text-muted-foreground">({leave.department?.department_name})</span></p>
-                  <p className="text-xs text-muted-foreground">{leave.leaveType} Leave • {leave.totalDays} Days</p>
+                  <p className="text-xs text-muted-foreground">{leave.leaveType} Leave ? {leave.totalDays} Days</p>
                   <p className="text-xs text-muted-foreground truncate max-w-[200px]">Reason: {leave.reason}</p>
                 </div>
                 <div className="flex flex-col gap-1">
@@ -674,13 +651,13 @@ export default function ExecutiveAdminDashboard() {
               onClick={() => { setModalOpen(false); toast({ title: `${item.label} approved`, description: `All ${item.count} items have been approved successfully.` }); }}
               className="flex-1 py-2.5 bg-success text-white rounded-lg text-sm font-bold hover:bg-success/90 transition-colors"
             >
-              ✓ Approve All
+              ? Approve All
             </button>
             <button
               onClick={() => { setModalOpen(false); toast({ title: `${item.label} sent back`, description: 'Items returned to department for revision.' }); }}
               className="flex-1 py-2.5 bg-muted text-muted-foreground rounded-lg text-sm font-bold hover:bg-destructive hover:text-white transition-colors"
             >
-              ✗ Reject
+              ? Reject
             </button>
           </div>
         )}
@@ -709,13 +686,13 @@ export default function ExecutiveAdminDashboard() {
     }
   };
 
-  /* ── alert click ── */
+  /* ?? alert click ?? */
   const handleAlertClick = (item: typeof alerts[0]) => {
     openModal(item.text, (
       <div className="space-y-4 font-sans">
         <div className={`flex items-center gap-2 text-xs font-bold px-3 py-1.5 rounded-full w-fit ${item.urgent ? 'bg-destructive/10 text-destructive' : 'bg-warning/10 text-warning'}`}>
           <AlertTriangle className="w-3.5 h-3.5" />
-          {item.urgent ? 'URGENT' : 'REMINDER'} · {item.date}
+          {item.urgent ? 'URGENT' : 'REMINDER'} ? {item.date}
         </div>
         <p className="text-sm text-foreground/80 leading-relaxed">{item.detail}</p>
         <div className="flex gap-2">
@@ -736,7 +713,7 @@ export default function ExecutiveAdminDashboard() {
     ));
   };
 
-  /* ── activity click ── */
+  /* ?? activity click ?? */
   const handleActivityClick = (item: typeof recentActivities[0]) => {
     openModal(item.text, (
       <div className="space-y-3 font-sans">
@@ -760,7 +737,7 @@ export default function ExecutiveAdminDashboard() {
     ));
   };
 
-  /* ── quick action handlers ── */
+  /* ?? quick action handlers ?? */
   const handleReport = () => {
     openModal('Generate Reports', (
       <div className="space-y-3 font-sans">
@@ -773,7 +750,7 @@ export default function ExecutiveAdminDashboard() {
           { name: 'NAAC Compliance Report', desc: 'All 6 criteria consolidated' },
         ].map((r) => (
           <button key={r.name}
-            onClick={() => { setModalOpen(false); toast({ title: `${r.name} — Generating`, description: 'PDF will be ready in a few seconds. Check your Downloads.' }); }}
+            onClick={() => { setModalOpen(false); toast({ title: `${r.name} ? Generating`, description: 'PDF will be ready in a few seconds. Check your Downloads.' }); }}
             className="w-full flex items-center justify-between p-3 rounded-xl border border-border hover:border-primary/40 hover:bg-primary/5 transition-all group text-left"
           >
             <div>
@@ -791,20 +768,20 @@ export default function ExecutiveAdminDashboard() {
     openModal('Pending Approval Requests', (
       <div className="space-y-2 font-sans max-h-[60vh] overflow-y-auto pr-1">
         {[
-          { emoji: '🔴', text: 'Leave: Dr. Kumar (CSE) — 3 days medical leave, Jun 20–22', type: 'leave' },
-          { emoji: '🔴', text: 'Leave: Prof. Anitha (ECE) — 2 days personal leave, Jun 21–22', type: 'leave' },
-          { emoji: '🔴', text: 'Leave: Dr. Raj (Mech) — 1 day emergency leave, Jun 19', type: 'leave' },
-          { emoji: '🟡', text: 'Budget: AI Lab Upgrade — ₹12.5L (pending finance sign-off)', type: 'budget' },
-          { emoji: '🟡', text: 'Budget: Library Digital Resources — ₹3.2L', type: 'budget' },
-          { emoji: '🔵', text: 'Event: Tech Symposium 2026 — CSE Dept, Jul 15–16', type: 'event' },
-          { emoji: '🔵', text: 'Event: National Hackathon — AI&DS Dept, Jul 22–23', type: 'event' },
-          { emoji: '🟢', text: 'Transfer: Prof. Suresh (EEE → ECE) — inter-dept transfer', type: 'transfer' },
+          { emoji: '??', text: 'Leave: Dr. Kumar (CSE) ? 3 days medical leave, Jun 20?22', type: 'leave' },
+          { emoji: '??', text: 'Leave: Prof. Anitha (ECE) ? 2 days personal leave, Jun 21?22', type: 'leave' },
+          { emoji: '??', text: 'Leave: Dr. Raj (Mech) ? 1 day emergency leave, Jun 19', type: 'leave' },
+          { emoji: '??', text: 'Budget: AI Lab Upgrade ? ?12.5L (pending finance sign-off)', type: 'budget' },
+          { emoji: '??', text: 'Budget: Library Digital Resources ? ?3.2L', type: 'budget' },
+          { emoji: '??', text: 'Event: Tech Symposium 2026 ? CSE Dept, Jul 15?16', type: 'event' },
+          { emoji: '??', text: 'Event: National Hackathon ? AI&DS Dept, Jul 22?23', type: 'event' },
+          { emoji: '??', text: 'Transfer: Prof. Suresh (EEE ? ECE) ? inter-dept transfer', type: 'transfer' },
         ].map((item, i) => (
           <div key={i} className="flex items-center justify-between p-2.5 rounded-xl border border-border hover:bg-muted/20 transition-colors">
             <span className="text-sm text-foreground/80 flex items-center gap-2">{item.emoji} {item.text}</span>
             <div className="flex gap-1 shrink-0 ml-2">
-              <button onClick={() => toast({ title: 'Approved!', description: item.text })} className="px-2 py-1 text-[10px] font-bold bg-success/10 text-success hover:bg-success hover:text-white rounded-md transition-colors">✓</button>
-              <button onClick={() => toast({ title: 'Rejected', description: item.text, variant: 'destructive' })} className="px-2 py-1 text-[10px] font-bold bg-destructive/10 text-destructive hover:bg-destructive hover:text-white rounded-md transition-colors">✗</button>
+              <button onClick={() => toast({ title: 'Approved!', description: item.text })} className="px-2 py-1 text-[10px] font-bold bg-success/10 text-success hover:bg-success hover:text-white rounded-md transition-colors">?</button>
+              <button onClick={() => toast({ title: 'Rejected', description: item.text, variant: 'destructive' })} className="px-2 py-1 text-[10px] font-bold bg-destructive/10 text-destructive hover:bg-destructive hover:text-white rounded-md transition-colors">?</button>
             </div>
           </div>
         ))}
@@ -819,7 +796,7 @@ export default function ExecutiveAdminDashboard() {
           {['General', 'Academic', 'Administrative', 'Urgent'].map((type) => (
             <button key={type} onClick={() => toast({ title: `Notice Type: ${type}`, description: `Creating a new ${type} notice. Redirecting to announcements...` })}
               className={`py-2 px-3 rounded-lg text-xs font-bold border transition-colors hover:border-primary/40 hover:bg-primary/5 ${type === 'Urgent' ? 'border-destructive/40 text-destructive bg-destructive/5' : 'border-border text-foreground'}`}>
-              {type === 'Urgent' ? '🔴 ' : type === 'General' ? '🔵 ' : type === 'Academic' ? '📚 ' : '⚙️ '}{type}
+              {type === 'Urgent' ? '?? ' : type === 'General' ? '?? ' : type === 'Academic' ? '?? ' : '?? '}{type}
             </button>
           ))}
         </div>
@@ -832,30 +809,30 @@ export default function ExecutiveAdminDashboard() {
             { text: 'Campus placement drive by Infosys', date: 'Jun 5' },
           ].map((n, i) => (
             <p key={i} className="text-xs text-muted-foreground py-1 border-b border-border/30 last:border-0 flex justify-between">
-              <span>• {n.text}</span><span className="font-medium">{n.date}</span>
+              <span>? {n.text}</span><span className="font-medium">{n.date}</span>
             </p>
           ))}
         </div>
         <button onClick={() => { setModalOpen(false); navigate('/admin/executive/announcements'); }}
           className="w-full py-2.5 bg-primary text-white rounded-lg text-sm font-bold hover:bg-primary/90 transition-colors">
-          Open Announcements Manager →
+          Open Announcements Manager ?
         </button>
       </div>
     ));
   };
 
   const handleCalendarModal = () => {
-    openModal('Academic Calendar — Even Semester 2025-26', (
+    openModal('Academic Calendar ? Even Semester 2025-26', (
       <div className="space-y-2 font-sans max-h-[60vh] overflow-y-auto pr-1">
         {[
-          { emoji: '📝', text: 'Mid-Semester Examinations', date: 'Jun 16–20', status: 'ongoing' },
-          { emoji: '📋', text: 'Last date for Internal Assessment submission', date: 'Jun 25', status: 'upcoming' },
-          { emoji: '🎭', text: 'Sports Day & Cultural Week', date: 'Jul 1–3', status: 'upcoming' },
-          { emoji: '👥', text: 'Staff Council Meeting', date: 'Jul 10', status: 'upcoming' },
-          { emoji: '💻', text: 'Tech Symposium (CSE)', date: 'Jul 15–16', status: 'upcoming' },
-          { emoji: '📚', text: 'End Semester Examinations', date: 'Aug 1–15', status: 'future' },
-          { emoji: '🎓', text: 'Results Publication', date: 'Aug 20', status: 'future' },
-          { emoji: '🏫', text: 'Odd Semester begins', date: 'Sep 1', status: 'future' },
+          { emoji: '??', text: 'Mid-Semester Examinations', date: 'Jun 16?20', status: 'ongoing' },
+          { emoji: '??', text: 'Last date for Internal Assessment submission', date: 'Jun 25', status: 'upcoming' },
+          { emoji: '??', text: 'Sports Day & Cultural Week', date: 'Jul 1?3', status: 'upcoming' },
+          { emoji: '??', text: 'Staff Council Meeting', date: 'Jul 10', status: 'upcoming' },
+          { emoji: '??', text: 'Tech Symposium (CSE)', date: 'Jul 15?16', status: 'upcoming' },
+          { emoji: '??', text: 'End Semester Examinations', date: 'Aug 1?15', status: 'future' },
+          { emoji: '??', text: 'Results Publication', date: 'Aug 20', status: 'future' },
+          { emoji: '??', text: 'Odd Semester begins', date: 'Sep 1', status: 'future' },
         ].map((item, i) => (
           <div key={i} className={`flex items-center gap-3 p-2.5 rounded-xl border transition-colors hover:bg-muted/20 cursor-pointer ${item.status === 'ongoing' ? 'border-success/40 bg-success/5' : 'border-border'}`}>
             <span className="text-lg">{item.emoji}</span>
@@ -884,8 +861,8 @@ export default function ExecutiveAdminDashboard() {
         </div>
         <div className="p-3 bg-muted/30 rounded-xl">
           <p className="text-xs font-bold text-foreground mb-2">Recent Circulars Sent:</p>
-          {['Dress code reminder — All Students · Jun 14', 'NAAC preparation meeting — All HODs · Jun 12', 'Exam hall allocation — All Faculty · Jun 10'].map((c, i) => (
-            <p key={i} className="text-xs text-muted-foreground py-1 border-b border-border/30 last:border-0">• {c}</p>
+          {['Dress code reminder ? All Students ? Jun 14', 'NAAC preparation meeting ? All HODs ? Jun 12', 'Exam hall allocation ? All Faculty ? Jun 10'].map((c, i) => (
+            <p key={i} className="text-xs text-muted-foreground py-1 border-b border-border/30 last:border-0">? {c}</p>
           ))}
         </div>
       </div>
@@ -947,7 +924,7 @@ export default function ExecutiveAdminDashboard() {
         {[
           { title: 'NAAC submission deadline approaching', time: '10 min ago', read: false, urgent: true },
           { title: 'Dr. Kumar leave application pending', time: '2h ago', read: false, urgent: false },
-          { title: 'Budget approval required: AI Lab ₹12.5L', time: '4h ago', read: false, urgent: false },
+          { title: 'Budget approval required: AI Lab ?12.5L', time: '4h ago', read: false, urgent: false },
           { title: 'AICTE report due in 5 days', time: '6h ago', read: true, urgent: true },
           { title: 'Prof. Anitha leave application', time: '1d ago', read: true, urgent: false },
           { title: 'Tech Symposium event approval pending', time: '1d ago', read: true, urgent: false },
@@ -999,7 +976,7 @@ export default function ExecutiveAdminDashboard() {
     <AdminLayout>
       <div className="space-y-5">
 
-        {/* ─── Welcome Header ─── */}
+        {/* ??? Welcome Header ??? */}
         <div className="widget-card !p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative overflow-hidden bg-white border border-slate-200 shadow-sm rounded-2xl">
           <div className="relative z-10">
             <h1 className="text-2xl font-bold text-black font-sans">
@@ -1010,7 +987,7 @@ export default function ExecutiveAdminDashboard() {
               <CheckCircle2 className="inline w-4 h-4 text-emerald-600" />
             </p>
             <p className="text-slate-600 font-sans text-xs mt-0.5">
-              Executive Overview · {currentTime.toLocaleString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+              Executive Overview ? {currentTime.toLocaleString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' })}
             </p>
           </div>
 
@@ -1058,22 +1035,22 @@ export default function ExecutiveAdminDashboard() {
           </div>
         </div>
 
-        {/* ─── 4 Stat Cards ─── */}
+        {/* ??? 4 Stat Cards ??? */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {[
             { icon: Users, iconBg: 'bg-primary/10', iconColor: 'text-primary', label: 'Total Students', value: totalStudentsVal !== undefined ? Number(totalStudentsVal).toLocaleString() : '0', change: '+6.3%', sub: 'vs Last Semester', positive: true },
             { icon: UserCheck, iconBg: 'bg-success/10', iconColor: 'text-success', label: 'Total Faculty', value: totalFacultyVal !== undefined ? Number(totalFacultyVal).toLocaleString() : '0', change: '+4.1%', sub: 'vs Last Semester', positive: true },
-            { icon: Building, iconBg: 'bg-warning/10', iconColor: 'text-warning', label: 'Departments', value: totalDeptsVal !== undefined ? Number(totalDeptsVal).toLocaleString() : '0', change: '—', sub: 'No Change', positive: null },
+            { icon: Building, iconBg: 'bg-warning/10', iconColor: 'text-warning', label: 'Departments', value: totalDeptsVal !== undefined ? Number(totalDeptsVal).toLocaleString() : '0', change: '?', sub: 'No Change', positive: null },
             { icon: BookOpen, iconBg: 'bg-secondary/10', iconColor: 'text-secondary', label: 'Programs', value: totalProgramsVal !== undefined ? Number(totalProgramsVal).toLocaleString() : '28', change: '+2', sub: 'vs Last Semester', positive: true },
           ].map((card) => (
             <StatCard key={card.label} {...card} onClick={() => handleStatClick(card.label)} />
           ))}
         </div>
 
-        {/* ─── Middle Row ─── */}
+        {/* ??? Middle Row ??? */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
 
-          {/* Bar Chart — Academic Performance */}
+          {/* Bar Chart ? Academic Performance */}
           <div className="lg:col-span-5 widget-card flex flex-col">
             <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
               <h2 className="section-title !mb-0 flex items-center gap-2">
@@ -1279,7 +1256,7 @@ export default function ExecutiveAdminDashboard() {
           </div>
         </div>
 
-        {/* ─── Bottom Row ─── */}
+        {/* ??? Bottom Row ??? */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
 
           {/* Student Strength */}
@@ -1292,15 +1269,15 @@ export default function ExecutiveAdminDashboard() {
                 <Dropdown
                   label={selectedDepartment}
                   options={studentDepartmentOptions}
-                  open={departmentOpen}
-                  onToggle={(e) => { e.stopPropagation(); setDepartmentOpen(!departmentOpen); setSemesterOpen(false); setYearOpen(false); }}
-                  onSelect={(value) => { setSelectedDepartment(value); setDepartmentOpen(false); }}
+                  open={studentDepartmentOpen}
+                  onToggle={(e) => { e.stopPropagation(); setStudentDepartmentOpen(!studentDepartmentOpen); setSemesterOpen(false); setYearOpen(false); }}
+                  onSelect={(value) => { setSelectedDepartment(value); setStudentDepartmentOpen(false); }}
                 />
                 <Dropdown
                   label={selectedYear}
                   options={studentYearOptions}
                   open={yearOpen}
-                  onToggle={(e) => { e.stopPropagation(); setYearOpen(!yearOpen); setSemesterOpen(false); setDepartmentOpen(false); }}
+                  onToggle={(e) => { e.stopPropagation(); setYearOpen(!yearOpen); setSemesterOpen(false); setStudentDepartmentOpen(false); }}
                   onSelect={(value) => { setSelectedYear(value); setYearOpen(false); }}
                 />
               </div>
@@ -1333,28 +1310,37 @@ export default function ExecutiveAdminDashboard() {
                   ))}
                 </div>
               </div>
-              {selectedYear === 'All Years' && (
-                <div className="font-sans">
-                  <div className="grid grid-cols-4 gap-2 text-[10px] font-bold text-muted-foreground px-2 pb-1">
-                    <span>Year</span><span className="text-right">Boys</span><span className="text-right">Girls</span><span className="text-right">Total</span>
-                  </div>
-                  <div className="space-y-1">
-                    {yearBreakdown.map((row) => (
-                      <div key={row.name} className="grid grid-cols-4 gap-2 text-xs rounded-lg bg-muted/30 px-2 py-1.5">
-                        <span className="font-semibold text-foreground/80">{row.name}</span>
-                        <span className="text-right text-foreground">{row.boys}</span>
-                        <span className="text-right text-foreground">{row.girls}</span>
-                        <span className="text-right font-bold text-foreground">{row.total}</span>
-                      </div>
-                    ))}
-                  </div>
+            </div>
+          </div>
+
+          {/* Staff Strength */}
+          <div className="lg:col-span-6 widget-card flex flex-col">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+              <h2 className="section-title !mb-0 flex items-center gap-2"><Users className="w-4 h-4 text-primary" /> Staff Strength</h2>
+              <Dropdown label={selectedStaffDepartment} options={studentDepartmentOptions} open={staffDepartmentOpen}
+                onToggle={(e) => { e.stopPropagation(); setStaffDepartmentOpen(!staffDepartmentOpen); setSemesterOpen(false); setYearOpen(false); }}
+                onSelect={(value) => { setSelectedStaffDepartment(value); setStaffDepartmentOpen(false); }} />
+            </div>
+            <div className="flex flex-col gap-4 flex-1">
+              <div className="flex items-center gap-4">
+                <div className="w-[130px] h-[130px] relative shrink-0">
+                  <ResponsiveContainer width="100%" height="100%"><PieChart>
+                    <Pie data={[{ name: 'Male', value: maleStaffCount }, { name: 'Female', value: femaleStaffCount }].filter((item) => item.value > 0)} cx="50%" cy="50%" innerRadius={40} outerRadius={61} paddingAngle={2} dataKey="value" stroke="none">
+                      <Cell fill="hsl(181,99%,28%)" /><Cell fill="hsl(0,83%,26%)" />
+                    </Pie><Tooltip content={<CustomTooltip />} />
+                  </PieChart></ResponsiveContainer>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none"><span className="text-lg font-bold text-foreground font-sans">{filteredStaff.length.toLocaleString()}</span><span className="text-[10px] text-muted-foreground font-sans font-semibold">Total Staff</span></div>
                 </div>
-              )}
+                <div className="flex-1 grid grid-cols-2 gap-2 font-sans">
+                  {[{ name: 'Male Staff', value: maleStaffCount }, { name: 'Female Staff', value: femaleStaffCount }, { name: 'Teaching', value: teachingStaffCount }, { name: 'Non-Teaching', value: nonTeachingStaffCount }].map((item) => (
+                    <div key={item.name} className="rounded-xl border border-border p-2.5"><p className="text-[11px] text-muted-foreground leading-tight">{item.name}</p><p className="text-lg font-bold text-foreground mt-1">{item.value.toLocaleString()}</p></div>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         </div>
-
-        {/* ─── Radar Chart Row ─── */}
+        {/* ??? Radar Chart Row ??? */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
           <div className="lg:col-span-5 widget-card flex flex-col">
             <div className="flex items-center justify-between mb-3">
@@ -1419,7 +1405,7 @@ export default function ExecutiveAdminDashboard() {
 
       </div>
 
-      {/* ══════ Generic Detail Modal ══════ */}
+      {/* ?????? Generic Detail Modal ?????? */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
@@ -1432,7 +1418,7 @@ export default function ExecutiveAdminDashboard() {
         </DialogContent>
       </Dialog>
 
-      {/* ══════ Analytics Modal ══════ */}
+      {/* ?????? Analytics Modal ?????? */}
       <Dialog open={analyticsOpen} onOpenChange={setAnalyticsOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
@@ -1475,13 +1461,13 @@ export default function ExecutiveAdminDashboard() {
             </div>
             <button onClick={() => { setAnalyticsOpen(false); navigate('/admin/executive/academic-performance'); }}
               className="w-full py-2.5 bg-primary text-white rounded-lg text-sm font-bold hover:bg-primary/90 transition-colors">
-              Open Full Analytics Dashboard →
+              Open Full Analytics Dashboard ?
             </button>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* ══════ Profile Modal ══════ */}
+      {/* ?????? Profile Modal ?????? */}
       <Dialog open={profileOpen} onOpenChange={setProfileOpen}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
@@ -1528,9 +1514,9 @@ export default function ExecutiveAdminDashboard() {
   );
 }
 
-/* ══════════════════════════════════════════════
+/* ??????????????????????????????????????????????
    HELPER COMPONENTS
-   ══════════════════════════════════════════════ */
+   ?????????????????????????????????????????????? */
 
 function StatCard({
   icon: Icon, iconBg, iconColor, label, value, change, sub, positive, onClick,
@@ -1582,7 +1568,7 @@ function Dropdown({
           {options.map((opt) => (
             <button key={opt} onClick={(e) => { e.stopPropagation(); onSelect(opt); }}
               className={`w-full text-left px-3 py-2 text-xs font-medium hover:bg-muted/40 transition-colors ${opt === label ? 'text-primary font-bold bg-primary/5' : 'text-foreground'}`}>
-              {opt === label && '✓ '}{opt}
+              {opt === label && '? '}{opt}
             </button>
           ))}
         </div>
