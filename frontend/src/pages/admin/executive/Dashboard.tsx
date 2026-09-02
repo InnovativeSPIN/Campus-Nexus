@@ -11,8 +11,10 @@ import {
   Megaphone, CheckCircle2, AlertTriangle, Mail, ArrowUpRight,
   BookOpen, Bell, Calendar, LogOut, TrendingUp, TrendingDown,
   Award, BarChart2, GaugeCircle,
-  BarChart3, RefreshCw, Download,
-  ChevronRight, Star, Clock, AlertCircle, Info,
+  Download,
+  ChevronRight, Star, AlertCircle, Info,
+
+
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -23,13 +25,16 @@ import {
 import { AdminLayout } from '@/pages/admin/executive/components/layout/AdminLayout';
 import { apiFetch } from '@/lib/apiFetch';
 
+type StudentRecord = { departmentId?: number; gender?: string; year?: string | number };
+type DepartmentOption = { id: number; short_name?: string; full_name?: string; name?: string };
+const studentYearOptions = ['All Years', 'I Year', 'II Year', 'III Year', 'IV Year'];
+const studentYearValues: Record<string, string> = { 'I Year': '1', 'II Year': '2', 'III Year': '3', 'IV Year': '4' };
+
 /* ══════════════════════════════════════════════
    DATA SETS
    ══════════════════════════════════════════════ */
 
 const semesterOptions = ['Even Semester 2025', 'Odd Semester 2024', 'Even Semester 2024', 'Odd Semester 2023'];
-const batchOptions = ['Batch 2025', 'Batch 2024', 'Batch 2023', 'Batch 2022'];
-const programOptions = ['All Programs', 'B.E./B.Tech', 'M.E./M.Tech', 'MBA/MCA', 'Ph.D.'];
 
 const academicDataBySemester: Record<string, { dept: string; result: number; attendance: number }[]> = {
   'Even Semester 2025': [
@@ -51,66 +56,6 @@ const academicDataBySemester: Record<string, { dept: string; result: number; att
     { dept: 'CSE', result: 79, attendance: 85 }, { dept: 'ECE', result: 74, attendance: 81 },
     { dept: 'EEE', result: 71, attendance: 77 }, { dept: 'MECH', result: 76, attendance: 83 },
     { dept: 'CIVIL', result: 73, attendance: 80 }, { dept: 'AI & DS', result: 68, attendance: 76 },
-  ],
-};
-
-const strengthDataByProgram: Record<string, { name: string; value: number; pct: string; color: string }[]> = {
-  'All Programs': [
-    { name: 'I Year', value: 635, pct: '25.8%', color: 'hsl(0,83%,26%)' },
-    { name: 'II Year', value: 612, pct: '24.9%', color: 'hsl(181,99%,28%)' },
-    { name: 'III Year', value: 643, pct: '26.2%', color: 'hsl(38,92%,50%)' },
-    { name: 'IV Year', value: 568, pct: '23.1%', color: 'hsl(142,76%,36%)' },
-  ],
-  'B.E./B.Tech': [
-    { name: 'I Year', value: 480, pct: '26.5%', color: 'hsl(0,83%,26%)' },
-    { name: 'II Year', value: 462, pct: '25.5%', color: 'hsl(181,99%,28%)' },
-    { name: 'III Year', value: 495, pct: '27.3%', color: 'hsl(38,92%,50%)' },
-    { name: 'IV Year', value: 375, pct: '20.7%', color: 'hsl(142,76%,36%)' },
-  ],
-  'M.E./M.Tech': [
-    { name: 'I Year', value: 95, pct: '52.8%', color: 'hsl(0,83%,26%)' },
-    { name: 'II Year', value: 85, pct: '47.2%', color: 'hsl(181,99%,28%)' },
-    { name: 'III Year', value: 0, pct: '0%', color: 'hsl(38,92%,50%)' },
-    { name: 'IV Year', value: 0, pct: '0%', color: 'hsl(142,76%,36%)' },
-  ],
-  'MBA/MCA': [
-    { name: 'I Year', value: 45, pct: '52.3%', color: 'hsl(0,83%,26%)' },
-    { name: 'II Year', value: 41, pct: '47.7%', color: 'hsl(181,99%,28%)' },
-    { name: 'III Year', value: 0, pct: '0%', color: 'hsl(38,92%,50%)' },
-    { name: 'IV Year', value: 0, pct: '0%', color: 'hsl(142,76%,36%)' },
-  ],
-  'Ph.D.': [
-    { name: 'I Year', value: 15, pct: '30%', color: 'hsl(0,83%,26%)' },
-    { name: 'II Year', value: 24, pct: '48%', color: 'hsl(181,99%,28%)' },
-    { name: 'III Year', value: 11, pct: '22%', color: 'hsl(38,92%,50%)' },
-    { name: 'IV Year', value: 0, pct: '0%', color: 'hsl(142,76%,36%)' },
-  ],
-};
-
-const placementDataByBatch: Record<string, { m: string; v: number }[]> = {
-  'Batch 2025': [
-    { m: 'Jul', v: 15 }, { m: 'Aug', v: 24 }, { m: 'Sep', v: 29 },
-    { m: 'Oct', v: 32 }, { m: 'Nov', v: 40 }, { m: 'Dec', v: 48 },
-    { m: 'Jan', v: 52 }, { m: 'Feb', v: 58 }, { m: 'Mar', v: 65 },
-    { m: 'Apr', v: 72 }, { m: 'May', v: 79 }, { m: 'Jun', v: 87.6 },
-  ],
-  'Batch 2024': [
-    { m: 'Jul', v: 12 }, { m: 'Aug', v: 20 }, { m: 'Sep', v: 26 },
-    { m: 'Oct', v: 30 }, { m: 'Nov', v: 37 }, { m: 'Dec', v: 44 },
-    { m: 'Jan', v: 49 }, { m: 'Feb', v: 54 }, { m: 'Mar', v: 61 },
-    { m: 'Apr', v: 69 }, { m: 'May', v: 76 }, { m: 'Jun', v: 82.4 },
-  ],
-  'Batch 2023': [
-    { m: 'Jul', v: 10 }, { m: 'Aug', v: 18 }, { m: 'Sep', v: 24 },
-    { m: 'Oct', v: 28 }, { m: 'Nov', v: 34 }, { m: 'Dec', v: 41 },
-    { m: 'Jan', v: 46 }, { m: 'Feb', v: 51 }, { m: 'Mar', v: 57 },
-    { m: 'Apr', v: 63 }, { m: 'May', v: 70 }, { m: 'Jun', v: 78.2 },
-  ],
-  'Batch 2022': [
-    { m: 'Jul', v: 9 }, { m: 'Aug', v: 16 }, { m: 'Sep', v: 21 },
-    { m: 'Oct', v: 25 }, { m: 'Nov', v: 31 }, { m: 'Dec', v: 38 },
-    { m: 'Jan', v: 43 }, { m: 'Feb', v: 48 }, { m: 'Mar', v: 53 },
-    { m: 'Apr', v: 59 }, { m: 'May', v: 66 }, { m: 'Jun', v: 73.8 },
   ],
 };
 
@@ -234,14 +179,14 @@ export default function ExecutiveAdminDashboard() {
 
   /* dropdown states */
   const [selectedSemester, setSelectedSemester] = useState(semesterOptions[0]);
-  const [selectedBatch, setSelectedBatch] = useState(batchOptions[0]);
-  const [selectedProgram, setSelectedProgram] = useState(programOptions[0]);
+  const [selectedDepartment, setSelectedDepartment] = useState('All Departments');
+  const [selectedYear, setSelectedYear] = useState(studentYearOptions[0]);
   const [chartView, setChartView] = useState<'result' | 'attendance'>('result');
 
   /* dropdown open states */
   const [semesterOpen, setSemesterOpen] = useState(false);
-  const [batchOpen, setBatchOpen] = useState(false);
-  const [programOpen, setProgramOpen] = useState(false);
+  const [yearOpen, setYearOpen] = useState(false);
+  const [departmentOpen, setDepartmentOpen] = useState(false);
 
   /* modal state */
   const [modalOpen, setModalOpen] = useState(false);
@@ -265,6 +210,8 @@ export default function ExecutiveAdminDashboard() {
 
   const [dashboardStats, setDashboardStats] = useState<any>(null);
   const [dashboardCharts, setDashboardCharts] = useState<any>(null);
+  const [students, setStudents] = useState<StudentRecord[]>([]);
+  const [departments, setDepartments] = useState<DepartmentOption[]>([]);
   const [liveActivities, setLiveActivities] = useState<any[]>([]);
   const [livePendingApprovals, setLivePendingApprovals] = useState<any[]>([]);
   const [liveApprovalsLoading, setLiveApprovalsLoading] = useState(false);
@@ -285,6 +232,14 @@ export default function ExecutiveAdminDashboard() {
       const chartsRes = await chartsRaw.json();
       if (chartsRes.success) setDashboardCharts(chartsRes.data);
 
+      const [studentsRaw, departmentsRaw] = await Promise.all([
+        apiFetch('/api/v1/students?limit=0'),
+        apiFetch('/api/v1/departments')
+      ]);
+      const [studentsRes, departmentsRes] = await Promise.all([studentsRaw.json(), departmentsRaw.json()]);
+      if (studentsRes.success) setStudents(studentsRes.data || []);
+      if (departmentsRes.success) setDepartments(departmentsRes.data || []);
+
       const activitiesRaw = await apiFetch('/api/v1/executive/activities');
       const activitiesRes = await activitiesRaw.json();
       if (activitiesRes.success) setLiveActivities(activitiesRes.data.recentActivities || []);
@@ -299,22 +254,43 @@ export default function ExecutiveAdminDashboard() {
 
   /* close dropdowns on outside click */
   useEffect(() => {
-    const handler = () => { setSemesterOpen(false); setBatchOpen(false); setProgramOpen(false); };
+    const handler = () => { setSemesterOpen(false); setDepartmentOpen(false); setYearOpen(false); };
     document.addEventListener('click', handler);
     return () => document.removeEventListener('click', handler);
   }, []);
 
   /* computed data */
   const academicData = dashboardCharts?.academicDataBySemester || academicDataBySemester[selectedSemester] || academicDataBySemester[semesterOptions[0]];
-  const strengthData = dashboardCharts?.strengthDataByProgram?.[selectedProgram] || strengthDataByProgram[selectedProgram] || strengthDataByProgram[programOptions[0]];
-  const placementData = dashboardCharts?.placementDataByBatch || placementDataByBatch[selectedBatch] || placementDataByBatch[batchOptions[0]];
+
 
   // Use real data if available from database endpoints, fallback to default mock
-  const totalStudentsVal = dashboardStats?.totalStudents ?? strengthData.reduce((s: any, d: any) => s + d.value, 0);
+  const totalStudentsVal = dashboardStats?.totalStudents ?? students.length;
   const totalFacultyVal = dashboardStats?.totalFaculty ?? 156;
   const totalDeptsVal = dashboardStats?.totalDepartments ?? 12;
   const totalProgramsVal = dashboardStats?.totalPrograms ?? 28;
 
+  const selectedDepartmentRecord = departments.find((department) => (department.short_name || department.name || department.full_name) === selectedDepartment);
+  const filteredStudents = students.filter((student) => {
+    const matchesDepartment = selectedDepartment === 'All Departments' || Number(student.departmentId) === selectedDepartmentRecord?.id;
+    const matchesYear = selectedYear === 'All Years' || String(student.year || '').trim() === studentYearValues[selectedYear];
+    return matchesDepartment && matchesYear;
+  });
+  const boysCount = filteredStudents.filter((student) => String(student.gender || '').toLowerCase() === 'male').length;
+  const girlsCount = filteredStudents.filter((student) => String(student.gender || '').toLowerCase() === 'female').length;
+  const studentStrengthData = [
+    { name: 'Boys', value: boysCount, color: 'hsl(181,99%,28%)' },
+    { name: 'Girls', value: girlsCount, color: 'hsl(0,83%,26%)' },
+  ];
+  const yearBreakdown = ['I Year', 'II Year', 'III Year', 'IV Year'].map((name) => {
+    const yearStudents = students.filter((student) => {
+      const matchesDepartment = selectedDepartment === 'All Departments' || Number(student.departmentId) === selectedDepartmentRecord?.id;
+      return matchesDepartment && String(student.year || '').trim() === studentYearValues[name];
+    });
+    const boys = yearStudents.filter((student) => String(student.gender || '').toLowerCase() === 'male').length;
+    const girls = yearStudents.filter((student) => String(student.gender || '').toLowerCase() === 'female').length;
+    return { name, boys, girls, total: yearStudents.length };
+  });
+  const studentDepartmentOptions = ['All Departments', ...departments.map((department) => department.short_name || department.name || department.full_name || 'Unknown Department')];
   // Dynamic Pending Approvals mapping
   const dynamicApprovals = [
     {
@@ -662,24 +638,6 @@ export default function ExecutiveAdminDashboard() {
     ));
   };
 
-  const handleViewAllActivities = () => {
-    openModal('All Recent Activities', (
-      <div className="space-y-2 font-sans max-h-[60vh] overflow-y-auto pr-1">
-        {recentActivities.map((a) => (
-          <div key={a.text} onClick={() => handleActivityClick(a)} className="flex items-start gap-3 p-3 rounded-xl border border-border hover:bg-muted/20 transition-colors cursor-pointer">
-            <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${a.color.split(' ')[1]}`}>
-              <a.icon className={`w-4 h-4 ${a.color.split(' ')[0]}`} />
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-foreground">{a.text}</p>
-              <p className="text-xs text-muted-foreground">{a.time}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-    ));
-  };
-
   const handleNotifClick = () => {
     setNotifCount(0);
     setNotifOpen(true);
@@ -791,7 +749,7 @@ export default function ExecutiveAdminDashboard() {
               </div>
             </button>
             {/* Session */}
-            <div onClick={(e) => { e.stopPropagation(); setSemesterOpen(false); setBatchOpen(false); }}
+            <div onClick={(e) => { e.stopPropagation(); setSemesterOpen(false); setYearOpen(false); }}
               className="flex items-center justify-center gap-1.5 border border-slate-300 hover:bg-slate-100 transition-colors rounded-xl px-3 h-10 bg-slate-50 text-black text-xs font-bold font-sans cursor-pointer shadow-sm">
               <Calendar className="w-4 h-4 text-slate-700" />
               <span className="hidden sm:inline">2025-26 (Even)</span>
@@ -835,7 +793,7 @@ export default function ExecutiveAdminDashboard() {
                   label={selectedSemester}
                   options={semesterOptions}
                   open={semesterOpen}
-                  onToggle={(e) => { e.stopPropagation(); setSemesterOpen(!semesterOpen); setBatchOpen(false); setProgramOpen(false); }}
+                  onToggle={(e) => { e.stopPropagation(); setSemesterOpen(!semesterOpen); setYearOpen(false); setDepartmentOpen(false); }}
                   onSelect={(v) => { setSelectedSemester(v); setSemesterOpen(false); }}
                 />
               </div>
@@ -942,136 +900,75 @@ export default function ExecutiveAdminDashboard() {
         {/* ─── Bottom Row ─── */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
 
-          {/* Pie Chart — Student Strength */}
-          <div className="lg:col-span-4 widget-card flex flex-col">
-            <div className="flex items-center justify-between mb-3">
+          {/* Student Strength */}
+          <div className="lg:col-span-6 widget-card flex flex-col">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
               <h2 className="section-title !mb-0 flex items-center gap-2">
                 <GaugeCircle className="w-4 h-4 text-primary" /> Student Strength
               </h2>
-              <Dropdown
-                label={selectedProgram}
-                options={programOptions}
-                open={programOpen}
-                onToggle={(e) => { e.stopPropagation(); setProgramOpen(!programOpen); setSemesterOpen(false); setBatchOpen(false); }}
-                onSelect={(v) => { setSelectedProgram(v); setProgramOpen(false); }}
-              />
-            </div>
-            <div className="flex items-center gap-4 flex-1">
-              <div className="w-[150px] h-[150px] relative shrink-0">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie data={strengthData.filter((d: any) => d.value > 0)} cx="50%" cy="50%"
-                      innerRadius={46} outerRadius={70} paddingAngle={2} dataKey="value" stroke="none">
-                      {strengthData.filter((d: any) => d.value > 0).map((d: any, i: number) => (
-                        <Cell key={`c-${i}`} fill={d.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip content={<CustomTooltip />} />
-                  </PieChart>
-                </ResponsiveContainer>
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <span className="text-lg font-bold text-foreground font-sans">{totalStudentsVal.toLocaleString()}</span>
-                  <span className="text-[10px] text-muted-foreground font-sans font-semibold">Total</span>
-                </div>
+              <div className="flex items-center gap-2">
+                <Dropdown
+                  label={selectedDepartment}
+                  options={studentDepartmentOptions}
+                  open={departmentOpen}
+                  onToggle={(e) => { e.stopPropagation(); setDepartmentOpen(!departmentOpen); setSemesterOpen(false); setYearOpen(false); }}
+                  onSelect={(value) => { setSelectedDepartment(value); setDepartmentOpen(false); }}
+                />
+                <Dropdown
+                  label={selectedYear}
+                  options={studentYearOptions}
+                  open={yearOpen}
+                  onToggle={(e) => { e.stopPropagation(); setYearOpen(!yearOpen); setSemesterOpen(false); setDepartmentOpen(false); }}
+                  onSelect={(value) => { setSelectedYear(value); setYearOpen(false); }}
+                />
               </div>
-              <div className="flex-1 space-y-2 font-sans">
-                {strengthData.map((d: any) => (
-                  d.value > 0 && (
-                    <div key={d.name} className="flex items-center justify-between text-xs">
-                      <span className="flex items-center gap-2">
-                        <span className="w-2.5 h-2.5 rounded-full shrink-0"
-                          ref={(el) => { if (el) el.style.backgroundColor = d.color; }} />
-                        <span className="font-semibold text-foreground/70">{d.name}</span>
-                      </span>
-                      <span className="font-bold text-foreground">
-                        {d.value} <span className="font-medium text-muted-foreground">({d.pct})</span>
-                      </span>
+            </div>
+            <div className="flex flex-col gap-4 flex-1">
+              <div className="flex items-center gap-4">
+                <div className="w-[130px] h-[130px] relative shrink-0">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie data={studentStrengthData.filter((item) => item.value > 0)} cx="50%" cy="50%" innerRadius={40} outerRadius={61} paddingAngle={2} dataKey="value" stroke="none">
+                        {studentStrengthData.map((item) => <Cell key={item.name} fill={item.color} />)}
+                      </Pie>
+                      <Tooltip content={<CustomTooltip />} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                    <span className="text-lg font-bold text-foreground font-sans">{filteredStudents.length.toLocaleString()}</span>
+                    <span className="text-[10px] text-muted-foreground font-sans font-semibold">Total</span>
+                  </div>
+                </div>
+                <div className="flex-1 grid grid-cols-2 gap-2 font-sans">
+                  {studentStrengthData.map((item) => (
+                    <div key={item.name} className="rounded-xl border border-border p-2.5">
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
+                        {item.name}
+                      </div>
+                      <p className="text-xl font-bold text-foreground mt-1">{item.value.toLocaleString()}</p>
                     </div>
-                  )
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Line Chart — Placement */}
-          <div className="lg:col-span-4 widget-card flex flex-col">
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="section-title !mb-0 flex items-center gap-2">
-                <BarChart3 className="w-4 h-4 text-primary" /> Placement Overview
-              </h2>
-              <Dropdown
-                label={selectedBatch}
-                options={batchOptions}
-                open={batchOpen}
-                onToggle={(e) => { e.stopPropagation(); setBatchOpen(!batchOpen); setSemesterOpen(false); setProgramOpen(false); }}
-                onSelect={(v) => { setSelectedBatch(v); setBatchOpen(false); }}
-              />
-            </div>
-            <div className="flex-1 min-h-[180px] relative">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={placementData} margin={{ top: 20, right: 16, left: -24, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="placementGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(181,99%,28%)" stopOpacity={0.15} />
-                      <stop offset="95%" stopColor="hsl(181,99%,28%)" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(0,0%,92%)" />
-                  <XAxis dataKey="m" axisLine={false} tickLine={false}
-                    tick={{ fontSize: 10, fill: 'hsl(0,10%,45%)', fontFamily: 'Inter' }} dy={8} />
-                  <YAxis axisLine={false} tickLine={false}
-                    tick={{ fontSize: 10, fill: 'hsl(0,10%,45%)', fontFamily: 'Inter' }}
-                    tickFormatter={(v) => `${v}%`} domain={[0, 100]} />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Area type="monotone" dataKey="v" stroke="hsl(181,99%,28%)" strokeWidth={2.5}
-                    fill="url(#placementGrad)" name="Placement %" dot={{ fill: 'hsl(181,99%,28%)', r: 3, strokeWidth: 2, stroke: '#fff' }}
-                    activeDot={{ r: 5, strokeWidth: 0, fill: 'hsl(181,99%,28%)' }} />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="flex items-center justify-center gap-2 mt-2 font-sans">
-              <div className="w-5 h-0.5 bg-secondary rounded relative flex items-center justify-center">
-                <div className="w-1.5 h-1.5 rounded-full bg-secondary absolute border border-white" />
-              </div>
-              <span className="text-xs text-muted-foreground font-medium">Cumulative Placement Rate (%)</span>
-            </div>
-          </div>
-
-          {/* Recent Activities */}
-          <div className="lg:col-span-4 widget-card flex flex-col">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="section-title !mb-0 flex items-center gap-2">
-                <Clock className="w-4 h-4 text-primary" /> Recent Activities
-              </h2>
-              <button
-                aria-label="Refresh activity feed"
-                title="Refresh activity feed"
-                onClick={() => { toast({ title: 'Refreshed', description: 'Activity feed is up to date.' }); }}
-                className="p-1.5 rounded-lg hover:bg-muted/40 transition-colors text-muted-foreground hover:text-foreground">
-                <RefreshCw className="w-3.5 h-3.5" />
-              </button>
-            </div>
-            <div className="flex-1 space-y-0.5 font-sans">
-              {(liveActivities.length > 0 ? liveActivities : recentActivities).map((a, i) => (
-                <div key={i} onClick={() => handleActivityClick(a)}
-                  className="flex items-center gap-3 group cursor-pointer py-2 px-2 -mx-2 rounded-xl hover:bg-muted/40 transition-colors">
-                  <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${a.color.split(' ')[1]}`}>
-                    {typeof a.icon === 'string' ? <Megaphone className={`w-3.5 h-3.5 ${a.color.split(' ')[0]}`} /> : <a.icon className={`w-3.5 h-3.5 ${a.color.split(' ')[0]}`} />}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <span className="text-[12px] font-semibold text-foreground/80 group-hover:text-foreground transition-colors leading-tight line-clamp-1">
-                      {a.text}
-                    </span>
-                    <p className="text-[10px] text-muted-foreground">{a.time}</p>
-                  </div>
-                  <ChevronRight className="w-3 h-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                  ))}
                 </div>
-              ))}
+              </div>
+              {selectedYear === 'All Years' && (
+                <div className="font-sans">
+                  <div className="grid grid-cols-4 gap-2 text-[10px] font-bold text-muted-foreground px-2 pb-1">
+                    <span>Year</span><span className="text-right">Boys</span><span className="text-right">Girls</span><span className="text-right">Total</span>
+                  </div>
+                  <div className="space-y-1">
+                    {yearBreakdown.map((row) => (
+                      <div key={row.name} className="grid grid-cols-4 gap-2 text-xs rounded-lg bg-muted/30 px-2 py-1.5">
+                        <span className="font-semibold text-foreground/80">{row.name}</span>
+                        <span className="text-right text-foreground">{row.boys}</span>
+                        <span className="text-right text-foreground">{row.girls}</span>
+                        <span className="text-right font-bold text-foreground">{row.total}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
-            <button onClick={handleViewAllActivities}
-              className="mt-3 w-full py-2 text-xs font-bold text-secondary hover:text-secondary/80 flex items-center gap-1 justify-center transition-colors font-sans border border-border rounded-lg hover:bg-muted/20">
-              View All Activities <ArrowUpRight className="w-3 h-3" />
-            </button>
           </div>
         </div>
 
