@@ -31,6 +31,33 @@ const semesterOptions = ['Even Semester 2025', 'Odd Semester 2024', 'Even Semest
 const batchOptions = ['Batch 2025', 'Batch 2024', 'Batch 2023', 'Batch 2022'];
 const programOptions = ['All Programs', 'B.E./B.Tech', 'M.E./M.Tech', 'MBA/MCA', 'Ph.D.'];
 
+// Academic Performance Filters
+const allDepartments = ['All Departments', 'CSE', 'ECE', 'IT', 'AI & DS', 'EEE', 'Civil', 'Mech', 'S&H'];
+const allYears = ['All Years', 'I Year', 'II Year', 'III Year', 'IV Year'];
+const semestersByYear: Record<string, string[]> = {
+  'All Years': ['1st Semester', '2nd Semester', '3rd Semester', '4th Semester', '5th Semester', '6th Semester', '7th Semester', '8th Semester'],
+  'I Year': ['1st Semester', '2nd Semester'],
+  'II Year': ['3rd Semester', '4th Semester'],
+  'III Year': ['5th Semester', '6th Semester'],
+  'IV Year': ['7th Semester', '8th Semester'],
+};
+
+// S&H only supports I Year
+const yearsByDepartment: Record<string, string[]> = {
+  'All Departments': allYears,
+  'CSE': allYears,
+  'ECE': allYears,
+  'IT': allYears,
+  'AI & DS': allYears,
+  'EEE': allYears,
+  'Civil': allYears,
+  'Mech': allYears,
+  'S&H': ['I Year'],
+};
+
+const departmentOptions = ['CSE', 'ECE', 'IT', 'AI & DS', 'EEE', 'CIVIL', 'MECH'];
+const yearOptions = ['I Year', 'II Year', 'III Year', 'IV Year'];
+
 const academicDataBySemester: Record<string, { dept: string; result: number; attendance: number }[]> = {
   'Even Semester 2025': [
     { dept: 'CSE', result: 88, attendance: 91 }, { dept: 'ECE', result: 82, attendance: 87 },
@@ -84,6 +111,152 @@ const strengthDataByProgram: Record<string, { name: string; value: number; pct: 
     { name: 'II Year', value: 24, pct: '48%', color: 'hsl(181,99%,28%)' },
     { name: 'III Year', value: 11, pct: '22%', color: 'hsl(38,92%,50%)' },
     { name: 'IV Year', value: 0, pct: '0%', color: 'hsl(142,76%,36%)' },
+  ],
+};
+
+const academicPerformanceByDepartmentYear: Record<string, Record<string, { '1st Semester': { result: number; attendance: number }; '2nd Semester': { result: number; attendance: number } }>> = {
+  CSE: {
+    'I Year': { '1st Semester': { result: 84, attendance: 88 }, '2nd Semester': { result: 87, attendance: 91 } },
+    'II Year': { '1st Semester': { result: 81, attendance: 86 }, '2nd Semester': { result: 85, attendance: 90 } },
+    'III Year': { '1st Semester': { result: 86, attendance: 89 }, '2nd Semester': { result: 90, attendance: 93 } },
+    'IV Year': { '1st Semester': { result: 88, attendance: 91 }, '2nd Semester': { result: 92, attendance: 94 } },
+  },
+  ECE: {
+    'I Year': { '1st Semester': { result: 80, attendance: 84 }, '2nd Semester': { result: 83, attendance: 88 } },
+    'II Year': { '1st Semester': { result: 79, attendance: 82 }, '2nd Semester': { result: 82, attendance: 86 } },
+    'III Year': { '1st Semester': { result: 84, attendance: 85 }, '2nd Semester': { result: 88, attendance: 89 } },
+    'IV Year': { '1st Semester': { result: 87, attendance: 90 }, '2nd Semester': { result: 91, attendance: 93 } },
+  },
+  IT: {
+    'I Year': { '1st Semester': { result: 82, attendance: 85 }, '2nd Semester': { result: 86, attendance: 90 } },
+    'II Year': { '1st Semester': { result: 80, attendance: 83 }, '2nd Semester': { result: 84, attendance: 88 } },
+    'III Year': { '1st Semester': { result: 83, attendance: 87 }, '2nd Semester': { result: 87, attendance: 91 } },
+    'IV Year': { '1st Semester': { result: 85, attendance: 88 }, '2nd Semester': { result: 89, attendance: 92 } },
+  },
+  'AI & DS': {
+    'I Year': { '1st Semester': { result: 78, attendance: 82 }, '2nd Semester': { result: 81, attendance: 86 } },
+    'II Year': { '1st Semester': { result: 76, attendance: 80 }, '2nd Semester': { result: 80, attendance: 85 } },
+    'III Year': { '1st Semester': { result: 82, attendance: 84 }, '2nd Semester': { result: 86, attendance: 89 } },
+    'IV Year': { '1st Semester': { result: 85, attendance: 87 }, '2nd Semester': { result: 89, attendance: 92 } },
+  },
+  EEE: {
+    'I Year': { '1st Semester': { result: 79, attendance: 83 }, '2nd Semester': { result: 82, attendance: 87 } },
+    'II Year': { '1st Semester': { result: 77, attendance: 81 }, '2nd Semester': { result: 80, attendance: 85 } },
+    'III Year': { '1st Semester': { result: 81, attendance: 84 }, '2nd Semester': { result: 84, attendance: 88 } },
+    'IV Year': { '1st Semester': { result: 83, attendance: 86 }, '2nd Semester': { result: 87, attendance: 90 } },
+  },
+  Civil: {
+    'I Year': { '1st Semester': { result: 75, attendance: 80 }, '2nd Semester': { result: 79, attendance: 84 } },
+    'II Year': { '1st Semester': { result: 74, attendance: 78 }, '2nd Semester': { result: 78, attendance: 83 } },
+    'III Year': { '1st Semester': { result: 78, attendance: 82 }, '2nd Semester': { result: 82, attendance: 86 } },
+    'IV Year': { '1st Semester': { result: 81, attendance: 85 }, '2nd Semester': { result: 85, attendance: 89 } },
+  },
+  Mech: {
+    'I Year': { '1st Semester': { result: 76, attendance: 81 }, '2nd Semester': { result: 80, attendance: 85 } },
+    'II Year': { '1st Semester': { result: 75, attendance: 79 }, '2nd Semester': { result: 79, attendance: 84 } },
+    'III Year': { '1st Semester': { result: 80, attendance: 83 }, '2nd Semester': { result: 84, attendance: 88 } },
+    'IV Year': { '1st Semester': { result: 82, attendance: 86 }, '2nd Semester': { result: 86, attendance: 90 } },
+  },
+  'S&H': {
+    'I Year': { '1st Semester': { result: 88, attendance: 92 }, '2nd Semester': { result: 91, attendance: 94 } },
+  },
+};
+
+// Comprehensive Department + Year + Semester data structure
+const academicDataByDeptYearSem: Record<string, Record<string, Record<string, { result: number; attendance: number }>>> = {
+  'CSE': {
+    'I Year': { '1st Semester': { result: 84, attendance: 88 }, '2nd Semester': { result: 87, attendance: 91 } },
+    'II Year': { '3rd Semester': { result: 81, attendance: 86 }, '4th Semester': { result: 85, attendance: 90 } },
+    'III Year': { '5th Semester': { result: 86, attendance: 89 }, '6th Semester': { result: 90, attendance: 93 } },
+    'IV Year': { '7th Semester': { result: 88, attendance: 91 }, '8th Semester': { result: 92, attendance: 94 } },
+  },
+  'ECE': {
+    'I Year': { '1st Semester': { result: 80, attendance: 84 }, '2nd Semester': { result: 83, attendance: 88 } },
+    'II Year': { '3rd Semester': { result: 79, attendance: 82 }, '4th Semester': { result: 82, attendance: 86 } },
+    'III Year': { '5th Semester': { result: 84, attendance: 85 }, '6th Semester': { result: 88, attendance: 89 } },
+    'IV Year': { '7th Semester': { result: 87, attendance: 90 }, '8th Semester': { result: 91, attendance: 93 } },
+  },
+  'IT': {
+    'I Year': { '1st Semester': { result: 82, attendance: 85 }, '2nd Semester': { result: 86, attendance: 90 } },
+    'II Year': { '3rd Semester': { result: 80, attendance: 83 }, '4th Semester': { result: 84, attendance: 88 } },
+    'III Year': { '5th Semester': { result: 83, attendance: 87 }, '6th Semester': { result: 87, attendance: 91 } },
+    'IV Year': { '7th Semester': { result: 85, attendance: 88 }, '8th Semester': { result: 89, attendance: 92 } },
+  },
+  'AI & DS': {
+    'I Year': { '1st Semester': { result: 78, attendance: 82 }, '2nd Semester': { result: 81, attendance: 86 } },
+    'II Year': { '3rd Semester': { result: 76, attendance: 80 }, '4th Semester': { result: 80, attendance: 85 } },
+    'III Year': { '5th Semester': { result: 82, attendance: 84 }, '6th Semester': { result: 86, attendance: 89 } },
+    'IV Year': { '7th Semester': { result: 85, attendance: 87 }, '8th Semester': { result: 89, attendance: 92 } },
+  },
+  'EEE': {
+    'I Year': { '1st Semester': { result: 79, attendance: 83 }, '2nd Semester': { result: 82, attendance: 87 } },
+    'II Year': { '3rd Semester': { result: 77, attendance: 81 }, '4th Semester': { result: 80, attendance: 85 } },
+    'III Year': { '5th Semester': { result: 81, attendance: 84 }, '6th Semester': { result: 84, attendance: 88 } },
+    'IV Year': { '7th Semester': { result: 83, attendance: 86 }, '8th Semester': { result: 87, attendance: 90 } },
+  },
+  'Civil': {
+    'I Year': { '1st Semester': { result: 75, attendance: 80 }, '2nd Semester': { result: 79, attendance: 84 } },
+    'II Year': { '3rd Semester': { result: 74, attendance: 78 }, '4th Semester': { result: 78, attendance: 83 } },
+    'III Year': { '5th Semester': { result: 78, attendance: 82 }, '6th Semester': { result: 82, attendance: 86 } },
+    'IV Year': { '7th Semester': { result: 81, attendance: 85 }, '8th Semester': { result: 85, attendance: 89 } },
+  },
+  'Mech': {
+    'I Year': { '1st Semester': { result: 76, attendance: 81 }, '2nd Semester': { result: 80, attendance: 85 } },
+    'II Year': { '3rd Semester': { result: 75, attendance: 79 }, '4th Semester': { result: 79, attendance: 84 } },
+    'III Year': { '5th Semester': { result: 80, attendance: 83 }, '6th Semester': { result: 84, attendance: 88 } },
+    'IV Year': { '7th Semester': { result: 82, attendance: 86 }, '8th Semester': { result: 86, attendance: 90 } },
+  },
+  'S&H': {
+    'I Year': { '1st Semester': { result: 88, attendance: 92 }, '2nd Semester': { result: 91, attendance: 94 } },
+  },
+};
+
+// All Departments chart data (department-wise aggregated)
+const academicDataAllDepts: Record<string, { dept: string; result: number; attendance: number }[]> = {
+  'All Years': [
+    { dept: 'CSE', result: 85, attendance: 89 },
+    { dept: 'ECE', result: 82, attendance: 86 },
+    { dept: 'IT', result: 83, attendance: 87 },
+    { dept: 'AI & DS', result: 80, attendance: 84 },
+    { dept: 'EEE', result: 81, attendance: 85 },
+    { dept: 'Civil', result: 77, attendance: 82 },
+    { dept: 'Mech', result: 78, attendance: 83 },
+  ],
+  'I Year': [
+    { dept: 'CSE', result: 84, attendance: 88 },
+    { dept: 'ECE', result: 80, attendance: 84 },
+    { dept: 'IT', result: 82, attendance: 85 },
+    { dept: 'AI & DS', result: 78, attendance: 82 },
+    { dept: 'EEE', result: 79, attendance: 83 },
+    { dept: 'Civil', result: 75, attendance: 80 },
+    { dept: 'Mech', result: 76, attendance: 81 },
+  ],
+  'II Year': [
+    { dept: 'CSE', result: 81, attendance: 86 },
+    { dept: 'ECE', result: 79, attendance: 82 },
+    { dept: 'IT', result: 80, attendance: 83 },
+    { dept: 'AI & DS', result: 76, attendance: 80 },
+    { dept: 'EEE', result: 77, attendance: 81 },
+    { dept: 'Civil', result: 74, attendance: 78 },
+    { dept: 'Mech', result: 75, attendance: 79 },
+  ],
+  'III Year': [
+    { dept: 'CSE', result: 86, attendance: 89 },
+    { dept: 'ECE', result: 84, attendance: 85 },
+    { dept: 'IT', result: 83, attendance: 87 },
+    { dept: 'AI & DS', result: 82, attendance: 84 },
+    { dept: 'EEE', result: 81, attendance: 84 },
+    { dept: 'Civil', result: 78, attendance: 82 },
+    { dept: 'Mech', result: 80, attendance: 83 },
+  ],
+  'IV Year': [
+    { dept: 'CSE', result: 88, attendance: 91 },
+    { dept: 'ECE', result: 87, attendance: 90 },
+    { dept: 'IT', result: 85, attendance: 88 },
+    { dept: 'AI & DS', result: 85, attendance: 87 },
+    { dept: 'EEE', result: 83, attendance: 86 },
+    { dept: 'Civil', result: 81, attendance: 85 },
+    { dept: 'Mech', result: 82, attendance: 86 },
   ],
 };
 
@@ -203,6 +376,24 @@ const statDetails: Record<string, { title: string; icon: React.ElementType; rows
 };
 
 /* ══════════════════════════════════════════════
+   ACADEMIC PERFORMANCE TOOLTIP
+   ══════════════════════════════════════════════ */
+const AcademicPerformanceTooltip = ({ active, payload }: any) => {
+  if (!active || !payload || !payload.length) return null;
+  
+  const point = payload[0].payload;
+  const semester = payload[0].name;
+  
+  return (
+    <div className="bg-card border border-border rounded-xl px-3 py-2.5 shadow-lg font-sans text-xs">
+      <p className="font-bold text-foreground mb-1">{point.department} - {point.year}</p>
+      <p className="text-muted-foreground">Semester: <span className="text-foreground font-semibold">{semester}</span></p>
+      <p className="text-muted-foreground">Performance: <span className="text-foreground font-semibold">{payload[0].value}%</span></p>
+    </div>
+  );
+};
+
+/* ══════════════════════════════════════════════
    CUSTOM TOOLTIP
    ══════════════════════════════════════════════ */
 const CustomTooltip = ({ active, payload, label }: any) => {
@@ -237,11 +428,25 @@ export default function ExecutiveAdminDashboard() {
   const [selectedBatch, setSelectedBatch] = useState(batchOptions[0]);
   const [selectedProgram, setSelectedProgram] = useState(programOptions[0]);
   const [chartView, setChartView] = useState<'result' | 'attendance'>('result');
+  
+  // Academic Performance filters
+  const [acPerfDept, setAcPerfDept] = useState('All Departments');
+  const [acPerfYear, setAcPerfYear] = useState('All Years');
+  const [acPerfSem, setAcPerfSem] = useState('1st Semester');
+  
+  // Legacy states (kept for other uses)
+  const [selectedDepartment, setSelectedDepartment] = useState('CSE');
+  const [selectedYear, setSelectedYear] = useState('I Year');
 
   /* dropdown open states */
   const [semesterOpen, setSemesterOpen] = useState(false);
   const [batchOpen, setBatchOpen] = useState(false);
   const [programOpen, setProgramOpen] = useState(false);
+  const [departmentOpen, setDepartmentOpen] = useState(false);
+  const [yearOpen, setYearOpen] = useState(false);
+  const [acPerfDeptOpen, setAcPerfDeptOpen] = useState(false);
+  const [acPerfYearOpen, setAcPerfYearOpen] = useState(false);
+  const [acPerfSemOpen, setAcPerfSemOpen] = useState(false);
 
   /* modal state */
   const [modalOpen, setModalOpen] = useState(false);
@@ -304,7 +509,42 @@ export default function ExecutiveAdminDashboard() {
     return () => document.removeEventListener('click', handler);
   }, []);
 
+  /* Helper functions for Academic Performance filtering */
+  const getAvailableYears = (dept: string): string[] => yearsByDepartment[dept] || allYears;
+  
+  const getAvailableSemesters = (year: string): string[] => semestersByYear[year] || [];
+  
+  // Handle S&H special case: auto-set year to I Year
+  const effectiveAcPerfYear = acPerfDept === 'S&H' ? 'I Year' : acPerfYear;
+  const effectiveAcPerfSem = acPerfSem && getAvailableSemesters(effectiveAcPerfYear).includes(acPerfSem) 
+    ? acPerfSem 
+    : getAvailableSemesters(effectiveAcPerfYear)[0] || '1st Semester';
+
+  // Compute chart data for Academic Performance based on filters
+  const getAcademicPerfChartData = (): any[] => {
+    if (acPerfDept === 'All Departments' && acPerfYear === 'All Years') {
+      // Show department-wise aggregated data
+      return academicDataAllDepts['All Years'];
+    } else if (acPerfDept === 'All Departments' && acPerfYear !== 'All Years') {
+      // Show department-wise data for selected year
+      return academicDataAllDepts[acPerfYear] || [];
+    } else if (acPerfDept !== 'All Departments') {
+      // Show semester-wise data for specific department + year
+      const deptData = academicDataByDeptYearSem[acPerfDept]?.[effectiveAcPerfYear];
+      if (!deptData) return [];
+      
+      const semesters = getAvailableSemesters(effectiveAcPerfYear);
+      return semesters.map(sem => ({
+        semester: sem,
+        result: deptData[sem]?.result || 0,
+        attendance: deptData[sem]?.attendance || 0,
+      }));
+    }
+    return [];
+  };
+
   /* computed data */
+  const academicPerfChartData = getAcademicPerfChartData();
   const academicData = dashboardCharts?.academicDataBySemester || academicDataBySemester[selectedSemester] || academicDataBySemester[semesterOptions[0]];
   const strengthData = dashboardCharts?.strengthDataByProgram?.[selectedProgram] || strengthDataByProgram[selectedProgram] || strengthDataByProgram[programOptions[0]];
   const placementData = dashboardCharts?.placementDataByBatch || placementDataByBatch[selectedBatch] || placementDataByBatch[batchOptions[0]];
@@ -816,54 +1056,135 @@ export default function ExecutiveAdminDashboard() {
 
           {/* Bar Chart — Academic Performance */}
           <div className="lg:col-span-5 widget-card flex flex-col">
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
               <h2 className="section-title !mb-0 flex items-center gap-2">
                 <BarChart2 className="w-4 h-4 text-primary" /> Academic Performance
               </h2>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                {/* Result/Attendance Toggle */}
                 <div className="flex rounded-lg border border-border overflow-hidden text-[10px] font-bold">
                   <button onClick={() => setChartView('result')}
-                    className={`px-2 py-1 transition-colors ${chartView === 'result' ? 'bg-primary text-white' : 'text-muted-foreground hover:bg-muted/40'}`}>
+                    className={`px-2.5 py-1.5 transition-colors ${chartView === 'result' ? 'bg-[hsl(0,83%,26%)] text-white' : 'text-muted-foreground hover:bg-muted/40'}`}>
                     Result
                   </button>
                   <button onClick={() => setChartView('attendance')}
-                    className={`px-2 py-1 transition-colors ${chartView === 'attendance' ? 'bg-primary text-white' : 'text-muted-foreground hover:bg-muted/40'}`}>
+                    className={`px-2.5 py-1.5 transition-colors ${chartView === 'attendance' ? 'bg-[hsl(0,83%,26%)] text-white' : 'text-muted-foreground hover:bg-muted/40'}`}>
                     Attendance
                   </button>
                 </div>
+                
+                {/* Department Dropdown */}
                 <Dropdown
-                  label={selectedSemester}
-                  options={semesterOptions}
-                  open={semesterOpen}
-                  onToggle={(e) => { e.stopPropagation(); setSemesterOpen(!semesterOpen); setBatchOpen(false); setProgramOpen(false); }}
-                  onSelect={(v) => { setSelectedSemester(v); setSemesterOpen(false); }}
+                  label={acPerfDept}
+                  options={allDepartments}
+                  open={acPerfDeptOpen}
+                  onToggle={(e) => { e.stopPropagation(); setAcPerfDeptOpen(!acPerfDeptOpen); setAcPerfYearOpen(false); setAcPerfSemOpen(false); }}
+                  onSelect={(v) => { 
+                    setAcPerfDept(v);
+                    // Auto-set year based on department
+                    const availableYears = getAvailableYears(v);
+                    if (v === 'S&H' && effectiveAcPerfYear !== 'I Year') {
+                      setAcPerfYear('I Year');
+                    } else if (acPerfYear === 'All Years' && v !== 'All Departments' && !availableYears.includes('All Years')) {
+                      setAcPerfYear(availableYears[0]);
+                    }
+                    setAcPerfDeptOpen(false); 
+                  }}
+                />
+                
+                {/* Year Dropdown */}
+                <Dropdown
+                  label={acPerfDept === 'S&H' ? 'I Year' : acPerfYear}
+                  options={getAvailableYears(acPerfDept)}
+                  open={acPerfYearOpen}
+                  onToggle={(e) => { e.stopPropagation(); setAcPerfYearOpen(!acPerfYearOpen); setAcPerfDeptOpen(false); setAcPerfSemOpen(false); }}
+                  onSelect={(v) => { 
+                    setAcPerfYear(v);
+                    // Auto-update semester based on year
+                    const availableSems = getAvailableSemesters(v);
+                    if (!availableSems.includes(acPerfSem)) {
+                      setAcPerfSem(availableSems[0] || '1st Semester');
+                    }
+                    setAcPerfYearOpen(false); 
+                  }}
+                />
+                
+                {/* Semester Dropdown */}
+                <Dropdown
+                  label={effectiveAcPerfSem}
+                  options={getAvailableSemesters(effectiveAcPerfYear)}
+                  open={acPerfSemOpen}
+                  onToggle={(e) => { e.stopPropagation(); setAcPerfSemOpen(!acPerfSemOpen); setAcPerfDeptOpen(false); setAcPerfYearOpen(false); }}
+                  onSelect={(v) => { setAcPerfSem(v); setAcPerfSemOpen(false); }}
                 />
               </div>
             </div>
-            <div className="flex-1 min-h-[220px]">
+            
+            <div className="flex-1 min-h-[280px]">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={academicData} margin={{ top: 20, right: 8, left: -24, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(0,0%,92%)" />
-                  <XAxis dataKey="dept" axisLine={false} tickLine={false}
-                    tick={{ fontSize: 11, fill: 'hsl(0,10%,45%)', fontFamily: 'Inter' }} dy={8} />
-                  <YAxis axisLine={false} tickLine={false}
-                    tick={{ fontSize: 11, fill: 'hsl(0,10%,45%)', fontFamily: 'Inter' }}
-                    tickFormatter={(v) => `${v}%`} domain={[60, 100]} />
-                  <Tooltip content={<CustomTooltip />} cursor={{ fill: 'hsl(210,20%,96%)' }} />
-                  <Bar dataKey={chartView} fill={chartView === 'result' ? 'hsl(0,83%,26%)' : 'hsl(181,99%,28%)'}
-                    radius={[5, 5, 0, 0]} barSize={28} name={chartView === 'result' ? 'Result %' : 'Attendance %'}>
-                    <LabelList dataKey={chartView} position="top" fontSize={10} fontWeight={700}
-                      fill={chartView === 'result' ? 'hsl(0,83%,26%)' : 'hsl(181,99%,28%)'}
-                      formatter={(v: number) => `${v}%`} />
+                <BarChart data={academicPerfChartData} margin={{ top: 30, right: 12, left: -20, bottom: 8 }}>
+                  <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="hsl(0,0%,90%)" />
+                  <XAxis 
+                    dataKey={acPerfDept === 'All Departments' ? 'dept' : 'semester'} 
+                    axisLine={false} 
+                    tickLine={false}
+                    tick={{ fontSize: 12, fill: 'hsl(0,0%,40%)', fontFamily: 'Inter', fontWeight: 500 }} 
+                    dy={6} 
+                  />
+                  <YAxis 
+                    axisLine={false} 
+                    tickLine={false}
+                    tick={{ fontSize: 12, fill: 'hsl(0,0%,40%)', fontFamily: 'Inter', fontWeight: 500 }}
+                    tickFormatter={(v) => `${v}%`} 
+                    domain={[60, 100]} 
+                    ticks={[60, 70, 80, 90, 100]}
+                  />
+                  <Tooltip 
+                    content={({ active, payload }: any) => {
+                      if (active && payload && payload.length) {
+                        const data = payload[0].payload;
+                        const value = payload[0].value;
+                        const label = chartView === 'result' ? 'Result' : 'Attendance';
+                        const displayName = acPerfDept === 'All Departments' ? data.dept : data.semester;
+                        return (
+                          <div className="bg-card border border-border rounded-lg px-3 py-2 shadow-lg font-sans text-xs">
+                            <p className="font-semibold text-foreground">{displayName}</p>
+                            <p className="text-muted-foreground">{label}: <span className="font-bold text-foreground">{value}%</span></p>
+                          </div>
+                        );
+                      }
+                      return null;
+                    }} 
+                    cursor={{ fill: 'hsl(0,0%,95%)' }} 
+                  />
+                  <Bar 
+                    dataKey={chartView} 
+                    fill="hsl(0,83%,26%)" 
+                    radius={[6, 6, 0, 0]} 
+                    barSize={36}
+                    name={chartView === 'result' ? 'Result %' : 'Attendance %'}
+                  >
+                    <LabelList 
+                      dataKey={chartView} 
+                      position="top" 
+                      fontSize={12} 
+                      fontWeight={700}
+                      fill="hsl(0,83%,26%)"
+                      formatter={(v: number) => `${v}%`} 
+                      offset={6}
+                    />
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>
-            <div className="flex items-center justify-center gap-2 mt-2 font-sans">
-              <div className={`w-3 h-3 rounded ${chartView === 'result' ? 'bg-primary' : 'bg-secondary'}`} />
-              <span className="text-xs text-muted-foreground font-medium">
-                {chartView === 'result' ? 'Average Pass Result (%)' : 'Average Attendance (%)'}
-              </span>
+            
+            <div className="flex items-center justify-center gap-3 mt-3 font-sans">
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-sm bg-[hsl(0,83%,26%)]" />
+                <span className="text-xs text-muted-foreground font-medium">
+                  {chartView === 'result' ? 'Average Pass Result (%)' : 'Average Attendance (%)'}
+                </span>
+              </div>
             </div>
           </div>
 
