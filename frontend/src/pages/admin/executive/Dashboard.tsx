@@ -10,7 +10,7 @@ import {
   ChevronDown, FileText, UserCheck, CalendarDays, Activity,
   Megaphone, CheckCircle2, AlertTriangle, Mail, ArrowUpRight,
   BookOpen, Bell, Calendar, LogOut, TrendingUp, TrendingDown,
-  Award, Briefcase, FlaskConical, BarChart2, GaugeCircle,
+  Award, BarChart2, GaugeCircle,
   BarChart3, RefreshCw, Download,
   ChevronRight, Star, Clock, AlertCircle, Info,
 } from 'lucide-react';
@@ -200,28 +200,6 @@ const statDetails: Record<string, { title: string; icon: React.ElementType; rows
       { label: 'NBA Accredited', value: '6' }, { label: 'Intake (Total)', value: '1,980' },
     ],
   },
-  'Placement Rate': {
-    title: 'Placement Details — Batch 2025',
-    icon: Briefcase,
-    rows: [
-      { label: 'Total Eligible', value: '520' }, { label: 'Placed', value: '455', trend: '↑ 5.8%' },
-      { label: 'Higher Studies', value: '38' }, { label: 'Entrepreneurs', value: '12' },
-      { label: 'Avg. Package', value: '₹ 5.2 LPA', trend: '↑ ₹0.4 LPA' },
-      { label: 'Highest Package', value: '₹ 42 LPA' }, { label: 'Top Recruiter', value: 'TCS (68 offers)' },
-      { label: 'Companies Visited', value: '87' }, { label: 'Offers > 10 LPA', value: '42' },
-    ],
-  },
-  'Research Funding': {
-    title: 'Research & Funding Breakdown',
-    icon: FlaskConical,
-    rows: [
-      { label: 'DST Projects', value: '₹ 45 L', trend: '↑ 12%' }, { label: 'AICTE Grants', value: '₹ 28 L' },
-      { label: 'Industry Sponsored', value: '₹ 32 L', trend: '↑ 18%' },
-      { label: 'Internal R&D Fund', value: '₹ 20 L' }, { label: 'Active Projects', value: '14' },
-      { label: 'Patents Filed', value: '7', trend: '↑ 3' }, { label: 'Patents Granted', value: '4' },
-      { label: 'Publications (2025)', value: '89' }, { label: 'Scopus Indexed', value: '62' },
-    ],
-  },
 };
 
 /* ══════════════════════════════════════════════
@@ -336,8 +314,6 @@ export default function ExecutiveAdminDashboard() {
   const totalFacultyVal = dashboardStats?.totalFaculty ?? 156;
   const totalDeptsVal = dashboardStats?.totalDepartments ?? 12;
   const totalProgramsVal = dashboardStats?.totalPrograms ?? 28;
-  const placementRateVal = dashboardStats?.placementRate ?? placementData[placementData.length - 1]?.v ?? 0;
-  const researchFundingVal = dashboardStats?.researchFunding ?? 1.25;
 
   // Dynamic Pending Approvals mapping
   const dynamicApprovals = [
@@ -823,15 +799,13 @@ export default function ExecutiveAdminDashboard() {
           </div>
         </div>
 
-        {/* ─── 6 Stat Cards ─── */}
-        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+        {/* ─── 4 Stat Cards ─── */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {[
             { icon: Users, iconBg: 'bg-primary/10', iconColor: 'text-primary', label: 'Total Students', value: totalStudentsVal !== undefined ? Number(totalStudentsVal).toLocaleString() : '0', change: '+6.3%', sub: 'vs Last Semester', positive: true },
             { icon: UserCheck, iconBg: 'bg-success/10', iconColor: 'text-success', label: 'Total Faculty', value: totalFacultyVal !== undefined ? Number(totalFacultyVal).toLocaleString() : '0', change: '+4.1%', sub: 'vs Last Semester', positive: true },
             { icon: Building, iconBg: 'bg-warning/10', iconColor: 'text-warning', label: 'Departments', value: totalDeptsVal !== undefined ? Number(totalDeptsVal).toLocaleString() : '0', change: '—', sub: 'No Change', positive: null },
             { icon: BookOpen, iconBg: 'bg-secondary/10', iconColor: 'text-secondary', label: 'Programs', value: totalProgramsVal !== undefined ? Number(totalProgramsVal).toLocaleString() : '28', change: '+2', sub: 'vs Last Semester', positive: true },
-            { icon: ClipboardCheck, iconBg: 'bg-info/10', iconColor: 'text-info', label: 'Placement Rate', value: `${placementRateVal}%`, change: '+5.8%', sub: 'vs Last Batch', positive: true },
-            { icon: IndianRupee, iconBg: 'bg-destructive/10', iconColor: 'text-destructive', label: 'Research Funding', value: `₹${researchFundingVal}Cr`, change: '+12.4%', sub: 'vs Last Year', positive: true },
           ].map((card) => (
             <StatCard key={card.label} {...card} onClick={() => handleStatClick(card.label)} />
           ))}
@@ -1054,9 +1028,6 @@ export default function ExecutiveAdminDashboard() {
                     activeDot={{ r: 5, strokeWidth: 0, fill: 'hsl(181,99%,28%)' }} />
                 </AreaChart>
               </ResponsiveContainer>
-              <div className="absolute top-2 right-2 bg-secondary text-white text-[10px] font-black px-2 py-0.5 rounded-md font-sans">
-                {placementRateVal}%
-              </div>
             </div>
             <div className="flex items-center justify-center gap-2 mt-2 font-sans">
               <div className="w-5 h-0.5 bg-secondary rounded relative flex items-center justify-center">
