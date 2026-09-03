@@ -38,26 +38,164 @@ const studentYearValues: Record<string, string> = { 'I Year': '1', 'II Year': '2
 
 const semesterOptions = ['Even Semester 2025', 'Odd Semester 2024', 'Even Semester 2024', 'Odd Semester 2023'];
 
-const academicDataBySemester: Record<string, { dept: string; result: number; attendance: number }[]> = {
+const departmentOptions = ['All Departments', 'CSE', 'ECE', 'IT', 'AI & DS', 'EEE', 'Civil', 'Mech', 'S&H'];
+
+const SH_DEPARTMENT = 'S&H';
+const SH_DEFAULT_YEAR = 'I Year';
+const SH_DEPARTMENTS_FOR_ALL_DEPT_CHART = ['CSE', 'ECE', 'IT', 'AI & DS', 'EEE', 'Civil', 'Mech'];
+
+const yearToSemesters: Record<string, string[]> = {
+  'I Year': ['1st Semester', '2nd Semester'],
+  'II Year': ['3rd Semester', '4th Semester'],
+  'III Year': ['5th Semester', '6th Semester'],
+  'IV Year': ['7th Semester', '8th Semester'],
+};
+
+const yearOptions = ['All Years', 'I Year', 'II Year', 'III Year', 'IV Year'];
+
+const semesterNumberToLabel = (n: number): string => {
+  if (n === 1) return '1st Semester';
+  if (n === 2) return '2nd Semester';
+  if (n === 3) return '3rd Semester';
+  if (n === 4) return '4th Semester';
+  if (n === 5) return '5th Semester';
+  if (n === 6) return '6th Semester';
+  if (n === 7) return '7th Semester';
+  if (n === 8) return '8th Semester';
+  return `${n}th Semester`;
+};
+
+const labelToSemesterNumber = (label: string): number => {
+  const m = label.match(/^(\d+)/);
+  return m ? parseInt(m[1], 10) : 0;
+};
+
+type AcademicRecord = { dept: string; result: number; attendance: number; year: string; semester: string };
+
+const academicDataBySemester: Record<string, AcademicRecord[]> = {
   'Even Semester 2025': [
-    { dept: 'CSE', result: 88, attendance: 91 }, { dept: 'ECE', result: 82, attendance: 87 },
-    { dept: 'EEE', result: 79, attendance: 84 }, { dept: 'MECH', result: 85, attendance: 89 },
-    { dept: 'CIVIL', result: 80, attendance: 86 }, { dept: 'AI & DS', result: 76, attendance: 82 },
+    { dept: 'CSE',    result: 88, attendance: 91, year: 'I Year',   semester: '2nd Semester' },
+    { dept: 'ECE',    result: 82, attendance: 87, year: 'I Year',   semester: '2nd Semester' },
+    { dept: 'IT',     result: 85, attendance: 88, year: 'I Year',   semester: '2nd Semester' },
+    { dept: 'AI & DS',result: 86, attendance: 90, year: 'I Year',   semester: '2nd Semester' },
+    { dept: 'EEE',    result: 79, attendance: 84, year: 'I Year',   semester: '2nd Semester' },
+    { dept: 'Civil',  result: 80, attendance: 86, year: 'I Year',   semester: '2nd Semester' },
+    { dept: 'Mech',   result: 85, attendance: 89, year: 'I Year',   semester: '2nd Semester' },
+    { dept: 'S&H',    result: 83, attendance: 88, year: 'I Year',   semester: '2nd Semester' },
+    { dept: 'CSE',    result: 86, attendance: 90, year: 'II Year',  semester: '4th Semester' },
+    { dept: 'ECE',    result: 80, attendance: 86, year: 'II Year',  semester: '4th Semester' },
+    { dept: 'IT',     result: 83, attendance: 87, year: 'II Year',  semester: '4th Semester' },
+    { dept: 'AI & DS',result: 84, attendance: 88, year: 'II Year',  semester: '4th Semester' },
+    { dept: 'EEE',    result: 77, attendance: 83, year: 'II Year',  semester: '4th Semester' },
+    { dept: 'Civil',  result: 78, attendance: 85, year: 'II Year',  semester: '4th Semester' },
+    { dept: 'Mech',   result: 83, attendance: 87, year: 'II Year',  semester: '4th Semester' },
+    { dept: 'CSE',    result: 84, attendance: 88, year: 'III Year', semester: '6th Semester' },
+    { dept: 'ECE',    result: 78, attendance: 84, year: 'III Year', semester: '6th Semester' },
+    { dept: 'IT',     result: 81, attendance: 85, year: 'III Year', semester: '6th Semester' },
+    { dept: 'AI & DS',result: 82, attendance: 86, year: 'III Year', semester: '6th Semester' },
+    { dept: 'EEE',    result: 75, attendance: 81, year: 'III Year', semester: '6th Semester' },
+    { dept: 'Civil',  result: 76, attendance: 82, year: 'III Year', semester: '6th Semester' },
+    { dept: 'Mech',   result: 81, attendance: 85, year: 'III Year', semester: '6th Semester' },
+    { dept: 'CSE',    result: 90, attendance: 92, year: 'IV Year',  semester: '8th Semester' },
+    { dept: 'ECE',    result: 84, attendance: 88, year: 'IV Year',  semester: '8th Semester' },
+    { dept: 'IT',     result: 87, attendance: 89, year: 'IV Year',  semester: '8th Semester' },
+    { dept: 'AI & DS',result: 88, attendance: 91, year: 'IV Year',  semester: '8th Semester' },
+    { dept: 'EEE',    result: 81, attendance: 86, year: 'IV Year',  semester: '8th Semester' },
+    { dept: 'Civil',  result: 82, attendance: 87, year: 'IV Year',  semester: '8th Semester' },
+    { dept: 'Mech',   result: 87, attendance: 90, year: 'IV Year',  semester: '8th Semester' },
   ],
   'Odd Semester 2024': [
-    { dept: 'CSE', result: 84, attendance: 89 }, { dept: 'ECE', result: 79, attendance: 85 },
-    { dept: 'EEE', result: 75, attendance: 81 }, { dept: 'MECH', result: 82, attendance: 87 },
-    { dept: 'CIVIL', result: 77, attendance: 84 }, { dept: 'AI & DS', result: 72, attendance: 80 },
+    { dept: 'CSE',    result: 84, attendance: 89, year: 'I Year',   semester: '1st Semester' },
+    { dept: 'ECE',    result: 79, attendance: 85, year: 'I Year',   semester: '1st Semester' },
+    { dept: 'IT',     result: 81, attendance: 86, year: 'I Year',   semester: '1st Semester' },
+    { dept: 'AI & DS',result: 82, attendance: 87, year: 'I Year',   semester: '1st Semester' },
+    { dept: 'EEE',    result: 75, attendance: 81, year: 'I Year',   semester: '1st Semester' },
+    { dept: 'Civil',  result: 77, attendance: 84, year: 'I Year',   semester: '1st Semester' },
+    { dept: 'Mech',   result: 82, attendance: 87, year: 'I Year',   semester: '1st Semester' },
+    { dept: 'S&H',    result: 80, attendance: 85, year: 'I Year',   semester: '1st Semester' },
+    { dept: 'CSE',    result: 82, attendance: 87, year: 'II Year',  semester: '3rd Semester' },
+    { dept: 'ECE',    result: 77, attendance: 83, year: 'II Year',  semester: '3rd Semester' },
+    { dept: 'IT',     result: 79, attendance: 84, year: 'II Year',  semester: '3rd Semester' },
+    { dept: 'AI & DS',result: 80, attendance: 85, year: 'II Year',  semester: '3rd Semester' },
+    { dept: 'EEE',    result: 73, attendance: 79, year: 'II Year',  semester: '3rd Semester' },
+    { dept: 'Civil',  result: 75, attendance: 82, year: 'II Year',  semester: '3rd Semester' },
+    { dept: 'Mech',   result: 80, attendance: 85, year: 'II Year',  semester: '3rd Semester' },
+    { dept: 'CSE',    result: 80, attendance: 85, year: 'III Year', semester: '5th Semester' },
+    { dept: 'ECE',    result: 75, attendance: 81, year: 'III Year', semester: '5th Semester' },
+    { dept: 'IT',     result: 77, attendance: 82, year: 'III Year', semester: '5th Semester' },
+    { dept: 'AI & DS',result: 78, attendance: 83, year: 'III Year', semester: '5th Semester' },
+    { dept: 'EEE',    result: 71, attendance: 77, year: 'III Year', semester: '5th Semester' },
+    { dept: 'Civil',  result: 73, attendance: 80, year: 'III Year', semester: '5th Semester' },
+    { dept: 'Mech',   result: 78, attendance: 83, year: 'III Year', semester: '5th Semester' },
+    { dept: 'CSE',    result: 86, attendance: 90, year: 'IV Year',  semester: '7th Semester' },
+    { dept: 'ECE',    result: 80, attendance: 86, year: 'IV Year',  semester: '7th Semester' },
+    { dept: 'IT',     result: 83, attendance: 87, year: 'IV Year',  semester: '7th Semester' },
+    { dept: 'AI & DS',result: 84, attendance: 88, year: 'IV Year',  semester: '7th Semester' },
+    { dept: 'EEE',    result: 77, attendance: 83, year: 'IV Year',  semester: '7th Semester' },
+    { dept: 'Civil',  result: 79, attendance: 85, year: 'IV Year',  semester: '7th Semester' },
+    { dept: 'Mech',   result: 84, attendance: 88, year: 'IV Year',  semester: '7th Semester' },
   ],
   'Even Semester 2024': [
-    { dept: 'CSE', result: 81, attendance: 87 }, { dept: 'ECE', result: 77, attendance: 83 },
-    { dept: 'EEE', result: 73, attendance: 79 }, { dept: 'MECH', result: 79, attendance: 85 },
-    { dept: 'CIVIL', result: 75, attendance: 82 }, { dept: 'AI & DS', result: 70, attendance: 78 },
+    { dept: 'CSE',    result: 81, attendance: 87, year: 'I Year',   semester: '2nd Semester' },
+    { dept: 'ECE',    result: 77, attendance: 83, year: 'I Year',   semester: '2nd Semester' },
+    { dept: 'IT',     result: 78, attendance: 84, year: 'I Year',   semester: '2nd Semester' },
+    { dept: 'AI & DS',result: 79, attendance: 85, year: 'I Year',   semester: '2nd Semester' },
+    { dept: 'EEE',    result: 73, attendance: 79, year: 'I Year',   semester: '2nd Semester' },
+    { dept: 'Civil',  result: 75, attendance: 82, year: 'I Year',   semester: '2nd Semester' },
+    { dept: 'Mech',   result: 79, attendance: 85, year: 'I Year',   semester: '2nd Semester' },
+    { dept: 'S&H',    result: 77, attendance: 83, year: 'I Year',   semester: '2nd Semester' },
+    { dept: 'CSE',    result: 79, attendance: 85, year: 'II Year',  semester: '4th Semester' },
+    { dept: 'ECE',    result: 75, attendance: 81, year: 'II Year',  semester: '4th Semester' },
+    { dept: 'IT',     result: 76, attendance: 82, year: 'II Year',  semester: '4th Semester' },
+    { dept: 'AI & DS',result: 77, attendance: 83, year: 'II Year',  semester: '4th Semester' },
+    { dept: 'EEE',    result: 71, attendance: 77, year: 'II Year',  semester: '4th Semester' },
+    { dept: 'Civil',  result: 73, attendance: 80, year: 'II Year',  semester: '4th Semester' },
+    { dept: 'Mech',   result: 77, attendance: 83, year: 'II Year',  semester: '4th Semester' },
+    { dept: 'CSE',    result: 77, attendance: 83, year: 'III Year', semester: '6th Semester' },
+    { dept: 'ECE',    result: 73, attendance: 79, year: 'III Year', semester: '6th Semester' },
+    { dept: 'IT',     result: 74, attendance: 80, year: 'III Year', semester: '6th Semester' },
+    { dept: 'AI & DS',result: 75, attendance: 81, year: 'III Year', semester: '6th Semester' },
+    { dept: 'EEE',    result: 69, attendance: 75, year: 'III Year', semester: '6th Semester' },
+    { dept: 'Civil',  result: 71, attendance: 78, year: 'III Year', semester: '6th Semester' },
+    { dept: 'Mech',   result: 75, attendance: 81, year: 'III Year', semester: '6th Semester' },
+    { dept: 'CSE',    result: 83, attendance: 88, year: 'IV Year',  semester: '8th Semester' },
+    { dept: 'ECE',    result: 78, attendance: 84, year: 'IV Year',  semester: '8th Semester' },
+    { dept: 'IT',     result: 80, attendance: 86, year: 'IV Year',  semester: '8th Semester' },
+    { dept: 'AI & DS',result: 81, attendance: 87, year: 'IV Year',  semester: '8th Semester' },
+    { dept: 'EEE',    result: 75, attendance: 81, year: 'IV Year',  semester: '8th Semester' },
+    { dept: 'Civil',  result: 77, attendance: 83, year: 'IV Year',  semester: '8th Semester' },
+    { dept: 'Mech',   result: 81, attendance: 86, year: 'IV Year',  semester: '8th Semester' },
   ],
   'Odd Semester 2023': [
-    { dept: 'CSE', result: 79, attendance: 85 }, { dept: 'ECE', result: 74, attendance: 81 },
-    { dept: 'EEE', result: 71, attendance: 77 }, { dept: 'MECH', result: 76, attendance: 83 },
-    { dept: 'CIVIL', result: 73, attendance: 80 }, { dept: 'AI & DS', result: 68, attendance: 76 },
+    { dept: 'CSE',    result: 79, attendance: 85, year: 'I Year',   semester: '1st Semester' },
+    { dept: 'ECE',    result: 74, attendance: 81, year: 'I Year',   semester: '1st Semester' },
+    { dept: 'IT',     result: 76, attendance: 82, year: 'I Year',   semester: '1st Semester' },
+    { dept: 'AI & DS',result: 77, attendance: 83, year: 'I Year',   semester: '1st Semester' },
+    { dept: 'EEE',    result: 71, attendance: 77, year: 'I Year',   semester: '1st Semester' },
+    { dept: 'Civil',  result: 73, attendance: 80, year: 'I Year',   semester: '1st Semester' },
+    { dept: 'Mech',   result: 76, attendance: 83, year: 'I Year',   semester: '1st Semester' },
+    { dept: 'S&H',    result: 74, attendance: 80, year: 'I Year',   semester: '1st Semester' },
+    { dept: 'CSE',    result: 77, attendance: 83, year: 'II Year',  semester: '3rd Semester' },
+    { dept: 'ECE',    result: 72, attendance: 79, year: 'II Year',  semester: '3rd Semester' },
+    { dept: 'IT',     result: 74, attendance: 80, year: 'II Year',  semester: '3rd Semester' },
+    { dept: 'AI & DS',result: 75, attendance: 81, year: 'II Year',  semester: '3rd Semester' },
+    { dept: 'EEE',    result: 69, attendance: 75, year: 'II Year',  semester: '3rd Semester' },
+    { dept: 'Civil',  result: 71, attendance: 78, year: 'II Year',  semester: '3rd Semester' },
+    { dept: 'Mech',   result: 74, attendance: 81, year: 'II Year',  semester: '3rd Semester' },
+    { dept: 'CSE',    result: 75, attendance: 81, year: 'III Year', semester: '5th Semester' },
+    { dept: 'ECE',    result: 70, attendance: 77, year: 'III Year', semester: '5th Semester' },
+    { dept: 'IT',     result: 72, attendance: 78, year: 'III Year', semester: '5th Semester' },
+    { dept: 'AI & DS',result: 73, attendance: 79, year: 'III Year', semester: '5th Semester' },
+    { dept: 'EEE',    result: 67, attendance: 73, year: 'III Year', semester: '5th Semester' },
+    { dept: 'Civil',  result: 69, attendance: 76, year: 'III Year', semester: '5th Semester' },
+    { dept: 'Mech',   result: 72, attendance: 79, year: 'III Year', semester: '5th Semester' },
+    { dept: 'CSE',    result: 81, attendance: 86, year: 'IV Year',  semester: '7th Semester' },
+    { dept: 'ECE',    result: 76, attendance: 82, year: 'IV Year',  semester: '7th Semester' },
+    { dept: 'IT',     result: 78, attendance: 84, year: 'IV Year',  semester: '7th Semester' },
+    { dept: 'AI & DS',result: 79, attendance: 85, year: 'IV Year',  semester: '7th Semester' },
+    { dept: 'EEE',    result: 73, attendance: 79, year: 'IV Year',  semester: '7th Semester' },
+    { dept: 'Civil',  result: 75, attendance: 82, year: 'IV Year',  semester: '7th Semester' },
+    { dept: 'Mech',   result: 79, attendance: 85, year: 'IV Year',  semester: '7th Semester' },
   ],
 };
 
@@ -186,11 +324,17 @@ export default function ExecutiveAdminDashboard() {
   const [selectedStaffDepartment, setSelectedStaffDepartment] = useState('All Departments');
   const [chartView, setChartView] = useState<'result' | 'attendance'>('result');
 
+  /* Academic Performance filters */
+  const [academicDepartment, setAcademicDepartment] = useState('All Departments');
+  const [academicYear, setAcademicYear] = useState('All Years');
+
   /* dropdown open states */
   const [semesterOpen, setSemesterOpen] = useState(false);
   const [yearOpen, setYearOpen] = useState(false);
   const [studentDepartmentOpen, setStudentDepartmentOpen] = useState(false);
   const [staffDepartmentOpen, setStaffDepartmentOpen] = useState(false);
+  const [academicDeptOpen, setAcademicDeptOpen] = useState(false);
+  const [academicYearOpen, setAcademicYearOpen] = useState(false);
 
   /* modal state */
   const [modalOpen, setModalOpen] = useState(false);
@@ -261,13 +405,76 @@ export default function ExecutiveAdminDashboard() {
 
   /* close dropdowns on outside click */
   useEffect(() => {
-    const handler = () => { setSemesterOpen(false); setStudentDepartmentOpen(false); setStaffDepartmentOpen(false); setYearOpen(false); };
+    const handler = () => { setSemesterOpen(false); setStudentDepartmentOpen(false); setStaffDepartmentOpen(false); setYearOpen(false); setAcademicDeptOpen(false); setAcademicYearOpen(false); };
     document.addEventListener('click', handler);
     return () => document.removeEventListener('click', handler);
   }, []);
 
   /* computed data */
   const academicData = dashboardCharts?.academicDataBySemester || academicDataBySemester[selectedSemester] || academicDataBySemester[semesterOptions[0]];
+
+  /* ??????????????????????????????????????????????
+     ACADEMIC PERFORMANCE FILTERING
+     ?????????????????????????????????????????????? */
+  const academicSemesterRecords: AcademicRecord[] = Object.values(academicDataBySemester).flat();
+
+  const availableAcademicYears = academicDepartment === SH_DEPARTMENT
+    ? ['I Year']
+    : yearOptions;
+
+  useEffect(() => {
+    if (academicDepartment === SH_DEPARTMENT && academicYear !== SH_DEFAULT_YEAR) {
+      setAcademicYear(SH_DEFAULT_YEAR);
+    }
+  }, [academicDepartment]);
+
+  const aggregateForKeys = (dept: string, sem: string): AcademicRecord | null => {
+    const recs = academicSemesterRecords.filter((r) => r.dept === dept && r.semester === sem);
+    if (!recs.length) return null;
+    const result = Math.round(recs.reduce((s, r) => s + r.result, 0) / recs.length);
+    const attendance = Math.round(recs.reduce((s, r) => s + r.attendance, 0) / recs.length);
+    return { dept, year: '', semester: sem, result, attendance };
+  };
+
+  type AcademicChartRow = { label: string; result: number; attendance: number };
+  const academicChartData: AcademicChartRow[] = (() => {
+    if (academicDepartment === 'All Departments' && academicYear === 'All Years') {
+      const deptsToShow = SH_DEPARTMENTS_FOR_ALL_DEPT_CHART;
+      return deptsToShow.map((dept) => {
+        const recs = academicSemesterRecords.filter((r) => r.dept === dept);
+        const result = recs.length ? Math.round(recs.reduce((s, r) => s + r.result, 0) / recs.length) : 0;
+        const attendance = recs.length ? Math.round(recs.reduce((s, r) => s + r.attendance, 0) / recs.length) : 0;
+        return { label: dept, result, attendance };
+      });
+    }
+    if (academicDepartment !== 'All Departments' && academicYear === 'All Years') {
+      const recs = academicSemesterRecords.filter((r) => r.dept === academicDepartment);
+      const result = recs.length ? Math.round(recs.reduce((s, r) => s + r.result, 0) / recs.length) : 0;
+      const attendance = recs.length ? Math.round(recs.reduce((s, r) => s + r.attendance, 0) / recs.length) : 0;
+      return [{ label: academicDepartment, result, attendance }];
+    }
+    if (academicDepartment !== 'All Departments' && academicYear !== 'All Years') {
+      const semesters = yearToSemesters[academicYear] || [];
+      return semesters.map((sem) => {
+        const rec = aggregateForKeys(academicDepartment, sem);
+        return { label: sem, result: rec?.result ?? 0, attendance: rec?.attendance ?? 0 };
+      });
+    }
+    if (academicDepartment === 'All Departments' && academicYear !== 'All Years') {
+      const semesters = yearToSemesters[academicYear] || [];
+      const deptsToShow = SH_DEPARTMENTS_FOR_ALL_DEPT_CHART;
+      return deptsToShow.map((dept) => {
+        const recs = academicSemesterRecords.filter((r) => r.dept === dept && semesters.includes(r.semester));
+        const result = recs.length ? Math.round(recs.reduce((s, r) => s + r.result, 0) / recs.length) : 0;
+        const attendance = recs.length ? Math.round(recs.reduce((s, r) => s + r.attendance, 0) / recs.length) : 0;
+        return { label: dept, result, attendance };
+      });
+    }
+    return [];
+  })();
+
+  const academicChartKey: 'result' | 'attendance' = chartView;
+  const academicChartXAxisKey = 'label';
 
 
   // Use real data if available from database endpoints, fallback to default mock
@@ -791,11 +998,11 @@ export default function ExecutiveAdminDashboard() {
 
           {/* Bar Chart ? Academic Performance */}
           <div className="lg:col-span-5 widget-card flex flex-col">
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
               <h2 className="section-title !mb-0 flex items-center gap-2">
                 <BarChart2 className="w-4 h-4 text-primary" /> Academic Performance
               </h2>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <div className="flex rounded-lg border border-border overflow-hidden text-[10px] font-bold">
                   <button onClick={() => setChartView('result')}
                     className={`px-2 py-1 transition-colors ${chartView === 'result' ? 'bg-primary text-white' : 'text-muted-foreground hover:bg-muted/40'}`}>
@@ -807,37 +1014,61 @@ export default function ExecutiveAdminDashboard() {
                   </button>
                 </div>
                 <Dropdown
-                  label={selectedSemester}
-                  options={semesterOptions}
-                  open={semesterOpen}
-                  onToggle={(e) => { e.stopPropagation(); setSemesterOpen(!semesterOpen); setYearOpen(false); setStudentDepartmentOpen(false); setStaffDepartmentOpen(false); }}
-                  onSelect={(v) => { setSelectedSemester(v); setSemesterOpen(false); }}
+                  label={academicDepartment}
+                  options={departmentOptions}
+                  open={academicDeptOpen}
+                  onToggle={(e) => { e.stopPropagation(); setAcademicDeptOpen(!academicDeptOpen); setAcademicYearOpen(false); }}
+                  onSelect={(v) => {
+                    setAcademicDepartment(v);
+                    setAcademicDeptOpen(false);
+                    if (v === SH_DEPARTMENT) {
+                      setAcademicYear(SH_DEFAULT_YEAR);
+                    }
+                  }}
                 />
+                <Dropdown
+                  label={academicYear}
+                  options={availableAcademicYears}
+                  open={academicYearOpen}
+                  onToggle={(e) => { e.stopPropagation(); setAcademicYearOpen(!academicYearOpen); setAcademicDeptOpen(false); }}
+                  onSelect={(v) => { setAcademicYear(v); setAcademicYearOpen(false); }}
+                />
+                {academicYear !== 'All Years' && (
+                  <span className="text-[11px] font-medium text-muted-foreground font-sans whitespace-nowrap">
+                    Semester: <span className="text-foreground font-semibold">{(yearToSemesters[academicYear] || []).join(', ')}</span>
+                  </span>
+                )}
               </div>
             </div>
             <div className="flex-1 min-h-[220px]">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={academicData} margin={{ top: 20, right: 8, left: -24, bottom: 0 }}>
+                <BarChart data={academicChartData} margin={{ top: 20, right: 8, left: -24, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(0,0%,92%)" />
-                  <XAxis dataKey="dept" axisLine={false} tickLine={false}
-                    tick={{ fontSize: 11, fill: 'hsl(0,10%,45%)', fontFamily: 'Inter' }} dy={8} />
+                  <XAxis dataKey={academicChartXAxisKey} axisLine={false} tickLine={false}
+                    tick={{ fontSize: 10, fill: 'hsl(0,10%,45%)', fontFamily: 'Inter' }}
+                    interval={0}
+                    angle={0}
+                    textAnchor="middle"
+                    dy={8}
+                    height={28}
+                    padding={{ left: 12, right: 12 }} />
                   <YAxis axisLine={false} tickLine={false}
                     tick={{ fontSize: 11, fill: 'hsl(0,10%,45%)', fontFamily: 'Inter' }}
                     tickFormatter={(v) => `${v}%`} domain={[60, 100]} />
                   <Tooltip content={<CustomTooltip />} cursor={{ fill: 'hsl(210,20%,96%)' }} />
-                  <Bar dataKey={chartView} fill={chartView === 'result' ? 'hsl(0,83%,26%)' : 'hsl(181,99%,28%)'}
-                    radius={[5, 5, 0, 0]} barSize={28} name={chartView === 'result' ? 'Result %' : 'Attendance %'}>
-                    <LabelList dataKey={chartView} position="top" fontSize={10} fontWeight={700}
-                      fill={chartView === 'result' ? 'hsl(0,83%,26%)' : 'hsl(181,99%,28%)'}
+                  <Bar dataKey={academicChartKey} fill={academicChartKey === 'result' ? 'hsl(0,83%,26%)' : 'hsl(181,99%,28%)'}
+                    radius={[5, 5, 0, 0]} barSize={Math.max(14, Math.min(36, Math.floor(360 / Math.max(academicChartData.length, 1))))} name={academicChartKey === 'result' ? 'Result %' : 'Attendance %'}>
+                    <LabelList dataKey={academicChartKey} position="top" fontSize={10} fontWeight={700}
+                      fill={academicChartKey === 'result' ? 'hsl(0,83%,26%)' : 'hsl(181,99%,28%)'}
                       formatter={(v: number) => `${v}%`} />
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>
             <div className="flex items-center justify-center gap-2 mt-2 font-sans">
-              <div className={`w-3 h-3 rounded ${chartView === 'result' ? 'bg-primary' : 'bg-secondary'}`} />
+              <div className={`w-3 h-3 rounded ${academicChartKey === 'result' ? 'bg-primary' : 'bg-secondary'}`} />
               <span className="text-xs text-muted-foreground font-medium">
-                {chartView === 'result' ? 'Average Pass Result (%)' : 'Average Attendance (%)'}
+                {academicChartKey === 'result' ? 'Average Pass Result (%)' : 'Average Attendance (%)'}
               </span>
             </div>
           </div>
