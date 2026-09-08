@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/pages/admin/executive/components/ui/use-toast';
@@ -242,25 +242,31 @@ const quickActions = [
   { label: 'Send Circular', icon: Mail, color: 'text-secondary', bg: 'bg-secondary/10 hover:bg-secondary hover:text-white', type: 'circular' as const },
 ];
 
+const secretaryQuickActions = [
+  { label: 'Add Notice', icon: Megaphone, color: 'text-info', bg: 'bg-info/10 hover:bg-info hover:text-white', type: 'notice' as const },
+  { label: 'Send Circular', icon: Mail, color: 'text-secondary', bg: 'bg-secondary/10 hover:bg-secondary hover:text-white', type: 'circular' as const },
+  { label: 'Academic Calendar', icon: CalendarDays, color: 'text-destructive', bg: 'bg-destructive/10 hover:bg-destructive hover:text-white', type: 'calendar' as const },
+];
+
 const statDetails: Record<string, { title: string; icon: React.ElementType; rows: { label: string; value: string; trend?: string }[] }> = {
   'Total Students': {
-    title: 'Student Breakdown ? Academic Year 2025-26',
+    title: 'Student Breakdown — Academic Year 2025-26',
     icon: GraduationCap,
     rows: [
-      { label: 'I Year', value: '635', trend: '? 4.2%' }, { label: 'II Year', value: '612', trend: '? 2.1%' },
-      { label: 'III Year', value: '643', trend: '? 7.5%' }, { label: 'IV Year', value: '568', trend: '? 1.8%' },
+      { label: 'I Year', value: '635', trend: '↑ 4.2%' }, { label: 'II Year', value: '612', trend: '↑ 2.1%' },
+      { label: 'III Year', value: '643', trend: '↑ 7.5%' }, { label: 'IV Year', value: '568', trend: '↑ 1.8%' },
       { label: 'Male Students', value: '1,342' }, { label: 'Female Students', value: '1,116' },
       { label: 'Day Scholars', value: '1,508' }, { label: 'Hostellers', value: '950' },
       { label: 'SC/ST Category', value: '312' }, { label: 'OBC Category', value: '890' },
     ],
   },
   'Total Faculty': {
-    title: 'Faculty Split ? 2025-26',
+    title: 'Faculty Split — 2025-26',
     icon: Users,
     rows: [
-      { label: 'Professors', value: '18', trend: '? 2' }, { label: 'Associate Professors', value: '34', trend: '? 3' },
-      { label: 'Assistant Professors', value: '82', trend: '? 1' }, { label: 'Visiting Faculty', value: '12' },
-      { label: 'Non-Teaching Staff', value: '10' }, { label: 'Ph.D. Holders', value: '94', trend: '? 6' },
+      { label: 'Professors', value: '18', trend: '↑ 2' }, { label: 'Associate Professors', value: '34', trend: '↑ 3' },
+      { label: 'Assistant Professors', value: '82', trend: '↓ 1' }, { label: 'Visiting Faculty', value: '12' },
+      { label: 'Non-Teaching Staff', value: '10' }, { label: 'Ph.D. Holders', value: '94', trend: '↑ 6' },
       { label: 'Male Faculty', value: '87' }, { label: 'Female Faculty', value: '69' },
       { label: 'Avg. Experience', value: '11.4 yrs' },
     ],
@@ -288,9 +294,9 @@ const statDetails: Record<string, { title: string; icon: React.ElementType; rows
   },
 };
 
-/* ??????????????????????????????????????????????
+/* ══════════════════════════════════════════════
    CUSTOM TOOLTIP
-   ?????????????????????????????????????????????? */
+   ══════════════════════════════════════════════ */
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
@@ -309,9 +315,9 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
-/* ??????????????????????????????????????????????
+/* ══════════════════════════════════════════════
    MAIN COMPONENT
-   ?????????????????????????????????????????????? */
+   ══════════════════════════════════════════════ */
 export default function ExecutiveAdminDashboard() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
@@ -330,6 +336,10 @@ export default function ExecutiveAdminDashboard() {
   /* Academic Performance filters */
   const [academicDepartment, setAcademicDepartment] = useState('All Departments');
   const [academicYear, setAcademicYear] = useState('All Years');
+
+  /* Faculty Attendance filters */
+  const [facultyAttendanceDept, setFacultyAttendanceDept] = useState('All Departments');
+  const [facultyAttendanceDeptOpen, setFacultyAttendanceDeptOpen] = useState(false);
 
   /* dropdown open states */
   const [semesterOpen, setSemesterOpen] = useState(false);
@@ -364,6 +374,7 @@ export default function ExecutiveAdminDashboard() {
   const [students, setStudents] = useState<StudentRecord[]>([]);
   const [departments, setDepartments] = useState<DepartmentOption[]>([]);
   const [staff, setStaff] = useState<StaffRecord[]>([]);
+  const [facultyAttendanceData, setFacultyAttendanceData] = useState<any>(null);
   const [liveActivities, setLiveActivities] = useState<any[]>([]);
   const [livePendingApprovals, setLivePendingApprovals] = useState<any[]>([]);
   const [liveApprovalsLoading, setLiveApprovalsLoading] = useState(false);
@@ -390,6 +401,11 @@ export default function ExecutiveAdminDashboard() {
       const chartsRaw = await apiFetch('/api/v1/executive/charts');
       const chartsRes = await chartsRaw.json();
       if (chartsRes.success) setDashboardCharts(chartsRes.data);
+
+      const facultyAttRaw = await apiFetch('/api/v1/executive/faculty-attendance');
+      const facultyAttRes = await facultyAttRaw.json();
+      if (facultyAttRes.success) setFacultyAttendanceData(facultyAttRes.data);
+
       if (!isSecretary) {
         const studentsRaw = await apiFetch('/api/v1/students?limit=0');
         const studentsRes = await studentsRaw.json();
@@ -416,7 +432,15 @@ export default function ExecutiveAdminDashboard() {
 
   /* close dropdowns on outside click */
   useEffect(() => {
-    const handler = () => { setSemesterOpen(false); setStudentDepartmentOpen(false); setStaffDepartmentOpen(false); setYearOpen(false); setAcademicDeptOpen(false); setAcademicYearOpen(false); };
+    const handler = () => {
+      setSemesterOpen(false);
+      setStudentDepartmentOpen(false);
+      setStaffDepartmentOpen(false);
+      setYearOpen(false);
+      setAcademicDeptOpen(false);
+      setAcademicYearOpen(false);
+      setFacultyAttendanceDeptOpen(false);
+    };
     document.addEventListener('click', handler);
     return () => document.removeEventListener('click', handler);
   }, []);
@@ -526,6 +550,175 @@ export default function ExecutiveAdminDashboard() {
     const departmentStaff = staff.filter((member) => Number(member.department_id) === department.id);
     return { name: department.short_name || department.name || department.full_name || 'Unknown Department', male: departmentStaff.filter((member) => String(member.gender || '').toLowerCase() === 'male').length, female: departmentStaff.filter((member) => String(member.gender || '').toLowerCase() === 'female').length, teaching: departmentStaff.filter((member) => isTeachingStaff(member.designation, member.role_id) === true).length, nonTeaching: departmentStaff.filter((member) => isTeachingStaff(member.designation, member.role_id) === false).length, total: departmentStaff.length };
   });
+
+  // Dropdown shows full department names
+  const DROPDOWN_DEPT_ORDER = [
+    'CSE',
+    'ECE',
+    'IT',
+    'AI&DS',
+    'EEE',
+    'CIVIL',
+    'MECH',
+    'S&H',
+    'STRUCTURE ENGINEERING',
+    'PHYSICAL EDUCATION',
+    'MFE',
+  ];
+
+  // Bar chart X-axis category labels shown below the chart in exact required order
+  const CHART_DEPT_ORDER = [
+    'CSE',
+    'ECE',
+    'IT',
+    'AI&DS',
+    'EEE',
+    'CIVIL',
+    'MECH',
+    'S&H',
+    'SE',
+    'PE',
+    'MFE',
+  ];
+
+  // Maps department names ONLY for the bar chart X-axis categories (STRUCTURE ENGINEERING -> SE, PHYSICAL EDUCATION -> PE)
+  const getChartDeptDisplayLabel = (deptName?: string | null): string => {
+    if (!deptName) return '';
+    const clean = deptName.trim();
+    const upper = clean.toUpperCase();
+    if (upper === 'STRUCTURE ENGINEERING' || upper === 'STRUCTURAL ENGINEERING' || upper === 'SE') return 'SE';
+    if (upper === 'PHYSICAL EDUCATION' || upper === 'PE') return 'PE';
+    if (upper === 'CIVIL' || upper === 'B.E. CIVIL ENGINEERING') return 'CIVIL';
+    if (upper === 'MECH' || upper === 'MECHANICAL' || upper === 'MECHANICAL ENGINEERING' || upper === 'B.E. MECHANICAL ENGINEERING') return 'MECH';
+    if (upper === 'AI&DS' || upper === 'AI & DS' || upper === 'AIDS' || upper.includes('ARTIFICIAL INTELLIGENCE')) return 'AI&DS';
+    if (upper === 'CSE' || upper === 'B.E. COMPUTER SCIENCE & ENGINEERING' || upper.includes('COMPUTER SCIENCE')) return 'CSE';
+    if (upper === 'ECE' || upper === 'B.E. ELECTRONICS & COMMUNICATION ENGINEERING' || upper.includes('ELECTRONICS & COMMUNICATION')) return 'ECE';
+    if (upper === 'EEE' || upper === 'B.E. ELECTRICAL AND ELECTRONICS ENGINEERING' || upper.includes('ELECTRICAL AND ELECTRONICS') || upper.includes('ELECTRICAL & ELECTRONICS')) return 'EEE';
+    if (upper === 'IT' || upper === 'B.TECH. INFORMATION TECHNOLOGY' || upper.includes('INFORMATION TECHNOLOGY')) return 'IT';
+    if (upper === 'S&H' || upper === 'S & H' || upper === 'SCIENCE AND HUMANITIES' || upper.includes('SCIENCE AND HUMANITIES') || upper.includes('SCIENCE & HUMANITIES')) return 'S&H';
+    if (upper === 'MFE' || upper === 'MANUFACTURING ENGINEERING' || upper.includes('MANUFACTURING ENGINEERING')) return 'MFE';
+    return clean;
+  };
+
+  // Dropdown options preserving FULL department names
+  const facultyAttendanceDeptOptions = useMemo(() => {
+    const fromDepts = departments.map((d) => (d.short_name || d.name || d.full_name || 'Unknown Department').trim());
+    const uniqueDepts = Array.from(new Set(fromDepts));
+    const sortedDepts = DROPDOWN_DEPT_ORDER.filter((d) =>
+      uniqueDepts.some((ud) => ud.toUpperCase() === d.toUpperCase() || getChartDeptDisplayLabel(ud) === getChartDeptDisplayLabel(d))
+    );
+    const remaining = uniqueDepts.filter(
+      (ud) => !sortedDepts.some((d) => d.toUpperCase() === ud.toUpperCase())
+    );
+    return ['All Departments', ...sortedDepts, ...remaining];
+  }, [departments]);
+
+  // Bar chart data formatted specifically for the chart categories
+  const allDeptFacultyAttendanceChartData = useMemo(() => {
+    const rawDeptList = facultyAttendanceData?.departments?.length
+      ? facultyAttendanceData.departments.map((d: any) => ({
+          chartLabel: getChartDeptDisplayLabel(d.name || d.fullName),
+          rawName: d.name,
+          fullName: d.fullName,
+          attendance: d.attendance,
+          teachingAttendance: d.teachingAttendance,
+          nonTeachingAttendance: d.nonTeachingAttendance,
+          totalStaff: d.totalStaff,
+          teachingStaff: d.teachingStaff,
+          nonTeachingStaff: d.nonTeachingStaff,
+        }))
+      : staffDepartmentBreakdown.map((dept) => {
+          const chartLabel = getChartDeptDisplayLabel(dept.name);
+          const isTech = chartLabel === 'CSE' || chartLabel === 'IT';
+          const attVal = isTech ? 85 : (dept.total > 0 ? 94 : 90);
+          return {
+            chartLabel,
+            rawName: dept.name,
+            fullName: dept.name,
+            attendance: attVal,
+            teachingAttendance: attVal,
+            nonTeachingAttendance: attVal,
+            totalStaff: dept.total,
+            teachingStaff: dept.teaching,
+            nonTeachingStaff: dept.nonTeaching,
+          };
+        });
+
+    // Map strictly in the required chart order: CSE, ECE, IT, AI&DS, EEE, CIVIL, MECH, S&H, SE, PE, MFE
+    const orderedChartData = CHART_DEPT_ORDER.map((deptLabel) => {
+      const existing = rawDeptList.find((d: any) => d.chartLabel === deptLabel);
+      if (existing) {
+        return {
+          ...existing,
+          name: deptLabel, // Displayed on the chart X-axis
+        };
+      }
+      return {
+        name: deptLabel,
+        chartLabel: deptLabel,
+        rawName: deptLabel,
+        fullName: deptLabel,
+        attendance: 90,
+        teachingAttendance: 92,
+        nonTeachingAttendance: 88,
+        totalStaff: 0,
+        teachingStaff: 0,
+        nonTeachingStaff: 0,
+      };
+    });
+
+    const extraDepts = rawDeptList
+      .filter((d: any) => !CHART_DEPT_ORDER.includes(d.chartLabel))
+      .map((d: any) => ({ ...d, name: d.chartLabel }));
+
+    return [...orderedChartData, ...extraDepts];
+  }, [facultyAttendanceData, staffDepartmentBreakdown]);
+
+  // Specific department selection works for full names (e.g. STRUCTURE ENGINEERING, PHYSICAL EDUCATION) as well
+  const specificDeptAttData = useMemo(() => {
+    if (facultyAttendanceDept === 'All Departments') return null;
+
+    const targetChartLabel = getChartDeptDisplayLabel(facultyAttendanceDept);
+
+    const found = facultyAttendanceData?.departments?.find((d: any) => {
+      const dChartLabel = getChartDeptDisplayLabel(d.name || d.fullName);
+      return (
+        dChartLabel === targetChartLabel ||
+        d.name?.toLowerCase() === facultyAttendanceDept.toLowerCase() ||
+        d.fullName?.toLowerCase() === facultyAttendanceDept.toLowerCase()
+      );
+    });
+    if (found) {
+      return {
+        ...found,
+        name: facultyAttendanceDept,
+      };
+    }
+
+    const selectedDeptRec = departments.find((d) => {
+      const dChartLabel = getChartDeptDisplayLabel(d.short_name || d.name || d.full_name);
+      return (
+        dChartLabel === targetChartLabel ||
+        (d.short_name || d.name || d.full_name)?.toLowerCase() === facultyAttendanceDept.toLowerCase()
+      );
+    });
+    const deptStaff = staff.filter((m) => Number(m.department_id) === selectedDeptRec?.id);
+    const teachingCount = deptStaff.filter((m) => isTeachingStaff(m.designation, m.role_id) !== false).length;
+    const nonTeachingCount = deptStaff.filter((m) => isTeachingStaff(m.designation, m.role_id) === false).length;
+    const isTech = targetChartLabel === 'CSE' || targetChartLabel === 'IT';
+    const baseAtt = isTech ? 85 : 94;
+
+    return {
+      name: facultyAttendanceDept,
+      attendance: baseAtt,
+      teachingAttendance: baseAtt,
+      nonTeachingAttendance: isTech ? 85 : 92,
+      totalStaff: deptStaff.length,
+      teachingStaff: teachingCount,
+      nonTeachingStaff: nonTeachingCount,
+    };
+  }, [facultyAttendanceDept, facultyAttendanceData, departments, staff]);
+
   // Dynamic Pending Approvals mapping
   const dynamicApprovals = [
     {
@@ -545,7 +738,7 @@ export default function ExecutiveAdminDashboard() {
     setModalTitle(title); setModalBody(body); setModalOpen(true);
   };
 
-  /* ?? stat card click ?? */
+  /* ── stat card click ── */
   const handleStatClick = (label: string) => {
     const info = statDetails[label];
     if (!info) return;
@@ -563,7 +756,7 @@ export default function ExecutiveAdminDashboard() {
             <span className="text-sm text-muted-foreground font-medium">{r.label}</span>
             <div className="flex items-center gap-2">
               {r.trend && (
-                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${r.trend.startsWith('?') ? 'text-success bg-success/10' : 'text-destructive bg-destructive/10'}`}>
+                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${r.trend.startsWith('↑') ? 'text-success bg-success/10' : 'text-destructive bg-destructive/10'}`}>
                   {r.trend}
                 </span>
               )}
@@ -575,10 +768,9 @@ export default function ExecutiveAdminDashboard() {
     ));
   };
 
-  /* ?? approval click ?? */
+  /* ── approval click ── */
   const handleApprovalClick = (item: any) => {
-    if (isSecretary) return;
-    openModal(`${item.label} ? ${item.count} Pending`, (
+    openModal(`${item.label} — ${item.count} Pending`, (
       <div className="space-y-4 font-sans">
         <div className={`p-3 rounded-xl flex items-start gap-3 ${item.accent.replace('text-', 'bg-').split(' ')[0]}/5`}>
           <item.icon className={`w-5 h-5 mt-0.5 shrink-0 ${item.accent.split(' ')[0]}`} />
@@ -590,32 +782,34 @@ export default function ExecutiveAdminDashboard() {
             {item.originalData.map((leave: any) => (
               <div key={leave.id} className="p-3 bg-muted/30 border border-border rounded-lg flex items-center justify-between">
                 <div>
-                  <p className="font-bold text-sm">{leave.applicant?.name} <span className="text-xs text-muted-foreground">({leave.department?.department_name})</span></p>
-                  <p className="text-xs text-muted-foreground">{leave.leaveType} Leave ? {leave.totalDays} Days</p>
+                  <p className="font-bold text-sm">{leave.applicant?.name || leave.applicant?.Name} <span className="text-xs text-muted-foreground">({leave.department?.short_name || leave.department?.full_name || leave.department?.department_name})</span></p>
+                  <p className="text-xs text-muted-foreground">{leave.leaveType} Leave • {leave.totalDays} Days</p>
                   <p className="text-xs text-muted-foreground truncate max-w-[200px]">Reason: {leave.reason}</p>
                 </div>
-                <div className="flex flex-col gap-1">
-                  <button disabled={liveApprovalsLoading} onClick={() => handleIndividualApproval('leave', leave.id, 'approve')} className="px-3 py-1 bg-success text-white text-xs font-bold rounded hover:bg-success/90">Approve</button>
-                  <button disabled={liveApprovalsLoading} onClick={() => handleIndividualApproval('leave', leave.id, 'reject')} className="px-3 py-1 bg-destructive text-white text-xs font-bold rounded hover:bg-destructive/90">Reject</button>
-                </div>
+                {!isSecretary && (
+                  <div className="flex flex-col gap-1">
+                    <button disabled={liveApprovalsLoading} onClick={() => handleIndividualApproval('leave', leave.id, 'approve')} className="px-3 py-1 bg-success text-white text-xs font-bold rounded hover:bg-success/90">Approve</button>
+                    <button disabled={liveApprovalsLoading} onClick={() => handleIndividualApproval('leave', leave.id, 'reject')} className="px-3 py-1 bg-destructive text-white text-xs font-bold rounded hover:bg-destructive/90">Reject</button>
+                  </div>
+                )}
               </div>
             ))}
           </div>
         )}
 
-        {(!item.originalData || item.originalData.length === 0) && (
+        {!isSecretary && (!item.originalData || item.originalData.length === 0) && (
           <div className="flex gap-2">
             <button
               onClick={() => { setModalOpen(false); toast({ title: `${item.label} approved`, description: `All ${item.count} items have been approved successfully.` }); }}
               className="flex-1 py-2.5 bg-success text-white rounded-lg text-sm font-bold hover:bg-success/90 transition-colors"
             >
-              ? Approve All
+              ✓ Approve All
             </button>
             <button
               onClick={() => { setModalOpen(false); toast({ title: `${item.label} sent back`, description: 'Items returned to department for revision.' }); }}
               className="flex-1 py-2.5 bg-muted text-muted-foreground rounded-lg text-sm font-bold hover:bg-destructive hover:text-white transition-colors"
             >
-              ? Reject
+              ✕ Reject
             </button>
           </div>
         )}
@@ -624,123 +818,94 @@ export default function ExecutiveAdminDashboard() {
   };
 
   const handleIndividualApproval = async (type: string, id: number, action: 'approve' | 'reject') => {
+    if (isSecretary) return;
     try {
       setLiveApprovalsLoading(true);
-      const resRaw = await apiFetch(`/api/v1/executive/approve/${type}/${id}`, {
+      const res = await apiFetch(`/api/v1/executive/approve/${type}/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action, remarks: `Executive ${action}d` })
+        body: JSON.stringify({ action })
       });
-      const res = await resRaw.json();
-      if (res.success) {
-        toast({ title: 'Success', description: `Request ${action}d successfully` });
-        await fetchDashboardData();
-        setModalOpen(false); // close to refresh data
+      const data = await res.json();
+      if (data.success) {
+        toast({ title: 'Success', description: data.message });
+        setLivePendingApprovals(prev => prev.filter(item => item.id !== id));
+        setModalOpen(false);
+      } else {
+        toast({ title: 'Error', description: data.message || 'Action failed', variant: 'destructive' });
       }
     } catch (err) {
-      toast({ title: 'Error', description: 'Failed to process request', variant: 'destructive' });
+      toast({ title: 'Error', description: 'Failed to process approval', variant: 'destructive' });
     } finally {
       setLiveApprovalsLoading(false);
     }
   };
 
-  /* ?? alert click ?? */
-  const handleAlertClick = (item: typeof alerts[0]) => {
-    openModal(item.text, (
-      <div className="space-y-4 font-sans">
-        <div className={`flex items-center gap-2 text-xs font-bold px-3 py-1.5 rounded-full w-fit ${item.urgent ? 'bg-destructive/10 text-destructive' : 'bg-warning/10 text-warning'}`}>
-          <AlertTriangle className="w-3.5 h-3.5" />
-          {item.urgent ? 'URGENT' : 'REMINDER'} ? {item.date}
-        </div>
-        <p className="text-sm text-foreground/80 leading-relaxed">{item.detail}</p>
-        <div className="flex gap-2">
-          <button
-            onClick={() => { setModalOpen(false); toast({ title: 'Marked as reviewed', description: `"${item.text}" has been acknowledged.` }); }}
-            className="flex-1 py-2.5 bg-primary text-white rounded-lg text-sm font-bold hover:bg-primary/90 transition-colors"
-          >
-            Mark Reviewed
-          </button>
-          <button
-            onClick={() => { setModalOpen(false); toast({ title: 'Reminder set', description: `You will be reminded about "${item.text}" 24 hours before the deadline.` }); }}
-            className="flex-1 py-2.5 bg-muted text-foreground rounded-lg text-sm font-bold hover:bg-muted/80 transition-colors"
-          >
-            Set Reminder
-          </button>
-        </div>
-      </div>
-    ));
-  };
-
-  /* ?? activity click ?? */
-  const handleActivityClick = (item: typeof recentActivities[0]) => {
+  /* ── alert click ── */
+  const handleAlertClick = (item: any) => {
     openModal(item.text, (
       <div className="space-y-3 font-sans">
-        <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-xl">
-          <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${item.color.split(' ')[1]}`}>
-            <item.icon className={`w-4 h-4 ${item.color.split(' ')[0]}`} />
-          </div>
+        <div className={`p-3 rounded-xl flex items-center gap-3 ${item.urgent ? 'bg-destructive/10' : 'bg-warning/10'}`}>
+          <AlertTriangle className={`w-5 h-5 ${item.urgent ? 'text-destructive' : 'text-warning'}`} />
           <div>
-            <p className="text-xs font-bold text-foreground">{item.text}</p>
-            <p className="text-[11px] text-muted-foreground">{item.time}</p>
+            <p className="text-xs font-bold text-muted-foreground">Due / Scheduled Date</p>
+            <p className="text-sm font-bold text-foreground">{item.date}</p>
           </div>
         </div>
         <p className="text-sm text-foreground/80 leading-relaxed">{item.detail}</p>
-        <button
-          onClick={() => { setModalOpen(false); toast({ title: 'Acknowledged', description: 'Activity has been noted in the log.' }); }}
-          className="w-full py-2.5 bg-primary text-white rounded-lg text-sm font-bold hover:bg-primary/90 transition-colors"
-        >
-          Acknowledge
+        <button onClick={() => { setModalOpen(false); toast({ title: 'Alert Acknowledged', description: `Action taken for: ${item.text}` }); }}
+          className="w-full py-2.5 bg-primary text-white rounded-lg text-sm font-bold hover:bg-primary/90 transition-colors">
+          Take Action
         </button>
       </div>
     ));
   };
 
-  /* ?? quick action handlers ?? */
+  /* ── quick actions handlers ── */
   const handleReport = () => {
-    openModal('Generate Reports', (
-      <div className="space-y-3 font-sans">
+    openModal('Generate Institutional Report', (
+      <div className="space-y-4 font-sans">
         <p className="text-sm text-muted-foreground">Select report type to generate and download:</p>
-        {[
-          { name: 'Academic Performance Report', desc: 'All departments, current semester' },
-          { name: 'Placement Statistics Report', desc: 'Batch-wise detailed analysis' },
-          { name: 'Faculty Attendance Report', desc: 'Monthly consolidated report' },
-          { name: 'Financial Summary Report', desc: 'Revenue, expenses & budget utilization' },
-          { name: 'NAAC Compliance Report', desc: 'All 6 criteria consolidated' },
-        ].map((r) => (
-          <button key={r.name}
-            onClick={() => { setModalOpen(false); toast({ title: `${r.name} ? Generating`, description: 'PDF will be ready in a few seconds. Check your Downloads.' }); }}
-            className="w-full flex items-center justify-between p-3 rounded-xl border border-border hover:border-primary/40 hover:bg-primary/5 transition-all group text-left"
-          >
-            <div>
-              <p className="text-sm font-bold text-foreground">{r.name}</p>
-              <p className="text-xs text-muted-foreground">{r.desc}</p>
-            </div>
-            <Download className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
-          </button>
-        ))}
+        <div className="grid grid-cols-2 gap-2">
+          {[
+            { label: 'Academic Performance Report', desc: 'Semester-wise results & pass %' },
+            { label: 'Faculty Workload Report', desc: 'Teaching hours, subjects & workload' },
+            { label: 'Student Attendance Summary', desc: 'Dept-wise monthly attendance' },
+            { label: 'Placement Statistics 2025-26', desc: 'Offers, packages & company data' },
+            { label: 'NAAC SSR Consolidated', desc: 'Criteria I–VII data compilation' },
+            { label: 'AICTE Compliance Report', desc: 'Faculty ratios & infrastructure' },
+          ].map((r) => (
+            <button key={r.label} onClick={() => { setModalOpen(false); toast({ title: 'Report Generated', description: `${r.label} is being downloaded.` }); }}
+              className="p-3 text-left rounded-xl border border-border hover:border-primary/40 hover:bg-primary/5 transition-colors group">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs font-bold text-foreground group-hover:text-primary transition-colors">{r.label}</span>
+                <Download className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary shrink-0 transition-colors" />
+              </div>
+              <p className="text-[11px] text-muted-foreground">{r.desc}</p>
+            </button>
+          ))}
+        </div>
       </div>
     ));
   };
 
   const handleApproveModal = () => {
-    openModal('Pending Approval Requests', (
-      <div className="space-y-2 font-sans max-h-[60vh] overflow-y-auto pr-1">
-        {[
-          { emoji: '??', text: 'Leave: Dr. Kumar (CSE) ? 3 days medical leave, Jun 20?22', type: 'leave' },
-          { emoji: '??', text: 'Leave: Prof. Anitha (ECE) ? 2 days personal leave, Jun 21?22', type: 'leave' },
-          { emoji: '??', text: 'Leave: Dr. Raj (Mech) ? 1 day emergency leave, Jun 19', type: 'leave' },
-          { emoji: '??', text: 'Budget: AI Lab Upgrade ? ?12.5L (pending finance sign-off)', type: 'budget' },
-          { emoji: '??', text: 'Budget: Library Digital Resources ? ?3.2L', type: 'budget' },
-          { emoji: '??', text: 'Event: Tech Symposium 2026 ? CSE Dept, Jul 15?16', type: 'event' },
-          { emoji: '??', text: 'Event: National Hackathon ? AI&DS Dept, Jul 22?23', type: 'event' },
-          { emoji: '??', text: 'Transfer: Prof. Suresh (EEE ? ECE) ? inter-dept transfer', type: 'transfer' },
-        ].map((item, i) => (
-          <div key={i} className="flex items-center justify-between p-2.5 rounded-xl border border-border hover:bg-muted/20 transition-colors">
-            <span className="text-sm text-foreground/80 flex items-center gap-2">{item.emoji} {item.text}</span>
-            <div className="flex gap-1 shrink-0 ml-2">
-              <button onClick={() => toast({ title: 'Approved!', description: item.text })} className="px-2 py-1 text-[10px] font-bold bg-success/10 text-success hover:bg-success hover:text-white rounded-md transition-colors">?</button>
-              <button onClick={() => toast({ title: 'Rejected', description: item.text, variant: 'destructive' })} className="px-2 py-1 text-[10px] font-bold bg-destructive/10 text-destructive hover:bg-destructive hover:text-white rounded-md transition-colors">?</button>
+    openModal('Pending Executive Approvals', (
+      <div className="space-y-3 font-sans">
+        <p className="text-sm text-muted-foreground">Select a category to review and process pending requests:</p>
+        {dynamicApprovals.map((a) => (
+          <div key={a.label} onClick={() => { setModalOpen(false); setTimeout(() => handleApprovalClick(a), 150); }}
+            className="flex items-center justify-between p-3 rounded-xl border border-border hover:bg-muted/40 cursor-pointer transition-colors">
+            <div className="flex items-center gap-3">
+              <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${a.accent.split(' ')[1]}`}>
+                <a.icon className={`w-4 h-4 ${a.accent.split(' ')[0]}`} />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-foreground">{a.label}</p>
+                <p className="text-xs text-muted-foreground">{a.detail.slice(0, 50)}...</p>
+              </div>
             </div>
+            <span className={`text-xs font-black px-2.5 py-1 rounded-full ${a.accent}`}>{a.count}</span>
           </div>
         ))}
       </div>
@@ -754,7 +919,7 @@ export default function ExecutiveAdminDashboard() {
           {['General', 'Academic', 'Administrative', 'Urgent'].map((type) => (
             <button key={type} onClick={() => toast({ title: `Notice Type: ${type}`, description: `Creating a new ${type} notice. Redirecting to announcements...` })}
               className={`py-2 px-3 rounded-lg text-xs font-bold border transition-colors hover:border-primary/40 hover:bg-primary/5 ${type === 'Urgent' ? 'border-destructive/40 text-destructive bg-destructive/5' : 'border-border text-foreground'}`}>
-              {type === 'Urgent' ? '?? ' : type === 'General' ? '?? ' : type === 'Academic' ? '?? ' : '?? '}{type}
+              {type === 'Urgent' ? '🚨 ' : type === 'General' ? '📢 ' : type === 'Academic' ? '📚 ' : '🏛️ '}{type}
             </button>
           ))}
         </div>
@@ -767,30 +932,30 @@ export default function ExecutiveAdminDashboard() {
             { text: 'Campus placement drive by Infosys', date: 'Jun 5' },
           ].map((n, i) => (
             <p key={i} className="text-xs text-muted-foreground py-1 border-b border-border/30 last:border-0 flex justify-between">
-              <span>? {n.text}</span><span className="font-medium">{n.date}</span>
+              <span>• {n.text}</span><span className="font-medium">{n.date}</span>
             </p>
           ))}
         </div>
         <button onClick={() => { setModalOpen(false); navigate('/admin/executive/announcements'); }}
           className="w-full py-2.5 bg-primary text-white rounded-lg text-sm font-bold hover:bg-primary/90 transition-colors">
-          Open Announcements Manager ?
+          Open Announcements Manager →
         </button>
       </div>
     ));
   };
 
   const handleCalendarModal = () => {
-    openModal('Academic Calendar ? Even Semester 2025-26', (
+    openModal('Academic Calendar — Even Semester 2025-26', (
       <div className="space-y-2 font-sans max-h-[60vh] overflow-y-auto pr-1">
         {[
-          { emoji: '??', text: 'Mid-Semester Examinations', date: 'Jun 16?20', status: 'ongoing' },
-          { emoji: '??', text: 'Last date for Internal Assessment submission', date: 'Jun 25', status: 'upcoming' },
-          { emoji: '??', text: 'Sports Day & Cultural Week', date: 'Jul 1?3', status: 'upcoming' },
-          { emoji: '??', text: 'Staff Council Meeting', date: 'Jul 10', status: 'upcoming' },
-          { emoji: '??', text: 'Tech Symposium (CSE)', date: 'Jul 15?16', status: 'upcoming' },
-          { emoji: '??', text: 'End Semester Examinations', date: 'Aug 1?15', status: 'future' },
-          { emoji: '??', text: 'Results Publication', date: 'Aug 20', status: 'future' },
-          { emoji: '??', text: 'Odd Semester begins', date: 'Sep 1', status: 'future' },
+          { emoji: '📝', text: 'Mid-Semester Examinations', date: 'Jun 16–20', status: 'ongoing' },
+          { emoji: '📋', text: 'Last date for Internal Assessment submission', date: 'Jun 25', status: 'upcoming' },
+          { emoji: '🏆', text: 'Sports Day & Cultural Week', date: 'Jul 1–3', status: 'upcoming' },
+          { emoji: '👥', text: 'Staff Council Meeting', date: 'Jul 10', status: 'upcoming' },
+          { emoji: '🔬', text: 'Tech Symposium (CSE)', date: 'Jul 15–16', status: 'upcoming' },
+          { emoji: '🎓', text: 'End Semester Examinations', date: 'Aug 1–15', status: 'future' },
+          { emoji: '📊', text: 'Results Publication', date: 'Aug 20', status: 'future' },
+          { emoji: '📅', text: 'Odd Semester begins', date: 'Sep 1', status: 'future' },
         ].map((item, i) => (
           <div key={i} className={`flex items-center gap-3 p-2.5 rounded-xl border transition-colors hover:bg-muted/20 cursor-pointer ${item.status === 'ongoing' ? 'border-success/40 bg-success/5' : 'border-border'}`}>
             <span className="text-lg">{item.emoji}</span>
@@ -819,8 +984,8 @@ export default function ExecutiveAdminDashboard() {
         </div>
         <div className="p-3 bg-muted/30 rounded-xl">
           <p className="text-xs font-bold text-foreground mb-2">Recent Circulars Sent:</p>
-          {['Dress code reminder ? All Students ? Jun 14', 'NAAC preparation meeting ? All HODs ? Jun 12', 'Exam hall allocation ? All Faculty ? Jun 10'].map((c, i) => (
-            <p key={i} className="text-xs text-muted-foreground py-1 border-b border-border/30 last:border-0">? {c}</p>
+          {['Dress code reminder — All Students — Jun 14', 'NAAC preparation meeting — All HODs — Jun 12', 'Exam hall allocation — All Faculty — Jun 10'].map((c, i) => (
+            <p key={i} className="text-xs text-muted-foreground py-1 border-b border-border/30 last:border-0">• {c}</p>
           ))}
         </div>
       </div>
@@ -828,7 +993,6 @@ export default function ExecutiveAdminDashboard() {
   };
 
   const handleQuickAction = (type: string) => {
-    if (isSecretary) return;
     switch (type) {
       case 'report': handleReport(); break;
       case 'approve': handleApproveModal(); break;
@@ -883,7 +1047,7 @@ export default function ExecutiveAdminDashboard() {
         {[
           { title: 'NAAC submission deadline approaching', time: '10 min ago', read: false, urgent: true },
           { title: 'Dr. Kumar leave application pending', time: '2h ago', read: false, urgent: false },
-          { title: 'Budget approval required: AI Lab ?12.5L', time: '4h ago', read: false, urgent: false },
+          { title: 'Budget approval required: AI Lab ₹12.5L', time: '4h ago', read: false, urgent: false },
           { title: 'AICTE report due in 5 days', time: '6h ago', read: true, urgent: true },
           { title: 'Prof. Anitha leave application', time: '1d ago', read: true, urgent: false },
           { title: 'Tech Symposium event approval pending', time: '1d ago', read: true, urgent: false },
@@ -931,11 +1095,512 @@ export default function ExecutiveAdminDashboard() {
     ));
   };
 
+  /* ── Reusable Component Renderers ── */
+  const renderAcademicPerformanceCard = () => (
+    <div className="widget-card flex flex-col h-full">
+      <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
+        <h2 className="section-title !mb-0 flex items-center gap-2">
+          <BarChart2 className="w-4 h-4 text-primary" /> Academic Performance
+        </h2>
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex rounded-lg border border-border overflow-hidden text-[10px] font-bold">
+            <button onClick={() => setChartView('result')}
+              className={`px-2 py-1 transition-colors ${chartView === 'result' ? 'bg-primary text-white' : 'text-muted-foreground hover:bg-muted/40'}`}>
+              Result
+            </button>
+            <button onClick={() => setChartView('attendance')}
+              className={`px-2 py-1 transition-colors ${chartView === 'attendance' ? 'bg-primary text-white' : 'text-muted-foreground hover:bg-muted/40'}`}>
+              Attendance
+            </button>
+          </div>
+          <Dropdown
+            label={academicDepartment}
+            options={departmentOptions}
+            open={academicDeptOpen}
+            onToggle={(e) => { e.stopPropagation(); setAcademicDeptOpen(!academicDeptOpen); setAcademicYearOpen(false); setFacultyAttendanceDeptOpen(false); }}
+            onSelect={(v) => {
+              setAcademicDepartment(v);
+              setAcademicDeptOpen(false);
+              if (v === SH_DEPARTMENT) {
+                setAcademicYear(SH_DEFAULT_YEAR);
+              }
+            }}
+          />
+          <Dropdown
+            label={academicYear}
+            options={availableAcademicYears}
+            open={academicYearOpen}
+            onToggle={(e) => { e.stopPropagation(); setAcademicYearOpen(!academicYearOpen); setAcademicDeptOpen(false); setFacultyAttendanceDeptOpen(false); }}
+            onSelect={(v) => { setAcademicYear(v); setAcademicYearOpen(false); }}
+          />
+          {academicYear !== 'All Years' && (
+            <span className="text-[11px] font-medium text-muted-foreground font-sans whitespace-nowrap">
+              Semester: <span className="text-foreground font-semibold">{(yearToSemesters[academicYear] || []).join(', ')}</span>
+            </span>
+          )}
+        </div>
+      </div>
+      <div className="flex-1 min-h-[220px]">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={academicChartData} margin={{ top: 20, right: 8, left: -24, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(0,0%,92%)" />
+            <XAxis dataKey={academicChartXAxisKey} axisLine={false} tickLine={false}
+              tick={{ fontSize: 10, fill: 'hsl(0,10%,45%)', fontFamily: 'Inter' }}
+              interval={0}
+              angle={0}
+              textAnchor="middle"
+              dy={8}
+              height={28}
+              padding={{ left: 12, right: 12 }} />
+            <YAxis axisLine={false} tickLine={false}
+              tick={{ fontSize: 11, fill: 'hsl(0,10%,45%)', fontFamily: 'Inter' }}
+              tickFormatter={(v) => `${v}%`} domain={[60, 100]} />
+            <Tooltip content={<CustomTooltip />} cursor={{ fill: 'hsl(210,20%,96%)' }} />
+            <Bar dataKey={academicChartKey} fill={academicChartKey === 'result' ? 'hsl(0,83%,26%)' : 'hsl(181,99%,28%)'}
+              radius={[5, 5, 0, 0]} barSize={Math.max(14, Math.min(36, Math.floor(360 / Math.max(academicChartData.length, 1))))} name={academicChartKey === 'result' ? 'Result %' : 'Attendance %'}>
+              <LabelList dataKey={academicChartKey} position="top" fontSize={10} fontWeight={700}
+                fill={academicChartKey === 'result' ? 'hsl(0,83%,26%)' : 'hsl(181,99%,28%)'}
+                formatter={(v: number) => `${v}%`} />
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+      <div className="flex items-center justify-center gap-2 mt-2 font-sans">
+        <div className={`w-3 h-3 rounded ${academicChartKey === 'result' ? 'bg-primary' : 'bg-secondary'}`} />
+        <span className="text-xs text-muted-foreground font-medium">
+          {academicChartKey === 'result' ? 'Average Pass Result (%)' : 'Average Attendance (%)'}
+        </span>
+      </div>
+    </div>
+  );
+
+  const renderFacultyAttendanceCard = () => (
+    <div className="widget-card flex flex-col h-full">
+      <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
+        <h2 className="section-title !mb-0 flex items-center gap-2">
+          <UserCheck className="w-4 h-4 text-primary" /> Faculty Attendance
+        </h2>
+        <div className="flex items-center gap-2">
+          <Dropdown
+            label={facultyAttendanceDept}
+            options={facultyAttendanceDeptOptions}
+            open={facultyAttendanceDeptOpen}
+            onToggle={(e) => {
+              e.stopPropagation();
+              setFacultyAttendanceDeptOpen(!facultyAttendanceDeptOpen);
+              setAcademicDeptOpen(false);
+              setAcademicYearOpen(false);
+              setStudentDepartmentOpen(false);
+              setStaffDepartmentOpen(false);
+            }}
+            onSelect={(v) => {
+              setFacultyAttendanceDept(v);
+              setFacultyAttendanceDeptOpen(false);
+            }}
+          />
+        </div>
+      </div>
+
+      {facultyAttendanceDept === 'All Departments' ? (
+        <div className="flex flex-col flex-1">
+          <div className="flex-1 min-h-[220px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={allDeptFacultyAttendanceChartData} margin={{ top: 20, right: 8, left: -24, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(0,0%,92%)" />
+                <XAxis
+                  dataKey="name"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fontSize: 9.5, fill: 'hsl(0,10%,45%)', fontFamily: 'Inter', fontWeight: 600 }}
+                  interval={0}
+                  textAnchor="middle"
+                  dy={8}
+                  height={28}
+                  padding={{ left: 6, right: 6 }}
+                />
+                <YAxis
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fontSize: 11, fill: 'hsl(0,10%,45%)', fontFamily: 'Inter' }}
+                  tickFormatter={(v) => `${v}%`}
+                  domain={[60, 100]}
+                />
+                <Tooltip content={<CustomTooltip />} cursor={{ fill: 'hsl(210,20%,96%)' }} />
+                <Bar
+                  dataKey="attendance"
+                  fill="hsl(181,99%,28%)"
+                  radius={[5, 5, 0, 0]}
+                  barSize={Math.max(12, Math.min(26, Math.floor(320 / Math.max(allDeptFacultyAttendanceChartData.length, 1))))}
+                  name="Attendance %"
+                >
+                  <LabelList
+                    dataKey="attendance"
+                    position="top"
+                    fontSize={9.5}
+                    fontWeight={700}
+                    fill="hsl(181,99%,28%)"
+                    formatter={(v: number) => `${v}%`}
+                  />
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="flex items-center justify-center gap-2 mt-2 font-sans">
+            <div className="w-3 h-3 rounded bg-secondary" />
+            <span className="text-xs text-muted-foreground font-medium">
+              Average Faculty Attendance (%)
+            </span>
+          </div>
+        </div>
+      ) : (
+        <div className="flex flex-col flex-1 justify-between gap-3">
+          <div className="grid grid-cols-2 gap-3 mt-1">
+            <div className="rounded-xl border border-border p-3.5 bg-muted/20 flex flex-col justify-between">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-muted-foreground">Teaching Staff</span>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  {specificDeptAttData?.teachingStaff ?? 0} Faculty
+                </span>
+              </div>
+              <div className="mt-2.5">
+                <div className="flex items-baseline justify-between mb-1.5">
+                  <span className="text-2xl font-black text-foreground font-sans">
+                    {specificDeptAttData?.teachingAttendance ?? 0}%
+                  </span>
+                  <span className="text-[11px] text-emerald-600 font-bold">Attendance</span>
+                </div>
+                <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                  <div
+                    className="bg-[#800000] h-full rounded-full transition-all duration-500"
+                    style={{ width: `${Math.min(100, specificDeptAttData?.teachingAttendance ?? 0)}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-border p-3.5 bg-muted/20 flex flex-col justify-between">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-muted-foreground">Non-Teaching Staff</span>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-teal-50 text-teal-700 border border-teal-200">
+                  {specificDeptAttData?.nonTeachingStaff ?? 0} Staff
+                </span>
+              </div>
+              <div className="mt-2.5">
+                <div className="flex items-baseline justify-between mb-1.5">
+                  <span className="text-2xl font-black text-foreground font-sans">
+                    {specificDeptAttData?.nonTeachingAttendance ?? 0}%
+                  </span>
+                  <span className="text-[11px] text-teal-600 font-bold">Attendance</span>
+                </div>
+                <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                  <div
+                    className="bg-secondary h-full rounded-full transition-all duration-500"
+                    style={{ width: `${Math.min(100, specificDeptAttData?.nonTeachingAttendance ?? 0)}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex-1 min-h-[140px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={[
+                  { name: 'Teaching Staff', attendance: specificDeptAttData?.teachingAttendance ?? 0 },
+                  { name: 'Non-Teaching Staff', attendance: specificDeptAttData?.nonTeachingAttendance ?? 0 }
+                ]}
+                margin={{ top: 20, right: 16, left: -24, bottom: 0 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(0,0%,92%)" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'hsl(0,10%,45%)', fontWeight: 600 }} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'hsl(0,10%,45%)' }} tickFormatter={(v) => `${v}%`} domain={[60, 100]} />
+                <Tooltip content={<CustomTooltip />} />
+                <Bar dataKey="attendance" radius={[5, 5, 0, 0]} barSize={48} name="Attendance %">
+                  <LabelList dataKey="attendance" position="top" fontSize={11} fontWeight={700} formatter={(v: number) => `${v}%`} />
+                  <Cell fill="hsl(0,83%,26%)" />
+                  <Cell fill="hsl(181,99%,28%)" />
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+
+          <div className="flex items-center justify-center gap-6 font-sans">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded bg-primary" />
+              <span className="text-xs text-muted-foreground font-medium">Teaching Staff</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded bg-secondary" />
+              <span className="text-xs text-muted-foreground font-medium">Non-Teaching Staff</span>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  const renderPendingApprovalsCard = () => (
+    <div className="widget-card flex flex-col h-full">
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="section-title !mb-0 flex items-center gap-2">
+          <ClipboardCheck className="w-4 h-4 text-primary" /> Pending Approvals
+        </h2>
+        <span className="text-xs font-bold bg-destructive/10 text-destructive px-2 py-0.5 rounded-full">
+          {dynamicApprovals.reduce((s, a) => s + a.count, 0)} Total
+        </span>
+      </div>
+      <div className="flex-1 space-y-0.5 font-sans">
+        {dynamicApprovals.map((a) => (
+          <div key={a.label} onClick={() => handleApprovalClick(a)}
+            className="flex items-center justify-between group cursor-pointer rounded-xl px-3 py-2.5 hover:bg-muted/40 transition-colors border border-transparent hover:border-border">
+            <div className="flex items-center gap-3">
+              <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${a.accent.split(' ')[1]}`}>
+                <a.icon className={`w-3.5 h-3.5 ${a.accent.split(' ')[0]}`} />
+              </div>
+              <span className="text-[13px] font-semibold text-foreground/80 group-hover:text-foreground transition-colors">
+                {a.label}
+              </span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className={`text-xs font-black px-2 py-0.5 rounded-full min-w-[24px] text-center ${a.accent}`}>
+                {a.count}
+              </span>
+              <ChevronRight className="w-3 h-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+            </div>
+          </div>
+        ))}
+      </div>
+      <button onClick={handleViewAllApprovals}
+        className="mt-3 w-full py-2 text-xs font-bold text-secondary hover:text-secondary/80 flex items-center gap-1 justify-center transition-colors font-sans border border-border rounded-lg hover:bg-muted/20">
+        View All Approvals <ArrowUpRight className="w-3 h-3" />
+      </button>
+    </div>
+  );
+
+  const renderImportantAlertsCard = () => (
+    <div className="widget-card flex flex-col h-full">
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="section-title !mb-0 flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 text-primary" /> Important Alerts
+        </h2>
+        <div className="flex gap-1">
+          <span className="text-[10px] font-bold bg-destructive/10 text-destructive px-2 py-0.5 rounded-full">
+            {alerts.filter(a => a.urgent).length} Urgent
+          </span>
+        </div>
+      </div>
+      <div className="flex-1 space-y-0.5 font-sans">
+        {alerts.map((a) => (
+          <div key={a.text} onClick={() => handleAlertClick(a)}
+            className="flex items-center justify-between group cursor-pointer rounded-xl px-3 py-2.5 hover:bg-muted/40 transition-colors border border-transparent hover:border-border">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <AlertTriangle className={`w-4 h-4 shrink-0 ${a.urgent ? 'text-destructive' : 'text-warning'} group-hover:scale-110 transition-transform`} />
+              <span className="text-[13px] font-semibold text-foreground/80 truncate group-hover:text-foreground transition-colors">
+                {a.text}
+              </span>
+            </div>
+            <span className="text-[10px] text-muted-foreground font-medium shrink-0 ml-3 whitespace-nowrap">
+              {a.date}
+            </span>
+          </div>
+        ))}
+      </div>
+      <button onClick={handleViewAllAlerts}
+        className="mt-3 w-full py-2 text-xs font-bold text-secondary hover:text-secondary/80 flex items-center gap-1 justify-center transition-colors font-sans border border-border rounded-lg hover:bg-muted/20">
+        View All Alerts <ArrowUpRight className="w-3 h-3" />
+      </button>
+    </div>
+  );
+
+  const renderStudentStrengthCard = () => (
+    <div className="widget-card flex flex-col h-full">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+        <h2 className="section-title !mb-0 flex items-center gap-2">
+          <GaugeCircle className="w-4 h-4 text-primary" /> Student Strength
+        </h2>
+        <div className="flex items-center gap-2">
+          <Dropdown
+            label={selectedDepartment}
+            options={studentDepartmentOptions}
+            open={studentDepartmentOpen}
+            onToggle={(e) => { e.stopPropagation(); setStudentDepartmentOpen(!studentDepartmentOpen); setSemesterOpen(false); setYearOpen(false); setFacultyAttendanceDeptOpen(false); }}
+            onSelect={(value) => { setSelectedDepartment(value); setStudentDepartmentOpen(false); }}
+          />
+          <Dropdown
+            label={selectedYear}
+            options={studentYearOptions}
+            open={yearOpen}
+            onToggle={(e) => { e.stopPropagation(); setYearOpen(!yearOpen); setSemesterOpen(false); setStudentDepartmentOpen(false); setFacultyAttendanceDeptOpen(false); }}
+            onSelect={(value) => { setSelectedYear(value); setYearOpen(false); }}
+          />
+        </div>
+      </div>
+      <div className="flex flex-col gap-4 flex-1">
+        <div className="flex items-center gap-4">
+          <div className="w-[130px] h-[130px] relative shrink-0">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie data={studentStrengthData.filter((item) => item.value > 0)} cx="50%" cy="50%" innerRadius={40} outerRadius={61} paddingAngle={2} dataKey="value" stroke="none">
+                  {studentStrengthData.map((item) => <Cell key={item.name} fill={item.color} />)}
+                </Pie>
+                <Tooltip content={<CustomTooltip />} />
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+              <span className="text-lg font-bold text-foreground font-sans">{filteredStudents.length.toLocaleString()}</span>
+              <span className="text-[10px] text-muted-foreground font-sans font-semibold">Total</span>
+            </div>
+          </div>
+          <div className="flex-1 grid grid-cols-2 gap-2 font-sans">
+            {studentStrengthData.map((item) => (
+              <div key={item.name} className="rounded-xl border border-border p-2.5">
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
+                  {item.name}
+                </div>
+                <p className="text-xl font-bold text-foreground mt-1">{item.value.toLocaleString()}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderStaffStrengthCard = () => (
+    <div className="widget-card flex flex-col h-full">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+        <h2 className="section-title !mb-0 flex items-center gap-2"><Users className="w-4 h-4 text-primary" /> Staff Strength</h2>
+        <Dropdown label={selectedStaffDepartment} options={studentDepartmentOptions} open={staffDepartmentOpen}
+          onToggle={(e) => { e.stopPropagation(); setStaffDepartmentOpen(!staffDepartmentOpen); setSemesterOpen(false); setYearOpen(false); setFacultyAttendanceDeptOpen(false); }}
+          onSelect={(value) => { setSelectedStaffDepartment(value); setStaffDepartmentOpen(false); }} />
+      </div>
+      <div className="flex flex-col gap-4 flex-1">
+        <div className="flex items-center gap-4">
+          <div className="w-[130px] h-[130px] relative shrink-0">
+            <ResponsiveContainer width="100%" height="100%"><PieChart>
+              <Pie data={[{ name: 'Male', value: maleStaffCount }, { name: 'Female', value: femaleStaffCount }].filter((item) => item.value > 0)} cx="50%" cy="50%" innerRadius={40} outerRadius={61} paddingAngle={2} dataKey="value" stroke="none">
+                <Cell fill="hsl(181,99%,28%)" /><Cell fill="hsl(0,83%,26%)" />
+              </Pie><Tooltip content={<CustomTooltip />} />
+            </PieChart></ResponsiveContainer>
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none"><span className="text-lg font-bold text-foreground font-sans">{filteredStaff.length.toLocaleString()}</span><span className="text-[10px] text-muted-foreground font-sans font-semibold">Total Staff</span></div>
+          </div>
+          <div className="flex-1 grid grid-cols-2 gap-2 font-sans">
+            {[{ name: 'Male Staff', value: maleStaffCount }, { name: 'Female Staff', value: femaleStaffCount }, { name: 'Teaching', value: teachingStaffCount }, { name: 'Non-Teaching', value: nonTeachingStaffCount }].map((item) => (
+              <div key={item.name} className="rounded-xl border border-border p-2.5"><p className="text-[11px] text-muted-foreground leading-tight">{item.name}</p><p className="text-lg font-bold text-foreground mt-1">{item.value.toLocaleString()}</p></div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderRadarCard = () => (
+    <div className="widget-card flex flex-col h-full">
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="section-title !mb-0 flex items-center gap-2">
+          <Activity className="w-4 h-4 text-primary" /> Institution Performance Radar
+        </h2>
+        <button onClick={() => toast({ title: 'Performance Index', description: 'Overall Institution Performance Score: 83.7 / 100' })}
+          className="text-[10px] font-bold bg-primary/10 text-primary px-2.5 py-1 rounded-full hover:bg-primary hover:text-white transition-colors">
+          Score: 83.7
+        </button>
+      </div>
+      <div className="flex-1 min-h-[220px]">
+        <ResponsiveContainer width="100%" height="100%">
+          <RadarChart data={radarData}>
+            <PolarGrid stroke="hsl(0,0%,88%)" />
+            <PolarAngleAxis dataKey="subject" tick={{ fontSize: 11, fill: 'hsl(0,10%,40%)', fontFamily: 'Inter', fontWeight: 600 }} />
+            <PolarRadiusAxis angle={90} domain={[0, 100]} tick={false} axisLine={false} />
+            <Radar name="Score" dataKey="A" stroke="hsl(0,83%,26%)" fill="hsl(0,83%,26%)" fillOpacity={0.12} strokeWidth={2} />
+            <Tooltip content={<CustomTooltip />} />
+          </RadarChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  );
+
+  const renderSecretaryQuickActionsCard = () => (
+    <div className="widget-card flex flex-col h-full">
+      <h2 className="section-title flex items-center gap-2">
+        <Activity className="w-4 h-4 text-primary" /> Quick Actions
+      </h2>
+      <div className="grid grid-cols-3 gap-3 flex-1">
+        {secretaryQuickActions.map((a) => (
+          <button key={a.label} onClick={() => handleQuickAction(a.type)}
+            className={`flex flex-col items-center justify-center gap-2 rounded-2xl p-4 border border-border transition-all duration-200 font-sans hover:shadow-md active:scale-[0.97] group ${a.bg}`}>
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${a.bg.includes('hover:bg-') ? '' : 'bg-muted/20'}`}>
+              <a.icon className={`w-5 h-5 ${a.color} group-hover:text-inherit transition-colors`} />
+            </div>
+            <span className={`text-[12px] font-bold text-foreground group-hover:text-inherit transition-colors text-center`}>{a.label}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* KPI Summary Strip */}
+      <div className="mt-4 grid grid-cols-3 gap-2">
+        {[
+          { label: 'Avg Attendance', value: '86.4%', icon: Users, positive: true },
+          { label: 'Pass Rate', value: '81.7%', icon: GraduationCap, positive: true },
+          { label: 'Open Tickets', value: '29', icon: AlertCircle, positive: false },
+        ].map((kpi) => (
+          <button key={kpi.label}
+            onClick={() => toast({ title: kpi.label, description: `Current value: ${kpi.value}.` })}
+            className="flex items-center gap-2 p-2.5 rounded-xl bg-muted/30 hover:bg-muted/50 border border-border transition-colors text-left">
+            <kpi.icon className={`w-4 h-4 shrink-0 ${kpi.positive ? 'text-success' : 'text-warning'}`} />
+            <div>
+              <p className="text-[10px] text-muted-foreground font-medium leading-tight">{kpi.label}</p>
+              <p className="text-sm font-bold text-foreground">{kpi.value}</p>
+            </div>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderPrincipalQuickActionsCard = () => (
+    <div className="widget-card flex flex-col h-full">
+      <h2 className="section-title flex items-center gap-2">
+        <Activity className="w-4 h-4 text-primary" /> Quick Actions
+      </h2>
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 flex-1">
+        {quickActions.map((a) => (
+          <button key={a.label} onClick={() => handleQuickAction(a.type)}
+            className={`flex flex-col items-center justify-center gap-2 rounded-2xl p-4 border border-border transition-all duration-200 font-sans hover:shadow-md active:scale-[0.97] group ${a.bg}`}>
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${a.bg.includes('hover:bg-') ? '' : 'bg-muted/20'}`}>
+              <a.icon className={`w-5 h-5 ${a.color} group-hover:text-inherit transition-colors`} />
+            </div>
+            <span className={`text-[12px] font-bold text-foreground group-hover:text-inherit transition-colors`}>{a.label}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* KPI Summary Strip */}
+      <div className="mt-4 grid grid-cols-3 gap-2">
+        {[
+          { label: 'Avg Attendance', value: '86.4%', icon: Users, positive: true },
+          { label: 'Pass Rate', value: '81.7%', icon: GraduationCap, positive: true },
+          { label: 'Open Tickets', value: '29', icon: AlertCircle, positive: false },
+        ].map((kpi) => (
+          <button key={kpi.label}
+            onClick={() => toast({ title: kpi.label, description: `Current value: ${kpi.value}. Click View Analytics for detailed breakdown.` })}
+            className="flex items-center gap-2 p-2.5 rounded-xl bg-muted/30 hover:bg-muted/50 border border-border transition-colors text-left">
+            <kpi.icon className={`w-4 h-4 shrink-0 ${kpi.positive ? 'text-success' : 'text-warning'}`} />
+            <div>
+              <p className="text-[10px] text-muted-foreground font-medium leading-tight">{kpi.label}</p>
+              <p className="text-sm font-bold text-foreground">{kpi.value}</p>
+            </div>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+
   return (
     <AdminLayout>
       <div className="space-y-5">
 
-        {/* ??? Welcome Header ??? */}
+        {/* ─── Welcome Header ─── */}
         <div className="widget-card !p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative overflow-hidden bg-white border border-slate-200 shadow-sm rounded-2xl">
           <div className="relative z-10">
             <h1 className="text-2xl font-bold text-black font-sans">
@@ -946,7 +1611,7 @@ export default function ExecutiveAdminDashboard() {
               <CheckCircle2 className="inline w-4 h-4 text-emerald-600" />
             </p>
             <p className="text-slate-600 font-sans text-xs mt-0.5">
-              Executive Overview ? {currentTime.toLocaleString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+              Executive Overview — {currentTime.toLocaleString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' })}
             </p>
           </div>
 
@@ -986,7 +1651,7 @@ export default function ExecutiveAdminDashboard() {
               </div>
             </button>
             {/* Session */}
-            <div onClick={(e) => { e.stopPropagation(); setSemesterOpen(false); setYearOpen(false); }}
+            <div onClick={(e) => { e.stopPropagation(); setSemesterOpen(false); setYearOpen(false); setFacultyAttendanceDeptOpen(false); }}
               className="flex items-center justify-center gap-1.5 border border-slate-300 hover:bg-slate-100 transition-colors rounded-xl px-3 h-10 bg-slate-50 text-black text-xs font-bold font-sans cursor-pointer shadow-sm">
               <Calendar className="w-4 h-4 text-slate-700" />
               <span className="hidden sm:inline">2025-26 (Even)</span>
@@ -994,316 +1659,84 @@ export default function ExecutiveAdminDashboard() {
           </div>
         </div>
 
-        {/* ??? 4 Stat Cards ??? */}
+        {/* ─── 4 Stat Cards ─── */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {[
             { icon: Users, iconBg: 'bg-primary/10', iconColor: 'text-primary', label: 'Total Students', value: totalStudentsVal !== undefined ? Number(totalStudentsVal).toLocaleString() : '0', change: '+6.3%', sub: 'vs Last Semester', positive: true },
             { icon: UserCheck, iconBg: 'bg-success/10', iconColor: 'text-success', label: 'Total Faculty', value: totalFacultyVal !== undefined ? Number(totalFacultyVal).toLocaleString() : '0', change: '+4.1%', sub: 'vs Last Semester', positive: true },
-            { icon: Building, iconBg: 'bg-warning/10', iconColor: 'text-warning', label: 'Departments', value: totalDeptsVal !== undefined ? Number(totalDeptsVal).toLocaleString() : '0', change: '?', sub: 'No Change', positive: null },
+            { icon: Building, iconBg: 'bg-warning/10', iconColor: 'text-warning', label: 'Departments', value: totalDeptsVal !== undefined ? Number(totalDeptsVal).toLocaleString() : '0', change: '—', sub: 'No Change', positive: null },
             { icon: BookOpen, iconBg: 'bg-secondary/10', iconColor: 'text-secondary', label: 'Programs', value: totalProgramsVal !== undefined ? Number(totalProgramsVal).toLocaleString() : '28', change: '+2', sub: 'vs Last Semester', positive: true },
           ].map((card) => (
             <StatCard key={card.label} {...card} onClick={() => handleStatClick(card.label)} />
           ))}
         </div>
 
-        {/* ??? Middle Row ??? */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        {isSecretary ? (
+          <>
+            {/* Secretary Row 1: Academic Performance & Faculty Attendance (side-by-side) */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {renderAcademicPerformanceCard()}
+              {renderFacultyAttendanceCard()}
+            </div>
 
-          {/* Bar Chart ? Academic Performance */}
-          <div className="lg:col-span-5 widget-card flex flex-col">
-            <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
-              <h2 className="section-title !mb-0 flex items-center gap-2">
-                <BarChart2 className="w-4 h-4 text-primary" /> Academic Performance
-              </h2>
-              <div className="flex items-center gap-2 flex-wrap">
-                <div className="flex rounded-lg border border-border overflow-hidden text-[10px] font-bold">
-                  <button onClick={() => setChartView('result')}
-                    className={`px-2 py-1 transition-colors ${chartView === 'result' ? 'bg-primary text-white' : 'text-muted-foreground hover:bg-muted/40'}`}>
-                    Result
-                  </button>
-                  <button onClick={() => setChartView('attendance')}
-                    className={`px-2 py-1 transition-colors ${chartView === 'attendance' ? 'bg-primary text-white' : 'text-muted-foreground hover:bg-muted/40'}`}>
-                    Attendance
-                  </button>
-                </div>
-                <Dropdown
-                  label={academicDepartment}
-                  options={departmentOptions}
-                  open={academicDeptOpen}
-                  onToggle={(e) => { e.stopPropagation(); setAcademicDeptOpen(!academicDeptOpen); setAcademicYearOpen(false); }}
-                  onSelect={(v) => {
-                    setAcademicDepartment(v);
-                    setAcademicDeptOpen(false);
-                    if (v === SH_DEPARTMENT) {
-                      setAcademicYear(SH_DEFAULT_YEAR);
-                    }
-                  }}
-                />
-                <Dropdown
-                  label={academicYear}
-                  options={availableAcademicYears}
-                  open={academicYearOpen}
-                  onToggle={(e) => { e.stopPropagation(); setAcademicYearOpen(!academicYearOpen); setAcademicDeptOpen(false); }}
-                  onSelect={(v) => { setAcademicYear(v); setAcademicYearOpen(false); }}
-                />
-                {academicYear !== 'All Years' && (
-                  <span className="text-[11px] font-medium text-muted-foreground font-sans whitespace-nowrap">
-                    Semester: <span className="text-foreground font-semibold">{(yearToSemesters[academicYear] || []).join(', ')}</span>
-                  </span>
-                )}
+            {/* Secretary Row 2: Student Strength & Staff Strength */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {renderStudentStrengthCard()}
+              {renderStaffStrengthCard()}
+            </div>
+
+            {/* Secretary Row 3: Radar & Quick Actions (3 buttons in one horizontal row) */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+              <div className="lg:col-span-5 flex flex-col">
+                {renderRadarCard()}
+              </div>
+              <div className="lg:col-span-7 flex flex-col">
+                {renderSecretaryQuickActionsCard()}
               </div>
             </div>
-            <div className="flex-1 min-h-[220px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={academicChartData} margin={{ top: 20, right: 8, left: -24, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(0,0%,92%)" />
-                  <XAxis dataKey={academicChartXAxisKey} axisLine={false} tickLine={false}
-                    tick={{ fontSize: 10, fill: 'hsl(0,10%,45%)', fontFamily: 'Inter' }}
-                    interval={0}
-                    angle={0}
-                    textAnchor="middle"
-                    dy={8}
-                    height={28}
-                    padding={{ left: 12, right: 12 }} />
-                  <YAxis axisLine={false} tickLine={false}
-                    tick={{ fontSize: 11, fill: 'hsl(0,10%,45%)', fontFamily: 'Inter' }}
-                    tickFormatter={(v) => `${v}%`} domain={[60, 100]} />
-                  <Tooltip content={<CustomTooltip />} cursor={{ fill: 'hsl(210,20%,96%)' }} />
-                  <Bar dataKey={academicChartKey} fill={academicChartKey === 'result' ? 'hsl(0,83%,26%)' : 'hsl(181,99%,28%)'}
-                    radius={[5, 5, 0, 0]} barSize={Math.max(14, Math.min(36, Math.floor(360 / Math.max(academicChartData.length, 1))))} name={academicChartKey === 'result' ? 'Result %' : 'Attendance %'}>
-                    <LabelList dataKey={academicChartKey} position="top" fontSize={10} fontWeight={700}
-                      fill={academicChartKey === 'result' ? 'hsl(0,83%,26%)' : 'hsl(181,99%,28%)'}
-                      formatter={(v: number) => `${v}%`} />
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="flex items-center justify-center gap-2 mt-2 font-sans">
-              <div className={`w-3 h-3 rounded ${academicChartKey === 'result' ? 'bg-primary' : 'bg-secondary'}`} />
-              <span className="text-xs text-muted-foreground font-medium">
-                {academicChartKey === 'result' ? 'Average Pass Result (%)' : 'Average Attendance (%)'}
-              </span>
-            </div>
-          </div>
 
-          {/* Pending Approvals */}
-          <div className="lg:col-span-3 widget-card flex flex-col">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="section-title !mb-0 flex items-center gap-2">
-                <ClipboardCheck className="w-4 h-4 text-primary" /> Pending Approvals
-              </h2>
-              <span className="text-xs font-bold bg-destructive/10 text-destructive px-2 py-0.5 rounded-full">
-                {dynamicApprovals.reduce((s, a) => s + a.count, 0)} Total
-              </span>
+            {/* Secretary Row 4 (Below Quick Actions area): Pending Approvals & Important Alerts */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {renderPendingApprovalsCard()}
+              {renderImportantAlertsCard()}
             </div>
-            <div className="flex-1 space-y-0.5 font-sans">
-              {dynamicApprovals.map((a) => (
-                <div key={a.label} onClick={() => handleApprovalClick(a)}
-                  className="flex items-center justify-between group cursor-pointer rounded-xl px-3 py-2.5 hover:bg-muted/40 transition-colors border border-transparent hover:border-border">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${a.accent.split(' ')[1]}`}>
-                      <a.icon className={`w-3.5 h-3.5 ${a.accent.split(' ')[0]}`} />
-                    </div>
-                    <span className="text-[13px] font-semibold text-foreground/80 group-hover:text-foreground transition-colors">
-                      {a.label}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <span className={`text-xs font-black px-2 py-0.5 rounded-full min-w-[24px] text-center ${a.accent}`}>
-                      {a.count}
-                    </span>
-                    <ChevronRight className="w-3 h-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </div>
-                </div>
-              ))}
-            </div>
-            <button onClick={handleViewAllApprovals}
-              className="mt-3 w-full py-2 text-xs font-bold text-secondary hover:text-secondary/80 flex items-center gap-1 justify-center transition-colors font-sans border border-border rounded-lg hover:bg-muted/20">
-              View All Approvals <ArrowUpRight className="w-3 h-3" />
-            </button>
-          </div>
-
-          {/* Important Alerts */}
-          <div className="lg:col-span-4 widget-card flex flex-col">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="section-title !mb-0 flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 text-primary" /> Important Alerts
-              </h2>
-              <div className="flex gap-1">
-                <span className="text-[10px] font-bold bg-destructive/10 text-destructive px-2 py-0.5 rounded-full">
-                  {alerts.filter(a => a.urgent).length} Urgent
-                </span>
+          </>
+        ) : (
+          <>
+            {/* Principal / Executive Admin Middle Row */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+              <div className="lg:col-span-5 flex flex-col">
+                {renderAcademicPerformanceCard()}
+              </div>
+              <div className="lg:col-span-3 flex flex-col">
+                {renderPendingApprovalsCard()}
+              </div>
+              <div className="lg:col-span-4 flex flex-col">
+                {renderImportantAlertsCard()}
               </div>
             </div>
-            <div className="flex-1 space-y-0.5 font-sans">
-              {alerts.map((a) => (
-                <div key={a.text} onClick={() => handleAlertClick(a)}
-                  className="flex items-center justify-between group cursor-pointer rounded-xl px-3 py-2.5 hover:bg-muted/40 transition-colors border border-transparent hover:border-border">
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <AlertTriangle className={`w-4 h-4 shrink-0 ${a.urgent ? 'text-destructive' : 'text-warning'} group-hover:scale-110 transition-transform`} />
-                    <span className="text-[13px] font-semibold text-foreground/80 truncate group-hover:text-foreground transition-colors">
-                      {a.text}
-                    </span>
-                  </div>
-                  <span className="text-[10px] text-muted-foreground font-medium shrink-0 ml-3 whitespace-nowrap">
-                    {a.date}
-                  </span>
-                </div>
-              ))}
-            </div>
-            <button onClick={handleViewAllAlerts}
-              className="mt-3 w-full py-2 text-xs font-bold text-secondary hover:text-secondary/80 flex items-center gap-1 justify-center transition-colors font-sans border border-border rounded-lg hover:bg-muted/20">
-              View All Alerts <ArrowUpRight className="w-3 h-3" />
-            </button>
-          </div>
-        </div>
 
-        {/* ??? Bottom Row ??? */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-
-          {/* Student Strength */}
-          <div className="lg:col-span-6 widget-card flex flex-col">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
-              <h2 className="section-title !mb-0 flex items-center gap-2">
-                <GaugeCircle className="w-4 h-4 text-primary" /> Student Strength
-              </h2>
-              <div className="flex items-center gap-2">
-                <Dropdown
-                  label={selectedDepartment}
-                  options={studentDepartmentOptions}
-                  open={studentDepartmentOpen}
-                  onToggle={(e) => { e.stopPropagation(); setStudentDepartmentOpen(!studentDepartmentOpen); setSemesterOpen(false); setYearOpen(false); }}
-                  onSelect={(value) => { setSelectedDepartment(value); setStudentDepartmentOpen(false); }}
-                />
-                <Dropdown
-                  label={selectedYear}
-                  options={studentYearOptions}
-                  open={yearOpen}
-                  onToggle={(e) => { e.stopPropagation(); setYearOpen(!yearOpen); setSemesterOpen(false); setStudentDepartmentOpen(false); }}
-                  onSelect={(value) => { setSelectedYear(value); setYearOpen(false); }}
-                />
+            {/* Principal / Executive Admin Bottom Row */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+              <div className="lg:col-span-6 flex flex-col">
+                {renderStudentStrengthCard()}
+              </div>
+              <div className="lg:col-span-6 flex flex-col">
+                {renderStaffStrengthCard()}
               </div>
             </div>
-            <div className="flex flex-col gap-4 flex-1">
-              <div className="flex items-center gap-4">
-                <div className="w-[130px] h-[130px] relative shrink-0">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie data={studentStrengthData.filter((item) => item.value > 0)} cx="50%" cy="50%" innerRadius={40} outerRadius={61} paddingAngle={2} dataKey="value" stroke="none">
-                        {studentStrengthData.map((item) => <Cell key={item.name} fill={item.color} />)}
-                      </Pie>
-                      <Tooltip content={<CustomTooltip />} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                    <span className="text-lg font-bold text-foreground font-sans">{filteredStudents.length.toLocaleString()}</span>
-                    <span className="text-[10px] text-muted-foreground font-sans font-semibold">Total</span>
-                  </div>
-                </div>
-                <div className="flex-1 grid grid-cols-2 gap-2 font-sans">
-                  {studentStrengthData.map((item) => (
-                    <div key={item.name} className="rounded-xl border border-border p-2.5">
-                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
-                        {item.name}
-                      </div>
-                      <p className="text-xl font-bold text-foreground mt-1">{item.value.toLocaleString()}</p>
-                    </div>
-                  ))}
-                </div>
+
+            {/* Principal / Executive Admin Radar & Quick Actions Row */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+              <div className="lg:col-span-5 flex flex-col">
+                {renderRadarCard()}
+              </div>
+              <div className="lg:col-span-7 flex flex-col">
+                {renderPrincipalQuickActionsCard()}
               </div>
             </div>
-          </div>
-
-          {/* Staff Strength */}
-          <div className="lg:col-span-6 widget-card flex flex-col">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
-              <h2 className="section-title !mb-0 flex items-center gap-2"><Users className="w-4 h-4 text-primary" /> Staff Strength</h2>
-              <Dropdown label={selectedStaffDepartment} options={studentDepartmentOptions} open={staffDepartmentOpen}
-                onToggle={(e) => { e.stopPropagation(); setStaffDepartmentOpen(!staffDepartmentOpen); setSemesterOpen(false); setYearOpen(false); }}
-                onSelect={(value) => { setSelectedStaffDepartment(value); setStaffDepartmentOpen(false); }} />
-            </div>
-            <div className="flex flex-col gap-4 flex-1">
-              <div className="flex items-center gap-4">
-                <div className="w-[130px] h-[130px] relative shrink-0">
-                  <ResponsiveContainer width="100%" height="100%"><PieChart>
-                    <Pie data={[{ name: 'Male', value: maleStaffCount }, { name: 'Female', value: femaleStaffCount }].filter((item) => item.value > 0)} cx="50%" cy="50%" innerRadius={40} outerRadius={61} paddingAngle={2} dataKey="value" stroke="none">
-                      <Cell fill="hsl(181,99%,28%)" /><Cell fill="hsl(0,83%,26%)" />
-                    </Pie><Tooltip content={<CustomTooltip />} />
-                  </PieChart></ResponsiveContainer>
-                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none"><span className="text-lg font-bold text-foreground font-sans">{filteredStaff.length.toLocaleString()}</span><span className="text-[10px] text-muted-foreground font-sans font-semibold">Total Staff</span></div>
-                </div>
-                <div className="flex-1 grid grid-cols-2 gap-2 font-sans">
-                  {[{ name: 'Male Staff', value: maleStaffCount }, { name: 'Female Staff', value: femaleStaffCount }, { name: 'Teaching', value: teachingStaffCount }, { name: 'Non-Teaching', value: nonTeachingStaffCount }].map((item) => (
-                    <div key={item.name} className="rounded-xl border border-border p-2.5"><p className="text-[11px] text-muted-foreground leading-tight">{item.name}</p><p className="text-lg font-bold text-foreground mt-1">{item.value.toLocaleString()}</p></div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        {/* ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ Radar Chart Row ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-          <div className="lg:col-span-5 widget-card flex flex-col">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="section-title !mb-0 flex items-center gap-2">
-                <Activity className="w-4 h-4 text-primary" /> Institution Performance Radar
-              </h2>
-              <button onClick={() => toast({ title: 'Performance Index', description: 'Overall Institution Performance Score: 83.7 / 100' })}
-                className="text-[10px] font-bold bg-primary/10 text-primary px-2.5 py-1 rounded-full hover:bg-primary hover:text-white transition-colors">
-                Score: 83.7
-              </button>
-            </div>
-            <div className="flex-1 min-h-[220px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <RadarChart data={radarData}>
-                  <PolarGrid stroke="hsl(0,0%,88%)" />
-                  <PolarAngleAxis dataKey="subject" tick={{ fontSize: 11, fill: 'hsl(0,10%,40%)', fontFamily: 'Inter', fontWeight: 600 }} />
-                  <PolarRadiusAxis angle={90} domain={[0, 100]} tick={false} axisLine={false} />
-                  <Radar name="Score" dataKey="A" stroke="hsl(0,83%,26%)" fill="hsl(0,83%,26%)" fillOpacity={0.12} strokeWidth={2} />
-                  <Tooltip content={<CustomTooltip />} />
-                </RadarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-
-          {/* Quick Actions */}
-          <div className="lg:col-span-7 widget-card flex flex-col">
-            <h2 className="section-title flex items-center gap-2">
-              <Activity className="w-4 h-4 text-primary" /> Quick Actions
-            </h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 flex-1">
-              {quickActions.map((a) => (
-                <button key={a.label} onClick={() => handleQuickAction(a.type)}
-                  className={`flex flex-col items-center justify-center gap-2 rounded-2xl p-4 border border-border transition-all duration-200 font-sans hover:shadow-md active:scale-[0.97] group ${a.bg}`}>
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${a.bg.includes('hover:bg-') ? '' : 'bg-muted/20'}`}>
-                    <a.icon className={`w-5 h-5 ${a.color} group-hover:text-inherit transition-colors`} />
-                  </div>
-                  <span className={`text-[12px] font-bold text-foreground group-hover:text-inherit transition-colors`}>{a.label}</span>
-                </button>
-              ))}
-            </div>
-
-            {/* KPI Summary Strip */}
-            <div className="mt-4 grid grid-cols-3 gap-2">
-              {[
-                { label: 'Avg Attendance', value: '86.4%', icon: Users, positive: true },
-                { label: 'Pass Rate', value: '81.7%', icon: GraduationCap, positive: true },
-                { label: 'Open Tickets', value: '29', icon: AlertCircle, positive: false },
-              ].map((kpi) => (
-                <button key={kpi.label}
-                  onClick={() => toast({ title: kpi.label, description: `Current value: ${kpi.value}. Click View Analytics for detailed breakdown.` })}
-                  className="flex items-center gap-2 p-2.5 rounded-xl bg-muted/30 hover:bg-muted/50 border border-border transition-colors text-left">
-                  <kpi.icon className={`w-4 h-4 shrink-0 ${kpi.positive ? 'text-success' : 'text-warning'}`} />
-                  <div>
-                    <p className="text-[10px] text-muted-foreground font-medium leading-tight">{kpi.label}</p>
-                    <p className="text-sm font-bold text-foreground">{kpi.value}</p>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
+          </>
+        )}
 
       </div>
 
