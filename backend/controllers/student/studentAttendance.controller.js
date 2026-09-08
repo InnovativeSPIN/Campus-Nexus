@@ -11,7 +11,7 @@ const errorResponse = (res, statusCode, message) => {
  * PERIOD CONFIGURATION
  * Period slot IDs to skip (breaks): 3 (Tea Break), 5 (Lunch), 8 (Short Break)
  */
-const TEACHING_PERIODS = [1, 2, 4, 6, 7, 9, 10]; // Excluding breaks
+const TEACHING_PERIODS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
 /**
  * Get period slots configuration

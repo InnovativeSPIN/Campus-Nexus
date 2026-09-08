@@ -82,12 +82,15 @@ const getDynamicPeriods = (slots: any[], basePeriods: PeriodDisplay[] = []): Per
 
     let label = '';
     if (isBreak) {
-      label = breakSlot?.notes || breakSlot?.period_label || breakSlot?.period?.label || base?.label || 'Break';
-      if (!label || label.trim() === '' || label.startsWith('Period')) label = 'Break';
+      label = (base as any)?.breakName || base?.label || breakSlot?.notes || breakSlot?.period_label || breakSlot?.period?.label || 'Break';
+      if (!label || label.trim() === '' || label.startsWith('Period')) {
+        label = 'Break';
+      }
     } else {
-      label = sample?.period?.label || sample?.period_label || base?.label || ROMAN_ARR[id] || `Period ${id}`;
+      label = sample?.period?.label || sample?.period_label || base?.label || '';
       if (!label || label.trim() === '' || label.toLowerCase().includes('break') || label.toLowerCase().includes('lunch')) {
-        label = ROMAN_ARR[id] || `Period ${id}`;
+        const pNum = (base as any)?.periodNumber || id;
+        label = getRomanNumeral(pNum);
       }
     }
 

@@ -6,11 +6,11 @@
  *   7=V (14:00-14:50), 8=Short Break (14:50-15:10) SKIP, 9=VI (15:10-16:00), 10=VII (16:00-16:45)
  */
 
-// Break period IDs that should not be marked for attendance
-const BREAK_PERIOD_IDS = [3, 5, 8];
+// Break period IDs (configurable per timetable master)
+const BREAK_PERIOD_IDS: number[] = [];
 
-// Teaching period IDs (only these can be marked for attendance)
-const TEACHING_PERIOD_IDS = [1, 2, 4, 6, 7, 9, 10];
+// Teaching period IDs
+const TEACHING_PERIOD_IDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
 interface PeriodInfo {
   label: string;
@@ -23,14 +23,14 @@ interface PeriodInfo {
 export const PERIOD_CONFIG: Record<number, PeriodInfo> = {
   1: { label: 'I', startTime: '09:30', endTime: '10:20', type: 'teaching' },
   2: { label: 'II', startTime: '10:20', endTime: '11:10', type: 'teaching' },
-  3: { label: 'Tea Break', startTime: '11:10', endTime: '11:30', type: 'break' },
-  4: { label: 'III', startTime: '11:30', endTime: '12:25', type: 'teaching' },
-  5: { label: 'Lunch', startTime: '12:25', endTime: '13:10', type: 'break' },
-  6: { label: 'IV', startTime: '13:10', endTime: '14:00', type: 'teaching' },
-  7: { label: 'V', startTime: '14:00', endTime: '14:50', type: 'teaching' },
-  8: { label: 'Short Break', startTime: '14:50', endTime: '15:10', type: 'break' },
-  9: { label: 'VI', startTime: '15:10', endTime: '16:00', type: 'teaching' },
-  10: { label: 'VII', startTime: '16:00', endTime: '16:45', type: 'teaching' }
+  3: { label: 'III', startTime: '11:10', endTime: '11:30', type: 'teaching' },
+  4: { label: 'IV', startTime: '11:30', endTime: '12:25', type: 'teaching' },
+  5: { label: 'V', startTime: '12:25', endTime: '13:10', type: 'teaching' },
+  6: { label: 'VI', startTime: '13:10', endTime: '14:00', type: 'teaching' },
+  7: { label: 'VII', startTime: '14:00', endTime: '14:50', type: 'teaching' },
+  8: { label: 'VIII', startTime: '14:50', endTime: '15:10', type: 'teaching' },
+  9: { label: 'IX', startTime: '15:10', endTime: '16:00', type: 'teaching' },
+  10: { label: 'X', startTime: '16:00', endTime: '16:45', type: 'teaching' }
 };
 
 /**

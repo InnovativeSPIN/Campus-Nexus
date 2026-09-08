@@ -692,6 +692,21 @@ export const getEffectiveClassTimetable = asyncHandler(async (req, res, next) =>
  */
 export const getAllMasterPeriodSlots = asyncHandler(async (req, res, next) => {
   try {
+    // Ensure base period_slots entries in DB have clean period numbers (1..10) and Roman labels
+    try {
+      await sequelize.query(`
+        UPDATE period_slots 
+        SET slot_type = 'teaching', break_name = NULL, period_number = id, 
+            period_label = CASE id 
+              WHEN 1 THEN 'I' WHEN 2 THEN 'II' WHEN 3 THEN 'III' WHEN 4 THEN 'IV' WHEN 5 THEN 'V' 
+              WHEN 6 THEN 'VI' WHEN 7 THEN 'VII' WHEN 8 THEN 'VIII' WHEN 9 THEN 'IX' WHEN 10 THEN 'X' 
+              ELSE period_label END 
+        WHERE id BETWEEN 1 AND 10;
+      `);
+    } catch (e) {
+      console.warn('[getAllMasterPeriodSlots] DB update notice:', e.message);
+    }
+
     const [periodSlots] = await sequelize.query(
       `SELECT id, slot_order, slot_type, period_number, period_label, start_time, end_time, duration_minutes, break_name
        FROM period_slots
@@ -703,21 +718,19 @@ export const getAllMasterPeriodSlots = asyncHandler(async (req, res, next) => {
     const formatted = periodSlots.map(ps => {
       const startStr = ps.start_time ? String(ps.start_time).substring(0, 5) : '';
       const endStr = ps.end_time ? String(ps.end_time).substring(0, 5) : '';
-      const num = ps.period_number || ps.id;
-      let label = ps.period_label;
-      if (!label || label.trim() === '' || label.toLowerCase().includes('break') || label.toLowerCase().includes('lunch')) {
-        label = ROMAN[num] || `Period ${num}`;
-      }
+      const pNum = ps.period_number || ps.id;
+      const label = ROMAN[pNum] || `Period ${pNum}`;
+
       return {
         id: ps.id,
         slotOrder: ps.slot_order,
-        slotType: ps.slot_type,
-        periodNumber: num,
+        slotType: 'teaching',
+        periodNumber: pNum,
         label,
         startTime: startStr,
         endTime: endStr,
-        isBreak: ps.slot_type === 'break',
-        breakName: ps.break_name || 'Break',
+        isBreak: false,
+        breakName: null,
       };
     });
 

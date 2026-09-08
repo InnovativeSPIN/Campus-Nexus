@@ -716,13 +716,28 @@ export const getPeriodSlots = asyncHandler(async (req, res, next) => {
   const accessError = checkReadAccess(req, master);
   if (accessError) return next(accessError);
 
-  let breakPeriodIds = [3, 5, 8];
+  let breakPeriodIds = [];
   if (master.break_period_ids) {
     try {
       breakPeriodIds = typeof master.break_period_ids === 'string'
         ? JSON.parse(master.break_period_ids)
-        : (master.break_period_ids || [3, 5, 8]);
+        : (master.break_period_ids || []);
     } catch (e) { }
+  }
+
+  // Ensure DB entries in period_slots have matching period_number = id and period_label
+  try {
+    await sequelize.query(`
+      UPDATE period_slots 
+      SET slot_type = 'teaching', break_name = NULL, period_number = id, 
+          period_label = CASE id 
+            WHEN 1 THEN 'I' WHEN 2 THEN 'II' WHEN 3 THEN 'III' WHEN 4 THEN 'IV' WHEN 5 THEN 'V' 
+            WHEN 6 THEN 'VI' WHEN 7 THEN 'VII' WHEN 8 THEN 'VIII' WHEN 9 THEN 'IX' WHEN 10 THEN 'X' 
+            ELSE period_label END 
+      WHERE id BETWEEN 1 AND 10;
+    `);
+  } catch (e) {
+    console.warn('[getPeriodSlots] DB update notice:', e.message);
   }
 
   // Fetch all active period slots from PeriodSlot table
@@ -760,6 +775,8 @@ export const getPeriodSlots = asyncHandler(async (req, res, next) => {
     return time;
   };
 
+  const ROMAN_MAP = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
+
   // Convert to period format with times and labels
   const periods = allPeriodSlots.map((ps) => {
     let start = ps.start_time;
@@ -773,24 +790,22 @@ export const getPeriodSlots = asyncHandler(async (req, res, next) => {
     }
 
     const timeRange = start && end ? `${formatTime(start)} - ${formatTime(end)}` : "";
-    const isBreak = ps.slot_type === 'break' || breakPeriodIds.includes(ps.id);
+    const isBreak = Array.isArray(breakPeriodIds) && breakPeriodIds.includes(ps.id);
 
-    let label = ps.period_label;
-    if (!label || label.trim() === '') {
-      if (isBreak) {
-        label = ps.break_name || (ps.id === 5 ? 'Lunch' : 'Tea Break');
-      } else {
-        label = `Period ${ps.period_number || ps.id}`;
-      }
+    const pNum = ps.id;
+    const romanLabel = ROMAN_MAP[pNum] || `Period ${pNum}`;
+    let label = romanLabel;
+    if (isBreak) {
+      label = ps.break_name || 'Break';
     }
 
     return {
       id: ps.id,
       slot_order: ps.slot_order,
-      slot_type: ps.slot_type,
-      period_number: ps.period_number,
+      slot_type: isBreak ? 'break' : 'teaching',
+      period_number: pNum,
       label,
-      period_label: ps.period_label,
+      period_label: romanLabel,
       break_name: ps.break_name,
       start_time: start,
       end_time: end,

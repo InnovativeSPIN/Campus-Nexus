@@ -79,16 +79,16 @@ interface Faculty {
 const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 const periods = [
-  { id: 1, label: "I", time: "09:30 AM - 10:20 AM", isBreak: false },
-  { id: 2, label: "II", time: "10:20 AM - 11:10 AM", isBreak: false },
-  { id: 3, label: "III", time: "11:10 AM - 11:30 AM", isBreak: false },
-  { id: 4, label: "IV", time: "11:30 AM - 12:25 PM", isBreak: false },
-  { id: 5, label: "V", time: "12:25 PM - 01:10 PM", isBreak: false },
-  { id: 6, label: "VI", time: "01:10 PM - 02:00 PM", isBreak: false },
-  { id: 7, label: "VII", time: "02:00 PM - 02:50 PM", isBreak: false },
-  { id: 8, label: "VIII", time: "02:50 PM - 03:10 PM", isBreak: false },
-  { id: 9, label: "IX", time: "03:10 PM - 04:00 PM", isBreak: false },
-  { id: 10, label: "X", time: "04:00 PM - 04:45 PM", isBreak: false },
+  { id: 1, label: "I", periodNumber: 1, time: "09:30 AM - 10:20 AM", isBreak: false },
+  { id: 2, label: "II", periodNumber: 2, time: "10:20 AM - 11:10 AM", isBreak: false },
+  { id: 3, label: "III", periodNumber: 3, time: "11:10 AM - 11:30 AM", isBreak: false },
+  { id: 4, label: "IV", periodNumber: 4, time: "11:30 AM - 12:25 PM", isBreak: false },
+  { id: 5, label: "V", periodNumber: 5, time: "12:25 PM - 01:10 PM", isBreak: false },
+  { id: 6, label: "VI", periodNumber: 6, time: "01:10 PM - 02:00 PM", isBreak: false },
+  { id: 7, label: "VII", periodNumber: 7, time: "02:00 PM - 02:50 PM", isBreak: false },
+  { id: 8, label: "VIII", periodNumber: 8, time: "02:50 PM - 03:10 PM", isBreak: false },
+  { id: 9, label: "IX", periodNumber: 9, time: "03:10 PM - 04:00 PM", isBreak: false },
+  { id: 10, label: "X", periodNumber: 10, time: "04:00 PM - 04:45 PM", isBreak: false },
 ];
 
 const breakTimings = {
@@ -108,18 +108,7 @@ export default function FacultyTimetableSlotsManagement() {
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [faculties, setFaculties] = useState<Faculty[]>([]);
   const [breakPeriodIds, setBreakPeriodIds] = useState<number[]>([]);
-  const [periodsList, setPeriodsList] = useState([
-    { id: 1, label: "I", time: "09:30 AM - 10:20 AM", isBreak: false },
-    { id: 2, label: "II", time: "10:20 AM - 11:10 AM", isBreak: false },
-    { id: 3, label: "III", time: "11:10 AM - 11:30 AM", isBreak: false },
-    { id: 4, label: "IV", time: "11:30 AM - 12:25 PM", isBreak: false },
-    { id: 5, label: "V", time: "12:25 PM - 01:10 PM", isBreak: false },
-    { id: 6, label: "VI", time: "01:10 PM - 02:00 PM", isBreak: false },
-    { id: 7, label: "VII", time: "02:00 PM - 02:50 PM", isBreak: false },
-    { id: 8, label: "VIII", time: "02:50 PM - 03:10 PM", isBreak: false },
-    { id: 9, label: "IX", time: "03:10 PM - 04:00 PM", isBreak: false },
-    { id: 10, label: "X", time: "04:00 PM - 04:45 PM", isBreak: false },
-  ]);
+  const [periodsList, setPeriodsList] = useState(periods);
   const [timetableName, setTimetableName] = useState<string>("");
   const [timetableInfo, setTimetableInfo] = useState<{ academic_year?: string; semester?: number; batch?: string; status?: string } | null>(null);
   const [loading, setLoading] = useState(false);
@@ -257,13 +246,21 @@ export default function FacultyTimetableSlotsManagement() {
             const periodData = data.data || [];
             console.log('[PERIOD SLOTS] Faculty view loaded from backend:', periodData);
 
-            // Build periods array with real-time label and time from database
+            const ROMAN_BY_NUM = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
             const updatedPeriods = periodData.map((p: any) => {
-              const isBreak = p.isBreak || breakPeriodIds.includes(p.id);
-              const label = p.label || p.period_label || (isBreak ? (p.break_name || (p.id === 5 ? "Lunch" : "Break")) : `Period ${p.id}`);
+              const isBreak = Array.isArray(breakPeriodIds) && breakPeriodIds.includes(p.id);
+              const pNum = Number(p.id);
+              const romanLabel = ROMAN_BY_NUM[pNum] || `Period ${pNum}`;
+
+              let label = romanLabel;
+              if (isBreak) {
+                label = p.break_name || "Break";
+              }
+
               return {
                 id: p.id,
                 label,
+                periodNumber: pNum,
                 time: p.time || "",
                 isBreak,
               };
@@ -712,11 +709,24 @@ export default function FacultyTimetableSlotsManagement() {
                     >
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        {periodsList.map(p => (
-                          <SelectItem key={p.id} value={p.id.toString()}>
-                            {p.label} — {p.time}
-                          </SelectItem>
-                        ))}
+                        {periodsList.map(p => {
+                          const isBreak = breakPeriodIds.includes(p.id);
+                          const pNum = p.periodNumber || (p as any).period_number || p.id;
+                          const ROMAN_BY_NUM = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
+                          const romanLabel = ROMAN_BY_NUM[pNum] || `Period ${pNum}`;
+
+                          let formattedLabel = `Period ${pNum}: ${romanLabel}`;
+                          if (isBreak) {
+                            const breakName = p.label && !p.label.startsWith('Period') && p.label !== romanLabel ? p.label : 'Break';
+                            formattedLabel = `Period ${pNum}: ${romanLabel} ☕ (${breakName})`;
+                          }
+
+                          return (
+                            <SelectItem key={p.id} value={p.id.toString()}>
+                              {formattedLabel} {p.time ? `(${p.time})` : ''}
+                            </SelectItem>
+                          );
+                        })}
                       </SelectContent>
                     </Select>
                   </div>
@@ -899,7 +909,9 @@ export default function FacultyTimetableSlotsManagement() {
                         >
                           <div className="flex-1">
                             <p className="font-semibold text-sm text-gray-700">
-                              {period.label}
+                              {period.isBreak
+                                ? `🔴 ${period.label}`
+                                : `Period ${period.periodNumber || (period as any).period_number || period.id}: ${period.label}`}
                               <span className="ml-2 text-xs text-gray-400 font-normal">({displayTime})</span>
                             </p>
                             {slot ? (

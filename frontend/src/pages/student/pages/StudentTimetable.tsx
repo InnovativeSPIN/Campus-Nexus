@@ -63,14 +63,14 @@ const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'
 const STANDARD_PERIODS: Period[] = [
   { id: 1, label: 'I', startTime: '09:30 AM', endTime: '10:20 AM' },
   { id: 2, label: 'II', startTime: '10:20 AM', endTime: '11:10 AM' },
-  { id: 3, label: 'Tea Break', startTime: '11:10 AM', endTime: '11:30 AM' },
-  { id: 4, label: 'III', startTime: '11:30 AM', endTime: '12:25 PM' },
-  { id: 5, label: 'Lunch', startTime: '12:25 PM', endTime: '01:10 PM' },
-  { id: 6, label: 'IV', startTime: '01:10 PM', endTime: '02:00 PM' },
-  { id: 7, label: 'V', startTime: '02:00 PM', endTime: '02:50 PM' },
-  { id: 8, label: 'Short Break', startTime: '02:50 PM', endTime: '03:10 PM' },
-  { id: 9, label: 'VI', startTime: '03:10 PM', endTime: '04:00 PM' },
-  { id: 10, label: 'VII', startTime: '04:00 PM', endTime: '04:45 PM' },
+  { id: 3, label: 'III', startTime: '11:10 AM', endTime: '11:30 AM' },
+  { id: 4, label: 'IV', startTime: '11:30 AM', endTime: '12:25 PM' },
+  { id: 5, label: 'V', startTime: '12:25 PM', endTime: '01:10 PM' },
+  { id: 6, label: 'VI', startTime: '01:10 PM', endTime: '02:00 PM' },
+  { id: 7, label: 'VII', startTime: '02:00 PM', endTime: '02:50 PM' },
+  { id: 8, label: 'VIII', startTime: '02:50 PM', endTime: '03:10 PM' },
+  { id: 9, label: 'IX', startTime: '03:10 PM', endTime: '04:00 PM' },
+  { id: 10, label: 'X', startTime: '04:00 PM', endTime: '04:45 PM' },
 ];
 
 const BREAK_TIMINGS = [
@@ -244,7 +244,7 @@ const StudentClassTimetable: React.FC = () => {
   const allPeriods = Array.from(periodMap.values()).sort((a, b) => a.id - b.id);
   const periodsToUse = allPeriods.length > 0 ? allPeriods : STANDARD_PERIODS;
 
-  const breakPeriodIds = timetable.timetableMaster.breakPeriodIds || [3, 5, 8];
+  const breakPeriodIds = timetable.timetableMaster.breakPeriodIds || [];
 
   const ROMAN_MAP = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
 

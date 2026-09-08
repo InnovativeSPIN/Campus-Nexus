@@ -103,7 +103,7 @@ export default function Timetable() {
 
       if (data.success && data.timetable && data.timetable.length > 0) {
         const slots: RawSlot[] = data.timetable
-          .filter((slot: any) => slot.sessionType !== "break" && slot.session_type !== "break" && !slot.isBreak && slot.subject !== "Lunch" && slot.subject !== "Break")
+          .filter((slot: any) => slot.subject && slot.subject !== "Lunch" && slot.subject !== "Break" && slot.subject !== "Unknown")
           .map((slot: any) => ({
             id: slot.id || Math.random(),
             day: slot.day?.trim() || "",
@@ -169,14 +169,14 @@ export default function Timetable() {
   const PERIOD_META: Record<number, { label: string; time: string; isBreak?: boolean }> = {
     1: { label: "Period I", time: "09:30 AM - 10:20 AM" },
     2: { label: "Period II", time: "10:20 AM - 11:10 AM" },
-    3: { label: "Tea Break", time: "11:10 AM - 11:30 AM", isBreak: true },
-    4: { label: "Period III", time: "11:30 AM - 12:25 PM" },
-    5: { label: "Lunch", time: "12:25 PM - 01:10 PM", isBreak: true },
-    6: { label: "Period IV", time: "01:10 PM - 02:00 PM" },
-    7: { label: "Period V", time: "02:00 PM - 02:50 PM" },
-    8: { label: "Short Break", time: "02:50 PM - 03:10 PM", isBreak: true },
-    9: { label: "Period VI", time: "03:10 PM - 04:00 PM" },
-    10: { label: "Period VII", time: "04:00 PM - 04:45 PM" },
+    3: { label: "Period III", time: "11:10 AM - 11:30 AM" },
+    4: { label: "Period IV", time: "11:30 AM - 12:25 PM" },
+    5: { label: "Period V", time: "12:25 PM - 01:10 PM" },
+    6: { label: "Period VI", time: "01:10 PM - 02:00 PM" },
+    7: { label: "Period VII", time: "02:00 PM - 02:50 PM" },
+    8: { label: "Period VIII", time: "02:50 PM - 03:10 PM" },
+    9: { label: "Period IX", time: "03:10 PM - 04:00 PM" },
+    10: { label: "Period X", time: "04:00 PM - 04:45 PM" },
   };
 
   /** Dynamic hours covering all standard 10 periods */
@@ -373,7 +373,8 @@ export default function Timetable() {
                           </td>
 
                           {days.map((day) => {
-                            if (meta.isBreak) {
+                            const slots = timetableData[day]?.[hour] || [];
+                            if (slots.length === 0 && meta.isBreak) {
                               const isLunch = meta.label.toLowerCase().includes('lunch');
                               return (
                                 <td key={`${day}-${hour}`} className="border border-border p-1.5 bg-amber-50/40 text-center align-middle">
@@ -383,8 +384,6 @@ export default function Timetable() {
                                 </td>
                               );
                             }
-
-                            const slots = timetableData[day]?.[hour] || [];
                             return (
                               <td
                                 key={`${day}-${hour}`}

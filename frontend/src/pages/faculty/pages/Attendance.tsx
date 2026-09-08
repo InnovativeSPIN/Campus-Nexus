@@ -196,21 +196,46 @@ export default function Attendance() {
     return Array.from(unique.values());
   }, [rawSlots]);
 
+  const formatTime12h = (timeStr: string | null | undefined): string => {
+    if (!timeStr) return "";
+    const trimmed = timeStr.trim();
+    if (!trimmed) return "";
+    if (trimmed.toLowerCase().includes("am") || trimmed.toLowerCase().includes("pm")) return trimmed;
+    const parts = trimmed.split(":");
+    let hours = parseInt(parts[0], 10);
+    const minutes = parseInt(parts[1], 10);
+    if (isNaN(hours) || isNaN(minutes)) return trimmed;
+    const ampm = hours >= 12 ? "PM" : "AM";
+    hours = hours % 12;
+    hours = hours ? hours : 12;
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')} ${ampm}`;
+  };
+
   // Periods for the selected subject on this day
   const periods = useMemo(() => {
     if (!selectedSubjectId) return [];
-    return rawSlots
+    const ROMAN = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
+    const filtered = rawSlots
       .filter(s => s.subjectId?.toString() === selectedSubjectId.toString())
-      .map(s => ({
-        id: s.periodId,
-        label: s.periodLabel,
-        startTime: s.startTime,
-        endTime: s.endTime,
-        classSectionId: s.classSectionId,
-        className: s.className,
-        classSection: s.classSection,
-        slotId: s.slotId
-      }));
+      .map(s => {
+        const pNum = Number(s.periodId);
+        const roman = ROMAN[pNum] || `Period ${pNum}`;
+        const periodLabel = `Period ${pNum}: ${roman}`;
+        return {
+          id: s.periodId,
+          label: periodLabel,
+          startTime: formatTime12h(s.startTime),
+          endTime: formatTime12h(s.endTime),
+          classSectionId: s.classSectionId,
+          className: s.className,
+          classSection: s.classSection,
+          slotId: s.slotId
+        };
+      });
+
+    // Sort periods numerically by period ID
+    filtered.sort((a, b) => Number(a.id) - Number(b.id));
+    return filtered;
   }, [selectedSubjectId, rawSlots]);
 
   // Active slot — determined by subject + period
@@ -1171,9 +1196,9 @@ export default function Attendance() {
                     <SelectValue placeholder={selectedSubjectId ? "Select period" : "Select subject first"} />
                   </SelectTrigger>
                   <SelectContent>
-                    {periods.map((p) => (
-                      <SelectItem key={p.id} value={p.id.toString()}>
-                        Period {p.label} — {p.startTime} to {p.endTime}
+                    {periods.map((p, idx) => (
+                      <SelectItem key={`${p.id}_${p.slotId || idx}`} value={p.id.toString()}>
+                        {p.label?.startsWith('Period') ? p.label : `Period ${p.label}`} ({p.startTime} - {p.endTime}) {p.className ? `— ${p.className} ${p.classSection || ''}` : ''}
                       </SelectItem>
                     ))}
                   </SelectContent>

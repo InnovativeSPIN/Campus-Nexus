@@ -64,14 +64,14 @@ const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'
 const STANDARD_PERIODS: PeriodDisplay[] = [
   { id: 1, label: 'I', time: '09:30 - 10:20' },
   { id: 2, label: 'II', time: '10:20 - 11:10' },
-  { id: 3, label: 'Tea Break', time: '11:10 - 11:30', isBreak: true },
-  { id: 4, label: 'III', time: '11:30 - 12:25' },
-  { id: 5, label: 'Lunch', time: '12:25 - 13:10', isBreak: true },
-  { id: 6, label: 'IV', time: '13:10 - 14:00' },
-  { id: 7, label: 'V', time: '14:00 - 14:50' },
-  { id: 8, label: 'Tea Break', time: '14:50 - 15:15', isBreak: true },
-  { id: 9, label: 'VI', time: '15:15 - 16:00' },
-  { id: 10, label: 'VII', time: '16:00 - 16:45' },
+  { id: 3, label: 'III', time: '11:10 - 11:30' },
+  { id: 4, label: 'IV', time: '11:30 - 12:25' },
+  { id: 5, label: 'V', time: '12:25 - 13:10' },
+  { id: 6, label: 'VI', time: '13:10 - 14:00' },
+  { id: 7, label: 'VII', time: '14:00 - 14:50' },
+  { id: 8, label: 'VIII', time: '14:50 - 15:15' },
+  { id: 9, label: 'IX', time: '15:15 - 16:00' },
+  { id: 10, label: 'X', time: '16:00 - 16:45' },
 ];
 
 export default function ExecutiveTimeTable() {

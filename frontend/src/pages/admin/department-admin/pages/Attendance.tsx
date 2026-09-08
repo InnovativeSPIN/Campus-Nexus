@@ -73,6 +73,7 @@ export default function Attendance() {  const { authToken, user } = useAuth();
   const itemsPerPage = 10;
   
   const [rawSlots, setRawSlots] = useState<any[]>([]);
+  const [classList, setClassList] = useState<any[]>([]);
   const [studentsByClass, setStudentsByClass] = useState<any>({});
 
   const [selectedClassId, setSelectedClassId] = useState("");
@@ -547,11 +548,13 @@ export default function Attendance() {  const { authToken, user } = useAuth();
       .then(data => { 
         if (data.success && data.data) { 
           setRawSlots(data.data.slots || []); 
+          setClassList(data.data.classList || []);
           setStudentsByClass(data.data.studentsByClass || {});
           setSelectedClassId("");
           setSelectedPeriodId("");
         } else {
           setRawSlots([]);
+          setClassList([]);
           setStudentsByClass({});
         }
       })
@@ -559,26 +562,62 @@ export default function Attendance() {  const { authToken, user } = useAuth();
   }, [selectedDate, authToken]);
 
   const classes = useMemo(() => {
+    if (classList && classList.length > 0) {
+      return classList;
+    }
     const unique = new Map();
     rawSlots.forEach(s => {
-      unique.set(s.classSectionId, { id: s.classSectionId, name: s.className, section: s.classSection });
+      if (s.classSectionId) {
+        unique.set(s.classSectionId.toString(), { id: s.classSectionId, name: s.className, section: s.classSection });
+      }
     });
     return Array.from(unique.values());
-  }, [rawSlots]);
+  }, [classList, rawSlots]);
+
+  const formatTime12h = (timeStr: string | null | undefined): string => {
+    if (!timeStr) return "";
+    const trimmed = timeStr.trim();
+    if (!trimmed) return "";
+    if (trimmed.toLowerCase().includes("am") || trimmed.toLowerCase().includes("pm")) return trimmed;
+    const parts = trimmed.split(":");
+    let hours = parseInt(parts[0], 10);
+    const minutes = parseInt(parts[1], 10);
+    if (isNaN(hours) || isNaN(minutes)) return trimmed;
+    const ampm = hours >= 12 ? "PM" : "AM";
+    hours = hours % 12;
+    hours = hours ? hours : 12;
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')} ${ampm}`;
+  };
 
   const periods = useMemo(() => {
     if (!selectedClassId) return [];
-    return rawSlots
-      .filter(s => s.classSectionId.toString() === selectedClassId.toString())
-      .map(s => ({
-        id: s.periodId,
-        label: s.periodLabel,
-        startTime: s.startTime,
-        endTime: s.endTime,
-        subjectId: s.subjectId,
-        subjectName: s.subjectName
-      }));
+    const ROMAN = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
+    const filtered = rawSlots
+      .filter(s => s.classSectionId?.toString() === selectedClassId.toString())
+      .filter(s => !!s.subjectId)
+      .map(s => {
+        const pNum = Number(s.periodId);
+        const roman = ROMAN[pNum] || `Period ${pNum}`;
+        const periodLabel = `Period ${pNum}: ${roman}`;
+        return {
+          id: s.periodId,
+          label: periodLabel,
+          startTime: formatTime12h(s.startTime),
+          endTime: formatTime12h(s.endTime),
+          subjectId: s.subjectId,
+          subjectName: s.subjectName,
+          slotId: s.slotId
+        };
+      });
+    
+    // Sort periods numerically by period ID
+    filtered.sort((a, b) => Number(a.id) - Number(b.id));
+    return filtered;
   }, [selectedClassId, rawSlots]);
+
+  useEffect(() => {
+    setSelectedPeriodId("");
+  }, [selectedClassId]);
 
   const subjects = useMemo(() => {
     const map = new Map<string, string>();
@@ -1037,12 +1076,12 @@ export default function Attendance() {  const { authToken, user } = useAuth();
                 <Label>Period</Label>
                 <Select value={selectedPeriodId} onValueChange={setSelectedPeriodId}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select a period" />
+                    <SelectValue placeholder={!selectedClassId ? "Select a class first" : periods.length === 0 ? "No timetable periods on this date" : "Select a period"} />
                   </SelectTrigger>
                   <SelectContent>
-                    {periods.map((p) => (
-                      <SelectItem key={p.id} value={p.id.toString()}>
-                        {p.label} ({p.startTime}-{p.endTime})
+                    {periods.map((p, idx) => (
+                      <SelectItem key={`${p.id}_${p.slotId || idx}`} value={p.id.toString()}>
+                        {p.label?.startsWith('Period') ? p.label : `Period ${p.label}`} ({p.startTime} - {p.endTime}) {p.subjectName ? `— ${p.subjectName}` : ''}
                       </SelectItem>
                     ))}
                   </SelectContent>

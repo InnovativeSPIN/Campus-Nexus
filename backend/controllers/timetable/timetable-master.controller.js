@@ -86,17 +86,7 @@ export const createTimetableMaster = asyncHandler(async (req, res, next) => {
     );
   }
 
-  // Fetch class details to check if it is 2nd Year
-  const classRecord = await ClassModel.findByPk(class_id);
-  const isSecondYear = classRecord && (
-    classRecord.semester === 3 || 
-    classRecord.semester === 4 || 
-    (classRecord.name && (
-      classRecord.name.toLowerCase().includes('ii year') || 
-      classRecord.name.toLowerCase().includes('2nd year')
-    ))
-  );
-  const finalBreakPeriodIds = isSecondYear ? [3, 6, 9] : [3, 5, 8];
+  const finalBreakPeriodIds = Array.isArray(req.body.break_period_ids) ? req.body.break_period_ids : [];
 
   const timetableMaster = await TimetableMaster.create({
     class_id,

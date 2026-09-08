@@ -63,6 +63,7 @@ interface Faculty {
 }
 
 const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const ROMAN_BY_NUM = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
 
 /**
  * Helper function to convert and normalize time format
@@ -123,16 +124,16 @@ const formatRangeTo12h = (rangeStr: string | null | undefined): string => {
 
 // Default periods - will be made dynamic later
 const DEFAULT_PERIODS = [
-  { id: 1, label: "I", time: "09:30 AM - 10:20 AM" },
-  { id: 2, label: "II", time: "10:20 AM - 11:10 AM" },
-  { id: 3, label: "III", time: "11:10 AM - 11:30 AM" },
-  { id: 4, label: "IV", time: "11:30 AM - 12:25 PM" },
-  { id: 5, label: "V", time: "12:25 PM - 01:10 PM" },
-  { id: 6, label: "VI", time: "01:10 PM - 02:00 PM" },
-  { id: 7, label: "VII", time: "02:00 PM - 02:50 PM" },
-  { id: 8, label: "VIII", time: "02:50 PM - 03:10 PM" },
-  { id: 9, label: "IX", time: "03:10 PM - 04:00 PM" },
-  { id: 10, label: "X", time: "04:00 PM - 04:45 PM" },
+  { id: 1, label: "I", periodNumber: 1, time: "09:30 AM - 10:20 AM", isBreak: false },
+  { id: 2, label: "II", periodNumber: 2, time: "10:20 AM - 11:10 AM", isBreak: false },
+  { id: 3, label: "III", periodNumber: 3, time: "11:10 AM - 11:30 AM", isBreak: false },
+  { id: 4, label: "IV", periodNumber: 4, time: "11:30 AM - 12:25 PM", isBreak: false },
+  { id: 5, label: "V", periodNumber: 5, time: "12:25 PM - 01:10 PM", isBreak: false },
+  { id: 6, label: "VI", periodNumber: 6, time: "01:10 PM - 02:00 PM", isBreak: false },
+  { id: 7, label: "VII", periodNumber: 7, time: "02:00 PM - 02:50 PM", isBreak: false },
+  { id: 8, label: "VIII", periodNumber: 8, time: "02:50 PM - 03:10 PM", isBreak: false },
+  { id: 9, label: "IX", periodNumber: 9, time: "03:10 PM - 04:00 PM", isBreak: false },
+  { id: 10, label: "X", periodNumber: 10, time: "04:00 PM - 04:45 PM", isBreak: false },
 ];
 
 const sessionTypes = ["theory", "lab", "tutorial", "activity", "project", "break", "free"];
@@ -412,16 +413,21 @@ export default function TimetableSlotsManagement() {
             const periodData = data.data || [];
             console.log('[PERIOD SLOTS] Loaded from backend:', periodData);
 
-            const ROMAN = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
+            const ROMAN_BY_NUM = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
             const updatedPeriods = periodData.map((p: any) => {
-              const isBreak = p.isBreak || breakPeriodIds.includes(p.id);
-              let label = p.label || p.period_label;
-              if (!label || label.toLowerCase().includes('break') || label.toLowerCase().includes('lunch')) {
-                label = ROMAN[p.id] || `Period ${p.id}`;
+              const isBreak = Array.isArray(breakPeriodIds) && breakPeriodIds.includes(p.id);
+              const pNum = Number(p.id);
+              const romanLabel = ROMAN_BY_NUM[pNum] || `Period ${pNum}`;
+
+              let label = romanLabel;
+              if (isBreak) {
+                label = p.break_name || "Break";
               }
+
               return {
                 id: p.id,
                 label,
+                periodNumber: pNum,
                 time: p.time || "",
                 isBreak,
               };
@@ -1474,12 +1480,19 @@ export default function TimetableSlotsManagement() {
                       <SelectContent>
                         {periods.map((p) => {
                           const isBreak = isPeriodBreak(p.id);
-                          const label = isBreak
-                            ? `🔴 Period ${p.id}: ${p.label}`
-                            : `Period ${p.id}: ${p.label}`;
+                          const pNum = p.periodNumber || (p as any).period_number || p.id;
+                          const ROMAN_BY_NUM = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
+                          const romanLabel = ROMAN_BY_NUM[pNum] || `Period ${pNum}`;
+
+                          let formattedLabel = `Period ${pNum}: ${romanLabel}`;
+                          if (isBreak) {
+                            const breakName = p.label && !p.label.startsWith('Period') && p.label !== romanLabel ? p.label : 'Break';
+                            formattedLabel = `Period ${pNum}: ${romanLabel} ☕ (${breakName})`;
+                          }
+
                           return (
                             <SelectItem key={p.id} value={p.id.toString()}>
-                              {label}
+                              {formattedLabel} {p.time ? `(${formatRangeTo12h(p.time)})` : ''}
                             </SelectItem>
                           );
                         })}
@@ -1688,9 +1701,9 @@ export default function TimetableSlotsManagement() {
                         >
                           <div className="flex-1">
                             <p className="font-semibold text-sm">
-                              {isPeriodBreak(period.id)
-                                ? `🔴 Period ${period.id}: ${period.label} (Break - ${formatRangeTo12h(period.time)})`
-                                : `Period ${period.id}: ${period.label} (${displayTime})`}
+                              {isPeriodBreak(period.id) || period.isBreak
+                                ? `🔴 ${period.label} (${formatRangeTo12h(displayTime || period.time)})`
+                                : `Period ${period.periodNumber || (period as any).period_number || period.id}: ${period.label} (${displayTime})`}
                             </p>
                             {slot ? (
                               <div className="mt-1 space-y-1">
@@ -1778,7 +1791,11 @@ export default function TimetableSlotsManagement() {
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
-                        <p className="font-medium">Period {period.id}: {period.label}</p>
+                        <p className="font-medium">
+                          {isPeriodBreak(period.id)
+                            ? `🔴 Period ${period.id}: ${ROMAN_BY_NUM[period.id] || period.id}`
+                            : `Period ${period.id}: ${ROMAN_BY_NUM[period.id] || period.id}`}
+                        </p>
                         <p className="text-sm text-muted-foreground">{formatRangeTo12h(period.time)}</p>
                       </div>
                       <div

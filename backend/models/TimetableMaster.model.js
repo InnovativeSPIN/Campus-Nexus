@@ -85,8 +85,8 @@ const TimetableMaster = (sequelize) => {
     break_period_ids: {
       type: DataTypes.JSON,
       allowNull: true,
-      defaultValue: [3, 5, 8],
-      comment: 'Array of period_slot_ids that are configured as breaks for this timetable (e.g., [3, 5, 8])'
+      defaultValue: [],
+      comment: 'Array of period_slot_ids that are configured as breaks for this timetable'
     }
   }, {
     tableName: 'timetable_master',

@@ -4,16 +4,19 @@ import { models } from '../../models/index.js';
 const { Attendance, FacultyAttendance, Student, StudentAttendance, Class: ClassModel, Subject, Faculty, FacultySubjectAssignment, PeriodTopicLog, CourseLessonPlan } = models;
 import { Op } from 'sequelize';
 
-// Teaching period slot IDs (breaks should not be marked)
-const TEACHING_PERIODS = [1, 2, 4, 6, 7, 9, 10];
+// Teaching period slot IDs (1 through 10)
+const TEACHING_PERIODS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 const PERIOD_NUMBER_BY_SLOT = {
   1: 1,
   2: 2,
-  4: 3,
-  6: 4,
-  7: 5,
-  9: 6,
-  10: 7,
+  3: 3,
+  4: 4,
+  5: 5,
+  6: 6,
+  7: 7,
+  8: 8,
+  9: 9,
+  10: 10,
 };
 
 const normalizeAttendanceStatus = (status) => {
@@ -872,22 +875,52 @@ export const getFacultyTimetableSlots = asyncHandler(async (req, res, next) => {
           model: PeriodSlot,
           as: 'period',
           attributes: ['id', 'period_label', 'start_time', 'end_time', 'slot_type'],
-          where: { slot_type: 'teaching' },
-          required: true
+          required: false
         },
       ],
+      attributes: ['id', 'day', 'subject_id', 'period_slot_id', 'faculty_id', 'start_time', 'end_time', 'master_id', 'session_type', 'is_lab_session', 'lab_group'],
       raw: false,
     });
+
+    // Fetch dynamic slot timing overrides across active masters
+    const activeMasterIds = [...new Set(timetableSlots.map(s => s.master_id).filter(Boolean))];
+    const masterPeriodTimingMap = new Map();
+    if (activeMasterIds.length > 0) {
+      const timingOverrides = await TimetableMasterSlots.findAll({
+        where: {
+          master_id: { [Op.in]: activeMasterIds },
+          start_time: { [Op.ne]: null },
+          end_time: { [Op.ne]: null }
+        },
+        attributes: ['master_id', 'period_slot_id', 'start_time', 'end_time'],
+        raw: true
+      });
+      timingOverrides.forEach(to => {
+        const key = `${to.master_id}_${to.period_slot_id}`;
+        if (!masterPeriodTimingMap.has(key)) {
+          masterPeriodTimingMap.set(key, { start_time: to.start_time, end_time: to.end_time });
+        }
+      });
+    }
 
     // Format response removing duplicates
     const uniqueSlots = {};
     const classStudents = {};
 
     timetableSlots.forEach(slot => {
+      // Include any slot that has a subject assigned to it (not an unassigned break)
+      const hasSubject = !!slot.subject?.id;
+      const isPureBreak = slot.session_type === 'break' && !hasSubject;
+
+      if (!hasSubject || isPureBreak) return;
+
       // Use slot.id as the unique key so each timetable slot row is distinct
       const key = slot.id;
       if (!uniqueSlots[key] && slot.master && slot.master.class && slot.period) {
         const classId = slot.master.class_id;
+        const timingOverride = masterPeriodTimingMap.get(`${slot.master_id}_${slot.period_slot_id}`);
+        const startTime = slot.start_time || timingOverride?.start_time || slot.period?.start_time;
+        const endTime = slot.end_time || timingOverride?.end_time || slot.period?.end_time;
 
         uniqueSlots[key] = {
           slotId: slot.id,
@@ -907,8 +940,8 @@ export const getFacultyTimetableSlots = asyncHandler(async (req, res, next) => {
           labGroup: slot.lab_group,
           periodId: slot.period?.id,
           periodLabel: slot.period?.period_label,
-          startTime: slot.period?.start_time,
-          endTime: slot.period?.end_time,
+          startTime,
+          endTime,
           dayOfWeek: slot.day,
         };
 
@@ -957,7 +990,7 @@ export const getFacultyTimetableSlots = asyncHandler(async (req, res, next) => {
  */
 export const getDepartmentAdminClassSlots = asyncHandler(async (req, res, next) => {
   const { date } = req.params;
-  const departmentId = req.user.departmentId;
+  const departmentId = req.user.departmentId || req.user.department_id || (typeof req.user.department === 'object' ? req.user.department?.id : null);
 
   if (!date) {
     return res.status(400).json({ success: false, error: 'Date parameter is required' });
@@ -976,9 +1009,9 @@ export const getDepartmentAdminClassSlots = asyncHandler(async (req, res, next) 
     const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const dayName = dayNames[dayOfWeek];
 
-    // Fetch all timetable assignments for department's classes on this day
+    // Fetch all active timetable assignments for department's classes on this day
     const timetableMasters = await TimetableMaster.findAll({
-      where: { department_id: departmentId },
+      where: { department_id: departmentId, status: 'active' },
       include: [
         {
           model: TimetableMasterSlots,
@@ -987,9 +1020,14 @@ export const getDepartmentAdminClassSlots = asyncHandler(async (req, res, next) 
           required: true,
           include: [
             { model: Subject, as: 'subject', attributes: ['id', 'subject_code', 'subject_name'] },
-            { model: PeriodSlot, as: 'period', attributes: ['id', 'period_label', 'start_time', 'end_time'] },
+            {
+              model: PeriodSlot,
+              as: 'period',
+              attributes: ['id', 'period_label', 'start_time', 'end_time', 'slot_type'],
+              required: false
+            },
           ],
-          attributes: ['id', 'day', 'subject_id', 'period_slot_id', 'faculty_id'],
+          attributes: ['id', 'day', 'subject_id', 'period_slot_id', 'faculty_id', 'start_time', 'end_time', 'master_id', 'session_type'],
         },
         { model: ClassModel, as: 'class', attributes: ['id', 'name', 'section'] },
       ],
@@ -997,14 +1035,46 @@ export const getDepartmentAdminClassSlots = asyncHandler(async (req, res, next) 
       raw: false,
     });
 
-    // Format response removing duplicates
+    // Fetch dynamic slot timing overrides across active masters
+    const activeMasterIds = timetableMasters.map(m => m.id);
+    const masterPeriodTimingMap = new Map();
+    if (activeMasterIds.length > 0) {
+      const timingOverrides = await TimetableMasterSlots.findAll({
+        where: {
+          master_id: { [Op.in]: activeMasterIds },
+          start_time: { [Op.ne]: null },
+          end_time: { [Op.ne]: null }
+        },
+        attributes: ['master_id', 'period_slot_id', 'start_time', 'end_time'],
+        raw: true
+      });
+      timingOverrides.forEach(to => {
+        const key = `${to.master_id}_${to.period_slot_id}`;
+        if (!masterPeriodTimingMap.has(key)) {
+          masterPeriodTimingMap.set(key, { start_time: to.start_time, end_time: to.end_time });
+        }
+      });
+    }
+
+    // Format response ensuring class-specific period slot keys are preserved
     const uniqueSlots = {};
     timetableMasters.forEach(master => {
       master.slots.forEach(slot => {
-        const key = `${slot.subject_id}_${slot.period_slot_id}`;
+        // Include any slot that has a subject assigned to it (not an unassigned break)
+        const hasSubject = !!slot.subject?.id;
+        const isPureBreak = slot.session_type === 'break' && !hasSubject;
+
+        if (!hasSubject || isPureBreak) return;
+
+        const key = `${master.class_id}_${slot.period_slot_id}_${slot.id}`;
         if (!uniqueSlots[key]) {
+          const timingOverride = masterPeriodTimingMap.get(`${master.id}_${slot.period_slot_id}`);
+          const startTime = slot.start_time || timingOverride?.start_time || slot.period?.start_time;
+          const endTime = slot.end_time || timingOverride?.end_time || slot.period?.end_time;
+
           uniqueSlots[key] = {
-            slotId: `${slot.subject_id}_${slot.period_slot_id}`,
+            slotId: slot.id,
+            masterSlotId: slot.id,
             classSectionId: master.class_id,
             className: master.class?.name || '',
             classSection: master.class?.section || '',
@@ -1015,26 +1085,36 @@ export const getDepartmentAdminClassSlots = asyncHandler(async (req, res, next) 
             subjectName: slot.subject?.subject_name,
             periodId: slot.period?.id,
             periodLabel: slot.period?.period_label,
-            startTime: slot.period?.start_time,
-            endTime: slot.period?.end_time,
+            startTime,
+            endTime,
             dayOfWeek: slot.day,
           };
         }
       });
     });
 
-    // Fetch students for each unique class section
-    const classStudents = {};
-    const uniqueClasses = [...new Set(Object.values(uniqueSlots).map(s => s.classSectionId))];
+    // Fetch all department classes using correct column department_id
+    const deptClasses = await ClassModel.findAll({
+      where: { department_id: departmentId },
+      attributes: ['id', 'name', 'section'],
+      order: [['name', 'ASC'], ['section', 'ASC']],
+      raw: true
+    });
 
-    for (const classId of uniqueClasses) {
+    const classStudents = {};
+    const allClassIds = [...new Set([
+      ...deptClasses.map(c => c.id),
+      ...Object.values(uniqueSlots).map(s => s.classSectionId)
+    ])];
+
+    for (const classId of allClassIds) {
       if (!classId || isNaN(parseInt(classId))) {
         classStudents[classId] = [];
         continue;
       }
 
       const students = await Student.findAll({
-        where: { classId: classId },
+        where: { classId: parseInt(classId, 10) },
         attributes: ['id', 'studentId', 'firstName', 'lastName', 'rollNumber', 'photo'],
         order: [['rollNumber', 'ASC']],
         raw: true,
@@ -1042,12 +1122,19 @@ export const getDepartmentAdminClassSlots = asyncHandler(async (req, res, next) 
       classStudents[classId] = students;
     }
 
+    const classList = deptClasses.map(c => ({
+      id: c.id,
+      name: c.name,
+      section: c.section
+    }));
+
     res.status(200).json({
       success: true,
       date,
       dayOfWeek: dayName,
       data: {
         slots: Object.values(uniqueSlots),
+        classList: classList,
         studentsByClass: classStudents,
       }
     });
