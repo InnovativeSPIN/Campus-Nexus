@@ -62,7 +62,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         body: JSON.stringify(bodyData),
       });
 
-      const result = await response.json();
+      let result: any;
+      try {
+        result = await response.json();
+      } catch (e) {
+        console.error('Failed to parse login response:', e);
+        setLoginError('Unable to communicate with server. Please try again.');
+        return false;
+      }
 
       if (result.success && result.user) {
         setLoginError(null);
