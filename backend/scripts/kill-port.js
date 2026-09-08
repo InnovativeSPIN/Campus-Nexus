@@ -1,6 +1,9 @@
 import { exec } from 'child_process';
+import dotenv from 'dotenv';
 
-const PORT = process.env.PORT || 8080;
+dotenv.config();
+
+const PORT = process.env.PORT || 3030;
 
 const isWin = process.platform === 'win32';
 
