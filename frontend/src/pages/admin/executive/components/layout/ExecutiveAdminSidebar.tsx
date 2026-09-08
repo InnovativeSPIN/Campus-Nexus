@@ -68,10 +68,10 @@ export function ExecutiveAdminSidebar({
     localStorage.setItem('executive_sidebar_collapsed', JSON.stringify(collapsed));
   }, [collapsed]);
 
+  const isSecretary = user?.role === 'secretary';
   const navItems: NavItem[] = [
-    { label: 'Dashboard', path: '/admin/executive', icon: <LayoutDashboard className="w-5 h-5" /> },
-    { label: 'Profile', path: '/admin/executive/profile', icon: <LayoutDashboard className="w-5 h-5" /> },
-
+    { label: 'Dashboard', path: isSecretary ? '/admin/secretary' : '/admin/executive', icon: <LayoutDashboard className="w-5 h-5" /> },
+    { label: 'Profile', path: isSecretary ? '/admin/secretary/profile' : '/admin/executive/profile', icon: <LayoutDashboard className="w-5 h-5" /> },
     { label: 'Time Table', path: '/admin/executive/timetable', icon: <Calendar className="w-5 h-5" /> },
     { label: 'Students', path: '/admin/executive/students', icon: <GraduationCap className="w-5 h-5" /> },
     { label: 'Faculty', path: '/admin/executive/faculty', icon: <Users className="w-5 h-5" /> },
@@ -82,13 +82,16 @@ export function ExecutiveAdminSidebar({
     { label: 'Audit & Reports', path: '/admin/executive/audit-and-reports', icon: <ShieldCheck className="w-5 h-5" /> },
     { label: 'Backup & Security', path: '/admin/executive/backup-security', icon: <Shield className="w-5 h-5" /> },
   ];
-
+  const visibleNavItems = isSecretary ? navItems.filter((item) => item.label !== 'Time Table' && item.label !== 'Academic Performance') : navItems;
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
 
   const isActive = (path: string) => {
+    if (path === '/admin/secretary') {
+      return location.pathname === path;
+    }
     if (path === '/admin/executive') {
       return location.pathname === path || location.pathname === '/admin/executive/' || location.pathname === '/admin/executive/dashboard';
     }
@@ -151,7 +154,7 @@ export function ExecutiveAdminSidebar({
                   className="flex-1 overflow-hidden"
                 >
                   <p className="text-white font-semibold text-sm truncate">{user.name}</p>
-                  <p className="text-white/60 text-xs uppercase tracking-wider truncate">{user?.name?.toLowerCase().includes('vice') ? 'Vice Principal' : 'Principal'}</p>
+                  <p className="text-white/60 text-xs uppercase tracking-wider truncate">{isSecretary ? 'Secretary' : (user?.name?.toLowerCase().includes('vice') ? 'Vice Principal' : 'Principal')}</p>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -161,7 +164,7 @@ export function ExecutiveAdminSidebar({
 
       <nav className="flex-1 overflow-y-auto py-4">
         <ul className="space-y-1 px-3">
-          {navItems.map((item, index) => {
+          {visibleNavItems.map((item, index) => {
             const active = isActive(item.path);
             return (
               <li key={item.path}>
@@ -280,3 +283,4 @@ export function ExecutiveAdminSidebar({
     </motion.aside>
   );
 }
+

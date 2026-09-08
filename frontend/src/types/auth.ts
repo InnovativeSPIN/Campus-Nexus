@@ -13,6 +13,7 @@ export type UserRole =
 	| 'faculty'
 	| 'principal'
 	| 'vice-principal'
+	| 'secretary'
 	| 'student';
 
 export interface Department {

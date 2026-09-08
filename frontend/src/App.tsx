@@ -32,6 +32,8 @@ import AcademicAnnouncementDetail from './pages/admin/academic/AnnouncementDetai
 import ExamCellRoutes from './pages/admin/exam-cell/ExamCellRoutes';
 // authentications   
 import Login from './pages/auth/Login';
+import ExecutiveAdminDashboard from './pages/admin/executive/Dashboard';
+import SecretaryProfile from './pages/admin/secretary/SecretaryProfile';
 import AdminLogin from './pages/auth/AdminLogin';
 import ChangePassword from './pages/auth/ChangePassword';
 import NotFound from './pages/auth/NotFound';
@@ -105,6 +107,8 @@ const AppRoutes = () => (
         {/* Universal Auth */}
         <Route path="/login" element={<Login />} />
         <Route path="/admin" element={<AdminLogin />} />
+        <Route path="/admin/secretary" element={<ExecutiveAdminDashboard />} />
+        <Route path="/admin/secretary/profile" element={<SecretaryProfile />} />
         <Route path="/admin/change-password" element={<ChangePassword />} />
 
         {/* Super Admin Routes */}

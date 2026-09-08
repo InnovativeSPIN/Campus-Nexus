@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { AdminLayout } from '@/pages/admin/executive/components/layout/AdminLayout';
+import { useAuth } from '@/contexts/AuthContext';
 import { apiFetch } from '@/lib/apiFetch';
 import { useToast } from '@/pages/admin/executive/components/ui/use-toast';
 import {
@@ -28,6 +29,8 @@ const CustomTooltip = ({ active, payload }: any) => {
 
 export default function BackupAndSecurity() {
   const { toast } = useToast();
+  const { user } = useAuth();
+  const isSecretary = user?.role === 'secretary';
   const [activeTab, setActiveTab] = useState('backup-mgmt');
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
@@ -142,6 +145,7 @@ export default function BackupAndSecurity() {
 
   // Handle manual backup trigger
   const handleBackupNow = async (type: 'Full Backup' | 'Incremental' | 'Log Backup') => {
+    if (isSecretary) return;
     try {
       setActionLoading(true);
       toast({ title: 'Triggering Backup', description: `Starting execution of ${type}...` });
@@ -168,6 +172,7 @@ export default function BackupAndSecurity() {
 
   // Handle backup restore action
   const handleRestore = async (id: number, name: string) => {
+    if (isSecretary) return;
     if (!window.confirm(`Are you sure you want to restore the database to the state of backup: "${name}"?\nThis will overwrite current system states.`)) {
       return;
     }
@@ -196,6 +201,7 @@ export default function BackupAndSecurity() {
 
   // Handle security integrity scan
   const handleSecurityScan = async () => {
+    if (isSecretary) return;
     try {
       setActionLoading(true);
       toast({ title: 'Scanning System', description: 'Auditing firewall, encryption files, and access logs...' });
@@ -221,6 +227,7 @@ export default function BackupAndSecurity() {
   // Handle settings update
   const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSecretary) return;
     try {
       setActionLoading(true);
       const res = await apiFetch('/api/v1/executive/backup-security/settings', {

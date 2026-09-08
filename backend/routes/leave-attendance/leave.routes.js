@@ -34,12 +34,12 @@ router.use(protect);
 router.get('/my-leaves', getMyLeaves);
 router.get('/balance', getLeaveBalance);
 router.get('/reassignment-requests', getReassignmentRequests);
-router.get('/pending-approvals', authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin', 'department-admin'), getPendingLeaves);
+router.get('/pending-approvals', authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin', 'department-admin', 'secretary'), getPendingLeaves);
 
 router.put('/:id/cancel', cancelLeave);
 
 // Admin routes
-router.get('/pending-count', authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin', 'department-admin'), getPendingCount);
+router.get('/pending-count', authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin', 'department-admin', 'secretary'), getPendingCount);
 
 // Leave notification routes
 router.get('/notifications/unread-count', getLeaveNotificationCount);

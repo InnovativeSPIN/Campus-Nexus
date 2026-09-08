@@ -510,6 +510,33 @@ export const getFacultyDetails = asyncHandler(async (req, res, next) => {
       subQuery: false
     });
 
+    // Secretary accounts live in the shared users table rather than faculty_profiles.
+    // Keep the existing faculty lookup unchanged and only expose Secretary here.
+    if (!faculty) {
+      const secretary = await User.findOne({
+        where: { email: identifier },
+        include: [{
+          model: Role,
+          as: 'role',
+          attributes: ['role_name'],
+          where: { role_name: 'secretary' }
+        }]
+      });
+
+      if (secretary && secretary.isActive) {
+        return res.status(200).json({
+          success: true,
+          data: {
+            name: secretary.name,
+            collegeId: secretary.id,
+            department: secretary.department_id || undefined,
+            email: secretary.email,
+            designation: secretary.role?.role_name || undefined
+          }
+        });
+      }
+    }
+
     if (!faculty) {
       return res.status(404).json({
         success: false,

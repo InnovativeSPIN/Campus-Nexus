@@ -24,6 +24,7 @@ import {
 } from 'recharts';
 import { AdminLayout } from '@/pages/admin/executive/components/layout/AdminLayout';
 import { apiFetch } from '@/lib/apiFetch';
+import { normalizeImageUrl } from '@/utils/imageUrl';
 
 type StudentRecord = { departmentId?: number; gender?: string; year?: string | number };
 type DepartmentOption = { id: number; short_name?: string; full_name?: string; name?: string };
@@ -316,6 +317,8 @@ export default function ExecutiveAdminDashboard() {
   const { user, logout } = useAuth();
   const { toast } = useToast();
   const displayName = user?.name || 'Dr. R. Principal';
+  const isSecretary = user?.role === 'secretary';
+  const secretaryAvatar = isSecretary ? normalizeImageUrl((user as any)?.avatar || (user as any)?.profile_image_url) : null;
 
   /* dropdown states */
   const [selectedSemester, setSelectedSemester] = useState(semesterOptions[0]);
@@ -367,6 +370,13 @@ export default function ExecutiveAdminDashboard() {
 
   const fetchDashboardData = async () => {
     try {
+      // Secretary Student Strength must load independently of other dashboard requests.
+      if (isSecretary) {
+        const studentsRaw = await apiFetch('/api/v1/students?limit=0');
+        const studentsRes = await studentsRaw.json();
+        if (studentsRes.success) setStudents(studentsRes.data || []);
+      }
+
       const statsRaw = await apiFetch('/api/v1/executive/stats');
       const statsRes = await statsRaw.json();
       if (statsRes.success) setDashboardStats(statsRes.data);
@@ -380,17 +390,18 @@ export default function ExecutiveAdminDashboard() {
       const chartsRaw = await apiFetch('/api/v1/executive/charts');
       const chartsRes = await chartsRaw.json();
       if (chartsRes.success) setDashboardCharts(chartsRes.data);
-
-      const [studentsRaw, departmentsRaw, staffRaw] = await Promise.all([
-        apiFetch('/api/v1/students?limit=0'),
+      if (!isSecretary) {
+        const studentsRaw = await apiFetch('/api/v1/students?limit=0');
+        const studentsRes = await studentsRaw.json();
+        if (studentsRes.success) setStudents(studentsRes.data || []);
+      }
+      const [departmentsRaw, staffRaw] = await Promise.all([
         apiFetch('/api/v1/departments'),
         apiFetch('/api/v1/faculty?limit=1000')
       ]);
-      const [studentsRes, departmentsRes, staffRes] = await Promise.all([studentsRaw.json(), departmentsRaw.json(), staffRaw.json()]);
-      if (studentsRes.success) setStudents(studentsRes.data || []);
+      const [departmentsRes, staffRes] = await Promise.all([departmentsRaw.json(), staffRaw.json()]);
       if (departmentsRes.success) setDepartments(departmentsRes.data || []);
       if (staffRes.success) setStaff(staffRes.data || []);
-
       const activitiesRaw = await apiFetch('/api/v1/executive/activities');
       const activitiesRes = await activitiesRaw.json();
       if (activitiesRes.success) setLiveActivities(activitiesRes.data.recentActivities || []);
@@ -566,6 +577,7 @@ export default function ExecutiveAdminDashboard() {
 
   /* ?? approval click ?? */
   const handleApprovalClick = (item: any) => {
+    if (isSecretary) return;
     openModal(`${item.label} ? ${item.count} Pending`, (
       <div className="space-y-4 font-sans">
         <div className={`p-3 rounded-xl flex items-start gap-3 ${item.accent.replace('text-', 'bg-').split(' ')[0]}/5`}>
@@ -816,6 +828,7 @@ export default function ExecutiveAdminDashboard() {
   };
 
   const handleQuickAction = (type: string) => {
+    if (isSecretary) return;
     switch (type) {
       case 'report': handleReport(); break;
       case 'approve': handleApproveModal(); break;
@@ -926,7 +939,7 @@ export default function ExecutiveAdminDashboard() {
         <div className="widget-card !p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative overflow-hidden bg-white border border-slate-200 shadow-sm rounded-2xl">
           <div className="relative z-10">
             <h1 className="text-2xl font-bold text-black font-sans">
-              Principal's Dashboard
+              {isSecretary ? "Secretary's Dashboard" : "Principal's Dashboard"}
             </h1>
             <p className="text-black font-sans text-sm flex items-center gap-1.5 font-medium mt-1">
               Welcome, {displayName}
@@ -964,12 +977,12 @@ export default function ExecutiveAdminDashboard() {
             <button onClick={() => setProfileOpen(true)}
               className="flex items-center gap-2.5 p-1 pr-3 rounded-xl bg-slate-100 border border-slate-200 hover:bg-slate-200 transition-colors h-10"
               aria-label="Profile">
-              <div className="w-8 h-8 rounded-[10px] bg-[#800000] flex items-center justify-center text-white font-bold text-xs">
-                {displayName.split(' ').map(n => n[0]).join('').slice(0, 2)}
+              <div className={`w-8 h-8 ${isSecretary ? 'rounded-full' : 'rounded-[10px]'} bg-[#800000] flex items-center justify-center text-white font-bold text-xs`}>
+                {secretaryAvatar ? <img src={secretaryAvatar} alt={displayName} className="h-full w-full object-cover" /> : displayName.split(' ').map(n => n[0]).join('').slice(0, 2)}
               </div>
               <div className="hidden sm:block text-left">
                 <p className="text-[13px] font-bold text-black font-sans leading-none">{displayName}</p>
-                <p className="text-[10px] text-slate-600 font-sans mt-0.5 leading-none">Principal</p>
+                <p className="text-[10px] text-slate-600 font-sans mt-0.5 leading-none">{isSecretary ? 'SECRETARY' : 'Principal'}</p>
               </div>
             </button>
             {/* Session */}
@@ -1229,7 +1242,7 @@ export default function ExecutiveAdminDashboard() {
             </div>
           </div>
         </div>
-        {/* ─── Radar Chart Row ─── */}
+        {/* ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ Radar Chart Row ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
           <div className="lg:col-span-5 widget-card flex flex-col">
             <div className="flex items-center justify-between mb-3">
@@ -1361,7 +1374,7 @@ export default function ExecutiveAdminDashboard() {
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle>My Profile</DialogTitle>
-            <DialogDescription className="sr-only">Principal profile details</DialogDescription>
+            <DialogDescription className="sr-only">{isSecretary ? 'Secretary' : 'Principal'} profile details</DialogDescription>
           </DialogHeader>
           <div className="flex flex-col items-center gap-4 py-4 font-sans">
             <div className="w-20 h-20 rounded-full bg-primary flex items-center justify-center text-white font-bold text-2xl shadow-lg">
@@ -1369,14 +1382,14 @@ export default function ExecutiveAdminDashboard() {
             </div>
             <div className="text-center">
               <p className="text-lg font-bold text-foreground">{displayName}</p>
-              <p className="text-sm text-muted-foreground">Principal & Chief Executive</p>
+              <p className="text-sm text-muted-foreground">{isSecretary ? 'Secretary' : 'Principal & Chief Executive'}</p>
               <p className="text-xs text-muted-foreground mt-0.5">{user?.email || 'principal@nscet.org'}</p>
             </div>
             <div className="w-full space-y-0">
               {[
-                { label: 'Role', value: 'Principal (Executive Admin)' },
-                { label: 'Department', value: 'Administration' },
-                { label: 'Phone', value: '+91 98765 43210' },
+                { label: 'Role', value: isSecretary ? 'SECRETARY' : 'Principal (Executive Admin)' },
+                { label: 'Department', value: isSecretary ? ((typeof user?.department === 'string' ? user.department : (user?.department as any)?.full_name) || 'ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â') : 'Administration' },
+                { label: 'Phone', value: isSecretary ? ((user as any)?.phone || 'ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â') : '+91 98765 43210' },
                 { label: 'Session', value: '2025-26 (Even)' },
                 { label: 'Status', value: 'Active', highlight: true },
               ].map((row) => (
@@ -1387,7 +1400,7 @@ export default function ExecutiveAdminDashboard() {
               ))}
             </div>
             <div className="w-full flex gap-2">
-              <button onClick={() => { toast({ title: 'Edit Profile', description: 'Profile editing feature coming soon.' }); }}
+              <button onClick={() => { if (isSecretary) { setProfileOpen(false); navigate('/admin/secretary/profile'); } else { toast({ title: 'Edit Profile', description: 'Profile editing feature coming soon.' }); } }}
                 className="flex-1 py-2.5 rounded-lg bg-muted text-foreground font-bold text-sm hover:bg-muted/80 transition-colors">
                 Edit Profile
               </button>
@@ -1465,3 +1478,9 @@ function Dropdown({
     </div>
   );
 }
+
+
+
+
+
+

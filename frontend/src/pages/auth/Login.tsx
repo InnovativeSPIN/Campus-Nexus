@@ -21,6 +21,7 @@ import {
 } from '@/pages/admin/superadmin/components/ui/alert-dialog';
 
 const roleRoutes: Record<string, string> = {
+  secretary: '/admin/secretary',
   student: '/student/dashboard',
   faculty: '/faculty/dashboard',
   'department-admin': '/admin/department-admin/dashboard',
@@ -220,13 +221,6 @@ export default function Login() {
                       <span className="font-medium">{userDetails.name}</span>
                     </div>
                   )}
-                  {userDetails.rollNo && (
-                    <div className="flex items-center gap-2">
-                      <Mail className="h-3 w-3 text-muted-foreground" />
-                      <span className="text-muted-foreground">ID / Roll No:</span>
-                      <span className="font-medium">{userDetails.rollNo}</span>
-                    </div>
-                  )}
                   {userDetails.designation && (
                     <div className="flex items-center gap-2">
                       <Users className="h-3 w-3 text-muted-foreground" />
@@ -342,3 +336,4 @@ export default function Login() {
     </div>
   );
 }
+

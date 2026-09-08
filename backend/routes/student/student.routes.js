@@ -68,12 +68,12 @@ router.put('/:id/change-password', authorize('superadmin', 'super-admin', 'execu
 
 // Generic routes for admin and faculty
 router.route('/')
-  .get(authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin', 'faculty'), getAllStudents)
+  .get(authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin', 'faculty', 'secretary'), getAllStudents)
   .post(authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin'), createStudent);
 
 // Generic :id route (must come LAST)
 router.route('/:id')
-  .get(authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin', 'faculty', 'student'), getStudent)
+  .get(authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin', 'faculty', 'student', 'secretary'), getStudent)
   .put(authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin'), updateStudent)
   .delete(authorize('superadmin', 'super-admin'), deleteStudent);
 

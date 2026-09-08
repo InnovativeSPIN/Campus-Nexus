@@ -77,11 +77,11 @@ router.post('/download-profile', authorize('faculty', 'department-admin', 'super
 
 // Routes for admin
 router.route('/')
-  .get(authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin', 'faculty', 'department-admin'), getAllFaculty)
+  .get(authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin', 'faculty', 'department-admin', 'secretary'), getAllFaculty)
   .post(authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin'), createFaculty);
 
 router.route('/:id(\\d+)')
-  .get(authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin', 'faculty'), getFaculty)
+  .get(authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin', 'faculty', 'secretary'), getFaculty)
   .put(authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin'), updateFaculty)
   .delete(authorize('superadmin', 'super-admin'), deleteFaculty);
 

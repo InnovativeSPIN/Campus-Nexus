@@ -12,6 +12,7 @@ const ALLOWED_ROLES = [
   'vice-principal',
   'vice principal',
   'admin',
+  'secretary',
 ];
 
 interface ExecutiveProtectedRouteProps {

@@ -1,4 +1,5 @@
 import { apiFetch } from '@/lib/apiFetch';
+import { useAuth } from '@/contexts/AuthContext';
 import { useState, useEffect } from 'react';
 import { AdminLayout } from '@/pages/admin/executive/components/layout/AdminLayout';
 import { motion } from 'framer-motion';
@@ -36,6 +37,8 @@ interface Leave {
 }
 
 export default function LeaveRequests() {
+    const { user } = useAuth();
+    const isSecretary = user?.role === 'secretary';
     const [requests, setRequests] = useState<Leave[]>([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('all');
@@ -262,14 +265,14 @@ export default function LeaveRequests() {
                                     {(request.status === 'pending' || request.status === 'hod_approved') && (
                                         <div className="grid grid-cols-2 gap-3 mt-6">
                                             <Button
-                                                disabled={actioning === request.id}
+                                                disabled={isSecretary || actioning === request.id}
                                                 onClick={() => handleAction(request.id, 'approved')}
                                                 className="bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-200"
                                             >
                                                 {actioning === request.id ? "..." : <><CheckCircle2 className="w-4 h-4 mr-2" /> Approve</>}
                                             </Button>
                                             <Button
-                                                disabled={actioning === request.id}
+                                                disabled={isSecretary || actioning === request.id}
                                                 variant="outline"
                                                 onClick={() => handleAction(request.id, 'rejected')}
                                                 className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
