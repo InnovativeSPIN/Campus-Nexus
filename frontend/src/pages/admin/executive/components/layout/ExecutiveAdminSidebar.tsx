@@ -18,6 +18,7 @@ import {
   X,
   ShieldCheck,
   Shield,
+  UserRound,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -53,6 +54,7 @@ export function ExecutiveAdminSidebar({
   const location = useLocation();
   const { logout, user } = useAuth();
   const [localCollapsed, setLocalCollapsed] = useState(false);
+  const [avatarError, setAvatarError] = useState(false);
 
   const collapsed = propCollapsed !== undefined ? propCollapsed : localCollapsed;
   const setCollapsed = propSetCollapsed !== undefined ? propSetCollapsed : setLocalCollapsed;
@@ -102,6 +104,8 @@ export function ExecutiveAdminSidebar({
     return name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'EA';
   };
 
+  const avatarUrl = normalizeImageUrl(user?.avatar || (user as any)?.profile_image_url || (user as any)?.profilePhoto);
+
   return (
     <motion.aside
       initial={false}
@@ -136,14 +140,16 @@ export function ExecutiveAdminSidebar({
         <div className="p-4 border-b border-sidebar-border bg-sidebar-accent/10">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/80 to-secondary/80 flex items-center justify-center flex-shrink-0 border-2 border-white/10 overflow-hidden">
-              <img
-                src={normalizeImageUrl(user?.avatar || (user as any)?.profile_image_url || (user as any)?.profilePhoto) || "/src/assets/prathap.png"}
-                alt={user?.name || "User"}
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src = "/src/assets/prathap.png";
-                }}
-              />
+              {avatarUrl && !avatarError ? (
+                <img
+                  src={avatarUrl}
+                  alt={user?.name || "User"}
+                  className="w-full h-full object-cover"
+                  onError={() => setAvatarError(true)}
+                />
+              ) : (
+                <UserRound className="w-5 h-5 text-white" aria-hidden="true" />
+              )}
             </div>
             <AnimatePresence>
               {!collapsed && (

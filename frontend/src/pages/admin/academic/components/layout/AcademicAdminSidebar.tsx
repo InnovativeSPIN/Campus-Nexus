@@ -147,7 +147,7 @@ export function AcademicAdminSidebar({
       {user && (
         <div className="p-4 border-b border-sidebar-border bg-sidebar-accent/10">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/80 to-secondary/80 flex items-center justify-center flex-shrink-0 border-2 border-white/10">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/80 to-secondary/80 flex items-center justify-center flex-shrink-0 border-2 border-white/10 animate-none">
               <span className="text-white font-bold text-xs">{getInitials(user.name)}</span>
             </div>
             <AnimatePresence>
