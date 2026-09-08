@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { Navigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 import { AdminLayout } from '@/pages/admin/executive/components/layout/AdminLayout';
 import { apiFetch } from '@/lib/apiFetch';
 import { 
@@ -11,6 +13,17 @@ import {
 } from 'recharts';
 
 export default function AuditAndReports() {
+  const { user } = useAuth();
+  const isSecretary = user?.role === 'secretary';
+
+  // --- TEMPORARILY DISABLED FOR SECRETARY PANEL ---
+  // To restore Secretary access to this page later:
+  // 1. Comment out or delete this redirect check.
+  // 2. Uncomment the 'Audit & Reports' filter in ExecutiveAdminSidebar.tsx.
+  if (isSecretary) {
+    return <Navigate to="/admin/secretary" replace />;
+  }
+
   const [activeTab, setActiveTab] = useState('audit-logs');
   const [stats, setStats] = useState({
     totalLogs: 18742,

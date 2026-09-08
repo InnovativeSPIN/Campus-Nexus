@@ -84,7 +84,18 @@ export function ExecutiveAdminSidebar({
     { label: 'Audit & Reports', path: '/admin/executive/audit-and-reports', icon: <ShieldCheck className="w-5 h-5" /> },
     { label: 'Backup & Security', path: '/admin/executive/backup-security', icon: <Shield className="w-5 h-5" /> },
   ];
-  const visibleNavItems = isSecretary ? navItems.filter((item) => item.label !== 'Time Table' && item.label !== 'Academic Performance') : navItems;
+
+  // Navigation filtering: 'Time Table', 'Academic Performance', and 'Audit & Reports' are hidden for Secretary Panel
+  // TEMPORARILY DISABLED FOR SECRETARY PANEL: To restore "Audit & Reports" in Secretary Panel, uncomment/remove the 'Audit & Reports' filter condition below
+  const visibleNavItems = isSecretary
+    ? navItems.filter(
+        (item) =>
+          item.label !== 'Time Table' &&
+          item.label !== 'Academic Performance' &&
+          /* Temporarily disabled Audit & Reports for Secretary */
+          item.label !== 'Audit & Reports'
+      )
+    : navItems;
   const handleLogout = () => {
     logout();
     navigate('/login');
