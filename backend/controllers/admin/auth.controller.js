@@ -626,16 +626,35 @@ export const updateDetails = asyncHandler(async (req, res, next) => {
 // @route     PUT /api/v1/auth/updatepassword
 // @access    Private
 export const updatePassword = asyncHandler(async (req, res, next) => {
+  const { currentPassword, newPassword } = req.body;
+
+  if (!currentPassword || !newPassword) {
+    return next(new ErrorResponse('Please provide both current and new password', 400));
+  }
+
+  if (newPassword.length < 6) {
+    return next(new ErrorResponse('Password must be at least 6 characters long', 400));
+  }
+
   const user = await User.findByPk(req.user.id, {
     attributes: { include: ['password'] }
   });
 
-  // Check current password
-  if (!(await user.matchPassword(req.body.currentPassword))) {
-    return next(new ErrorResponse('Password is incorrect', 401));
+  if (!user) {
+    return next(new ErrorResponse('User not found', 404));
   }
 
-  user.password = req.body.newPassword;
+  // Check current password
+  if (!(await user.matchPassword(currentPassword))) {
+    return next(new ErrorResponse('Current password is incorrect', 401));
+  }
+
+  // Check if new password is same as current password
+  if (await user.matchPassword(newPassword)) {
+    return next(new ErrorResponse('New password cannot be the same as your current password', 400));
+  }
+
+  user.password = newPassword;
   await user.save();
 
   sendTokenResponse(user, 200, res);

@@ -19,6 +19,7 @@ import {
   ShieldCheck,
   Shield,
   UserRound,
+  Lock,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -78,6 +79,7 @@ export function ExecutiveAdminSidebar({
     { label: 'Students', path: '/admin/executive/students', icon: <GraduationCap className="w-5 h-5" /> },
     { label: 'Faculty', path: '/admin/executive/faculty', icon: <Users className="w-5 h-5" /> },
     { label: 'Leave Requests', path: '/admin/executive/leave-requests', icon: <Calendar className="w-5 h-5" /> },
+    { label: 'Change Password', path: '/admin/secretary/change-password', icon: <Lock className="w-5 h-5" /> },
     { label: 'Academic Performance', path: '/admin/executive/academic-performance', icon: <TrendingUp className="w-5 h-5" /> },
     { label: 'Announcements', path: '/admin/executive/announcements', icon: <Bell className="w-5 h-5" /> },
     { label: 'Reports', path: '/admin/executive/reports', icon: <FileText className="w-5 h-5" /> },
@@ -85,8 +87,8 @@ export function ExecutiveAdminSidebar({
     { label: 'Backup & Security', path: '/admin/executive/backup-security', icon: <Shield className="w-5 h-5" /> },
   ];
 
-  // Navigation filtering: 'Time Table', 'Academic Performance', and 'Audit & Reports' are hidden for Secretary Panel
-  // TEMPORARILY DISABLED FOR SECRETARY PANEL: To restore "Audit & Reports" in Secretary Panel, uncomment/remove the 'Audit & Reports' filter condition below
+  // Navigation filtering: 'Time Table', 'Academic Performance', and 'Audit & Reports' are hidden for Secretary Panel.
+  // 'Change Password' is ONLY for Secretary Panel.
   const visibleNavItems = isSecretary
     ? navItems.filter(
         (item) =>
@@ -95,7 +97,7 @@ export function ExecutiveAdminSidebar({
           /* Temporarily disabled Audit & Reports for Secretary */
           item.label !== 'Audit & Reports'
       )
-    : navItems;
+    : navItems.filter((item) => item.label !== 'Change Password');
   const handleLogout = () => {
     logout();
     navigate('/login');
@@ -103,6 +105,12 @@ export function ExecutiveAdminSidebar({
 
   const isActive = (path: string) => {
     if (path === '/admin/secretary') {
+      return location.pathname === path;
+    }
+    if (path === '/admin/secretary/profile') {
+      return location.pathname === path;
+    }
+    if (path === '/admin/secretary/change-password') {
       return location.pathname === path;
     }
     if (path === '/admin/executive') {

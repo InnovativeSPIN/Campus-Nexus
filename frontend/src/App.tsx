@@ -34,6 +34,7 @@ import ExamCellRoutes from './pages/admin/exam-cell/ExamCellRoutes';
 import Login from './pages/auth/Login';
 import ExecutiveAdminDashboard from './pages/admin/executive/Dashboard';
 import SecretaryProfile from './pages/admin/secretary/SecretaryProfile';
+import SecretaryChangePassword from './pages/admin/secretary/SecretaryChangePassword';
 import AdminLogin from './pages/auth/AdminLogin';
 import ChangePassword from './pages/auth/ChangePassword';
 import NotFound from './pages/auth/NotFound';
@@ -109,6 +110,7 @@ const AppRoutes = () => (
         <Route path="/admin" element={<AdminLogin />} />
         <Route path="/admin/secretary" element={<ExecutiveAdminDashboard />} />
         <Route path="/admin/secretary/profile" element={<SecretaryProfile />} />
+        <Route path="/admin/secretary/change-password" element={<SecretaryChangePassword />} />
         <Route path="/admin/change-password" element={<ChangePassword />} />
 
         {/* Super Admin Routes */}
