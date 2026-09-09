@@ -337,6 +337,18 @@ export default function ExecutiveAdminDashboard() {
   const [academicDepartment, setAcademicDepartment] = useState('All Departments');
   const [academicYear, setAcademicYear] = useState('All Years');
 
+  /* Secretary Student Attendance filters */
+  const [secretaryStudentAttDept, setSecretaryStudentAttDept] = useState('All Departments');
+  const [secretaryStudentAttYear, setSecretaryStudentAttYear] = useState('All Years');
+  const [secretaryStudentAttDeptOpen, setSecretaryStudentAttDeptOpen] = useState(false);
+  const [secretaryStudentAttYearOpen, setSecretaryStudentAttYearOpen] = useState(false);
+
+  /* Secretary Academic Results filters */
+  const [secretaryAcademicResultDept, setSecretaryAcademicResultDept] = useState('All Departments');
+  const [secretaryAcademicResultYear, setSecretaryAcademicResultYear] = useState('All Years');
+  const [secretaryAcademicResultDeptOpen, setSecretaryAcademicResultDeptOpen] = useState(false);
+  const [secretaryAcademicResultYearOpen, setSecretaryAcademicResultYearOpen] = useState(false);
+
   /* Faculty Attendance filters */
   const [facultyAttendanceDept, setFacultyAttendanceDept] = useState('All Departments');
   const [facultyAttendanceDeptOpen, setFacultyAttendanceDeptOpen] = useState(false);
@@ -440,6 +452,10 @@ export default function ExecutiveAdminDashboard() {
       setAcademicDeptOpen(false);
       setAcademicYearOpen(false);
       setFacultyAttendanceDeptOpen(false);
+      setSecretaryStudentAttDeptOpen(false);
+      setSecretaryStudentAttYearOpen(false);
+      setSecretaryAcademicResultDeptOpen(false);
+      setSecretaryAcademicResultYearOpen(false);
     };
     document.addEventListener('click', handler);
     return () => document.removeEventListener('click', handler);
@@ -448,12 +464,20 @@ export default function ExecutiveAdminDashboard() {
   /* computed data */
   const academicData = dashboardCharts?.academicDataBySemester || academicDataBySemester[selectedSemester] || academicDataBySemester[semesterOptions[0]];
 
-  /* ??????????????????????????????????????????????
-     ACADEMIC PERFORMANCE FILTERING
-     ?????????????????????????????????????????????? */
+  /* ──────────────────────────────────────────────
+     ACADEMIC PERFORMANCE & ATTENDANCE FILTERING
+     ────────────────────────────────────────────── */
   const academicSemesterRecords: AcademicRecord[] = Object.values(academicDataBySemester).flat();
 
   const availableAcademicYears = academicDepartment === SH_DEPARTMENT
+    ? ['I Year']
+    : yearOptions;
+
+  const availableSecretaryStudentAttYears = secretaryStudentAttDept === SH_DEPARTMENT
+    ? ['I Year']
+    : yearOptions;
+
+  const availableSecretaryAcademicResultYears = secretaryAcademicResultDept === SH_DEPARTMENT
     ? ['I Year']
     : yearOptions;
 
@@ -462,6 +486,18 @@ export default function ExecutiveAdminDashboard() {
       setAcademicYear(SH_DEFAULT_YEAR);
     }
   }, [academicDepartment]);
+
+  useEffect(() => {
+    if (secretaryStudentAttDept === SH_DEPARTMENT && secretaryStudentAttYear !== SH_DEFAULT_YEAR) {
+      setSecretaryStudentAttYear(SH_DEFAULT_YEAR);
+    }
+  }, [secretaryStudentAttDept]);
+
+  useEffect(() => {
+    if (secretaryAcademicResultDept === SH_DEPARTMENT && secretaryAcademicResultYear !== SH_DEFAULT_YEAR) {
+      setSecretaryAcademicResultYear(SH_DEFAULT_YEAR);
+    }
+  }, [secretaryAcademicResultDept]);
 
   const aggregateForKeys = (dept: string, sem: string): AcademicRecord | null => {
     const recs = academicSemesterRecords.filter((r) => r.dept === dept && r.semester === sem);
@@ -472,8 +508,9 @@ export default function ExecutiveAdminDashboard() {
   };
 
   type AcademicChartRow = { label: string; result: number; attendance: number };
-  const academicChartData: AcademicChartRow[] = (() => {
-    if (academicDepartment === 'All Departments' && academicYear === 'All Years') {
+
+  const getAcademicOrAttendanceChartData = (deptFilter: string, yearFilter: string): AcademicChartRow[] => {
+    if (deptFilter === 'All Departments' && yearFilter === 'All Years') {
       const deptsToShow = SH_DEPARTMENTS_FOR_ALL_DEPT_CHART;
       return deptsToShow.map((dept) => {
         const recs = academicSemesterRecords.filter((r) => r.dept === dept);
@@ -482,21 +519,21 @@ export default function ExecutiveAdminDashboard() {
         return { label: dept, result, attendance };
       });
     }
-    if (academicDepartment !== 'All Departments' && academicYear === 'All Years') {
-      const recs = academicSemesterRecords.filter((r) => r.dept === academicDepartment);
+    if (deptFilter !== 'All Departments' && yearFilter === 'All Years') {
+      const recs = academicSemesterRecords.filter((r) => r.dept === deptFilter);
       const result = recs.length ? Math.round(recs.reduce((s, r) => s + r.result, 0) / recs.length) : 0;
       const attendance = recs.length ? Math.round(recs.reduce((s, r) => s + r.attendance, 0) / recs.length) : 0;
-      return [{ label: academicDepartment, result, attendance }];
+      return [{ label: deptFilter, result, attendance }];
     }
-    if (academicDepartment !== 'All Departments' && academicYear !== 'All Years') {
-      const semesters = yearToSemesters[academicYear] || [];
+    if (deptFilter !== 'All Departments' && yearFilter !== 'All Years') {
+      const semesters = yearToSemesters[yearFilter] || [];
       return semesters.map((sem) => {
-        const rec = aggregateForKeys(academicDepartment, sem);
+        const rec = aggregateForKeys(deptFilter, sem);
         return { label: sem, result: rec?.result ?? 0, attendance: rec?.attendance ?? 0 };
       });
     }
-    if (academicDepartment === 'All Departments' && academicYear !== 'All Years') {
-      const semesters = yearToSemesters[academicYear] || [];
+    if (deptFilter === 'All Departments' && yearFilter !== 'All Years') {
+      const semesters = yearToSemesters[yearFilter] || [];
       const deptsToShow = SH_DEPARTMENTS_FOR_ALL_DEPT_CHART;
       return deptsToShow.map((dept) => {
         const recs = academicSemesterRecords.filter((r) => r.dept === dept && semesters.includes(r.semester));
@@ -506,7 +543,11 @@ export default function ExecutiveAdminDashboard() {
       });
     }
     return [];
-  })();
+  };
+
+  const academicChartData: AcademicChartRow[] = getAcademicOrAttendanceChartData(academicDepartment, academicYear);
+  const secretaryStudentAttendanceChartData: AcademicChartRow[] = getAcademicOrAttendanceChartData(secretaryStudentAttDept, secretaryStudentAttYear);
+  const secretaryAcademicResultChartData: AcademicChartRow[] = getAcademicOrAttendanceChartData(secretaryAcademicResultDept, secretaryAcademicResultYear);
 
   const academicChartKey: 'result' | 'attendance' = chartView;
   const academicChartXAxisKey = 'label';
@@ -1174,6 +1215,176 @@ export default function ExecutiveAdminDashboard() {
     </div>
   );
 
+  const renderSecretaryStudentAttendanceCard = () => (
+    <div className="widget-card flex flex-col h-full">
+      <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
+        <h2 className="section-title !mb-0 flex items-center gap-2">
+          <BarChart2 className="w-4 h-4 text-primary" /> Student Attendance
+        </h2>
+        <div className="flex items-center gap-2 flex-wrap">
+          <Dropdown
+            label={secretaryStudentAttDept}
+            options={departmentOptions}
+            open={secretaryStudentAttDeptOpen}
+            onToggle={(e) => {
+              e.stopPropagation();
+              setSecretaryStudentAttDeptOpen(!secretaryStudentAttDeptOpen);
+              setSecretaryStudentAttYearOpen(false);
+              setSecretaryAcademicResultDeptOpen(false);
+              setSecretaryAcademicResultYearOpen(false);
+              setFacultyAttendanceDeptOpen(false);
+            }}
+            onSelect={(v) => {
+              setSecretaryStudentAttDept(v);
+              setSecretaryStudentAttDeptOpen(false);
+              if (v === SH_DEPARTMENT) {
+                setSecretaryStudentAttYear(SH_DEFAULT_YEAR);
+              }
+            }}
+          />
+          <Dropdown
+            label={secretaryStudentAttYear}
+            options={availableSecretaryStudentAttYears}
+            open={secretaryStudentAttYearOpen}
+            onToggle={(e) => {
+              e.stopPropagation();
+              setSecretaryStudentAttYearOpen(!secretaryStudentAttYearOpen);
+              setSecretaryStudentAttDeptOpen(false);
+              setSecretaryAcademicResultDeptOpen(false);
+              setSecretaryAcademicResultYearOpen(false);
+              setFacultyAttendanceDeptOpen(false);
+            }}
+            onSelect={(v) => {
+              setSecretaryStudentAttYear(v);
+              setSecretaryStudentAttYearOpen(false);
+            }}
+          />
+          {secretaryStudentAttYear !== 'All Years' && (
+            <span className="text-[11px] font-medium text-muted-foreground font-sans whitespace-nowrap">
+              Semester: <span className="text-foreground font-semibold">{(yearToSemesters[secretaryStudentAttYear] || []).join(', ')}</span>
+            </span>
+          )}
+        </div>
+      </div>
+      <div className="flex-1 min-h-[220px]">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={secretaryStudentAttendanceChartData} margin={{ top: 20, right: 8, left: -24, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(0,0%,92%)" />
+            <XAxis dataKey="label" axisLine={false} tickLine={false}
+              tick={{ fontSize: 10, fill: 'hsl(0,10%,45%)', fontFamily: 'Inter' }}
+              interval={0}
+              angle={0}
+              textAnchor="middle"
+              dy={8}
+              height={28}
+              padding={{ left: 12, right: 12 }} />
+            <YAxis axisLine={false} tickLine={false}
+              tick={{ fontSize: 11, fill: 'hsl(0,10%,45%)', fontFamily: 'Inter' }}
+              tickFormatter={(v) => `${v}%`} domain={[60, 100]} />
+            <Tooltip content={<CustomTooltip />} cursor={{ fill: 'hsl(210,20%,96%)' }} />
+            <Bar dataKey="attendance" fill="hsl(181,99%,28%)"
+              radius={[5, 5, 0, 0]} barSize={Math.max(14, Math.min(36, Math.floor(360 / Math.max(secretaryStudentAttendanceChartData.length, 1))))} name="Attendance %">
+              <LabelList dataKey="attendance" position="top" fontSize={10} fontWeight={700}
+                fill="hsl(181,99%,28%)"
+                formatter={(v: number) => `${v}%`} />
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+      <div className="flex items-center justify-center gap-2 mt-2 font-sans">
+        <div className="w-3 h-3 rounded bg-secondary" />
+        <span className="text-xs text-muted-foreground font-medium">
+          Average Attendance (%)
+        </span>
+      </div>
+    </div>
+  );
+
+  const renderSecretaryAcademicResultsCard = () => (
+    <div className="widget-card flex flex-col h-full">
+      <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
+        <h2 className="section-title !mb-0 flex items-center gap-2">
+          <BarChart2 className="w-4 h-4 text-primary" /> Academic Results
+        </h2>
+        <div className="flex items-center gap-2 flex-wrap">
+          <Dropdown
+            label={secretaryAcademicResultDept}
+            options={departmentOptions}
+            open={secretaryAcademicResultDeptOpen}
+            onToggle={(e) => {
+              e.stopPropagation();
+              setSecretaryAcademicResultDeptOpen(!secretaryAcademicResultDeptOpen);
+              setSecretaryAcademicResultYearOpen(false);
+              setSecretaryStudentAttDeptOpen(false);
+              setSecretaryStudentAttYearOpen(false);
+              setFacultyAttendanceDeptOpen(false);
+            }}
+            onSelect={(v) => {
+              setSecretaryAcademicResultDept(v);
+              setSecretaryAcademicResultDeptOpen(false);
+              if (v === SH_DEPARTMENT) {
+                setSecretaryAcademicResultYear(SH_DEFAULT_YEAR);
+              }
+            }}
+          />
+          <Dropdown
+            label={secretaryAcademicResultYear}
+            options={availableSecretaryAcademicResultYears}
+            open={secretaryAcademicResultYearOpen}
+            onToggle={(e) => {
+              e.stopPropagation();
+              setSecretaryAcademicResultYearOpen(!secretaryAcademicResultYearOpen);
+              setSecretaryAcademicResultDeptOpen(false);
+              setSecretaryStudentAttDeptOpen(false);
+              setSecretaryStudentAttYearOpen(false);
+              setFacultyAttendanceDeptOpen(false);
+            }}
+            onSelect={(v) => {
+              setSecretaryAcademicResultYear(v);
+              setSecretaryAcademicResultYearOpen(false);
+            }}
+          />
+          {secretaryAcademicResultYear !== 'All Years' && (
+            <span className="text-[11px] font-medium text-muted-foreground font-sans whitespace-nowrap">
+              Semester: <span className="text-foreground font-semibold">{(yearToSemesters[secretaryAcademicResultYear] || []).join(', ')}</span>
+            </span>
+          )}
+        </div>
+      </div>
+      <div className="flex-1 min-h-[220px]">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={secretaryAcademicResultChartData} margin={{ top: 20, right: 8, left: -24, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(0,0%,92%)" />
+            <XAxis dataKey="label" axisLine={false} tickLine={false}
+              tick={{ fontSize: 10, fill: 'hsl(0,10%,45%)', fontFamily: 'Inter' }}
+              interval={0}
+              angle={0}
+              textAnchor="middle"
+              dy={8}
+              height={28}
+              padding={{ left: 12, right: 12 }} />
+            <YAxis axisLine={false} tickLine={false}
+              tick={{ fontSize: 11, fill: 'hsl(0,10%,45%)', fontFamily: 'Inter' }}
+              tickFormatter={(v) => `${v}%`} domain={[60, 100]} />
+            <Tooltip content={<CustomTooltip />} cursor={{ fill: 'hsl(210,20%,96%)' }} />
+            <Bar dataKey="result" fill="hsl(0,83%,26%)"
+              radius={[5, 5, 0, 0]} barSize={Math.max(14, Math.min(36, Math.floor(360 / Math.max(secretaryAcademicResultChartData.length, 1))))} name="Result %">
+              <LabelList dataKey="result" position="top" fontSize={10} fontWeight={700}
+                fill="hsl(0,83%,26%)"
+                formatter={(v: number) => `${v}%`} />
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+      <div className="flex items-center justify-center gap-2 mt-2 font-sans">
+        <div className="w-3 h-3 rounded bg-primary" />
+        <span className="text-xs text-muted-foreground font-medium">
+          Average Pass Result (%)
+        </span>
+      </div>
+    </div>
+  );
+
   const renderFacultyAttendanceCard = () => (
     <div className="widget-card flex flex-col h-full">
       <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
@@ -1673,9 +1884,9 @@ export default function ExecutiveAdminDashboard() {
 
         {isSecretary ? (
           <>
-            {/* Secretary Row 1: Academic Performance & Faculty Attendance (side-by-side) */}
+            {/* Secretary Row 1: Student Attendance & Faculty Attendance (side-by-side) */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {renderAcademicPerformanceCard()}
+              {renderSecretaryStudentAttendanceCard()}
               {renderFacultyAttendanceCard()}
             </div>
 
@@ -1699,6 +1910,11 @@ export default function ExecutiveAdminDashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {renderPendingApprovalsCard()}
               {renderImportantAlertsCard()}
+            </div>
+
+            {/* Secretary Row 5: Academic Results (Separate section at the bottom) */}
+            <div className="grid grid-cols-1 gap-4">
+              {renderSecretaryAcademicResultsCard()}
             </div>
           </>
         ) : (
