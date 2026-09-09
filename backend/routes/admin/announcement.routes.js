@@ -18,7 +18,7 @@ router.use(protect);
 router.route('/')
     .get(getAnnouncements)
     .post(
-        authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin', 'department-admin', 'faculty'),
+        authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin', 'principal', 'secretary', 'department-admin', 'faculty'),
         createAnnouncement
     );
 

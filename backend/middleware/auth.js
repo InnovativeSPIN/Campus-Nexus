@@ -141,7 +141,7 @@ export const protect = asyncHandler(async (req, res, next) => {
       console.log('[AUTH DEBUG] Faculty ID:', req.user.faculty_id, 'ID:', req.user.id);
 
       // Add role info for faculty and extract department code
-      req.user.role = 'faculty';
+      req.user.role = Number(req.user.role_id) === 4 ? 'principal' : 'faculty';
       req.user.userType = 'faculty';
       req.user.departmentCode = req.user.department?.short_name || null;
       // normalize department id and faculty id properties for compatibility

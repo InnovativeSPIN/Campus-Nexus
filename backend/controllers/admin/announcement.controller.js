@@ -14,19 +14,55 @@ function buildInclude() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+const SUPER_ROLES = ['superadmin', 'super-admin', 'executiveadmin', 'academicadmin'];
+
+function targetRoleCondition(role, alias = 'a') {
+    return `(CAST(${alias}.targetRole AS CHAR) LIKE '%"all"%' OR CAST(${alias}.targetRole AS CHAR) LIKE ${sequelize.escape(`%"${role}"%`)})`;
+}
+
+function academicYearValues(value) {
+    const raw = String(value ?? '').trim().toUpperCase();
+    const numeric = { I: '1', II: '2', III: '3', IV: '4', '1ST': '1', '2ND': '2', '3RD': '3', '4TH': '4' };
+    const number = numeric[raw] || (/^[1-4]$/.test(raw) ? raw : null);
+    if (!number) return [raw];
+    const roman = ['', 'I', 'II', 'III', 'IV'][Number(number)];
+    const ordinal = ['', '1ST', '2ND', '3RD', '4TH'][Number(number)];
+    return [raw, number, roman, ordinal];
+}
+
+function academicTargetConditions(user, alias = 'a') {
+    const semester = String(user.semester ?? '').trim();
+    const yearValues = academicYearValues(user.year).map(value => sequelize.escape(String(value)));
+    const numericSemester = Number(user.semester);
+    const currentTerm = Number.isFinite(numericSemester) && numericSemester > 0 && numericSemester % 2 === 0 ? 'even' : 'odd';
+
+    if (user.role !== 'student') {
+        return ` AND (${alias}.semester IS NULL OR TRIM(${alias}.semester) = '')
+                 AND (${alias}.year IS NULL OR TRIM(${alias}.year) = '')
+                 AND (${alias}.term IS NULL OR LOWER(TRIM(${alias}.term)) IN ('', 'both'))`;
+    }
+
+    return ` AND (${alias}.semester IS NULL OR TRIM(${alias}.semester) = '' OR ${alias}.semester = ${sequelize.escape(semester)})
+             AND (${alias}.year IS NULL OR TRIM(${alias}.year) = '' OR UPPER(TRIM(${alias}.year)) IN (${yearValues.join(', ')}))
+             AND (${alias}.term IS NULL OR TRIM(${alias}.term) = '' OR LOWER(TRIM(${alias}.term)) IN ('both', ${sequelize.escape(currentTerm)}))`;
+}
+function recipientConditions(user, alias = 'a') {
+    const role = user.role || '';
+    const departmentCode = user.departmentCode || '';
+    const department = departmentCode
+        ? `((${alias}.department IS NULL) OR ${alias}.department = ${sequelize.escape(departmentCode)})`
+        : `${alias}.department IS NULL`;
+    return ` AND ${targetRoleCondition(role, alias)} AND ${department}${academicTargetConditions(user, alias)}`;
+}
+
 // GET /api/v1/announcements
 // All authenticated users. Results are filtered by targetRole + department.
 // ─────────────────────────────────────────────────────────────────────────────
 export const getAnnouncements = asyncHandler(async (req, res) => {
-    const { Announcement, User } = models;
-    const { role = '', departmentCode = '' } = req.user;
-
-    const superRoles = ['superadmin', 'super-admin', 'executiveadmin', 'academicadmin'];
-
+    const { role = '' } = req.user;
     let rows;
 
-    if (superRoles.includes(role)) {
-        // Super admins see every active announcement
+    if (SUPER_ROLES.includes(role)) {
         rows = await sequelize.query(
             `SELECT a.*, u.id as createdBy_id, u.name as createdBy_name, u.avatar as createdBy_avatar
              FROM announcements a
@@ -36,105 +72,89 @@ export const getAnnouncements = asyncHandler(async (req, res) => {
             { type: sequelize.QueryTypes.SELECT }
         );
     } else {
-        // Role check via LIKE (avoids JSON_CONTAINS quoting issues)
-        const deptSQL = departmentCode
-            ? `AND (a.department IS NULL OR a.department = ${sequelize.escape(departmentCode)})`
-            : 'AND a.department IS NULL';
-
+        const user = req.user;
         rows = await sequelize.query(
             `SELECT a.*, u.id as createdBy_id, u.name as createdBy_name, u.avatar as createdBy_avatar
              FROM announcements a
              LEFT JOIN users u ON a.createdById = u.id
-             WHERE a.isActive = 1
-               AND (
-                     a.targetRole LIKE '%"all"%'
-                  OR a.targetRole LIKE ${sequelize.escape(`%"${role}"%`)}
-               )
-               ${deptSQL}
+             WHERE a.isActive = 1${recipientConditions(user)}
              ORDER BY a.createdAt DESC`,
             { type: sequelize.QueryTypes.SELECT }
         );
     }
 
-    // Normalise: parse JSON fields that may come back as strings from raw query
     const data = rows.map(r => ({
         ...r,
         attachments: typeof r.attachments === 'string' ? tryParse(r.attachments, []) : (r.attachments ?? []),
-        targetRole:  typeof r.targetRole  === 'string' ? tryParse(r.targetRole,  []) : (r.targetRole  ?? []),
-        createdBy: r.createdBy_id
-            ? { id: r.createdBy_id, name: r.createdBy_name, avatar: r.createdBy_avatar }
-            : null,
+        targetRole: typeof r.targetRole === 'string' ? tryParse(r.targetRole, []) : (r.targetRole ?? []),
+        createdBy: r.createdBy_id ? { id: r.createdBy_id, name: r.createdBy_name, avatar: r.createdBy_avatar } : null,
     }));
 
     return res.status(200).json({ success: true, count: data.length, data });
 });
-
-// ─────────────────────────────────────────────────────────────────────────────
 // GET /api/v1/announcements/admin
 // Department-admins and faculty: global + their department's announcements.
 // ─────────────────────────────────────────────────────────────────────────────
 export const getAdminAnnouncements = asyncHandler(async (req, res) => {
-    const { role = '', departmentCode = '' } = req.user;
+    const { role = '' } = req.user;
+    let sql;
 
-    const superRoles = ['superadmin', 'super-admin', 'executiveadmin', 'academicadmin'];
-
-    let sql, bind;
-
-    if (superRoles.includes(role)) {
-        // Super admins see ALL announcements
-        sql  = `SELECT a.*, u.id as createdBy_id, u.name as createdBy_name, u.avatar as createdBy_avatar
-                FROM announcements a
-                LEFT JOIN users u ON a.createdById = u.id
-                ORDER BY a.createdAt DESC`;
-        bind = [];
-    } else if (departmentCode) {
-        // Faculty / HOD: global announcements + their own department
-        sql  = `SELECT a.*, u.id as createdBy_id, u.name as createdBy_name, u.avatar as createdBy_avatar
-                FROM announcements a
-                LEFT JOIN users u ON a.createdById = u.id
-                WHERE (a.department IS NULL OR a.department = ?)
-                ORDER BY a.createdAt DESC`;
-        bind = [departmentCode];
+    if (SUPER_ROLES.includes(role)) {
+        sql = `SELECT a.*, u.id as createdBy_id, u.name as createdBy_name, u.avatar as createdBy_avatar
+               FROM announcements a
+               LEFT JOIN users u ON a.createdById = u.id
+               ORDER BY a.createdAt DESC`;
     } else {
-        // No departmentCode: show all (fallback)
-        sql  = `SELECT a.*, u.id as createdBy_id, u.name as createdBy_name, u.avatar as createdBy_avatar
-                FROM announcements a
-                LEFT JOIN users u ON a.createdById = u.id
-                ORDER BY a.createdAt DESC`;
-        bind = [];
+        const user = req.user;
+        sql = `SELECT a.*, u.id as createdBy_id, u.name as createdBy_name, u.avatar as createdBy_avatar
+               FROM announcements a
+               LEFT JOIN users u ON a.createdById = u.id
+               WHERE a.isActive = 1${recipientConditions(user)}
+               ORDER BY a.createdAt DESC`;
     }
 
-    const rows = await sequelize.query(sql, {
-        type: sequelize.QueryTypes.SELECT,
-        replacements: bind.length ? bind : undefined
-    });
-
+    const rows = await sequelize.query(sql, { type: sequelize.QueryTypes.SELECT });
     const data = rows.map(r => ({
         ...r,
         attachments: typeof r.attachments === 'string' ? tryParse(r.attachments, []) : (r.attachments ?? []),
-        targetRole:  typeof r.targetRole  === 'string' ? tryParse(r.targetRole,  []) : (r.targetRole  ?? []),
-        createdBy: r.createdBy_id
-            ? { id: r.createdBy_id, name: r.createdBy_name, avatar: r.createdBy_avatar }
-            : null,
+        targetRole: typeof r.targetRole === 'string' ? tryParse(r.targetRole, []) : (r.targetRole ?? []),
+        createdBy: r.createdBy_id ? { id: r.createdBy_id, name: r.createdBy_name, avatar: r.createdBy_avatar } : null,
     }));
 
     return res.status(200).json({ success: true, count: data.length, data });
 });
 export const getAnnouncement = asyncHandler(async (req, res, next) => {
-    const { Announcement, User } = models;
+    const { role = '' } = req.user;
+    let rows;
 
-    const announcement = await Announcement.findByPk(req.params.id, {
-        include: buildInclude()
-    });
-
-    if (!announcement) {
-        return next(new ErrorResponse(`Announcement not found with id of ${req.params.id}`, 404));
+    if (SUPER_ROLES.includes(role)) {
+        rows = await sequelize.query(
+            `SELECT a.*, u.id as createdBy_id, u.name as createdBy_name, u.avatar as createdBy_avatar
+             FROM announcements a
+             LEFT JOIN users u ON a.createdById = u.id
+             WHERE a.id = ${sequelize.escape(req.params.id)} AND a.isActive = 1`,
+            { type: sequelize.QueryTypes.SELECT }
+        );
+    } else {
+        const user = req.user;
+        rows = await sequelize.query(
+            `SELECT a.*, u.id as createdBy_id, u.name as createdBy_name, u.avatar as createdBy_avatar
+             FROM announcements a
+             LEFT JOIN users u ON a.createdById = u.id
+             WHERE a.id = ${sequelize.escape(req.params.id)} AND a.isActive = 1${recipientConditions(user)}`,
+            { type: sequelize.QueryTypes.SELECT }
+        );
     }
 
-    return res.status(200).json({ success: true, data: announcement });
+    if (!rows.length) return next(new ErrorResponse(`Announcement not found with id of ${req.params.id}`, 404));
+    const r = rows[0];
+    return res.status(200).json({ success: true, data: {
+        ...r,
+        attachments: typeof r.attachments === 'string' ? tryParse(r.attachments, []) : (r.attachments ?? []),
+        targetRole: typeof r.targetRole === 'string' ? tryParse(r.targetRole, []) : (r.targetRole ?? []),
+        createdBy: r.createdBy_id ? { id: r.createdBy_id, name: r.createdBy_name, avatar: r.createdBy_avatar } : null,
+    }});
 });
-
-// ─────────────────────────────────────────────────────────────────────────────
 // POST /api/v1/announcements
 // ─────────────────────────────────────────────────────────────────────────────
 export const createAnnouncement = asyncHandler(async (req, res, next) => {
