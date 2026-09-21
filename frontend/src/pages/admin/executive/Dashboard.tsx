@@ -1884,19 +1884,24 @@ export default function ExecutiveAdminDashboard() {
 
         {isSecretary ? (
           <>
-            {/* Secretary Row 1: Student Attendance & Faculty Attendance (side-by-side) */}
+            {/* Secretary Row 1: Academic Results */}
+            <div className="grid grid-cols-1 gap-4">
+              {renderSecretaryAcademicResultsCard()}
+            </div>
+
+            {/* Secretary Row 2: Student Attendance & Faculty Attendance (side-by-side) */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {renderSecretaryStudentAttendanceCard()}
               {renderFacultyAttendanceCard()}
             </div>
 
-            {/* Secretary Row 2: Student Strength & Staff Strength */}
+            {/* Secretary Row 3: Student Strength & Staff Strength */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {renderStudentStrengthCard()}
               {renderStaffStrengthCard()}
             </div>
 
-            {/* Secretary Row 3: Radar & Quick Actions (3 buttons in one horizontal row) */}
+            {/* Secretary Row 4: Radar & Quick Actions (3 buttons in one horizontal row) */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
               <div className="lg:col-span-5 flex flex-col">
                 {renderRadarCard()}
@@ -1906,15 +1911,10 @@ export default function ExecutiveAdminDashboard() {
               </div>
             </div>
 
-            {/* Secretary Row 4 (Below Quick Actions area): Pending Approvals & Important Alerts */}
+            {/* Secretary Row 5 (Below Quick Actions area): Pending Approvals & Important Alerts */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {renderPendingApprovalsCard()}
               {renderImportantAlertsCard()}
-            </div>
-
-            {/* Secretary Row 5: Academic Results (Separate section at the bottom) */}
-            <div className="grid grid-cols-1 gap-4">
-              {renderSecretaryAcademicResultsCard()}
             </div>
           </>
         ) : (
