@@ -157,7 +157,15 @@ export function ExecutiveAdminSidebar({
 
       {user && (
         <div className="p-4 border-b border-sidebar-border bg-sidebar-accent/10">
-          <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => {
+              navigate(isSecretary ? '/admin/secretary/profile' : '/admin/executive/profile');
+              setIsMobileMenuOpen?.(false);
+            }}
+            className="flex w-full items-center gap-3 text-left rounded-lg hover:bg-sidebar-accent/30 transition-colors cursor-pointer"
+            aria-label="Open profile"
+          >
             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/80 to-secondary/80 flex items-center justify-center flex-shrink-0 border-2 border-white/10 overflow-hidden">
               {avatarUrl && !avatarError ? (
                 <img
@@ -183,7 +191,7 @@ export function ExecutiveAdminSidebar({
                 </motion.div>
               )}
             </AnimatePresence>
-          </div>
+          </button>
         </div>
       )}
 

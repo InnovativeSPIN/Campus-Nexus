@@ -59,7 +59,7 @@ const router = express.Router();
 router.use(protect);
 
 // Faculty, department-admins, and executive admins can access their own profile
-router.get('/me/profile', authorize('faculty', 'department-admin', 'executiveadmin', 'superadmin'), getMyProfile);
+router.get('/me/profile', authorize('faculty', 'department-admin', 'executiveadmin', 'superadmin', 'principal'), getMyProfile);
 // Faculty class incharge - get assigned class and students
 router.get('/me/class-incharge', authorize('faculty', 'department-admin', 'executiveadmin', 'superadmin'), getMyClassIncharge);
 // Faculty timetable roles (class coordinator / timetable incharge)
@@ -77,7 +77,7 @@ router.post('/download-profile', authorize('faculty', 'department-admin', 'super
 
 // Routes for admin
 router.route('/')
-  .get(authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin', 'faculty', 'department-admin', 'secretary'), getAllFaculty)
+  .get(authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin', 'faculty', 'department-admin', 'secretary', 'principal'), getAllFaculty)
   .post(authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin'), createFaculty);
 
 router.route('/:id(\\d+)')

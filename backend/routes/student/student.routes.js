@@ -68,7 +68,7 @@ router.put('/:id/change-password', authorize('superadmin', 'super-admin', 'execu
 
 // Generic routes for admin and faculty
 router.route('/')
-  .get(authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin', 'faculty', 'secretary'), getAllStudents)
+  .get(authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin', 'faculty', 'secretary', 'principal'), getAllStudents)
   .post(authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin'), createStudent);
 
 // Generic :id route (must come LAST)

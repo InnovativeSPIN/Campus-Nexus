@@ -16,7 +16,7 @@ const router = express.Router();
 router.use(protect);
 
 router.route('/')
-    .get(authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin', 'faculty', 'department-admin', 'secretary'), getDepartments)
+    .get(authorize('superadmin', 'super-admin', 'executiveadmin', 'academicadmin', 'faculty', 'department-admin', 'secretary', 'principal'), getDepartments)
     .post(authorize('superadmin', 'super-admin'), createDepartment);
 
 router.route('/statistics')
