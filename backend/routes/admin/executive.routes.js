@@ -7,8 +7,10 @@ import {
   processApproval,
   getExecutiveFacultyAttendance
 } from '../../controllers/admin/executive.controller.js';
-
+import { protect, authorize } from '../../middleware/auth.js';
 const router = express.Router();
+router.use(protect);
+router.use(authorize('superadmin', 'super-admin', 'executiveadmin', 'executive', 'principal', 'secretary'));
 
 router.get('/stats', getExecutiveStats);
 router.get('/pending-approvals', getPendingApprovals);

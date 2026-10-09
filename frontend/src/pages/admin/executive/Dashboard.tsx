@@ -71,167 +71,17 @@ const labelToSemesterNumber = (label: string): number => {
   return m ? parseInt(m[1], 10) : 0;
 };
 
-type AcademicRecord = { dept: string; result: number; attendance: number; year: string; semester: string };
+type AcademicRecord = { dept: string; result?: number; attendance?: number; year: string; semester: string };
 
-const academicDataBySemester: Record<string, AcademicRecord[]> = {
-  'Even Semester 2025': [
-    { dept: 'CSE',    result: 88, attendance: 91, year: 'I Year',   semester: '2nd Semester' },
-    { dept: 'ECE',    result: 82, attendance: 87, year: 'I Year',   semester: '2nd Semester' },
-    { dept: 'IT',     result: 85, attendance: 88, year: 'I Year',   semester: '2nd Semester' },
-    { dept: 'AI & DS',result: 86, attendance: 90, year: 'I Year',   semester: '2nd Semester' },
-    { dept: 'EEE',    result: 79, attendance: 84, year: 'I Year',   semester: '2nd Semester' },
-    { dept: 'Civil',  result: 80, attendance: 86, year: 'I Year',   semester: '2nd Semester' },
-    { dept: 'Mech',   result: 85, attendance: 89, year: 'I Year',   semester: '2nd Semester' },
-    { dept: 'S&H',    result: 83, attendance: 88, year: 'I Year',   semester: '2nd Semester' },
-    { dept: 'CSE',    result: 86, attendance: 90, year: 'II Year',  semester: '4th Semester' },
-    { dept: 'ECE',    result: 80, attendance: 86, year: 'II Year',  semester: '4th Semester' },
-    { dept: 'IT',     result: 83, attendance: 87, year: 'II Year',  semester: '4th Semester' },
-    { dept: 'AI & DS',result: 84, attendance: 88, year: 'II Year',  semester: '4th Semester' },
-    { dept: 'EEE',    result: 77, attendance: 83, year: 'II Year',  semester: '4th Semester' },
-    { dept: 'Civil',  result: 78, attendance: 85, year: 'II Year',  semester: '4th Semester' },
-    { dept: 'Mech',   result: 83, attendance: 87, year: 'II Year',  semester: '4th Semester' },
-    { dept: 'CSE',    result: 84, attendance: 88, year: 'III Year', semester: '6th Semester' },
-    { dept: 'ECE',    result: 78, attendance: 84, year: 'III Year', semester: '6th Semester' },
-    { dept: 'IT',     result: 81, attendance: 85, year: 'III Year', semester: '6th Semester' },
-    { dept: 'AI & DS',result: 82, attendance: 86, year: 'III Year', semester: '6th Semester' },
-    { dept: 'EEE',    result: 75, attendance: 81, year: 'III Year', semester: '6th Semester' },
-    { dept: 'Civil',  result: 76, attendance: 82, year: 'III Year', semester: '6th Semester' },
-    { dept: 'Mech',   result: 81, attendance: 85, year: 'III Year', semester: '6th Semester' },
-    { dept: 'CSE',    result: 90, attendance: 92, year: 'IV Year',  semester: '8th Semester' },
-    { dept: 'ECE',    result: 84, attendance: 88, year: 'IV Year',  semester: '8th Semester' },
-    { dept: 'IT',     result: 87, attendance: 89, year: 'IV Year',  semester: '8th Semester' },
-    { dept: 'AI & DS',result: 88, attendance: 91, year: 'IV Year',  semester: '8th Semester' },
-    { dept: 'EEE',    result: 81, attendance: 86, year: 'IV Year',  semester: '8th Semester' },
-    { dept: 'Civil',  result: 82, attendance: 87, year: 'IV Year',  semester: '8th Semester' },
-    { dept: 'Mech',   result: 87, attendance: 90, year: 'IV Year',  semester: '8th Semester' },
-  ],
-  'Odd Semester 2024': [
-    { dept: 'CSE',    result: 84, attendance: 89, year: 'I Year',   semester: '1st Semester' },
-    { dept: 'ECE',    result: 79, attendance: 85, year: 'I Year',   semester: '1st Semester' },
-    { dept: 'IT',     result: 81, attendance: 86, year: 'I Year',   semester: '1st Semester' },
-    { dept: 'AI & DS',result: 82, attendance: 87, year: 'I Year',   semester: '1st Semester' },
-    { dept: 'EEE',    result: 75, attendance: 81, year: 'I Year',   semester: '1st Semester' },
-    { dept: 'Civil',  result: 77, attendance: 84, year: 'I Year',   semester: '1st Semester' },
-    { dept: 'Mech',   result: 82, attendance: 87, year: 'I Year',   semester: '1st Semester' },
-    { dept: 'S&H',    result: 80, attendance: 85, year: 'I Year',   semester: '1st Semester' },
-    { dept: 'CSE',    result: 82, attendance: 87, year: 'II Year',  semester: '3rd Semester' },
-    { dept: 'ECE',    result: 77, attendance: 83, year: 'II Year',  semester: '3rd Semester' },
-    { dept: 'IT',     result: 79, attendance: 84, year: 'II Year',  semester: '3rd Semester' },
-    { dept: 'AI & DS',result: 80, attendance: 85, year: 'II Year',  semester: '3rd Semester' },
-    { dept: 'EEE',    result: 73, attendance: 79, year: 'II Year',  semester: '3rd Semester' },
-    { dept: 'Civil',  result: 75, attendance: 82, year: 'II Year',  semester: '3rd Semester' },
-    { dept: 'Mech',   result: 80, attendance: 85, year: 'II Year',  semester: '3rd Semester' },
-    { dept: 'CSE',    result: 80, attendance: 85, year: 'III Year', semester: '5th Semester' },
-    { dept: 'ECE',    result: 75, attendance: 81, year: 'III Year', semester: '5th Semester' },
-    { dept: 'IT',     result: 77, attendance: 82, year: 'III Year', semester: '5th Semester' },
-    { dept: 'AI & DS',result: 78, attendance: 83, year: 'III Year', semester: '5th Semester' },
-    { dept: 'EEE',    result: 71, attendance: 77, year: 'III Year', semester: '5th Semester' },
-    { dept: 'Civil',  result: 73, attendance: 80, year: 'III Year', semester: '5th Semester' },
-    { dept: 'Mech',   result: 78, attendance: 83, year: 'III Year', semester: '5th Semester' },
-    { dept: 'CSE',    result: 86, attendance: 90, year: 'IV Year',  semester: '7th Semester' },
-    { dept: 'ECE',    result: 80, attendance: 86, year: 'IV Year',  semester: '7th Semester' },
-    { dept: 'IT',     result: 83, attendance: 87, year: 'IV Year',  semester: '7th Semester' },
-    { dept: 'AI & DS',result: 84, attendance: 88, year: 'IV Year',  semester: '7th Semester' },
-    { dept: 'EEE',    result: 77, attendance: 83, year: 'IV Year',  semester: '7th Semester' },
-    { dept: 'Civil',  result: 79, attendance: 85, year: 'IV Year',  semester: '7th Semester' },
-    { dept: 'Mech',   result: 84, attendance: 88, year: 'IV Year',  semester: '7th Semester' },
-  ],
-  'Even Semester 2024': [
-    { dept: 'CSE',    result: 81, attendance: 87, year: 'I Year',   semester: '2nd Semester' },
-    { dept: 'ECE',    result: 77, attendance: 83, year: 'I Year',   semester: '2nd Semester' },
-    { dept: 'IT',     result: 78, attendance: 84, year: 'I Year',   semester: '2nd Semester' },
-    { dept: 'AI & DS',result: 79, attendance: 85, year: 'I Year',   semester: '2nd Semester' },
-    { dept: 'EEE',    result: 73, attendance: 79, year: 'I Year',   semester: '2nd Semester' },
-    { dept: 'Civil',  result: 75, attendance: 82, year: 'I Year',   semester: '2nd Semester' },
-    { dept: 'Mech',   result: 79, attendance: 85, year: 'I Year',   semester: '2nd Semester' },
-    { dept: 'S&H',    result: 77, attendance: 83, year: 'I Year',   semester: '2nd Semester' },
-    { dept: 'CSE',    result: 79, attendance: 85, year: 'II Year',  semester: '4th Semester' },
-    { dept: 'ECE',    result: 75, attendance: 81, year: 'II Year',  semester: '4th Semester' },
-    { dept: 'IT',     result: 76, attendance: 82, year: 'II Year',  semester: '4th Semester' },
-    { dept: 'AI & DS',result: 77, attendance: 83, year: 'II Year',  semester: '4th Semester' },
-    { dept: 'EEE',    result: 71, attendance: 77, year: 'II Year',  semester: '4th Semester' },
-    { dept: 'Civil',  result: 73, attendance: 80, year: 'II Year',  semester: '4th Semester' },
-    { dept: 'Mech',   result: 77, attendance: 83, year: 'II Year',  semester: '4th Semester' },
-    { dept: 'CSE',    result: 77, attendance: 83, year: 'III Year', semester: '6th Semester' },
-    { dept: 'ECE',    result: 73, attendance: 79, year: 'III Year', semester: '6th Semester' },
-    { dept: 'IT',     result: 74, attendance: 80, year: 'III Year', semester: '6th Semester' },
-    { dept: 'AI & DS',result: 75, attendance: 81, year: 'III Year', semester: '6th Semester' },
-    { dept: 'EEE',    result: 69, attendance: 75, year: 'III Year', semester: '6th Semester' },
-    { dept: 'Civil',  result: 71, attendance: 78, year: 'III Year', semester: '6th Semester' },
-    { dept: 'Mech',   result: 75, attendance: 81, year: 'III Year', semester: '6th Semester' },
-    { dept: 'CSE',    result: 83, attendance: 88, year: 'IV Year',  semester: '8th Semester' },
-    { dept: 'ECE',    result: 78, attendance: 84, year: 'IV Year',  semester: '8th Semester' },
-    { dept: 'IT',     result: 80, attendance: 86, year: 'IV Year',  semester: '8th Semester' },
-    { dept: 'AI & DS',result: 81, attendance: 87, year: 'IV Year',  semester: '8th Semester' },
-    { dept: 'EEE',    result: 75, attendance: 81, year: 'IV Year',  semester: '8th Semester' },
-    { dept: 'Civil',  result: 77, attendance: 83, year: 'IV Year',  semester: '8th Semester' },
-    { dept: 'Mech',   result: 81, attendance: 86, year: 'IV Year',  semester: '8th Semester' },
-  ],
-  'Odd Semester 2023': [
-    { dept: 'CSE',    result: 79, attendance: 85, year: 'I Year',   semester: '1st Semester' },
-    { dept: 'ECE',    result: 74, attendance: 81, year: 'I Year',   semester: '1st Semester' },
-    { dept: 'IT',     result: 76, attendance: 82, year: 'I Year',   semester: '1st Semester' },
-    { dept: 'AI & DS',result: 77, attendance: 83, year: 'I Year',   semester: '1st Semester' },
-    { dept: 'EEE',    result: 71, attendance: 77, year: 'I Year',   semester: '1st Semester' },
-    { dept: 'Civil',  result: 73, attendance: 80, year: 'I Year',   semester: '1st Semester' },
-    { dept: 'Mech',   result: 76, attendance: 83, year: 'I Year',   semester: '1st Semester' },
-    { dept: 'S&H',    result: 74, attendance: 80, year: 'I Year',   semester: '1st Semester' },
-    { dept: 'CSE',    result: 77, attendance: 83, year: 'II Year',  semester: '3rd Semester' },
-    { dept: 'ECE',    result: 72, attendance: 79, year: 'II Year',  semester: '3rd Semester' },
-    { dept: 'IT',     result: 74, attendance: 80, year: 'II Year',  semester: '3rd Semester' },
-    { dept: 'AI & DS',result: 75, attendance: 81, year: 'II Year',  semester: '3rd Semester' },
-    { dept: 'EEE',    result: 69, attendance: 75, year: 'II Year',  semester: '3rd Semester' },
-    { dept: 'Civil',  result: 71, attendance: 78, year: 'II Year',  semester: '3rd Semester' },
-    { dept: 'Mech',   result: 74, attendance: 81, year: 'II Year',  semester: '3rd Semester' },
-    { dept: 'CSE',    result: 75, attendance: 81, year: 'III Year', semester: '5th Semester' },
-    { dept: 'ECE',    result: 70, attendance: 77, year: 'III Year', semester: '5th Semester' },
-    { dept: 'IT',     result: 72, attendance: 78, year: 'III Year', semester: '5th Semester' },
-    { dept: 'AI & DS',result: 73, attendance: 79, year: 'III Year', semester: '5th Semester' },
-    { dept: 'EEE',    result: 67, attendance: 73, year: 'III Year', semester: '5th Semester' },
-    { dept: 'Civil',  result: 69, attendance: 76, year: 'III Year', semester: '5th Semester' },
-    { dept: 'Mech',   result: 72, attendance: 79, year: 'III Year', semester: '5th Semester' },
-    { dept: 'CSE',    result: 81, attendance: 86, year: 'IV Year',  semester: '7th Semester' },
-    { dept: 'ECE',    result: 76, attendance: 82, year: 'IV Year',  semester: '7th Semester' },
-    { dept: 'IT',     result: 78, attendance: 84, year: 'IV Year',  semester: '7th Semester' },
-    { dept: 'AI & DS',result: 79, attendance: 85, year: 'IV Year',  semester: '7th Semester' },
-    { dept: 'EEE',    result: 73, attendance: 79, year: 'IV Year',  semester: '7th Semester' },
-    { dept: 'Civil',  result: 75, attendance: 82, year: 'IV Year',  semester: '7th Semester' },
-    { dept: 'Mech',   result: 79, attendance: 85, year: 'IV Year',  semester: '7th Semester' },
-  ],
-};
+const academicDataBySemester: Record<string, AcademicRecord[]> = {};
 
-const radarData = [
-  { subject: 'Teaching', A: 88, fullMark: 100 },
-  { subject: 'Research', A: 72, fullMark: 100 },
-  { subject: 'Placement', A: 87, fullMark: 100 },
-  { subject: 'Attendance', A: 86, fullMark: 100 },
-  { subject: 'Infrastructure', A: 78, fullMark: 100 },
-  { subject: 'Compliance', A: 91, fullMark: 100 },
-];
+const radarData: any[] = [];
 
-const pendingApprovals = [
-  { label: 'Leave Applications', count: 8, icon: UserCheck, accent: 'text-destructive bg-destructive/10', detail: '3 Faculty leaves (Dr. Kumar, Prof. Anitha, Dr. Raj) + 5 Student leaves pending your review.' },
-  { label: 'Faculty Requests', count: 3, icon: Users, accent: 'text-warning bg-warning/10', detail: '2 Transfer requests and 1 new equipment request from Mechanical Dept.' },
-  { label: 'Student Requests', count: 12, icon: GraduationCap, accent: 'text-info bg-info/10', detail: '7 Bonafide certificate requests, 3 fee concession appeals, 2 hostel change requests.' },
-  { label: 'Budget Approvals', count: 2, icon: ClipboardCheck, accent: 'text-success bg-success/10', detail: 'AI Lab Upgrade: ?12.5L, Library Digital Resources: ?3.2L ? awaiting your signature.' },
-  { label: 'Event Approvals', count: 4, icon: CalendarDays, accent: 'text-secondary bg-secondary/10', detail: 'Tech Symposium (CSE), Cultural Fest (Student Council), Workshop (ECE), Hackathon (AI&DS).' },
-];
+const pendingApprovals: any[] = [];
 
-const alerts = [
-  { text: 'NAAC Data Submission Pending', date: '10 Jun 2026', urgent: true, detail: 'Criteria I?VI data must be uploaded to the NAAC portal before the deadline. SSR draft is 85% complete.' },
-  { text: 'AICTE Compliance Report Due', date: '15 Jun 2026', urgent: true, detail: 'Annual compliance report including faculty-student ratio, infrastructure, and placement data.' },
-  { text: 'Department Budget Review', date: '18 Jun 2026', urgent: false, detail: 'Q2 budget utilisation review meeting with all HODs scheduled in Conference Hall.' },
-  { text: 'Scholarship Verification Pending', date: '20 Jun 2026', urgent: false, detail: '42 BC/MBC scholarship applications and 18 SC/ST scholarship applications need verification.' },
-  { text: 'Infrastructure Audit Scheduled', date: '25 Jun 2026', urgent: false, detail: 'Annual infrastructure audit by external agency. Labs, classrooms, and hostels to be inspected.' },
-];
+const alerts: any[] = [];
 
-const recentActivities = [
-  { text: 'New faculty Dr. Anitha joined in CSE Dept.', time: '2h ago', icon: UserCheck, color: 'text-success bg-success/10', detail: 'Dr. Anitha M., Ph.D. (IIT Madras), specialising in Machine Learning, appointed as Assistant Professor.' },
-  { text: 'Budget approved for AI Lab Upgradation', time: '4h ago', icon: IndianRupee, color: 'text-info bg-info/10', detail: '?12.5 Lakhs sanctioned for GPU workstations, networking, and software licenses.' },
-  { text: 'Workshop on "Cloud Computing" approved', time: '1d ago', icon: Award, color: 'text-warning bg-warning/10', detail: '2-day hands-on workshop sponsored by AWS. 120 participants from CSE and IT departments.' },
-  { text: 'Student Achievements data updated', time: '2d ago', icon: Star, color: 'text-primary bg-primary/10', detail: '23 new entries: 8 Hackathon wins, 5 Paper presentations, 6 Sports, 4 Cultural awards.' },
-  { text: 'NAAC Criteria VI data verified', time: '3d ago', icon: CheckCircle2, color: 'text-secondary bg-secondary/10', detail: 'Governance, Leadership, and Management data verified by IQAC. Ready for SSR upload.' },
-];
+const recentActivities: any[] = [];
 
 const quickActions = [
   { label: 'Generate Reports', icon: FileText, color: 'text-primary', bg: 'bg-primary/10 hover:bg-primary hover:text-white', type: 'report' as const },
@@ -248,51 +98,7 @@ const secretaryQuickActions = [
   { label: 'Academic Calendar', icon: CalendarDays, color: 'text-destructive', bg: 'bg-destructive/10 hover:bg-destructive hover:text-white', type: 'calendar' as const },
 ];
 
-const statDetails: Record<string, { title: string; icon: React.ElementType; rows: { label: string; value: string; trend?: string }[] }> = {
-  'Total Students': {
-    title: 'Student Breakdown — Academic Year 2025-26',
-    icon: GraduationCap,
-    rows: [
-      { label: 'I Year', value: '635', trend: '↑ 4.2%' }, { label: 'II Year', value: '612', trend: '↑ 2.1%' },
-      { label: 'III Year', value: '643', trend: '↑ 7.5%' }, { label: 'IV Year', value: '568', trend: '↑ 1.8%' },
-      { label: 'Male Students', value: '1,342' }, { label: 'Female Students', value: '1,116' },
-      { label: 'Day Scholars', value: '1,508' }, { label: 'Hostellers', value: '950' },
-      { label: 'SC/ST Category', value: '312' }, { label: 'OBC Category', value: '890' },
-    ],
-  },
-  'Total Faculty': {
-    title: 'Faculty Split — 2025-26',
-    icon: Users,
-    rows: [
-      { label: 'Professors', value: '18', trend: '↑ 2' }, { label: 'Associate Professors', value: '34', trend: '↑ 3' },
-      { label: 'Assistant Professors', value: '82', trend: '↓ 1' }, { label: 'Visiting Faculty', value: '12' },
-      { label: 'Non-Teaching Staff', value: '10' }, { label: 'Ph.D. Holders', value: '94', trend: '↑ 6' },
-      { label: 'Male Faculty', value: '87' }, { label: 'Female Faculty', value: '69' },
-      { label: 'Avg. Experience', value: '11.4 yrs' },
-    ],
-  },
-  'Departments': {
-    title: 'Department-wise Strength',
-    icon: Building,
-    rows: [
-      { label: 'CSE', value: '480 students' }, { label: 'ECE', value: '320 students' },
-      { label: 'EEE', value: '280 students' }, { label: 'Mechanical', value: '350 students' },
-      { label: 'Civil', value: '250 students' }, { label: 'AI & DS', value: '310 students' },
-      { label: 'IT', value: '290 students' }, { label: 'Others (5 depts)', value: '178 students' },
-      { label: 'Total Depts (UG)', value: '8' }, { label: 'Total Depts (PG)', value: '4' },
-    ],
-  },
-  'Programs': {
-    title: 'Program Details',
-    icon: BookOpen,
-    rows: [
-      { label: 'B.E. / B.Tech', value: '12 programs' }, { label: 'M.E. / M.Tech', value: '8 programs' },
-      { label: 'MBA', value: '2 programs' }, { label: 'MCA', value: '1 program' },
-      { label: 'Ph.D.', value: '5 programs' }, { label: 'AICTE Approved', value: '23' },
-      { label: 'NBA Accredited', value: '6' }, { label: 'Intake (Total)', value: '1,980' },
-    ],
-  },
-};
+const statDetails: Record<string, any> = {};
 
 /* ══════════════════════════════════════════════
    CUSTOM TOOLTIP
@@ -371,8 +177,8 @@ export default function ExecutiveAdminDashboard() {
   /* notification state */
   const [notifOpen, setNotifOpen] = useState(false);
   const [msgOpen, setMsgOpen] = useState(false);
-  const [notifCount, setNotifCount] = useState(8);
-  const [msgCount, setMsgCount] = useState(5);
+  const [notifCount, setNotifCount] = useState(0);
+  const [msgCount, setMsgCount] = useState(0);
 
   /* live clock */
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -389,6 +195,7 @@ export default function ExecutiveAdminDashboard() {
   const [facultyAttendanceData, setFacultyAttendanceData] = useState<any>(null);
   const [liveActivities, setLiveActivities] = useState<any[]>([]);
   const [livePendingApprovals, setLivePendingApprovals] = useState<any[]>([]);
+  const [pendingApprovalSummary, setPendingApprovalSummary] = useState<any>({});
   const [liveApprovalsLoading, setLiveApprovalsLoading] = useState(false);
 
   const fetchDashboardData = async () => {
@@ -408,6 +215,7 @@ export default function ExecutiveAdminDashboard() {
       const approvalsRes = await approvalsRaw.json();
       if (approvalsRes.success) {
         setLivePendingApprovals(approvalsRes.data.leaveApplications || []);
+        setPendingApprovalSummary(approvalsRes.data || {});
       }
 
       const chartsRaw = await apiFetch('/api/v1/executive/charts');
@@ -462,12 +270,12 @@ export default function ExecutiveAdminDashboard() {
   }, []);
 
   /* computed data */
-  const academicData = dashboardCharts?.academicDataBySemester || academicDataBySemester[selectedSemester] || academicDataBySemester[semesterOptions[0]];
+  const academicData = dashboardCharts?.academicDataBySemester?.[selectedSemester] || Object.values(dashboardCharts?.academicDataBySemester || {})[0] || [];
 
   /* ──────────────────────────────────────────────
      ACADEMIC PERFORMANCE & ATTENDANCE FILTERING
      ────────────────────────────────────────────── */
-  const academicSemesterRecords: AcademicRecord[] = Object.values(academicDataBySemester).flat();
+  const academicSemesterRecords: AcademicRecord[] = Object.values(dashboardCharts?.academicDataBySemester || {}).flat() as AcademicRecord[];
 
   const availableAcademicYears = academicDepartment === SH_DEPARTMENT
     ? ['I Year']
@@ -502,27 +310,28 @@ export default function ExecutiveAdminDashboard() {
   const aggregateForKeys = (dept: string, sem: string): AcademicRecord | null => {
     const recs = academicSemesterRecords.filter((r) => r.dept === dept && r.semester === sem);
     if (!recs.length) return null;
-    const result = Math.round(recs.reduce((s, r) => s + r.result, 0) / recs.length);
-    const attendance = Math.round(recs.reduce((s, r) => s + r.attendance, 0) / recs.length);
+    const result = Math.round(recs.reduce((s, r) => s + (r.result ?? 0), 0) / recs.length);
+    const attendance = Math.round(recs.reduce((s, r) => s + (r.attendance ?? 0), 0) / recs.length);
     return { dept, year: '', semester: sem, result, attendance };
   };
 
   type AcademicChartRow = { label: string; result: number; attendance: number };
 
   const getAcademicOrAttendanceChartData = (deptFilter: string, yearFilter: string): AcademicChartRow[] => {
+    if (!academicSemesterRecords.length) return [];
     if (deptFilter === 'All Departments' && yearFilter === 'All Years') {
       const deptsToShow = SH_DEPARTMENTS_FOR_ALL_DEPT_CHART;
       return deptsToShow.map((dept) => {
         const recs = academicSemesterRecords.filter((r) => r.dept === dept);
-        const result = recs.length ? Math.round(recs.reduce((s, r) => s + r.result, 0) / recs.length) : 0;
-        const attendance = recs.length ? Math.round(recs.reduce((s, r) => s + r.attendance, 0) / recs.length) : 0;
+        const result = recs.length ? Math.round(recs.reduce((s, r) => s + (r.result ?? 0), 0) / recs.length) : 0;
+        const attendance = recs.length ? Math.round(recs.reduce((s, r) => s + (r.attendance ?? 0), 0) / recs.length) : 0;
         return { label: dept, result, attendance };
       });
     }
     if (deptFilter !== 'All Departments' && yearFilter === 'All Years') {
       const recs = academicSemesterRecords.filter((r) => r.dept === deptFilter);
-      const result = recs.length ? Math.round(recs.reduce((s, r) => s + r.result, 0) / recs.length) : 0;
-      const attendance = recs.length ? Math.round(recs.reduce((s, r) => s + r.attendance, 0) / recs.length) : 0;
+      const result = recs.length ? Math.round(recs.reduce((s, r) => s + (r.result ?? 0), 0) / recs.length) : 0;
+      const attendance = recs.length ? Math.round(recs.reduce((s, r) => s + (r.attendance ?? 0), 0) / recs.length) : 0;
       return [{ label: deptFilter, result, attendance }];
     }
     if (deptFilter !== 'All Departments' && yearFilter !== 'All Years') {
@@ -537,13 +346,15 @@ export default function ExecutiveAdminDashboard() {
       const deptsToShow = SH_DEPARTMENTS_FOR_ALL_DEPT_CHART;
       return deptsToShow.map((dept) => {
         const recs = academicSemesterRecords.filter((r) => r.dept === dept && semesters.includes(r.semester));
-        const result = recs.length ? Math.round(recs.reduce((s, r) => s + r.result, 0) / recs.length) : 0;
-        const attendance = recs.length ? Math.round(recs.reduce((s, r) => s + r.attendance, 0) / recs.length) : 0;
+        const result = recs.length ? Math.round(recs.reduce((s, r) => s + (r.result ?? 0), 0) / recs.length) : 0;
+        const attendance = recs.length ? Math.round(recs.reduce((s, r) => s + (r.attendance ?? 0), 0) / recs.length) : 0;
         return { label: dept, result, attendance };
       });
     }
     return [];
   };
+
+  const formatAttendance = (value: number | null | undefined) => value == null ? 'No data' : `${value}%`;
 
   const academicChartData: AcademicChartRow[] = getAcademicOrAttendanceChartData(academicDepartment, academicYear);
   const secretaryStudentAttendanceChartData: AcademicChartRow[] = getAcademicOrAttendanceChartData(secretaryStudentAttDept, secretaryStudentAttYear);
@@ -555,9 +366,9 @@ export default function ExecutiveAdminDashboard() {
 
   // Use real data if available from database endpoints, fallback to default mock
   const totalStudentsVal = dashboardStats?.totalStudents ?? students.length;
-  const totalFacultyVal = dashboardStats?.totalFaculty ?? 156;
-  const totalDeptsVal = dashboardStats?.totalDepartments ?? 12;
-  const totalProgramsVal = dashboardStats?.totalPrograms ?? 28;
+  const totalFacultyVal = dashboardStats?.totalFaculty ?? null;
+  const totalDeptsVal = dashboardStats?.totalDepartments ?? null;
+  const totalProgramsVal = dashboardStats?.totalPrograms ?? null;
 
   const selectedDepartmentRecord = departments.find((department) => (department.short_name || department.name || department.full_name) === selectedDepartment);
   const filteredStudents = students.filter((student) => {
@@ -654,67 +465,14 @@ export default function ExecutiveAdminDashboard() {
     return ['All Departments', ...sortedDepts, ...remaining];
   }, [departments]);
 
-  // Bar chart data formatted specifically for the chart categories
   const allDeptFacultyAttendanceChartData = useMemo(() => {
-    const rawDeptList = facultyAttendanceData?.departments?.length
-      ? facultyAttendanceData.departments.map((d: any) => ({
-          chartLabel: getChartDeptDisplayLabel(d.name || d.fullName),
-          rawName: d.name,
-          fullName: d.fullName,
-          attendance: d.attendance,
-          teachingAttendance: d.teachingAttendance,
-          nonTeachingAttendance: d.nonTeachingAttendance,
-          totalStaff: d.totalStaff,
-          teachingStaff: d.teachingStaff,
-          nonTeachingStaff: d.nonTeachingStaff,
-        }))
-      : staffDepartmentBreakdown.map((dept) => {
-          const chartLabel = getChartDeptDisplayLabel(dept.name);
-          const isTech = chartLabel === 'CSE' || chartLabel === 'IT';
-          const attVal = isTech ? 85 : (dept.total > 0 ? 94 : 90);
-          return {
-            chartLabel,
-            rawName: dept.name,
-            fullName: dept.name,
-            attendance: attVal,
-            teachingAttendance: attVal,
-            nonTeachingAttendance: attVal,
-            totalStaff: dept.total,
-            teachingStaff: dept.teaching,
-            nonTeachingStaff: dept.nonTeaching,
-          };
-        });
-
-    // Map strictly in the required chart order: CSE, ECE, IT, AI&DS, EEE, CIVIL, MECH, S&H, SE, PE, MFE
-    const orderedChartData = CHART_DEPT_ORDER.map((deptLabel) => {
-      const existing = rawDeptList.find((d: any) => d.chartLabel === deptLabel);
-      if (existing) {
-        return {
-          ...existing,
-          name: deptLabel, // Displayed on the chart X-axis
-        };
-      }
-      return {
-        name: deptLabel,
-        chartLabel: deptLabel,
-        rawName: deptLabel,
-        fullName: deptLabel,
-        attendance: 90,
-        teachingAttendance: 92,
-        nonTeachingAttendance: 88,
-        totalStaff: 0,
-        teachingStaff: 0,
-        nonTeachingStaff: 0,
-      };
-    });
-
-    const extraDepts = rawDeptList
-      .filter((d: any) => !CHART_DEPT_ORDER.includes(d.chartLabel))
-      .map((d: any) => ({ ...d, name: d.chartLabel }));
-
-    return [...orderedChartData, ...extraDepts];
-  }, [facultyAttendanceData, staffDepartmentBreakdown]);
-
+    const rawDeptList = facultyAttendanceData?.departments?.map((d: any) => ({
+      name: getChartDeptDisplayLabel(d.name || d.fullName), chartLabel: getChartDeptDisplayLabel(d.name || d.fullName), rawName: d.name, fullName: d.fullName,
+      attendance: d.attendance, teachingAttendance: d.teachingAttendance, nonTeachingAttendance: d.nonTeachingAttendance,
+      totalStaff: d.totalStaff, teachingStaff: d.teachingStaff, nonTeachingStaff: d.nonTeachingStaff
+    })) || [];
+    return rawDeptList;
+  }, [facultyAttendanceData]);
   // Specific department selection works for full names (e.g. STRUCTURE ENGINEERING, PHYSICAL EDUCATION) as well
   const specificDeptAttData = useMemo(() => {
     if (facultyAttendanceDept === 'All Departments') return null;
@@ -746,33 +504,44 @@ export default function ExecutiveAdminDashboard() {
     const deptStaff = staff.filter((m) => Number(m.department_id) === selectedDeptRec?.id);
     const teachingCount = deptStaff.filter((m) => isTeachingStaff(m.designation, m.role_id) !== false).length;
     const nonTeachingCount = deptStaff.filter((m) => isTeachingStaff(m.designation, m.role_id) === false).length;
-    const isTech = targetChartLabel === 'CSE' || targetChartLabel === 'IT';
-    const baseAtt = isTech ? 85 : 94;
-
     return {
       name: facultyAttendanceDept,
-      attendance: baseAtt,
-      teachingAttendance: baseAtt,
-      nonTeachingAttendance: isTech ? 85 : 92,
+      attendance: null,
+      teachingAttendance: null,
+      nonTeachingAttendance: null,
       totalStaff: deptStaff.length,
       teachingStaff: teachingCount,
       nonTeachingStaff: nonTeachingCount,
     };
   }, [facultyAttendanceDept, facultyAttendanceData, departments, staff]);
 
-  // Dynamic Pending Approvals mapping
+  // Dynamic Pending Approvals mapping. Empty categories remain empty because
+  // there are no corresponding approval models in the current schema.
   const dynamicApprovals = [
     {
       label: 'Leave Applications',
-      count: livePendingApprovals.length || 8, // fallback to mock 8
+      count: livePendingApprovals.length,
       icon: UserCheck,
       accent: 'text-destructive bg-destructive/10',
-      detail: livePendingApprovals.length > 0
-        ? `${livePendingApprovals.length} pending leave requests from Faculty.`
-        : '3 Faculty leaves (Dr. Kumar, Prof. Anitha, Dr. Raj) + 5 Student leaves pending your review.',
+      detail: livePendingApprovals.length ? `${livePendingApprovals.length} pending leave requests from Faculty.` : 'No pending leave applications.',
       originalData: livePendingApprovals
     },
-    ...pendingApprovals.slice(1) // Keep the rest as mock for now
+    {
+      label: 'Faculty Requests', count: pendingApprovalSummary.facultyRequests?.length || 0, icon: Users,
+      accent: 'text-warning bg-warning/10', detail: 'No faculty request data is available.', originalData: pendingApprovalSummary.facultyRequests || []
+    },
+    {
+      label: 'Student Requests', count: pendingApprovalSummary.studentRequests?.length || 0, icon: GraduationCap,
+      accent: 'text-info bg-info/10', detail: pendingApprovalSummary.studentRequests?.length ? `${pendingApprovalSummary.studentRequests.length} pending student requests.` : 'No pending student requests.', originalData: pendingApprovalSummary.studentRequests || []
+    },
+    {
+      label: 'Budget Approvals', count: pendingApprovalSummary.budgetApprovals?.length || 0, icon: ClipboardCheck,
+      accent: 'text-success bg-success/10', detail: 'No budget approval data is available.', originalData: pendingApprovalSummary.budgetApprovals || []
+    },
+    {
+      label: 'Event Approvals', count: pendingApprovalSummary.eventApprovals?.length || 0, icon: CalendarDays,
+      accent: 'text-secondary bg-secondary/10', detail: 'No event approval data is available.', originalData: pendingApprovalSummary.eventApprovals || []
+    }
   ];
 
   const openModal = (title: string, body: React.ReactNode) => {
@@ -782,7 +551,10 @@ export default function ExecutiveAdminDashboard() {
   /* ── stat card click ── */
   const handleStatClick = (label: string) => {
     const info = statDetails[label];
-    if (!info) return;
+    if (!info) {
+      openModal(label, <p className="text-sm text-muted-foreground">No database source is available for this breakdown.</p>);
+      return;
+    }
     const Icon = info.icon;
     openModal(info.title, (
       <div className="space-y-0 font-sans">
@@ -967,10 +739,6 @@ export default function ExecutiveAdminDashboard() {
         <div className="p-3 bg-muted/30 rounded-xl">
           <p className="text-xs font-bold text-foreground mb-2">Recent Notices Published:</p>
           {[
-            { text: 'Mid-semester exam schedule', date: 'Jun 12' },
-            { text: 'Faculty development program registration', date: 'Jun 10' },
-            { text: 'Library extended hours during exams', date: 'Jun 8' },
-            { text: 'Campus placement drive by Infosys', date: 'Jun 5' },
           ].map((n, i) => (
             <p key={i} className="text-xs text-muted-foreground py-1 border-b border-border/30 last:border-0 flex justify-between">
               <span>• {n.text}</span><span className="font-medium">{n.date}</span>
@@ -989,14 +757,6 @@ export default function ExecutiveAdminDashboard() {
     openModal('Academic Calendar — Even Semester 2025-26', (
       <div className="space-y-2 font-sans max-h-[60vh] overflow-y-auto pr-1">
         {[
-          { emoji: '📝', text: 'Mid-Semester Examinations', date: 'Jun 16–20', status: 'ongoing' },
-          { emoji: '📋', text: 'Last date for Internal Assessment submission', date: 'Jun 25', status: 'upcoming' },
-          { emoji: '🏆', text: 'Sports Day & Cultural Week', date: 'Jul 1–3', status: 'upcoming' },
-          { emoji: '👥', text: 'Staff Council Meeting', date: 'Jul 10', status: 'upcoming' },
-          { emoji: '🔬', text: 'Tech Symposium (CSE)', date: 'Jul 15–16', status: 'upcoming' },
-          { emoji: '🎓', text: 'End Semester Examinations', date: 'Aug 1–15', status: 'future' },
-          { emoji: '📊', text: 'Results Publication', date: 'Aug 20', status: 'future' },
-          { emoji: '📅', text: 'Odd Semester begins', date: 'Sep 1', status: 'future' },
         ].map((item, i) => (
           <div key={i} className={`flex items-center gap-3 p-2.5 rounded-xl border transition-colors hover:bg-muted/20 cursor-pointer ${item.status === 'ongoing' ? 'border-success/40 bg-success/5' : 'border-border'}`}>
             <span className="text-lg">{item.emoji}</span>
@@ -1025,7 +785,7 @@ export default function ExecutiveAdminDashboard() {
         </div>
         <div className="p-3 bg-muted/30 rounded-xl">
           <p className="text-xs font-bold text-foreground mb-2">Recent Circulars Sent:</p>
-          {['Dress code reminder — All Students — Jun 14', 'NAAC preparation meeting — All HODs — Jun 12', 'Exam hall allocation — All Faculty — Jun 10'].map((c, i) => (
+          {[].map((c, i) => (
             <p key={i} className="text-xs text-muted-foreground py-1 border-b border-border/30 last:border-0">• {c}</p>
           ))}
         </div>
@@ -1047,7 +807,7 @@ export default function ExecutiveAdminDashboard() {
   const handleViewAllApprovals = () => {
     openModal('All Pending Approvals', (
       <div className="space-y-2 font-sans max-h-[60vh] overflow-y-auto pr-1">
-        {pendingApprovals.map((a) => (
+        {dynamicApprovals.map((a) => (
           <div key={a.label} className="p-3 rounded-xl border border-border hover:bg-muted/20 transition-colors">
             <div className="flex items-center justify-between mb-1">
               <span className="text-sm font-bold text-foreground flex items-center gap-2">
@@ -1085,16 +845,7 @@ export default function ExecutiveAdminDashboard() {
     setNotifOpen(true);
     openModal('Notifications', (
       <div className="space-y-2 font-sans max-h-[60vh] overflow-y-auto pr-1">
-        {[
-          { title: 'NAAC submission deadline approaching', time: '10 min ago', read: false, urgent: true },
-          { title: 'Dr. Kumar leave application pending', time: '2h ago', read: false, urgent: false },
-          { title: 'Budget approval required: AI Lab ₹12.5L', time: '4h ago', read: false, urgent: false },
-          { title: 'AICTE report due in 5 days', time: '6h ago', read: true, urgent: true },
-          { title: 'Prof. Anitha leave application', time: '1d ago', read: true, urgent: false },
-          { title: 'Tech Symposium event approval pending', time: '1d ago', read: true, urgent: false },
-          { title: 'Scholarship verification: 60 applications', time: '2d ago', read: true, urgent: false },
-          { title: 'Infrastructure audit scheduled Jun 25', time: '3d ago', read: true, urgent: false },
-        ].map((n, i) => (
+        {[].map((n, i) => (
           <div key={i} className={`flex items-start gap-3 p-3 rounded-xl border transition-colors cursor-pointer hover:bg-muted/20 ${!n.read ? 'border-primary/30 bg-primary/5' : 'border-border'}`}>
             <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${n.urgent ? 'bg-destructive' : 'bg-primary'} ${n.read ? 'opacity-30' : ''}`} />
             <div>
@@ -1111,13 +862,7 @@ export default function ExecutiveAdminDashboard() {
     setMsgCount(0);
     openModal('Messages', (
       <div className="space-y-2 font-sans max-h-[60vh] overflow-y-auto pr-1">
-        {[
-          { from: 'Dr. Subramaniam (HOD-CSE)', msg: 'Sir, the lab equipment procurement...', time: '1h ago', read: false },
-          { from: 'Prof. Meena (HOD-ECE)', msg: 'Department seminar schedule...', time: '3h ago', read: false },
-          { from: 'Controller of Examinations', msg: 'Regarding hall ticket distribution...', time: '5h ago', read: false },
-          { from: 'Finance Officer', msg: 'Q2 budget reconciliation report...', time: '1d ago', read: true },
-          { from: 'IQAC Coordinator', msg: 'NAAC SSR draft chapter updates...', time: '2d ago', read: true },
-        ].map((m, i) => (
+        {[].map((m, i) => (
           <div key={i} onClick={() => toast({ title: `Message from ${m.from}`, description: m.msg })}
             className={`flex items-start gap-3 p-3 rounded-xl border transition-colors cursor-pointer hover:bg-muted/20 ${!m.read ? 'border-secondary/30 bg-secondary/5' : 'border-border'}`}>
             <div className={`w-9 h-9 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold shrink-0`}>
@@ -1476,7 +1221,7 @@ export default function ExecutiveAdminDashboard() {
               <div className="mt-2.5">
                 <div className="flex items-baseline justify-between mb-1.5">
                   <span className="text-2xl font-black text-foreground font-sans">
-                    {specificDeptAttData?.teachingAttendance ?? 0}%
+                    {formatAttendance(specificDeptAttData?.teachingAttendance)}
                   </span>
                   <span className="text-[11px] text-emerald-600 font-bold">Attendance</span>
                 </div>
@@ -1499,7 +1244,7 @@ export default function ExecutiveAdminDashboard() {
               <div className="mt-2.5">
                 <div className="flex items-baseline justify-between mb-1.5">
                   <span className="text-2xl font-black text-foreground font-sans">
-                    {specificDeptAttData?.nonTeachingAttendance ?? 0}%
+                    {formatAttendance(specificDeptAttData?.nonTeachingAttendance)}
                   </span>
                   <span className="text-[11px] text-teal-600 font-bold">Attendance</span>
                 </div>
@@ -1517,8 +1262,8 @@ export default function ExecutiveAdminDashboard() {
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={[
-                  { name: 'Teaching Staff', attendance: specificDeptAttData?.teachingAttendance ?? 0 },
-                  { name: 'Non-Teaching Staff', attendance: specificDeptAttData?.nonTeachingAttendance ?? 0 }
+                  { name: 'Teaching Staff', attendance: specificDeptAttData?.teachingAttendance ?? null },
+                  { name: 'Non-Teaching Staff', attendance: specificDeptAttData?.nonTeachingAttendance ?? null }
                 ]}
                 margin={{ top: 20, right: 16, left: -24, bottom: 0 }}
               >
@@ -1616,7 +1361,11 @@ export default function ExecutiveAdminDashboard() {
           </div>
         ))}
       </div>
-      <button onClick={handleViewAllAlerts}
+      {liveActivities.length > 0 && (
+        <div className="mt-3 space-y-1">
+          {liveActivities.map((activity, index) => <p key={`${activity.text}-${index}`} className="text-xs text-muted-foreground">{activity.text}</p>)}
+        </div>
+      )}      <button onClick={handleViewAllAlerts}
         className="mt-3 w-full py-2 text-xs font-bold text-secondary hover:text-secondary/80 flex items-center gap-1 justify-center transition-colors font-sans border border-border rounded-lg hover:bg-muted/20">
         View All Alerts <ArrowUpRight className="w-3 h-3" />
       </button>
@@ -1712,9 +1461,9 @@ export default function ExecutiveAdminDashboard() {
         <h2 className="section-title !mb-0 flex items-center gap-2">
           <Activity className="w-4 h-4 text-primary" /> Institution Performance Radar
         </h2>
-        <button onClick={() => toast({ title: 'Performance Index', description: 'Overall Institution Performance Score: 83.7 / 100' })}
+        <button onClick={() => toast({ title: 'Performance Index', description: 'Institution performance data is unavailable.' })}
           className="text-[10px] font-bold bg-primary/10 text-primary px-2.5 py-1 rounded-full hover:bg-primary hover:text-white transition-colors">
-          Score: 83.7
+          Score: Unavailable
         </button>
       </div>
       <div className="flex-1 min-h-[220px]">
@@ -1751,9 +1500,7 @@ export default function ExecutiveAdminDashboard() {
       {/* KPI Summary Strip */}
       <div className="mt-4 grid grid-cols-3 gap-2">
         {[
-          { label: 'Avg Attendance', value: '86.4%', icon: Users, positive: true },
-          { label: 'Pass Rate', value: '81.7%', icon: GraduationCap, positive: true },
-          { label: 'Open Tickets', value: '29', icon: AlertCircle, positive: false },
+          { label: 'Avg Attendance', value: 'Unavailable', icon: Users, positive: null }, { label: 'Pass Rate', value: 'Unavailable', icon: GraduationCap, positive: null }, { label: 'Open Tickets', value: 'Unavailable', icon: AlertCircle, positive: null },
         ].map((kpi) => (
           <button key={kpi.label}
             onClick={() => toast({ title: kpi.label, description: `Current value: ${kpi.value}.` })}
@@ -1789,9 +1536,7 @@ export default function ExecutiveAdminDashboard() {
       {/* KPI Summary Strip */}
       <div className="mt-4 grid grid-cols-3 gap-2">
         {[
-          { label: 'Avg Attendance', value: '86.4%', icon: Users, positive: true },
-          { label: 'Pass Rate', value: '81.7%', icon: GraduationCap, positive: true },
-          { label: 'Open Tickets', value: '29', icon: AlertCircle, positive: false },
+          { label: 'Avg Attendance', value: 'Unavailable', icon: Users, positive: null }, { label: 'Pass Rate', value: 'Unavailable', icon: GraduationCap, positive: null }, { label: 'Open Tickets', value: 'Unavailable', icon: AlertCircle, positive: null },
         ].map((kpi) => (
           <button key={kpi.label}
             onClick={() => toast({ title: kpi.label, description: `Current value: ${kpi.value}. Click View Analytics for detailed breakdown.` })}
@@ -1873,10 +1618,10 @@ export default function ExecutiveAdminDashboard() {
         {/* ─── 4 Stat Cards ─── */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {[
-            { icon: Users, iconBg: 'bg-primary/10', iconColor: 'text-primary', label: 'Total Students', value: totalStudentsVal !== undefined ? Number(totalStudentsVal).toLocaleString() : '0', change: '+6.3%', sub: 'vs Last Semester', positive: true },
-            { icon: UserCheck, iconBg: 'bg-success/10', iconColor: 'text-success', label: 'Total Faculty', value: totalFacultyVal !== undefined ? Number(totalFacultyVal).toLocaleString() : '0', change: '+4.1%', sub: 'vs Last Semester', positive: true },
-            { icon: Building, iconBg: 'bg-warning/10', iconColor: 'text-warning', label: 'Departments', value: totalDeptsVal !== undefined ? Number(totalDeptsVal).toLocaleString() : '0', change: '—', sub: 'No Change', positive: null },
-            { icon: BookOpen, iconBg: 'bg-secondary/10', iconColor: 'text-secondary', label: 'Programs', value: totalProgramsVal !== undefined ? Number(totalProgramsVal).toLocaleString() : '28', change: '+2', sub: 'vs Last Semester', positive: true },
+            { icon: Users, iconBg: 'bg-primary/10', iconColor: 'text-primary', label: 'Total Students', value: totalStudentsVal !== null ? Number(totalStudentsVal).toLocaleString() : 'Unavailable', change: 'Unavailable', sub: 'No comparison data', positive: null },
+            { icon: UserCheck, iconBg: 'bg-success/10', iconColor: 'text-success', label: 'Total Faculty', value: totalFacultyVal !== null ? Number(totalFacultyVal).toLocaleString() : 'Unavailable', change: 'Unavailable', sub: 'No comparison data', positive: null },
+            { icon: Building, iconBg: 'bg-warning/10', iconColor: 'text-warning', label: 'Departments', value: totalDeptsVal !== null ? Number(totalDeptsVal).toLocaleString() : 'Unavailable', change: '—', sub: 'No Change', positive: null },
+            { icon: BookOpen, iconBg: 'bg-secondary/10', iconColor: 'text-secondary', label: 'Programs', value: totalProgramsVal !== null ? Number(totalProgramsVal).toLocaleString() : 'Unavailable', change: '—', sub: 'No database source', positive: null },
           ].map((card) => (
             <StatCard key={card.label} {...card} onClick={() => handleStatClick(card.label)} />
           ))}
@@ -1981,10 +1726,7 @@ export default function ExecutiveAdminDashboard() {
           <div className="space-y-4 mt-2">
             <div className="grid grid-cols-2 gap-3">
               {[
-                { label: 'Overall Pass Rate', value: '81.7%', change: '+3.2%', icon: TrendingUp, color: 'text-success' },
-                { label: 'Avg Attendance', value: '86.4%', change: '+1.8%', icon: TrendingUp, color: 'text-success' },
-                { label: 'Placement Rate', value: '87.6%', change: '+5.8%', icon: TrendingUp, color: 'text-success' },
-                { label: 'Faculty Retention', value: '94.2%', change: '-0.3%', icon: TrendingDown, color: 'text-destructive' },
+                { label: 'Overall Pass Rate', value: 'Unavailable', change: 'No data', icon: Info, color: 'text-muted-foreground' }, { label: 'Avg Attendance', value: 'Unavailable', change: 'No data', icon: Info, color: 'text-muted-foreground' }, { label: 'Placement Rate', value: 'Unavailable', change: 'No data', icon: Info, color: 'text-muted-foreground' }, { label: 'Faculty Retention', value: 'Unavailable', change: 'No data', icon: Info, color: 'text-muted-foreground' },
               ].map((m) => (
                 <div key={m.label} className="p-3 rounded-xl border border-border bg-muted/20 flex items-center gap-3">
                   <m.icon className={`w-5 h-5 ${m.color}`} />

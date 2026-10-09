@@ -151,6 +151,13 @@ export function UserFormModal({ open, onClose, onSave, type, initialData, mode }
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
+  const studentFieldLabel = (label: string, required = false) => (
+    <>
+      {label}{' '}
+      {required ? <span className="text-red-500">*</span> : <span>(Optional)</span>}
+    </>
+  );
+
   const getTitle = () => {
     if (type === 'student') return 'Student';
     if (type === 'faculty') return 'Faculty';
@@ -168,7 +175,7 @@ export function UserFormModal({ open, onClose, onSave, type, initialData, mode }
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid gap-3">
             <div className="space-y-2">
-              <Label htmlFor="name">Full Name</Label>
+              <Label htmlFor="name">{type === 'student' ? studentFieldLabel('Full Name', true) : 'Full Name'}</Label>
               <Input
                 id="name"
                 value={(formData as any).name || ''}
@@ -177,7 +184,7 @@ export function UserFormModal({ open, onClose, onSave, type, initialData, mode }
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{type === 'student' ? studentFieldLabel('Email', true) : 'Email'}</Label>
               <Input
                 id="email"
                 type="email"
@@ -212,7 +219,7 @@ export function UserFormModal({ open, onClose, onSave, type, initialData, mode }
             {type !== 'admin' && (
               <>
                 <div className="space-y-2">
-                  <Label htmlFor="phone">Phone</Label>
+                  <Label htmlFor="phone">{type === 'student' ? studentFieldLabel('Phone', true) : 'Phone'}</Label>
                   <Input
                     id="phone"
                     value={type === 'student' ? (formData as Student).phone || '' : (formData as Faculty).phone_number || ''}
@@ -221,7 +228,7 @@ export function UserFormModal({ open, onClose, onSave, type, initialData, mode }
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="gender">Gender</Label>
+                  <Label htmlFor="gender">{type === 'student' ? studentFieldLabel('Gender') : 'Gender'}</Label>
                   <Select
                     value={(formData as any).gender || ''}
                     onValueChange={(value) => updateField('gender', value)}
@@ -303,7 +310,7 @@ export function UserFormModal({ open, onClose, onSave, type, initialData, mode }
 
             {(type !== 'admin' || (type === 'admin' && ((formData as Admin).role === 'academic' || (formData as Admin).role === 'department-admin'))) && (
               <div className="space-y-2">
-                <Label htmlFor="department">Department</Label>
+                <Label htmlFor="department">{type === 'student' ? studentFieldLabel('Department', true) : 'Department'}</Label>
                 <Select
                   value={(formData as any).department || ''}
                   onValueChange={(value) => updateField('department', value)}
@@ -344,7 +351,7 @@ export function UserFormModal({ open, onClose, onSave, type, initialData, mode }
             {type === 'student' && (
               <>
                 <div className="space-y-2">
-                  <Label htmlFor="academicYear">Academic Year (Batch)</Label>
+                  <Label htmlFor="academicYear">{studentFieldLabel('Academic Year (Batch)', true)}</Label>
                   <Select
                     value={(formData as Student).batch || ''}
                     onValueChange={(value) => updateField('batch', value)}
@@ -361,7 +368,7 @@ export function UserFormModal({ open, onClose, onSave, type, initialData, mode }
                 </div>
                 {(formData as Student).batch && (
                   <div className="space-y-2">
-                    <Label htmlFor="className">Class Name</Label>
+                    <Label htmlFor="className">{studentFieldLabel('Class Name')}</Label>
                     <Select
                       value={(formData as any).classId || ''}
                       onValueChange={(value) => updateField('classId', value)}
@@ -384,7 +391,7 @@ export function UserFormModal({ open, onClose, onSave, type, initialData, mode }
                   </div>
                 )}
                 <div className="space-y-2">
-                  <Label htmlFor="status">Status</Label>
+                  <Label htmlFor="status">{studentFieldLabel('Status')}</Label>
                   <Select
                     value={(formData as Student).status || ''}
                     onValueChange={(value) => updateField('status', value)}
@@ -400,7 +407,7 @@ export function UserFormModal({ open, onClose, onSave, type, initialData, mode }
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="year">Study Year</Label>
+                  <Label htmlFor="year">{studentFieldLabel('Study Year')}</Label>
                   <Select
                     value={(formData as Student).year || ''}
                     onValueChange={(value) => updateField('year', value)}
@@ -417,16 +424,17 @@ export function UserFormModal({ open, onClose, onSave, type, initialData, mode }
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="studentId">Register Number</Label>
+                  <Label htmlFor="studentId">{studentFieldLabel('Register Number', true)}</Label>
                   <Input
                     id="studentId"
                     value={(formData as Student).studentId || ''}
                     onChange={(e) => updateField('studentId', e.target.value)}
                     placeholder="Enter register number"
+                    required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="rollNo">Roll Number</Label>
+                  <Label htmlFor="rollNo">{studentFieldLabel('Roll Number')}</Label>
                   <Input
                     id="rollNo"
                     value={(formData as Student).rollNumber || ''}
@@ -435,7 +443,7 @@ export function UserFormModal({ open, onClose, onSave, type, initialData, mode }
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="admissionNo">Admission Number</Label>
+                  <Label htmlFor="admissionNo">{studentFieldLabel('Admission Number')}</Label>
                   <Input
                     id="admissionNo"
                     value={((formData as any).admissionNo) || ''}
@@ -444,7 +452,7 @@ export function UserFormModal({ open, onClose, onSave, type, initialData, mode }
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="emisNo">EMIS Number</Label>
+                  <Label htmlFor="emisNo">{studentFieldLabel('EMIS Number')}</Label>
                   <Input
                     id="emisNo"
                     value={((formData as any).emisNo) || ''}
@@ -453,7 +461,7 @@ export function UserFormModal({ open, onClose, onSave, type, initialData, mode }
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="semester">Semester</Label>
+                  <Label htmlFor="semester">{studentFieldLabel('Semester')}</Label>
                   <Select
                     value={(formData as Student).semester?.toString() || ''}
                     onValueChange={(value) => updateField('semester', parseInt(value))}
@@ -469,7 +477,7 @@ export function UserFormModal({ open, onClose, onSave, type, initialData, mode }
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="admissionDate">Admission Date</Label>
+                  <Label htmlFor="admissionDate">{studentFieldLabel('Admission Date')}</Label>
                   <Input
                     id="admissionDate"
                     type="date"
@@ -478,7 +486,7 @@ export function UserFormModal({ open, onClose, onSave, type, initialData, mode }
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="admissionType">Admission Type</Label>
+                  <Label htmlFor="admissionType">{studentFieldLabel('Admission Type')}</Label>
                   <Select
                     value={(formData as Student).admissionType || ''}
                     onValueChange={(value) => updateField('admissionType', value)}
@@ -494,7 +502,7 @@ export function UserFormModal({ open, onClose, onSave, type, initialData, mode }
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="feeStatus">Fee Status</Label>
+                  <Label htmlFor="feeStatus">{studentFieldLabel('Fee Status')}</Label>
                   <Select
                     value={(formData as Student).feeStatus || ''}
                     onValueChange={(value) => updateField('feeStatus', value)}
@@ -513,7 +521,7 @@ export function UserFormModal({ open, onClose, onSave, type, initialData, mode }
                   <h4 className="font-semibold text-sm mb-4">Bio Information</h4>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="alternatePhone">Alternate Phone</Label>
+                  <Label htmlFor="alternatePhone">{studentFieldLabel('Alternate Phone')}</Label>
                   <Input
                     id="alternatePhone"
                     value={(formData as any).alternatePhone || ''}
@@ -522,7 +530,7 @@ export function UserFormModal({ open, onClose, onSave, type, initialData, mode }
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="dateOfBirth">Date of Birth</Label>
+                  <Label htmlFor="dateOfBirth">{studentFieldLabel('Date of Birth')}</Label>
                   <Input
                     id="dateOfBirth"
                     type="date"
@@ -531,7 +539,7 @@ export function UserFormModal({ open, onClose, onSave, type, initialData, mode }
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="bloodGroup">Blood Group</Label>
+                  <Label htmlFor="bloodGroup">{studentFieldLabel('Blood Group')}</Label>
                   <Select
                     value={(formData as any).bloodGroup || ''}
                     onValueChange={(value) => updateField('bloodGroup', value)}
@@ -547,7 +555,7 @@ export function UserFormModal({ open, onClose, onSave, type, initialData, mode }
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="nationality">Nationality</Label>
+                  <Label htmlFor="nationality">{studentFieldLabel('Nationality')}</Label>
                   <Input
                     id="nationality"
                     value={(formData as any).nationality || ''}
@@ -556,7 +564,7 @@ export function UserFormModal({ open, onClose, onSave, type, initialData, mode }
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="religion">Religion</Label>
+                  <Label htmlFor="religion">{studentFieldLabel('Religion')}</Label>
                   <Input
                     id="religion"
                     value={(formData as any).religion || ''}
@@ -565,7 +573,7 @@ export function UserFormModal({ open, onClose, onSave, type, initialData, mode }
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="category">Category</Label>
+                  <Label htmlFor="category">{studentFieldLabel('Category')}</Label>
                   <Input
                     id="category"
                     value={(formData as any).category || ''}
@@ -574,7 +582,7 @@ export function UserFormModal({ open, onClose, onSave, type, initialData, mode }
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="aadharNo">Aadhar Number</Label>
+                  <Label htmlFor="aadharNo">{studentFieldLabel('Aadhar Number')}</Label>
                   <Input
                     id="aadharNo"
                     value={(formData as any).aadharNo || ''}
@@ -583,7 +591,7 @@ export function UserFormModal({ open, onClose, onSave, type, initialData, mode }
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="motherTongue">Mother Tongue</Label>
+                  <Label htmlFor="motherTongue">{studentFieldLabel('Mother Tongue')}</Label>
                   <Input
                     id="motherTongue"
                     value={(formData as any).motherTongue || ''}
@@ -592,7 +600,7 @@ export function UserFormModal({ open, onClose, onSave, type, initialData, mode }
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="linkedinUrl">LinkedIn URL</Label>
+                  <Label htmlFor="linkedinUrl">{studentFieldLabel('LinkedIn URL')}</Label>
                   <Input
                     id="linkedinUrl"
                     type="url"
@@ -602,7 +610,7 @@ export function UserFormModal({ open, onClose, onSave, type, initialData, mode }
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="residenceType">Residence Type</Label>
+                  <Label htmlFor="residenceType">{studentFieldLabel('Residence Type')}</Label>
                   <Select
                     value={(formData as any).residenceType || ''}
                     onValueChange={(value) => updateField('residenceType', value)}

@@ -305,7 +305,7 @@ export default function SuperAdminStudents() {
           setFormModal({ open: false, mode: 'add' });
           await loadData(); // Reload with current filters
         } else {
-          toast.error(json.message || 'Failed to add student');
+          toast.error(json.message || json.error || 'Failed to add student');
         }
       } else {
         const token = localStorage.getItem('authToken');
