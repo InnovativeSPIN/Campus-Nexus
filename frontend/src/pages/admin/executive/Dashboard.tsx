@@ -98,7 +98,7 @@ const secretaryQuickActions = [
   { label: 'Academic Calendar', icon: CalendarDays, color: 'text-destructive', bg: 'bg-destructive/10 hover:bg-destructive hover:text-white', type: 'calendar' as const },
 ];
 
-const statDetails: Record<string, any> = {};
+const statDetails: Record<string, { title: string; icon: React.ElementType; rows: { label: string; value: string; trend?: string }[] }> = {};
 
 /* ══════════════════════════════════════════════
    CUSTOM TOOLTIP
@@ -564,7 +564,7 @@ export default function ExecutiveAdminDashboard() {
           </div>
           <p className="text-sm text-muted-foreground">Detailed breakdown for Academic Year 2025-26</p>
         </div>
-        {info.rows.map((r) => (
+        {info.rows.map((r: { label: string; value: string; trend?: string }) => (
           <div key={r.label} className="flex items-center justify-between py-2.5 border-b border-border/40 last:border-0 group hover:bg-muted/20 px-2 -mx-2 rounded transition-colors">
             <span className="text-sm text-muted-foreground font-medium">{r.label}</span>
             <div className="flex items-center gap-2">
@@ -738,12 +738,17 @@ export default function ExecutiveAdminDashboard() {
         </div>
         <div className="p-3 bg-muted/30 rounded-xl">
           <p className="text-xs font-bold text-foreground mb-2">Recent Notices Published:</p>
-          {[
-          ].map((n, i) => (
-            <p key={i} className="text-xs text-muted-foreground py-1 border-b border-border/30 last:border-0 flex justify-between">
-              <span>• {n.text}</span><span className="font-medium">{n.date}</span>
-            </p>
-          ))}
+          {([
+          ] as Array<{ text: string; date: string }>).length === 0 ? (
+            <p className="text-xs text-muted-foreground py-1">No recent notices published.</p>
+          ) : (
+            ([
+            ] as Array<{ text: string; date: string }>).map((n, i) => (
+              <p key={i} className="text-xs text-muted-foreground py-1 border-b border-border/30 last:border-0 flex justify-between">
+                <span>• {n.text}</span><span className="font-medium">{n.date}</span>
+              </p>
+            ))
+          )}
         </div>
         <button onClick={() => { setModalOpen(false); navigate('/admin/executive/announcements'); }}
           className="w-full py-2.5 bg-primary text-white rounded-lg text-sm font-bold hover:bg-primary/90 transition-colors">
@@ -754,19 +759,23 @@ export default function ExecutiveAdminDashboard() {
   };
 
   const handleCalendarModal = () => {
+    const calendarEvents: Array<{ emoji: string; text: string; date: string; status?: string }> = [];
     openModal('Academic Calendar — Even Semester 2025-26', (
       <div className="space-y-2 font-sans max-h-[60vh] overflow-y-auto pr-1">
-        {[
-        ].map((item, i) => (
-          <div key={i} className={`flex items-center gap-3 p-2.5 rounded-xl border transition-colors hover:bg-muted/20 cursor-pointer ${item.status === 'ongoing' ? 'border-success/40 bg-success/5' : 'border-border'}`}>
-            <span className="text-lg">{item.emoji}</span>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-foreground truncate">{item.text}</p>
-              <p className="text-xs text-muted-foreground">{item.date}</p>
+        {calendarEvents.length === 0 ? (
+          <p className="text-xs text-muted-foreground py-4 text-center">No academic calendar events scheduled.</p>
+        ) : (
+          calendarEvents.map((item, i) => (
+            <div key={i} className={`flex items-center gap-3 p-2.5 rounded-xl border transition-colors hover:bg-muted/20 cursor-pointer ${item.status === 'ongoing' ? 'border-success/40 bg-success/5' : 'border-border'}`}>
+              <span className="text-lg">{item.emoji}</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-foreground truncate">{item.text}</p>
+                <p className="text-xs text-muted-foreground">{item.date}</p>
+              </div>
+              {item.status === 'ongoing' && <span className="text-[10px] font-bold bg-success text-white px-2 py-0.5 rounded-full shrink-0">LIVE</span>}
             </div>
-            {item.status === 'ongoing' && <span className="text-[10px] font-bold bg-success text-white px-2 py-0.5 rounded-full shrink-0">LIVE</span>}
-          </div>
-        ))}
+          ))
+        )}
       </div>
     ));
   };
@@ -785,9 +794,15 @@ export default function ExecutiveAdminDashboard() {
         </div>
         <div className="p-3 bg-muted/30 rounded-xl">
           <p className="text-xs font-bold text-foreground mb-2">Recent Circulars Sent:</p>
-          {[].map((c, i) => (
-            <p key={i} className="text-xs text-muted-foreground py-1 border-b border-border/30 last:border-0">• {c}</p>
-          ))}
+          {([
+          ] as string[]).length === 0 ? (
+            <p className="text-xs text-muted-foreground py-1">No recent circulars sent.</p>
+          ) : (
+            ([
+            ] as string[]).map((c, i) => (
+              <p key={i} className="text-xs text-muted-foreground py-1 border-b border-border/30 last:border-0">• {c}</p>
+            ))
+          )}
         </div>
       </div>
     ));
@@ -843,40 +858,50 @@ export default function ExecutiveAdminDashboard() {
   const handleNotifClick = () => {
     setNotifCount(0);
     setNotifOpen(true);
+    const notificationsList: Array<{ title: string; time: string; read?: boolean; urgent?: boolean }> = [];
     openModal('Notifications', (
       <div className="space-y-2 font-sans max-h-[60vh] overflow-y-auto pr-1">
-        {[].map((n, i) => (
-          <div key={i} className={`flex items-start gap-3 p-3 rounded-xl border transition-colors cursor-pointer hover:bg-muted/20 ${!n.read ? 'border-primary/30 bg-primary/5' : 'border-border'}`}>
-            <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${n.urgent ? 'bg-destructive' : 'bg-primary'} ${n.read ? 'opacity-30' : ''}`} />
-            <div>
-              <p className={`text-sm font-semibold ${n.read ? 'text-muted-foreground' : 'text-foreground'}`}>{n.title}</p>
-              <p className="text-xs text-muted-foreground">{n.time}</p>
+        {notificationsList.length === 0 ? (
+          <p className="text-xs text-muted-foreground py-4 text-center">No notifications available.</p>
+        ) : (
+          notificationsList.map((n, i) => (
+            <div key={i} className={`flex items-start gap-3 p-3 rounded-xl border transition-colors cursor-pointer hover:bg-muted/20 ${!n.read ? 'border-primary/30 bg-primary/5' : 'border-border'}`}>
+              <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${n.urgent ? 'bg-destructive' : 'bg-primary'} ${n.read ? 'opacity-30' : ''}`} />
+              <div>
+                <p className={`text-sm font-semibold ${n.read ? 'text-muted-foreground' : 'text-foreground'}`}>{n.title}</p>
+                <p className="text-xs text-muted-foreground">{n.time}</p>
+              </div>
             </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
     ));
   };
 
   const handleMsgClick = () => {
     setMsgCount(0);
+    const messagesList: Array<{ from: string; msg: string; time: string; read?: boolean }> = [];
     openModal('Messages', (
       <div className="space-y-2 font-sans max-h-[60vh] overflow-y-auto pr-1">
-        {[].map((m, i) => (
-          <div key={i} onClick={() => toast({ title: `Message from ${m.from}`, description: m.msg })}
-            className={`flex items-start gap-3 p-3 rounded-xl border transition-colors cursor-pointer hover:bg-muted/20 ${!m.read ? 'border-secondary/30 bg-secondary/5' : 'border-border'}`}>
-            <div className={`w-9 h-9 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold shrink-0`}>
-              {m.from.split(' ')[0][0]}{m.from.split(' ')[1]?.[0] || ''}
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between mb-0.5">
-                <p className={`text-sm font-bold truncate ${m.read ? 'text-muted-foreground' : 'text-foreground'}`}>{m.from}</p>
-                <span className="text-[10px] text-muted-foreground shrink-0 ml-2">{m.time}</span>
+        {messagesList.length === 0 ? (
+          <p className="text-xs text-muted-foreground py-4 text-center">No messages available.</p>
+        ) : (
+          messagesList.map((m, i) => (
+            <div key={i} onClick={() => toast({ title: `Message from ${m.from}`, description: m.msg })}
+              className={`flex items-start gap-3 p-3 rounded-xl border transition-colors cursor-pointer hover:bg-muted/20 ${!m.read ? 'border-secondary/30 bg-secondary/5' : 'border-border'}`}>
+              <div className={`w-9 h-9 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold shrink-0`}>
+                {m.from.split(' ')[0][0]}{m.from.split(' ')[1]?.[0] || ''}
               </div>
-              <p className="text-xs text-muted-foreground truncate">{m.msg}</p>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between mb-0.5">
+                  <p className={`text-sm font-bold truncate ${m.read ? 'text-muted-foreground' : 'text-foreground'}`}>{m.from}</p>
+                  <span className="text-[10px] text-muted-foreground shrink-0 ml-2">{m.time}</span>
+                </div>
+                <p className="text-xs text-muted-foreground truncate">{m.msg}</p>
+              </div>
             </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
     ));
   };
