@@ -81,7 +81,9 @@ interface Slot {
   subjectName: string;
   subjectCode: string;
   periodId: string | number;
+  periodNumber?: string | number;
   periodLabel: string;
+  periodSlotType?: string;
   startTime: string;
   endTime: string;
   classSectionId: number;
@@ -98,6 +100,17 @@ interface Slot {
   batch?: string;
 }
 
+// period_slots IDs: 1=I, 2=II, 4=III, 6=IV, 7=V, 9=VI, 10=VII.
+// IDs 3, 5, and 8 are break slots and must not be selectable for attendance.
+const TEACHING_PERIODS = [
+  { id: 1, number: 1, label: 'I', startTime: '09:30', endTime: '10:20' },
+  { id: 2, number: 2, label: 'II', startTime: '10:20', endTime: '11:10' },
+  { id: 4, number: 3, label: 'III', startTime: '11:30', endTime: '12:25' },
+  { id: 6, number: 4, label: 'IV', startTime: '13:10', endTime: '14:00' },
+  { id: 7, number: 5, label: 'V', startTime: '14:00', endTime: '14:50' },
+  { id: 9, number: 6, label: 'VI', startTime: '15:10', endTime: '16:00' },
+  { id: 10, number: 7, label: 'VII', startTime: '16:00', endTime: '16:45' },
+];
 export default function Attendance() {
   const { authToken, user } = useAuth();
   const isDepartmentAdmin = user?.role === 'department-admin';
@@ -113,6 +126,7 @@ export default function Attendance() {
   const [rawSlots, setRawSlots] = useState<Slot[]>([]);
   const [studentsByClass, setStudentsByClass] = useState<Record<number, any>>({});
 
+  const [selectedClassId, setSelectedClassId] = useState("");
   const [selectedSubjectId, setSelectedSubjectId] = useState("");
   const [selectedPeriodId, setSelectedPeriodId] = useState("");
   
@@ -181,20 +195,25 @@ export default function Attendance() {
       .catch(console.error);
   }, [selectedDate, authToken]);
 
-  // Unique subjects for this day (derived from rawSlots)
-  const subjects = useMemo(() => {
-    const unique = new Map();
-    rawSlots.forEach(s => {
-      if (s.subjectId && !unique.has(s.subjectId)) {
-        unique.set(s.subjectId, {
-          id: s.subjectId,
-          name: s.subjectName,
-          code: s.subjectCode
-        });
-      }
+  const isTeachingSlot = (slot: Slot) =>
+    slot.periodSlotType === 'teaching' && Number(slot.periodNumber) >= 1 && Number(slot.periodNumber) <= 7;
+
+  const classes = useMemo(() => {
+    const unique = new Map<string, { id: number; name: string; section: string }>();
+    rawSlots.filter(isTeachingSlot).forEach(s => {
+      const id = String(s.classSectionId);
+      if (!unique.has(id)) unique.set(id, { id: s.classSectionId, name: s.className, section: s.classSection });
     });
     return Array.from(unique.values());
   }, [rawSlots]);
+
+  const subjects = useMemo(() => {
+    const unique = new Map();
+    rawSlots.filter(s => isTeachingSlot(s) && String(s.classSectionId) === String(selectedClassId)).forEach(s => {
+      if (s.subjectId && !unique.has(s.subjectId)) unique.set(s.subjectId, { id: s.subjectId, name: s.subjectName, code: s.subjectCode });
+    });
+    return Array.from(unique.values());
+  }, [rawSlots, selectedClassId]);
 
   const formatTime12h = (timeStr: string | null | undefined): string => {
     if (!timeStr) return "";
@@ -211,45 +230,71 @@ export default function Attendance() {
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')} ${ampm}`;
   };
 
-  // Periods for the selected subject on this day
+  // All teaching periods for the selected class and subject. A period need not
+  // already be allocated to that subject in today's timetable.
   const periods = useMemo(() => {
-    if (!selectedSubjectId) return [];
-    const ROMAN = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
-    const filtered = rawSlots
-      .filter(s => s.subjectId?.toString() === selectedSubjectId.toString())
-      .map(s => {
-        const pNum = Number(s.periodId);
-        const roman = ROMAN[pNum] || `Period ${pNum}`;
-        const periodLabel = `Period ${pNum}: ${roman}`;
-        return {
-          id: s.periodId,
-          label: periodLabel,
-          startTime: formatTime12h(s.startTime),
-          endTime: formatTime12h(s.endTime),
-          classSectionId: s.classSectionId,
-          className: s.className,
-          classSection: s.classSection,
-          slotId: s.slotId
-        };
-      });
+    return TEACHING_PERIODS.map(period => {
+      const scheduledSlot = rawSlots.find(s =>
+        isTeachingSlot(s) &&
+        String(s.classSectionId) === String(selectedClassId) &&
+        s.subjectId?.toString() === selectedSubjectId.toString() &&
+        Number(s.periodId) === period.id
+      );
 
-    // Sort periods numerically by period ID
-    filtered.sort((a, b) => Number(a.id) - Number(b.id));
-    return filtered;
-  }, [selectedSubjectId, rawSlots]);
+      return {
+        id: period.id,
+        label: 'Period ' + period.number + ': ' + period.label,
+        startTime: formatTime12h(scheduledSlot?.startTime || period.startTime),
+        endTime: formatTime12h(scheduledSlot?.endTime || period.endTime),
+        classSectionId: Number(selectedClassId),
+        className: scheduledSlot?.className,
+        classSection: scheduledSlot?.classSection,
+        slotId: scheduledSlot?.slotId,
+        periodNumber: period.number,
+      };
+    });
+  }, [selectedClassId, selectedSubjectId, rawSlots]);
 
-  // Active slot — determined by subject + period
+  // Active slot — use the timetable slot when allocated, otherwise use the
+  // selected subject's class/faculty context with the selected period_slot ID.
   const slotInfo = useMemo(() => {
-    if (!selectedSubjectId || !selectedPeriodId) return null;
-    return rawSlots.find(s =>
+    if (!selectedClassId || !selectedSubjectId || !selectedPeriodId) return null;
+    const subjectSlot = rawSlots.find(s =>
+      isTeachingSlot(s) &&
+      String(s.classSectionId) === String(selectedClassId) &&
+      s.subjectId?.toString() === selectedSubjectId.toString()
+    );
+    if (!subjectSlot) return null;
+
+    const scheduledSlot = rawSlots.find(s =>
+      isTeachingSlot(s) &&
+      String(s.classSectionId) === String(selectedClassId) &&
       s.subjectId?.toString() === selectedSubjectId.toString() &&
       s.periodId?.toString() === selectedPeriodId.toString()
-    ) || null;
-  }, [selectedSubjectId, selectedPeriodId, rawSlots]);
+    );
+    if (scheduledSlot) return scheduledSlot;
 
-  // Reset period when subject changes
+    const period = TEACHING_PERIODS.find(p => String(p.id) === String(selectedPeriodId));
+    if (!period) return null;
+    return {
+      ...subjectSlot,
+      periodId: period.id,
+      periodNumber: period.number,
+      periodLabel: period.label,
+      periodSlotType: 'teaching',
+      startTime: period.startTime,
+      endTime: period.endTime,
+      slotId: null,
+      masterSlotId: undefined,
+    };
+  }, [selectedClassId, selectedSubjectId, selectedPeriodId, rawSlots]);
+
   useEffect(() => {
-    setSelectedPeriodId("");
+    setSelectedSubjectId(""); setSelectedPeriodId(""); setAttendanceData({}); setSlotStudents([]); setLocked(false);
+  }, [selectedClassId]);
+
+  useEffect(() => {
+    setSelectedPeriodId(""); setAttendanceData({}); setSlotStudents([]); setLocked(false);
   }, [selectedSubjectId]);
 
   // Load coverage topics when slotInfo changes (has both subject and class)
@@ -266,6 +311,7 @@ export default function Attendance() {
   }, [slotInfo, selectedSubjectId, selectedPeriodId]);
 
   useEffect(() => {
+    let requestActive = true;
     if (slotInfo) {
       const classId = slotInfo.classSectionId;
       const students = studentsByClass[classId] || [];
@@ -329,6 +375,7 @@ export default function Attendance() {
       fetch(`/api/v1/attendance?${attendanceQuery.toString()}`, { headers: { 'Authorization': `Bearer ${authToken}` } })
         .then(r => r.json())
         .then(response => {
+          if (!requestActive) return;
           if (response.success && response.data) {
             const attendanceRecord = response.data.find((r: any) =>
               r.period === slotInfo.periodId ||
@@ -362,6 +409,7 @@ export default function Attendance() {
       setSelectedLessonPlanId("");
       setLocked(!isToday);
     }
+  return () => { requestActive = false; };
   }, [slotInfo, studentsByClass, selectedDate, authToken, isToday]);
 
   const formatDate = (date: Date) => {
@@ -411,7 +459,7 @@ export default function Attendance() {
           facultyId: slotInfo.facultyId,
           attendanceDate: selectedDate,
           periodSlotId: slotInfo.periodId,
-          periodNumber: Number(slotInfo.periodLabel),
+          periodNumber: Number(slotInfo.periodNumber),
           masterSlotId: slotInfo.masterSlotId,
           academicYear: slotInfo.academicYear,
           semester: slotInfo.semester,
@@ -1132,12 +1180,12 @@ export default function Attendance() {
               {/* Subject (auto-filtered by day from rawSlots) */}
               <div className="space-y-2">
                 <Label>Subject</Label>
-                {rawSlots.length > 0 && subjects.length === 0 ? (
+                {selectedClassId && rawSlots.length > 0 && subjects.length === 0 ? (
                   <p className="text-sm text-destructive pt-2 font-medium">No subjects scheduled on this day</p>
                 ) : (
-                  <Select value={selectedSubjectId} onValueChange={setSelectedSubjectId} disabled={subjects.length === 0}>
+                  <Select value={selectedSubjectId} onValueChange={setSelectedSubjectId} disabled={!selectedClassId || subjects.length === 0}>
                     <SelectTrigger>
-                      <SelectValue placeholder={subjects.length === 0 ? "No classes this day" : "Select subject"} />
+                      <SelectValue placeholder={!selectedClassId ? "Select class first" : "Select subject"} />
                     </SelectTrigger>
                     <SelectContent>
                       {subjects.map((sub) => (
@@ -1151,61 +1199,40 @@ export default function Attendance() {
               </div>
             </div>
 
-            {/* Row 2: Class (auto) + Period (filtered by subject) */}
+            {/* Row 2: Class + Period */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-              {/* Class — auto-populated from selected subject, read-only */}
               <div className="space-y-2">
                 <Label>Class</Label>
-                {selectedSubjectId && periods.length > 0 ? (
-                  <div className="flex h-10 w-full rounded-md border border-input bg-muted/40 px-3 py-2 text-sm items-center gap-2">
-                    {selectedPeriodId ? (
-                      <>                        
-                        <span className="font-medium text-foreground">
-                          {slotInfo?.className || periods[0]?.className}
-                          {(slotInfo?.classSection || periods[0]?.classSection) ? ` — ${slotInfo?.classSection || periods[0]?.classSection}` : ''}
-                        </span>
-                        {slotInfo?.semester && (
-                          <span className="ml-auto text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
-                            Sem {slotInfo.semester}
-                          </span>
-                        )}
-                      </>
-                    ) : (
-                      <span className="text-muted-foreground">
-                        {/* show all unique classes for this subject */}
-                        {[...new Set(periods.map(p => `${p.className}${p.classSection ? ` - ${p.classSection}` : ''}`))].join(', ')}
-                      </span>
-                    )}
-                  </div>
-                ) : (
-                  <div className="flex h-10 w-full rounded-md border border-input bg-muted/20 px-3 py-2 text-sm items-center text-muted-foreground">
-                    Auto-filled from subject
-                  </div>
-                )}
+                <Select value={selectedClassId} onValueChange={setSelectedClassId} disabled={classes.length === 0}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={classes.length === 0 ? "No classes this day" : "Select class"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {classes.map((cls) => (
+                      <SelectItem key={cls.id} value={String(cls.id)}>
+                        {cls.name}{cls.section ? ' — ' + cls.section : ''}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
-              {/* Period */}
               <div className="space-y-2">
                 <Label>Period</Label>
-                <Select
-                  value={selectedPeriodId}
-                  onValueChange={setSelectedPeriodId}
-                  disabled={periods.length === 0}
-                >
+                <Select value={selectedPeriodId} onValueChange={setSelectedPeriodId}>
                   <SelectTrigger>
                     <SelectValue placeholder={selectedSubjectId ? "Select period" : "Select subject first"} />
                   </SelectTrigger>
                   <SelectContent>
                     {periods.map((p, idx) => (
-                      <SelectItem key={`${p.id}_${p.slotId || idx}`} value={p.id.toString()}>
-                        {p.label?.startsWith('Period') ? p.label : `Period ${p.label}`} ({p.startTime} - {p.endTime}) {p.className ? `— ${p.className} ${p.classSection || ''}` : ''}
+                      <SelectItem key={String(p.id) + '_' + String(p.slotId || idx)} value={p.id.toString()}>
+                        {p.label} ({p.startTime} - {p.endTime})
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
             </div>
-
             {/* Active Slot Info Banner */}
             {slotInfo && (
               <div className="mt-4 p-4 bg-info/5 border border-info/20 rounded-lg">

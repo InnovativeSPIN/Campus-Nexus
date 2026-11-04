@@ -572,6 +572,48 @@ export const getFacultyDetails = asyncHandler(async (req, res, next) => {
   }
 });
 
+// @desc      Get HOD details by email
+// @route     GET /api/v1/auth/hod-details/:identifier
+// @access    Public
+export const getHodDetails = asyncHandler(async (req, res, next) => {
+  const identifier = req.params.identifier;
+
+  if (!identifier) {
+    return next(new ErrorResponse('Please provide an HOD identifier', 400));
+  }
+
+  const hod = await Faculty.findOne({
+    where: {
+      email: identifier,
+      role_id: 7
+    },
+    attributes: ['Name', 'designation'],
+    include: [{
+      model: models.Department,
+      as: 'department',
+      attributes: ['short_name', 'full_name'],
+      required: false
+    }]
+  });
+
+  if (!hod) {
+    return res.status(404).json({
+      success: false,
+      message: 'HOD not found',
+      data: null
+    });
+  }
+
+  return res.status(200).json({
+    success: true,
+    data: {
+      name: hod.Name,
+      designation: hod.designation || 'HOD',
+      department: hod.department?.short_name || hod.department?.full_name
+    }
+  });
+});
+
 // @desc      Log user out / clear cookie
 // @route     GET /api/v1/auth/logout
 // @access    Private

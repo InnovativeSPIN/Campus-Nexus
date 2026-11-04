@@ -111,6 +111,22 @@ export default function Login() {
           }
         }
 
+        // HODs are stored in faculty_profiles with role_id 7 and are
+        // intentionally excluded from the regular faculty-details lookup.
+        const hodRes = await fetch(`/api/v1/auth/hod-details/${encodeURIComponent(identifier)}`);
+        if (hodRes.ok) {
+          const result = await hodRes.json();
+          if (result.success && result.data) {
+            setUserDetails({
+              name: result.data.name,
+              designation: result.data.designation,
+              department: result.data.department
+            });
+            setIsFetchingDetails(false);
+            return;
+          }
+        }
+
         setUserDetails(null);
       } catch (error) {
         console.error('Error fetching user details:', error);

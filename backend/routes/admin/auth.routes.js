@@ -15,7 +15,8 @@ import {
   uploadAvatar,
   uploadStudentAvatar,
   getStudentDetails,
-  getFacultyDetails
+  getFacultyDetails,
+  getHodDetails
 } from '../../controllers/admin/auth.controller.js';
 
 import { protect } from '../../middleware/auth.js';
@@ -29,6 +30,8 @@ router.post('/student-login', studentLogin);
 router.get('/student-details/:identifier', getStudentDetails);
 // faculty lookup by email or college code
 router.get('/faculty-details/:identifier', getFacultyDetails);
+// HOD lookup by email
+router.get('/hod-details/:identifier', getHodDetails);
 router.get('/logout', logout);
 router.get('/admins/:role', getAdminsByRole);
 router.get('/me', protect, getMe);

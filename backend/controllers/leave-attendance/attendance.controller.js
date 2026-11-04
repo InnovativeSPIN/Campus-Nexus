@@ -4,19 +4,16 @@ import { models } from '../../models/index.js';
 const { Attendance, FacultyAttendance, Student, StudentAttendance, Class: ClassModel, Subject, Faculty, FacultySubjectAssignment, PeriodTopicLog, CourseLessonPlan } = models;
 import { Op } from 'sequelize';
 
-// Teaching period slot IDs (1 through 10)
-const TEACHING_PERIODS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+// period_slots IDs for I-VII. IDs 3, 5, and 8 are break slots.
+const TEACHING_PERIODS = [1, 2, 4, 6, 7, 9, 10];
 const PERIOD_NUMBER_BY_SLOT = {
   1: 1,
   2: 2,
-  3: 3,
-  4: 4,
-  5: 5,
-  6: 6,
-  7: 7,
-  8: 8,
-  9: 9,
-  10: 10,
+  4: 3,
+  6: 4,
+  7: 5,
+  9: 6,
+  10: 7,
 };
 
 const normalizeAttendanceStatus = (status) => {
@@ -874,7 +871,7 @@ export const getFacultyTimetableSlots = asyncHandler(async (req, res, next) => {
         {
           model: PeriodSlot,
           as: 'period',
-          attributes: ['id', 'period_label', 'start_time', 'end_time', 'slot_type'],
+          attributes: ['id', 'period_number', 'period_label', 'start_time', 'end_time', 'slot_type'],
           required: false
         },
       ],
@@ -939,7 +936,9 @@ export const getFacultyTimetableSlots = asyncHandler(async (req, res, next) => {
           isLabSession: slot.is_lab_session,
           labGroup: slot.lab_group,
           periodId: slot.period?.id,
+          periodNumber: slot.period?.period_number,
           periodLabel: slot.period?.period_label,
+          periodSlotType: slot.period?.slot_type,
           startTime,
           endTime,
           dayOfWeek: slot.day,
